@@ -57,12 +57,12 @@ def consume(admitted, **kwargs):
     )
 
 
-def test_current_worker_mapping_preserves_original_authority_and_sources(admitted):
+def test_current_executor_mapping_preserves_original_authority_and_sources(admitted):
     result = consume(admitted)
     assert result["status"] == "dispatch-ready"
     dispatch = result["dispatch"]
-    assert dispatch["schema"] == "aquarium.assignment/v2"
-    assert dispatch["role"] == "worker"
+    assert dispatch["schema"] == "aquarium.assignment/v3"
+    assert dispatch["role"] == "executor"
     assert dispatch["procedure"]["node"] == "deliver"
     assert dispatch["work"] == admitted[1]["assignment"]["work"]
     assert dispatch["authority"] == admitted[1]["assignment"]["authority"]
@@ -91,12 +91,14 @@ def test_lifecycle_only_never_claims_achievement_or_dispatches(admitted, state, 
     assert "achieved" not in result
 
 
-def test_running_nonbootstrap_judge_uses_actual_mapping_and_report_only_scope(admitted):
+def test_running_nonbootstrap_evaluator_uses_actual_mapping_and_report_only_scope(
+    admitted,
+):
     observation = admitted[3]
     observation["guidance"]["node"]["graph_node_id"] = "assess"
     result = consume(admitted)
-    assert result["role"] == "judge"
-    assert result["dispatch"]["role"] == "judge"
+    assert result["role"] == "evaluator"
+    assert result["dispatch"]["role"] == "evaluator"
     assert result["dispatch"]["authority"]["effects"] == []
     assert {row["node"] for row in result["selected_evidence"]} == {"deliver"}
     assert set(admitted[1]["assignment"]["authority"]["excluded"]).issubset(
@@ -107,10 +109,12 @@ def test_running_nonbootstrap_judge_uses_actual_mapping_and_report_only_scope(ad
 @pytest.mark.parametrize(
     "node", ["outcome", "accept", "collect-review", "check-review", "closeout"]
 )
-def test_native_decisions_review_and_finalization_remain_primary_owned(admitted, node):
+def test_native_decisions_review_and_finalization_remain_coordinator_owned(
+    admitted, node
+):
     admitted[3]["guidance"]["node"]["graph_node_id"] = node
     result = consume(admitted)
-    assert result["status"] == "primary-owned"
+    assert result["status"] == "coordinator-owned"
     assert result["dispatch"] is None
     assert result["authority"]["review"]["route"] == "herdr"
 
@@ -144,13 +148,13 @@ def test_subagent_runtime_preserves_primary_review_ownership(admitted):
     qualification["assessment"] = report_for(requested["target"])
     observation["guidance"]["node"]["graph_node_id"] = "collect-review"
     result = consume(admitted)
-    assert result["status"] == "primary-owned"
+    assert result["status"] == "coordinator-owned"
     assert result["dispatch"] is None
     assert result["authority"]["review"]["route"] == "subagent-review"
 
 
 @pytest.mark.parametrize("scenario", ["bookkeeping", "mapped-history"])
-def test_custom_review_fields_survive_suitability_admission_and_worker_resume(
+def test_custom_review_fields_survive_suitability_admission_and_executor_resume(
     tmp_path, scenario
 ):
     from adaptive_admission import selected_source
@@ -196,7 +200,7 @@ def test_custom_review_fields_survive_suitability_admission_and_worker_resume(
                     ],
                 }
             )
-        binding["capability_definitions"]["fixture.review-routing/v1"]["fields"].update(
+        binding["capability_definitions"]["fixture.review-routing/v2"]["fields"].update(
             {logical: {"type": "choice", "required": True} for logical in fields}
         )
         binding["nodes"]["collect-review"]["capabilities"][1]["fields"] = fields
@@ -413,13 +417,13 @@ def handoff(tmp_path):
         {"node": "approved-input", "required": False, "items": ["plan-link"]}
     )
     mapping["nodes"]["approved-input"] = {
-        "role": "orchestrator",
+        "role": "coordinator",
         "kind": "action",
         "effects": [],
         "capabilities": [],
     }
     context["operation_contracts"][sha256(canonical_json(attachment))] = {
-        "roles": ["orchestrator"],
+        "roles": ["coordinator"],
         "effect": "control",
         "basis": "Exact approved context recording without product work",
     }
@@ -482,7 +486,7 @@ def test_mapped_handoff_requires_attachment_and_selected_work_connection(tmp_pat
     assert error.value.code == "missing-topology"
 
 
-def test_handoff_rejects_a_later_worker_before_the_actual_work_frontier(tmp_path):
+def test_handoff_rejects_a_later_executor_before_the_actual_work_frontier(tmp_path):
     from adaptive_definitions import canonical_json
 
     doc, binding, assignment, observation, _, _ = handoff(tmp_path)
@@ -569,8 +573,8 @@ def test_guarded_alternative_first_work_frontiers_remain_supported(tmp_path):
         "options": [
             {
                 "id": "primary",
-                "label": "Primary",
-                "criteria": "Primary original variant applies",
+                "label": "Coordinator",
+                "criteria": "Coordinator original variant applies",
             },
             {
                 "id": "alternative",
@@ -604,12 +608,12 @@ def test_guarded_alternative_first_work_frontiers_remain_supported(tmp_path):
     )
     binding["nodes"]["choose"] = {
         "kind": "decision",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [],
     }
     binding["nodes"]["alternative"] = copy.deepcopy(binding["nodes"]["deliver"])
-    binding["nodes"]["alternative"]["role"] = "orchestrator"
+    binding["nodes"]["alternative"]["role"] = "coordinator"
     assess = next(row for row in doc["graph"]["nodes"] if row["id"] == "assess")
     assess["evidence_from"][0]["required"] = False
     assess["evidence_from"].append(
@@ -839,7 +843,7 @@ def test_mapped_handoff_consumed_endpoint_shapes_are_typed(tmp_path, field, valu
     assert error.value.code == "invalid-input"
 
 
-def test_later_worker_resume_revalidates_existing_plan_metadata(tmp_path):
+def test_later_executor_resume_revalidates_existing_plan_metadata(tmp_path):
     from adaptive_definitions import canonical_json
 
     doc, binding, assignment, observation, artifact, path = handoff(tmp_path)
@@ -888,7 +892,7 @@ def test_later_worker_resume_revalidates_existing_plan_metadata(tmp_path):
     assert error.value.code == "source-drift"
 
 
-def test_later_judge_resume_revalidates_existing_plan_metadata(tmp_path):
+def test_later_evaluator_resume_revalidates_existing_plan_metadata(tmp_path):
     doc, binding, assignment, observation, artifact, path = handoff(tmp_path)
     observation["guidance"]["node"]["graph_node_id"] = "assess"
     runtime = assignment["target"]["plan_handoff_runtime"]
@@ -1068,7 +1072,7 @@ def test_performance_work_dispatches_actual_measurement_and_conditional_producer
         client=client,
     )
     assert (
-        result["role"] == "worker"
+        result["role"] == "executor"
         and result["dispatch"]["target"]["active_operation"]["items"][0]["type"]
         == "integer"
     )
@@ -1080,7 +1084,7 @@ def test_performance_work_dispatches_actual_measurement_and_conditional_producer
         qualification=q,
         client=client,
     )
-    assert decision["status"] == "primary-owned" and decision["dispatch"] is None
+    assert decision["status"] == "coordinator-owned" and decision["dispatch"] is None
     assert {row["node"] for row in decision["selected_evidence"]} == {"measure"}
 
 
@@ -1261,10 +1265,10 @@ def retired_source_context(admitted):
     from adaptive_definitions import definition_id
 
     repository, qualification, client, observation, retained = admitted
-    judge = next(
+    evaluator = next(
         node
         for node, value in retained["binding"]["nodes"].items()
-        if value["role"] == "judge"
+        if value["role"] == "evaluator"
     )
     original = repository / "requirements.json"
     before = sha256(original.read_bytes())
@@ -1280,14 +1284,14 @@ def retired_source_context(admitted):
         },
     }
     original.unlink()
-    report_path = repository / "affected-judge.json"
+    report_path = repository / "affected-evaluator.json"
     report = {
-        "schema": "aquarium.judge-assessment/v2",
+        "schema": "aquarium.evaluator-assessment/v3",
         "work": {"repository": str(repository), **qualification["assignment"]["work"]},
         "procedure": {
             "session": copy.deepcopy(observation["status"]["session"]),
             "goal_revision": observation["status"]["goal_revision"],
-            "node": judge,
+            "node": evaluator,
             "attempt": {"attempt_id": "actual-attempt", "attempt_number": 2},
             "source": {"sha256": retained["binding"]["procedure"]["source_sha256"]},
             "binding": {"sha256": definition_id(retained["binding"])},
@@ -1308,16 +1312,18 @@ def retired_source_context(admitted):
     }
     report_path.write_text(json.dumps(report))
     observation["guidance"]["node"]["graph_node_id"] = "closeout"
-    observation["status"]["counters"] = [{"graph_node_id": judge, "attempt_count": 2}]
+    observation["status"]["counters"] = [
+        {"graph_node_id": evaluator, "attempt_count": 2}
+    ]
     producer = {
-        "graph_node_id": judge,
+        "graph_node_id": evaluator,
         "attempt_id": "actual-attempt",
         "attempt_number": 2,
     }
     consumer_node = next(
         node
         for node, value in retained["binding"]["nodes"].items()
-        if value["role"] == "orchestrator"
+        if value["role"] == "coordinator"
     )
     consumer = {
         "graph_node_id": consumer_node,
@@ -1367,7 +1373,7 @@ def retired_source_context(admitted):
             "sha256": sha256(report_path.read_bytes()),
         },
         "checkpoint": {
-            "schema": "aquarium.orchestration-checkpoint/v2",
+            "schema": "aquarium.orchestration-checkpoint/v3",
             "work": copy.deepcopy(report["work"]),
             "native": native,
         },
@@ -1462,7 +1468,7 @@ def test_source_retirement_rejects_missing_or_changed_current_proof(
             "Other criteria"
         )
     elif change == "report":
-        (admitted[0] / "affected-judge.json").write_text("{}")
+        (admitted[0] / "affected-evaluator.json").write_text("{}")
     elif change == "native-report":
         recovery["selected_evidence"]["result"]["page"]["data"]["sha256_digest"] = (
             "sha256:" + "0" * 64
@@ -2103,7 +2109,7 @@ def test_finalization_obeys_due_checkpoint_and_null_verdict_fallback(
 @pytest.mark.parametrize(
     "change,expected",
     [
-        ("non-judge-producer", "not-established"),
+        ("non-evaluator-producer", "not-established"),
         ("missing-history", "unsupported-runtime"),
         ("malformed-history", "unsupported-runtime"),
         ("checkpoint-epic", "reassessment-required"),
@@ -2129,17 +2135,17 @@ def test_finalization_requires_current_role_work_goal_and_verbose_history(
     qualification["assessment"] = report_for(target)
     recovery = retired_source_context(admitted)
     report = json.loads((repository / recovery["assessment"]["path"]).read_text())
-    if change == "non-judge-producer":
-        worker = next(
+    if change == "non-evaluator-producer":
+        executor = next(
             node
             for node, declaration in retained["binding"]["nodes"].items()
-            if declaration["role"] == "worker"
+            if declaration["role"] == "executor"
         )
-        recovery["selected_evidence"]["result"]["source"]["graph_node_id"] = worker
+        recovery["selected_evidence"]["result"]["source"]["graph_node_id"] = executor
         observation["status"]["current_trace_history"]["entries"][0][
             "graph_node_id"
-        ] = worker
-        report["procedure"]["node"] = worker
+        ] = executor
+        report["procedure"]["node"] = executor
     elif change == "missing-history":
         observation["status"].pop("current_trace_history")
     elif change == "malformed-history":
@@ -2623,10 +2629,10 @@ def applied_source_case(repository, family="task", kind="known", originals="capt
         "proposal": proposal,
         "approval": approval,
         "checkpoint": {
-            "schema": "aquarium.orchestration-checkpoint/v2",
+            "schema": "aquarium.orchestration-checkpoint/v3",
             "work": copy.deepcopy(value["work"]),
             "procedure": None,
-            "native": {"harness": "Codex", "public_handle": "synthetic-worker"},
+            "native": {"harness": "Codex", "public_handle": "synthetic-executor"},
         },
     }
     qualification["applied_source_recovery"] = recovery
@@ -2696,63 +2702,67 @@ def continue_applied(case):
             "task",
             "known",
             [
-                ("document", "worker"),
-                ("judge-documentation", "judge"),
-                ("decide-documentation-assessment", "orchestrator"),
+                ("document", "executor"),
+                ("evaluator-documentation", "evaluator"),
+                ("decide-documentation-assessment", "coordinator"),
             ],
         ),
         (
             "goal",
             "known",
             [
-                ("complete-work", "worker"),
-                ("judge-goal", "judge"),
-                ("assess-goal", "orchestrator"),
+                ("complete-work", "executor"),
+                ("evaluator-goal", "evaluator"),
+                ("assess-goal", "coordinator"),
             ],
         ),
         (
             "validation",
             "known",
             [
-                ("remediate", "worker"),
-                ("judge-validation", "judge"),
-                ("prepare-validation-assessment", "orchestrator"),
+                ("remediate", "executor"),
+                ("evaluator-validation", "evaluator"),
+                ("prepare-validation-assessment", "coordinator"),
             ],
         ),
         (
             "design",
             "known",
             [
-                ("apply-documents", "worker"),
-                ("judge-application", "judge"),
-                ("prepare-design-assessment", "orchestrator"),
-                ("judge-design", "judge"),
-                ("assess-goal", "orchestrator"),
+                ("apply-documents", "executor"),
+                ("evaluator-application", "evaluator"),
+                ("prepare-design-assessment", "coordinator"),
+                ("evaluator-design", "evaluator"),
+                ("assess-goal", "coordinator"),
             ],
         ),
         (
             "diagnosis",
             "known",
             [
-                ("document", "worker"),
-                ("judge-documentation", "judge"),
-                ("prepare-diagnostic-assessment", "orchestrator"),
-                ("judge-diagnosis", "judge"),
-                ("assess-goal", "orchestrator"),
+                ("document", "executor"),
+                ("evaluator-documentation", "evaluator"),
+                ("prepare-diagnostic-assessment", "coordinator"),
+                ("evaluator-diagnosis", "evaluator"),
+                ("assess-goal", "coordinator"),
             ],
         ),
         (
             "task",
             "adaptive",
-            [("deliver", "worker"), ("assess", "judge"), ("outcome", "orchestrator")],
+            [
+                ("deliver", "executor"),
+                ("assess", "evaluator"),
+                ("outcome", "coordinator"),
+            ],
         ),
         (
             "design",
             "namespaced",
             [
-                ("scope-apply-documents", "worker"),
-                ("scope-judge-application", "judge"),
-                ("scope-assess-goal", "orchestrator"),
+                ("scope-apply-documents", "executor"),
+                ("scope-evaluator-application", "evaluator"),
+                ("scope-assess-goal", "coordinator"),
             ],
         ),
     ],
@@ -2769,7 +2779,7 @@ def test_approved_sources_continue_actual_pending_roles_without_future_report(
         result = continue_applied(case)
         assert result["node"] == node and result["role"] == role
         assert result["status"] == (
-            "primary-owned" if role == "orchestrator" else "dispatch-ready"
+            "coordinator-owned" if role == "coordinator" else "dispatch-ready"
         )
         assert result["procedure"]["session"] == observation["status"]["session"]
         assert result["bundle_id"] == retained["retention"]["bundle_id"]
@@ -2779,7 +2789,7 @@ def test_approved_sources_continue_actual_pending_roles_without_future_report(
         if kind == "known":
             assert result["qualification"]["status"] == "qualified-known"
             assert result["qualification"]["bootstrap"] is None
-        if role != "orchestrator":
+        if role != "coordinator":
             dispatched = result["dispatch"]
             assert dispatched["role"] == role
             assert dispatched["work"] == original["work"]
@@ -2794,7 +2804,7 @@ def test_approved_sources_continue_actual_pending_roles_without_future_report(
                 == qualification["applied_source_recovery"]["approval"]
             )
             if (
-                role == "judge"
+                role == "evaluator"
                 or family in {"design", "diagnosis"}
                 and node in {"apply-documents", "scope-apply-documents", "document"}
             ):
@@ -2861,7 +2871,7 @@ def test_applied_source_view_rejects_unapproved_drift_and_invalid_current_native
     elif change == "rejected":
         recovery["approval"]["decision"] = "rejected"
     elif change == "unknown-source":
-        recovery["approval"]["source"] = "judge"
+        recovery["approval"]["source"] = "evaluator"
     elif change == "proposal":
         recovery["proposal"]["diff"] += " Another change"
     elif change == "postimage":
@@ -2999,15 +3009,15 @@ def settle_applied_sources(case):
     repository, qualification, _, observation, retained = case
     pending_source_node(case, "assess-goal")
     recovery = qualification.pop("applied_source_recovery")
-    judge = {
-        "task": "judge-task",
-        "goal": "judge-goal",
-        "validation": "judge-validation",
-        "design": "judge-design",
-        "diagnosis": "judge-diagnosis",
+    evaluator = {
+        "task": "evaluator-task",
+        "goal": "evaluator-goal",
+        "validation": "evaluator-validation",
+        "design": "evaluator-design",
+        "diagnosis": "evaluator-diagnosis",
     }[retained["binding"]["family"]]
     producer = {
-        "graph_node_id": judge,
+        "graph_node_id": evaluator,
         "attempt_id": str(uuid.uuid4()),
         "attempt_number": 2,
     }
@@ -3019,7 +3029,7 @@ def settle_applied_sources(case):
         {**producer, "goal_revision": 1, "validity": "valid", "lifecycle": "completed"}
     )
     report = {
-        "schema": "aquarium.judge-assessment/v2",
+        "schema": "aquarium.evaluator-assessment/v3",
         "work": copy.deepcopy(qualification["assignment"]["work"]),
         "procedure": None,
         "checkpoint_result": "pass",
@@ -3136,7 +3146,7 @@ def test_settled_report_can_have_current_active_native_consumer(tmp_path):
 
 def test_applied_source_view_reads_immutable_git_originals(tmp_path):
     case = applied_source_case(tmp_path, originals="git")
-    pending_source_node(case, "judge-documentation")
+    pending_source_node(case, "evaluator-documentation")
     result = continue_applied(case)
     assert result["status"] == "dispatch-ready"
     sources = result["dispatch"]["target"]["applied_source_context"]["sources"]
@@ -3147,9 +3157,9 @@ def test_applied_source_view_reads_immutable_git_originals(tmp_path):
 @pytest.mark.parametrize(
     "node,role",
     [
-        ("apply-documents", "worker"),
-        ("judge-application", "judge"),
-        ("assess-goal", "orchestrator"),
+        ("apply-documents", "executor"),
+        ("evaluator-application", "evaluator"),
+        ("assess-goal", "coordinator"),
     ],
 )
 @pytest.mark.parametrize("chained", [False, True])
@@ -3267,7 +3277,7 @@ def test_public_context_continues_pending_applied_sources_through_real_native_tr
     assert not output.err
     assert result["role"] == role and result["node"] == node
     assert result["status"] == (
-        "primary-owned" if role == "orchestrator" else "dispatch-ready"
+        "coordinator-owned" if role == "coordinator" else "dispatch-ready"
     )
     assert result["bundle_id"] == retained["retention"]["bundle_id"]
     assert result["pending_operations"] == qualification["pending_operations"]
@@ -3332,12 +3342,16 @@ def chain_source_changes(case, *, deleted=False):
         (
             "task",
             "known",
-            ["document", "judge-documentation", "decide-documentation-assessment"],
+            ["document", "evaluator-documentation", "decide-documentation-assessment"],
         ),
         ("task", "adaptive", ["deliver", "assess", "outcome"]),
-        ("goal", "known", ["complete-work", "judge-goal", "assess-goal"]),
-        ("design", "known", ["apply-documents", "judge-application", "assess-goal"]),
-        ("diagnosis", "known", ["document", "judge-documentation", "assess-goal"]),
+        ("goal", "known", ["complete-work", "evaluator-goal", "assess-goal"]),
+        (
+            "design",
+            "known",
+            ["apply-documents", "evaluator-application", "assess-goal"],
+        ),
+        ("diagnosis", "known", ["document", "evaluator-documentation", "assess-goal"]),
     ],
 )
 def test_approved_source_chain_preserves_originals_and_pending_roles(
@@ -3349,12 +3363,12 @@ def test_approved_source_chain_preserves_originals_and_pending_roles(
     original = copy.deepcopy(qualification["assignment"])
     expected = copy.deepcopy(recovery["changes"])
     before = {p: p.read_bytes() for p in repository.rglob("*") if p.is_file()}
-    for node, role in zip(nodes, ["worker", "judge", "orchestrator"]):
+    for node, role in zip(nodes, ["executor", "evaluator", "coordinator"]):
         pending_source_node(case, node)
         result = continue_applied(case)
         assert result["role"] == role and result["node"] == node
         assert result["status"] == (
-            "primary-owned" if role == "orchestrator" else "dispatch-ready"
+            "coordinator-owned" if role == "coordinator" else "dispatch-ready"
         )
         assert result["work"] == original["work"]
         assert result["authority"] == original["authority"]
@@ -3374,7 +3388,7 @@ def test_approved_source_chain_preserves_originals_and_pending_roles(
             )
             assert row["sha256"] == pin
             assert sha256((repository / row["capture"]).read_bytes()) == pin
-        if role != "orchestrator":
+        if role != "coordinator":
             assert result["dispatch"]["target"]["applied_source_context"] == context
         else:
             assert result["dispatch"] is None
@@ -3549,5 +3563,5 @@ def test_approved_source_chain_can_recreate_an_approved_absence(tmp_path):
             },
         }
     )
-    pending_source_node(case, "judge-documentation")
+    pending_source_node(case, "evaluator-documentation")
     assert continue_applied(case)["status"] == "dispatch-ready"

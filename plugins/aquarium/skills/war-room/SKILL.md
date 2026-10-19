@@ -45,6 +45,6 @@ Never treat diagnostic document approval as authority to implement the fix.
 
 ## Ordinary native orchestration
 
-Follow [Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md) for ordinary v2 native assignments, grouped independent assessments, original evidence and recovery. Preserve this skill's original leaf, exact approval and effect boundaries. No native history, role snapshot or configuration qualification is required. Existing formal snapshots retain their original contracts; source updates do not authorize managed-file rollout.
+Follow [Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md) for ordinary v3 native assignments, grouped independent assessments, original evidence and recovery. Preserve this skill's original leaf, exact approval and effect boundaries. No native history, role snapshot or configuration qualification is required. Existing formal snapshots retain their original contracts; source updates do not authorize managed-file rollout.
 
 Ordinary investigation changes use declared native rework. If a required route is absent from the running snapshot, preserve it and follow the shared [explicitly consented atomic transition](../../references/adaptive-execution.md#consented-atomic-supersede). Never replace a session to retrieve a missing report, reset review authority, or imply that a diagnosis repaired the defect.

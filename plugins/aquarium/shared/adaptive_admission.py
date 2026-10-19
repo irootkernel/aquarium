@@ -284,15 +284,22 @@ class NativeClient:
 
 
 def known_source(source):
-    contract = json.loads((ASSETS / "adaptive/known-sources-v1.json").read_text())
-    if (
-        contract.get("schema") != "aquarium.known-procedure-sources/v1"
-        or contract.get("mapping_version") != "1"
-    ):
-        raise BundleError("unsupported", "Known-source mapping contract is unsupported")
-    for record in contract["sources"]:
-        if sha256(source) == record["source_sha256"]:
-            return record, yaml.safe_load(source)
+    for version in (2, 1):
+        path = ASSETS / f"adaptive/known-sources-v{version}.json"
+        if not path.exists():
+            continue
+        contract = json.loads(path.read_text())
+        if contract.get(
+            "schema"
+        ) != f"aquarium.known-procedure-sources/v{version}" or contract.get(
+            "mapping_version"
+        ) != str(version):
+            raise BundleError(
+                "unsupported", "Known-source mapping contract is unsupported"
+            )
+        for record in contract["sources"]:
+            if sha256(source) == record["source_sha256"]:
+                return record, yaml.safe_load(source)
     raise BundleError(
         "not-established",
         "New adaptive sources require exact structural qualification and suitability; existing legacy/custom/formal contracts remain separate",
@@ -303,6 +310,12 @@ def reference_mapping(source):
     """Return the supported definition mapping without inventing a native digest."""
     record, document = known_source(source)
     family = record["family"]
+    retained = any(
+        value["role"] in {"worker", "judge", "orchestrator"}
+        for value in record["definitions"].values()
+    )
+    version = 1 if retained else 2
+    assessor = "judge" if retained else "evaluator"
     placements = {node["id"]: node for node in document["graph"]["nodes"]}
     nodes, obligations, goals, closeout = {}, {}, [], []
     for identifier, placement in placements.items():
@@ -315,7 +328,7 @@ def reference_mapping(source):
             goals.append({"node": identifier, "outcomes": assessment["outcomes"]})
         if placement.get("terminal"):
             closeout.append({"node": identifier, "kind": "shared", "requires": []})
-        if role == "judge":
+        if role == assessor:
             producers = []
             for evidence in placement.get("evidence_from", []):
                 if evidence.get("required"):
@@ -329,14 +342,16 @@ def reference_mapping(source):
                     "source": "Aquarium references/ordinary-agent-orchestration.md: roles and assessment boundaries",
                     "applicability": "Due at this known canonical assessment placement; invocation criteria remain in ordinary records.",
                     "producers": producers,
-                    "evidence": [{"node": identifier, "item": "judge-assessment"}],
+                    "evidence": [
+                        {"node": identifier, "item": f"{assessor}-assessment"}
+                    ],
                     "assessor": identifier,
                     "decision": decision,
                     "effects": ["covered-work"],
                 }
     binding = {
-        "schema": "aquarium.procedure-binding/v1",
-        "compatibility": "aquarium.adaptive/v1",
+        "schema": f"aquarium.procedure-binding/v{version}",
+        "compatibility": f"aquarium.adaptive/v{version}",
         "family": family,
         "entrypoints": sorted(FAMILY_ENTRYPOINTS[family]),
         "nodes": nodes,
@@ -384,6 +399,17 @@ def selection_contract(
 ):
     """Validate the selected invocation without changing suitability timing."""
     adaptive = qualification is not None
+    retained = binding.get("schema") == "aquarium.procedure-binding/v1"
+    if (
+        retained
+        and adaptive
+        and qualification.get("assignment", {}).get("schema")
+        == "aquarium.assignment/v3"
+    ):
+        raise BundleError(
+            "retained-contract",
+            "Retained definitions require their original execution contract",
+        )
     if adaptive:
         approved_route = (
             qualification.get("assignment", {})
@@ -422,7 +448,7 @@ def selection_contract(
         if document is None:
             document = yaml.safe_load(source)
         signatures = {
-            **capability_signatures(),
+            **capability_signatures(1 if retained else 2),
             **binding.get("capability_definitions", {}),
         }
         declarations = []

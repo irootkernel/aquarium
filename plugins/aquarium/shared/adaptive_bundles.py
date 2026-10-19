@@ -143,7 +143,10 @@ def verified_bundle(repository, path):
             else "corrupt"
         )
         raise BundleError(code, str(exc)) from exc
-    if binding["schema"] != "aquarium.procedure-binding/v1":
+    if binding["schema"] not in {
+        "aquarium.procedure-binding/v1",
+        "aquarium.procedure-binding/v2",
+    }:
         raise BundleError("unsupported", "Retained definition is not a binding")
     if binding_bytes != canonical_json(binding) or path.name != definition_id(binding):
         raise BundleError(

@@ -27,12 +27,12 @@ Apply the shared QA outcome mapping and [delivery-input commit boundary](../../r
 
 ## Ordinary native orchestration
 
-Follow [Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md) for ordinary v2 native assignments, grouped independent assessments, original evidence and recovery. Preserve this skill's original leaf, exact approval and effect boundaries. No native history, role snapshot or configuration qualification is required. Existing formal snapshots retain their original contracts; source updates do not authorize managed-file rollout.
+Follow [Design and diagnosis orchestration](../../references/design-diagnosis-orchestration.md) for ordinary v3 native assignments, grouped independent assessments, original evidence and recovery. Preserve this skill's original leaf, exact approval and effect boundaries. No native history, role snapshot or configuration qualification is required. Existing formal snapshots retain their original contracts; source updates do not authorize managed-file rollout.
 
-For an authorized non-Git invocation, use the same Worker/Judge evidence and
+For an authorized non-Git invocation, use the same Executor/Evaluator evidence and
 exact document approval with Podway explicitly inapplicable. Preserve the
 existing prohibition on implicit Git or Podway initialization.
 
 ## Adaptive Design execution
 
-Before Podway discovery or source preparation, branch on explicit Podway opt-out and, for `new-project`, non-Git scope. Continue the original ordinary Worker/Judge and document approval workflow with Podway inapplicable; do not initialize Git or Podway. On the native path, follow [adaptive Design execution](../../references/adaptive-execution.md#design-entrypoints) for actual fit, exact admission and same-session recovery. Prefer adequate unchanged Design sources and preserve their first due grouped assessment. Keep this entrypoint's artifacts, upstream leaves, selected reviews and effect authority.
+Before Podway discovery or source preparation, branch on explicit Podway opt-out and, for `new-project`, non-Git scope. Continue the original ordinary Executor/Evaluator and document approval workflow with Podway inapplicable; do not initialize Git or Podway. On the native path, follow [adaptive Design execution](../../references/adaptive-execution.md#design-entrypoints) for actual fit, exact admission and same-session recovery. Prefer adequate unchanged Design sources and preserve their first due grouped assessment. Keep this entrypoint's artifacts, upstream leaves, selected reviews and effect authority.

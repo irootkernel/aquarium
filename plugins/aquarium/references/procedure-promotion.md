@@ -1,6 +1,6 @@
 # Reusable Procedure preservation
 
-After actual successful use, the Primary compares useful whole Procedures and
+After actual successful use, the Coordinator compares useful whole Procedures and
 fragments with the repository's optional library. A successful start, source
 check or unit result alone does not establish successful operation or future
 usefulness. Use the original ordinary results to explain both, retain observed
@@ -10,14 +10,14 @@ optional and never blocks the original goal.
 The source-only [promotion helper](../shared/promote_adaptive_procedure.py)
 prepares the exact content to show Master. It never dispatches agents, advances
 Podway, stages or commits. Existing applicable source-review and acceptance
-policies still apply; preservation adds no routine Judge cycle.
+policies still apply; preservation adds no routine Evaluator cycle.
 
 ## Closeout callers
 
-At Task closeout, the Primary checks actual used definitions for successful
+At Task closeout, the Coordinator checks actual used definitions for successful
 operation and distinct future usefulness, prepares exact eligible whole or
 fragment candidates, and invokes `offer` below. Present the grouped content with
-the closeout result. An Epic Primary normally gathers member, Goal and Validation
+the closeout result. An Epic Coordinator normally gathers member, Goal and Validation
 candidates for its final presentation instead of interrupting ordinary member
 delivery. Design and Diagnosis use their final result presentation. With no
 eligible used definition, including a non-Git or opted-out workflow that used no
@@ -29,7 +29,7 @@ separate from original acceptance and carry it in the ordinary closeout handoff.
 The offer is read-only; content consent may be obtained at this presentation.
 Apply only after the original accepted commit or verified no-commit result and
 required native finalization. Declining or a promotion failure preserves original
-completion and local recovery. This adds no Judge, review team or Procedure node.
+completion and local recovery. This adds no Evaluator, review team or Procedure node.
 
 ## Offer
 
@@ -48,7 +48,7 @@ Run an available supported Python environment with YAML and `jsonschema`:
 - `candidates`: distinct entry `name`, `kind` (`whole` or `fragment`), `future_use`,
   observed `limits`, and `use` with `outcome: successful`, actual result
   `reference` and operation `evidence`. These remain ordinary evidence for the
-  Primary to assess; labels cannot authenticate execution or usefulness.
+  Coordinator to assess; labels cannot authenticate execution or usefulness.
 - Each `source` and `binding` reference has `path` and exact `sha256`. A whole
   uses its full source and closed binding. Set `transformed: true` for a changed
   or parameterized whole. A fragment's `binding` belongs to its representative;

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Qualify exact prepared source and request or import its pre-start Judge assessment."""
+"""Qualify exact prepared source and request or import its pre-start Evaluator assessment."""
 
 import argparse
 import json
@@ -13,10 +13,10 @@ def main():
     parser.add_argument(
         "--assignment",
         required=True,
-        help="Ordinary prepared aquarium.assignment/v2 JSON file or -",
+        help="Ordinary prepared aquarium.assignment/v3 JSON file or -",
     )
     parser.add_argument(
-        "--assessment", help="Actual aquarium.judge-assessment/v2 JSON file"
+        "--assessment", help="Actual aquarium.evaluator-assessment/v3 JSON file"
     )
     parser.add_argument(
         "--podway", required=True, help="Exact supported source-check binary"
@@ -29,7 +29,7 @@ def main():
     parser.add_argument(
         "--combined-task-plan",
         action="store_true",
-        help="Include the compatible due Task plan assessment in this exact Judge scope",
+        help="Include the compatible due Task plan assessment in this exact Evaluator scope",
     )
     args = parser.parse_args()
     try:

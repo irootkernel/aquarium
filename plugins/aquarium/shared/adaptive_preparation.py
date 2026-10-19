@@ -452,6 +452,14 @@ def fit(assignment, criteria, document, mapping, coverage):
     """Mechanical fit, with semantic sufficiency left to the original assessor."""
     plan = assignment["target"]["procedure_plan"]
     object_value(mapping, "mapping")
+    if (
+        mapping.get("schema") == "aquarium.procedure-binding/v1"
+        or mapping.get("compatibility") == "aquarium.adaptive/v1"
+    ):
+        raise BundleError(
+            "retained-contract",
+            "Retained definitions require their original execution contract",
+        )
     for node in object_value(mapping["nodes"], "mapping.nodes").values():
         object_value(node, "mapping node")
         for capability in object_rows(node["capabilities"], "node.capabilities"):
@@ -556,7 +564,7 @@ def select(repository, assignment, *, client=None):
     """Use caller-approved locations only; plan-only never calls a native tool."""
     validator_path = (
         Path(__file__).resolve().parents[1]
-        / "skills/goal-judge/scripts/ordinary_assignment.py"
+        / "skills/goal-evaluator/scripts/ordinary_assignment.py"
     )
     specification = importlib.util.spec_from_file_location(
         "adaptive_ordinary_assignment", validator_path
@@ -567,9 +575,9 @@ def select(repository, assignment, *, client=None):
         assignment = validator.prepare(assignment)
     except validator.AssignmentError as error:
         raise BundleError("incompatible", str(error)) from error
-    if assignment["role"] != "worker":
+    if assignment["role"] != "executor":
         raise BundleError(
-            "incompatible", "Preparation requires its ordinary Worker assignment"
+            "incompatible", "Preparation requires its ordinary Executor assignment"
         )
     plan = object_value(assignment["target"]["procedure_plan"], "procedure_plan")
     object_rows(plan.get("candidates", []), "candidates")

@@ -5,7 +5,7 @@ and documentation in English. The fixture operator supplies actual plan,
 execution, correction, exact-result and commit decisions at their normal
 boundaries. Do not infer an approval from this file or mark partial work achieved.
 
-Use native Codex Workers and an independent report-only Codex Judge. The selected
+Use native Codex Executors and an independent report-only Codex Evaluator. The selected
 technical review route is three-agent native Codex Subagent Review. Preserve
 original criteria, relevant checks and the normal handler approval boundaries.
 

@@ -18,7 +18,7 @@ user-run evidence when the owning workflow accepts it for the exact target.
 The agent that will select the transport or start the check must first load the
 installed `$use-gaori` skill in its own execution context and follow the
 applicable release-matched instructions. Naming the skill or loading it only in
-a coordinator does not load it for a delegated worker. Already loaded guidance
+a coordinator does not load it for a delegated executor. Already loaded guidance
 may be reused while its version, scope, and relevant state remain applicable.
 If the skill or a required capability is missing, use the prerequisite and
 fallback routing below; do not reconstruct Gaori lifecycle behavior from memory.

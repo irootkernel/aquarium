@@ -14,7 +14,7 @@ report-only boundary, [review intent](../../references/review-intent-contract.md
 also read [routing](../../references/review-routing-contract.md).
 
 Run one Subagent Review through fresh, similar-capability reviewers in the
-current Primary's native harness, such as Codex or Claude. It uses no Mulgae,
+current Coordinator's native harness, such as Codex or Claude. It uses no Mulgae,
 Herdr or Dolgorae operation and is never an automatic fallback.
 
 ## Bind the request

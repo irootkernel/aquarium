@@ -43,7 +43,7 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 cover goal-specific selection, bounded authoring, whole/fragment composition,
 qualification and local retention across all seven handlers. The
 [mapped execution contract](../plugins/aquarium/references/adaptive-execution.md)
-preserves ordinary Worker/Judge reports, selected review and authority through
+preserves ordinary Executor/Evaluator reports, selected review and authority through
 native execution and exact recovery. Unexpected running-session replacement uses
 explicit consent and native atomic preserve-start. Optional
 [reusable preservation](../plugins/aquarium/references/procedure-promotion.md)

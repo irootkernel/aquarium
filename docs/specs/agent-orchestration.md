@@ -2,18 +2,26 @@
 
 ## Ordinary native workflow contract
 
-[EPIC-024](../roadmap/README.md#epic-024-restore-native-agent-workflows-and-add-manual-vm-release-acceptance)
-defines ordinary native Worker and independent report-only Judge work at
-meaningful phase boundaries. TASK-127 implements the interfaces in the
-[ordinary native contract](../../plugins/aquarium/references/ordinary-agent-orchestration.md):
-`aquarium.assignment/v2`, `aquarium.worker-handoff/v2`,
-`aquarium.judge-assessment/v2` and `aquarium.orchestration-checkpoint/v2`.
+Current handlers use a Coordinator, native Executors and an independent
+report-only Evaluator at meaningful phase boundaries. The
+[ordinary v3 contract](../../plugins/aquarium/references/ordinary-agent-orchestration.md) defines
+their interfaces:
+`aquarium.assignment/v3`, `aquarium.executor-handoff/v3`,
+`aquarium.evaluator-assessment/v3` and `aquarium.orchestration-checkpoint/v3`.
 That owner defines roles, grouped assessments, minimal relevant evidence,
 recovery and the producer/consumer map. Handlers, role instructions, helpers and all five bundled Procedures use the
 ordinary contract. Source and structural results do not establish installed
 functionality; actual startup, rework and recovery remain separate verification.
 
-Operational roles use the current Primary's supported native harness, preserving
+[EPIC-024](../roadmap/README.md#epic-024-restore-native-agent-workflows-and-add-manual-vm-release-acceptance)
+established the preceding ordinary v2 contract. Its original role names and
+document identifiers remain in the
+[retained v2 contract](../../plugins/aquarium/references/ordinary-agent-orchestration-v2.md).
+Current adaptive definitions use binding/fragment v2 and `aquarium.adaptive/v2`;
+retained v1 definitions keep their original identities. The role rename requires
+an authorized compatible update and preserves admitted sessions and reports.
+
+Operational roles use the current Coordinator's supported native harness, preserving
 selected supported options or its defaults. Ordinary work does not require
 private executor history, effective configuration digests or prior qualification.
 Selected technical reviews retain their native providers and obligations.
@@ -32,7 +40,7 @@ The formal v1 contract applies to retained formal sources, installed handlers
 that have not received an authorized update, and their admitted sessions. The remaining sections also preserve
 EPIC-021 qualification outcomes, historical records and admitted snapshots,
 including their original v1 meanings, source identities and digest domains.
-They do not add prerequisites to the ordinary v2 contract.
+They do not add prerequisites to the ordinary v3 contract.
 
 `TASK-110` defines the shared Orchestrator, Judge, and Workers contract for
 `EPIC-021`. `TASK-111` through `TASK-116` implement the candidate native mappings,
@@ -68,8 +76,8 @@ candidate and its task-specific delegated functional outcomes.
 
 ## TASK-111 candidate instructions
 
-[Goal Judge](../../plugins/aquarium/skills/goal-judge/SKILL.md) supplies report-only
-assessment instructions; [Worker guidance](../../plugins/aquarium/references/worker-guidance.md)
+[Goal Judge](../../plugins/aquarium/skills/goal-evaluator/SKILL.md) supplies report-only
+assessment instructions; [Worker guidance](../../plugins/aquarium/references/executor-guidance.md)
 supplies bounded assignments and handoffs. The
 [native mapping profiles](../../plugins/aquarium/references/native-agent-mappings.md)
 identify the Codex and Claude public fields, acknowledgement obligations, and
@@ -86,13 +94,13 @@ still needs an applicable qualified integration and admitted Procedure; installe
 released snapshots retain their existing behavior.
 
 The mapping profiles also own the caller's
-[local assignment helper](../../plugins/aquarium/skills/goal-judge/scripts/prepare_assignment.py).
+[local assignment helper](../../plugins/aquarium/skills/goal-evaluator/scripts/prepare_assignment.py).
 It preserves role, declared dependencies and full selected file evidence as exact
 bytes and prepares local digests. It does not dispatch an agent or prove native
 acceptance. Executable tests cover this preparation behavior separately from the
 combined host/workflow and skill qualification.
 
-The [native delivery mapper](../../plugins/aquarium/skills/goal-judge/scripts/map_native_delivery.py)
+The [native delivery mapper](../../plugins/aquarium/skills/goal-evaluator/scripts/map_native_delivery.py)
 correlates supplied public Codex thread records, journaled Codex initial spawns
 and serialized feedback, or synchronous Claude Agent records and same-agent
 SendMessage feedback with exact inputs and complete results. It produces
@@ -102,16 +110,16 @@ configuration; the collector and Primary establish authenticity, acceptance,
 lifetime accounting, settlement and current Podway context. Supplied records and
 isolated tests alone cannot establish those facts.
 
-The [dispatch renderer](../../plugins/aquarium/skills/goal-judge/scripts/render_dispatch.py)
+The [dispatch renderer](../../plugins/aquarium/skills/goal-evaluator/scripts/render_dispatch.py)
 preserves role/dependency UTF-8 text as operative instructions and includes the
 full node and selected evidence. The
-[prepared-delivery binder](../../plugins/aquarium/skills/goal-judge/scripts/bind_prepared_delivery.py)
+[prepared-delivery binder](../../plugins/aquarium/skills/goal-evaluator/scripts/bind_prepared_delivery.py)
 reruns rendering and native correlation to bind the complete role snapshot and
 acknowledged fork/model/effort configuration to the native task and full result.
 These components leave Primary acceptance, lifetime accounting, settlement,
 current Podway context and durable host qualification to the integration.
 
-The [Claude prepared-delivery binder](../../plugins/aquarium/skills/goal-judge/scripts/bind_claude_delivery.py)
+The [Claude prepared-delivery binder](../../plugins/aquarium/skills/goal-evaluator/scripts/bind_claude_delivery.py)
 binds the exact operative role snapshot and echoed prompt to acknowledged
 synchronous Agent controls, the native resolved model and complete structured
 result. Serialized feedback keeps a separate complete public child result
@@ -119,7 +127,7 @@ domain and per-run provenance. Actual isolated Claude delivery and feedback have
 exercised acceptance and retained settlement; synthetic checks cover correlation
 and rejection separately.
 
-The [Codex record producer](../../plugins/aquarium/skills/goal-judge/scripts/read_codex_thread.py)
+The [Codex record producer](../../plugins/aquarium/skills/goal-evaluator/scripts/read_codex_thread.py)
 captures full native thread records through an explicitly selected existing Unix
 WebSocket endpoint. It initializes a read client and hydrates history without
 creating a Primary or changing configuration. The collector retains its

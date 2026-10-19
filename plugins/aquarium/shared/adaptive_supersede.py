@@ -343,7 +343,7 @@ def verify_result(repository, checkpoint, result, *, client, qualification):
         "pending_operations": copy.deepcopy(
             checkpoint["disclosure"]["pending_operations"]
         ),
-        "next_owner": "Primary separately authorized begin",
+        "next_owner": "Coordinator separately authorized begin",
         "dispatch": None,
     }
 

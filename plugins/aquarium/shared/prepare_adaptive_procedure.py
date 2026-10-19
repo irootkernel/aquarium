@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Select or prepare Procedure source from an ordinary Worker assignment."""
+"""Select or prepare Procedure source from an ordinary Executor assignment."""
 
 import argparse
 import json
@@ -13,7 +13,7 @@ def main():
     parser.add_argument(
         "--assignment",
         required=True,
-        help="Ordinary aquarium.assignment/v2 JSON file, or - for stdin",
+        help="Ordinary aquarium.assignment/v3 JSON file, or - for stdin",
     )
     parser.add_argument(
         "--podway",

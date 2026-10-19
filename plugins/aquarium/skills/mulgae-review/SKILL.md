@@ -21,7 +21,7 @@ Run one standalone review through Mulgae and return an advisory report. This ski
 
 Preserve an already supplied purpose, target, roles, work-unit identity, and revision. Do not ask for them again.
 
-- Select `change` for a request to judge the intended effect of a selected change. Never turn that result into Task or Epic completion approval.
+- Select `change` for a request to evaluate the intended effect of a selected change. Never turn that result into Task or Epic completion approval.
 - Select `completion` when the request asks whether a named Task, Epic, or bounded requirement set is fully satisfied. Resolve and read its canonical authority and applicable checkpoint before dispatch.
 - Reject an unidentified or materially underspecified completion basis as unqualified. Return the supported defect review and the missing authority; do not invent criteria, assign the latest active Epic, or silently convert the request to `change`.
 

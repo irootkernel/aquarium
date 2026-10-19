@@ -24,7 +24,7 @@ unimplemented and a later task is assigned to ship or revise the same contract.
 - [Development channel](development-channel.md) specifies producer, enrollment, publication, and inherited-environment launcher behavior.
 - [Production setup status](production-status.md) links to the shipped authority for the user-global setup ledger, reporter, recorder, retention, and installation contracts.
 - [Workflow review routing](review-routing.md) defines the shipped selection, recovery, evidence, and waiver contract for Mulgae, Herdr, Subagent Review, and coordinator-waived review in Task, Epic, and validation workflows.
-- [Supervised agent orchestration](agent-orchestration.md) catalogs ordinary v2 roles, reports and recovery and preserves formal v1 mappings, Procedures and bounded qualification; distribution and repository activation remain separate.
+- [Supervised agent orchestration](agent-orchestration.md) catalogs ordinary v3 roles, reports and recovery and preserves formal v1 mappings, Procedures and bounded qualification; distribution and repository activation remain separate.
 
 ## Adaptive Procedures
 
@@ -34,7 +34,7 @@ whole/fragment composition, structural qualification, suitability for the exact
 candidate and ignored local retention. Task, Goal, Validation, Design and Diagnosis use the
 [mapped execution adapter](../../plugins/aquarium/references/adaptive-execution.md)
 with exact native-tuple recovery and consented atomic supersede. Existing
-ordinary v2 reports, selected reviews and acceptance authority remain applicable.
+ordinary v3 reports, selected reviews and acceptance authority remain applicable.
 
 [Whole/fragment preservation](../../plugins/aquarium/references/procedure-promotion.md)
 requires specific content consent and applies after original finalization.

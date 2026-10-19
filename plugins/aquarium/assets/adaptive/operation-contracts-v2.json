@@ -1,0 +1,1719 @@
+{
+  "sha256:0e353dfe8d9a4d25286d0235542649d4336b942bb29d8b486882f34c9d909604": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "plan-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "plan-summary",
+      "review-selection-summary",
+      "executor-handoff"
+    ],
+    "output_scopes": {
+      "plan-summary": "task-plan"
+    }
+  },
+  "sha256:374c4604ce8bf8387e1e123e4e1fe0b3f83f68b059a7502bcb918725ce0a99dc": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "implementation-entry-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "implementation-entry-summary"
+    ],
+    "delivery_items": [
+      "implementation-entry-summary"
+    ]
+  },
+  "sha256:88562a5dc9e61f944614f110d2b36d2bd05cb7dfe1d821634aca30dfd330147a": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "implementation-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "implementation-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:b466695fa1366eb1d3d217b1592eb6818afbe42d943c07109e1b1ea8c843873a": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "verification-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "executor-handoff"
+    ]
+  },
+  "sha256:ccb3fb0a1e778f9ee2fd62cb9b9a238f29fe1ad56c541b65bb2144c04c2cf7ad": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "refinement-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "refinement-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:98245f4d1520d2a8a99eb6c2baadb71d6e6c2b2f853202b5736427fcd2b8c6ff": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "documentation-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "documentation-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:7b392c572a1b6468f35932cba1db4d3ede2526ca90824402a984284e742e661e": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "review-checkpoint-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary"
+    ],
+    "delivery_items": [
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary"
+    ]
+  },
+  "sha256:6f92e3c26ea47b4e2ab99bbb0709df1f3ad4faa048715fa02cf42dedab2d425a": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "review-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "waiver-summary",
+      "review-summary",
+      "completion-assessment-summary",
+      "reported-severity-summary",
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "waiver-summary",
+      "review-summary",
+      "completion-assessment-summary",
+      "reported-severity-summary",
+      "executor-handoff"
+    ],
+    "review_recovery": [
+      "same-operation-recovery"
+    ]
+  },
+  "sha256:435f5060e15c1478e688e94e5c621960ded3dd4f367bfb6437c9ac4da896beec": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "review-route-direction-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "route-direction-summary"
+    ],
+    "delivery_items": [
+      "route-direction-summary"
+    ],
+    "review_recovery": [
+      "same-operation-recovery",
+      "review-route-change"
+    ]
+  },
+  "sha256:446928852d39eae2c381c0b4583aab5325be8be6048101fcb158bc477a89bcaf": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "review-route-stop-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "route-stop-summary"
+    ],
+    "delivery_items": [
+      "route-stop-summary"
+    ]
+  },
+  "sha256:280fb52c459bbc24e82889a537d906cb79247422cbf210e49d240ccf675c82c1": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "user-direction-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "direction-summary"
+    ],
+    "delivery_items": [
+      "direction-summary"
+    ]
+  },
+  "sha256:51fa7384c338719a8f5b22a20bb8f11acab1a20c8d879d8317bcd601d4aab1f4": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "control",
+    "user_directions": {
+      "fix-and-review": "product-correction"
+    },
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "user-direction-decision",
+      "authority": "Original family workflow and review-routing/review-strategy contracts: actual fresh user direction after confirmation exhaustion."
+    }
+  },
+  "sha256:f10f029e4f018dfd731ba7928d4bdeca0b4509f512b9d1108530cbee1cac9766": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "low-disposition-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "delivery_items": [
+      "low-disposition-summary",
+      "completion-assessment-summary"
+    ],
+    "owned_correction": true
+  },
+  "sha256:b5942bfdedc229c4c472d7036c7b79462bffa389d8e107985712e9ddbe8d5b8d": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "stopped-goal-boundary-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [],
+    "delivery_items": []
+  },
+  "sha256:d865fc145f65126ccb9dfafcf0160665542f8d85c46ad004e49c3f2752b3b236": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "stopped-core-gap-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "stopped-core-gap-summary"
+    ],
+    "delivery_items": [
+      "stopped-core-gap-summary"
+    ]
+  },
+  "sha256:192aa2edc5131577f988db768c35e68e52ad4b68df486da6b35f09ae7eee4340": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "finalization",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "outcome-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "delivery_items": [
+      "outcome-summary"
+    ]
+  },
+  "sha256:b4f9debcebb8acd7755cbaa603f1e33011e46338317ef4bd72c63f8d73e09438": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "finalization",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "closeout-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "delivery_items": [
+      "closeout-summary"
+    ]
+  },
+  "sha256:4950f1b03949952dd0dbc84f47317c073e4c59dc505245cb6bec42df09fd5d04": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "task-rework-basis-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "rework-basis-summary"
+    ],
+    "delivery_items": [
+      "rework-basis-summary"
+    ]
+  },
+  "sha256:35cb59da8c8252f8ad80bc89a307488812b9962af827c830525af70a7d1e646e": {
+    "roles": [
+      "evaluator"
+    ],
+    "effect": "assessment",
+    "checkpoint_scopes": [
+      "task-plan",
+      "procedure-suitability"
+    ],
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "evaluator-assessment-record",
+      "authority": "Original task-handler plan phase and independent ordinary Evaluator contract"
+    }
+  },
+  "sha256:c6d8334b882c685f737aea23f752ceae82a4d9859218652dd96b20763e79be25": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "task-assessment-candidate",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "candidate-evidence",
+      "task-assessment-summary"
+    ],
+    "delivery_items": [
+      "candidate-evidence",
+      "task-assessment-summary"
+    ]
+  },
+  "sha256:e02cf9bf0405d10b5fc160da204bd43d445638639c62f6c20766b8c27ed56ecb": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "semantic-plan-followup",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:af97bb76e80a0ec7d7c03c0efe61576e34416565ee8ce42ccd2991d7213c5188": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "semantic-verification-followup",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:e26daa1c4a751637f80db03f67505da18780bb444130c5bb59c31942309b0e1d": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "semantic-documentation-followup",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:32ad0cd88f500254b1c241b0e20540bfbd838ade2ddb7614c74d9a8df77e1680": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-task-v2",
+      "native_version": "34",
+      "definition": "semantic-review-followup",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:d452888e9777c7be1f2d1fc7900fe44f0ab9dc8318383c3153566feb9fe0acc9": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "work-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "work-summary",
+      "review-selection-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:1bb4ec5e10f28aa3f89e15c84c120f59c56359aceab6df19d3e20013021f9a67": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "evidence-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "waiver-summary",
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary",
+      "evidence-summary",
+      "completion-assessment-summary",
+      "finding-disposition-summary",
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "waiver-summary",
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary",
+      "evidence-summary",
+      "completion-assessment-summary",
+      "finding-disposition-summary",
+      "executor-handoff"
+    ],
+    "discriminators": {
+      "goal-kind": "goal_kind"
+    },
+    "review_recovery": [
+      "same-operation-recovery"
+    ]
+  },
+  "sha256:b1fc3e2817cf254fb01bff8e56c9f7f7d04479c613cd3232b1812e8147b4f4c1": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "control",
+    "user_directions": {
+      "resume-current": "same-operation-recovery",
+      "change-route": "review-route-change",
+      "new-review-current-route": "new-review-authority"
+    },
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "review-route-direction-decision",
+      "authority": "Original Goal review routing contract; route-only recovery preserves accepted product scope."
+    },
+    "review_recovery": [
+      "same-operation-recovery",
+      "review-route-change"
+    ]
+  },
+  "sha256:8a09dcece34d0047c9c02b68d55392d047bc6856563a246ebf4150ce7a5b40ee": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "review-route-stop-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "route-stop-summary"
+    ],
+    "delivery_items": [
+      "route-stop-summary"
+    ]
+  },
+  "sha256:90c45828266e60ec59a5a359e49e8b404258132df872424906c4c2f0d84deee4": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "closeout-substitute-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "closeout-substitute-summary"
+    ],
+    "delivery_items": [
+      "closeout-substitute-summary"
+    ]
+  },
+  "sha256:92cd489c63cd870db04f2ffdf2b46613cd0af89cf8a552828eeb63cdc310d7c8": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "hardening-deferral-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "hardening-deferral-summary"
+    ],
+    "delivery_items": [
+      "hardening-deferral-summary"
+    ]
+  },
+  "sha256:5c3562d6e0c38e9445440754274266854b5696abb718ccb381e2f227b015d218": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "low-disposition-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "delivery_items": [
+      "low-disposition-summary",
+      "completion-assessment-summary"
+    ],
+    "owned_correction": true
+  },
+  "sha256:c03d4a0cb717e13e5725c4600a47222359e89411b4792c7f0ea1052efe19990a": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "user-direction-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "direction-summary"
+    ],
+    "delivery_items": [
+      "direction-summary"
+    ]
+  },
+  "sha256:dd84c25ff9fbd88b0ecf4e76319fc166e1584cee4eb642ae4dcd956c70b8936c": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "control",
+    "user_directions": {
+      "fix-and-review": "product-correction"
+    },
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "user-direction-decision",
+      "authority": "Original family workflow and review-routing/review-strategy contracts: actual fresh user direction after confirmation exhaustion."
+    }
+  },
+  "sha256:5b1013f88a9d99fdfbddf78750355871be0ea090c288c44f43f57b2a54f7be36": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "stopped-core-gap-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [],
+    "delivery_items": []
+  },
+  "sha256:f358ff7cf76c2b40cd435d4bfefb8f6fb5fc4cc873b430198e3a03162489ad7e": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "stopped-goal-boundary-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [],
+    "delivery_items": [],
+    "acceptance_policy": "user-only-boundary"
+  },
+  "sha256:4afb232ddf7867f8be55d9d473469c2b8f5e06aa0fc3627edd71055ddfde356b": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "hardening-deferral-disposition",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "hardening-handoff-summary"
+    ],
+    "delivery_items": [
+      "hardening-handoff-summary"
+    ]
+  },
+  "sha256:bf30257c9d857ee2d57950d79d819907dddd6854241e936a15dfa1ac9c1c7fc6": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "finalization",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "outcome-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "delivery_items": [
+      "outcome-summary"
+    ]
+  },
+  "sha256:a5857743608fe99feb5010ce10d76f799686990addda2e5ccb65472e2f54b1b8": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "finalization",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "closeout-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "delivery_items": [
+      "closeout-summary"
+    ]
+  },
+  "sha256:51534594c4f8af2feea8ac489fb09dcb53e327dab1a5057a0bcf2cebf023f953": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "record-work-followup",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:ce21b146b98b8950c87dbbade43b438a5774b3a5b9c5209d6dee3339177a1cb0": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "record-work-evidence",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:3bfcd015f9390377c6f98fcce626c02c88b0823e891d9b4560a7afea573b73b9": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "record-goal-evidence-evidence",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:5b703c77c7b864372bd5c2eda1d518e183c8d052c2b29519e1fb6297a34d2859": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "record-goal-rework-basis",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:9311e6ebbb681c57cf9684cd7b4d862e207ea861e9312cadb5baec05597f00b8": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-goal-v2",
+      "native_version": "37",
+      "definition": "goal-assessment-candidate",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "candidate-evidence",
+      "goal-assessment-summary"
+    ],
+    "delivery_items": [
+      "candidate-evidence",
+      "goal-assessment-summary"
+    ]
+  },
+  "sha256:eee43b7c51a1586b2ec80505642531be30992fbddf169aca43b5855cac8c46c0": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "baseline-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "baseline-summary",
+      "review-selection-summary"
+    ],
+    "delivery_items": [
+      "baseline-summary",
+      "review-selection-summary"
+    ],
+    "discriminators": {
+      "workflow-owner": "workflow_owner"
+    }
+  },
+  "sha256:3e25aaeda2eebc27d212f4779e4873bb7d3efbcd2d1f7db1075949bbe26e9f35": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "remediation-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "remediation-candidate-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:d2b0bd210162583e993d450db7a941053227ac2b0b7125cb88224133e9673190": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "audit-low-basis-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "audit-low-basis-summary"
+    ],
+    "delivery_items": [
+      "audit-low-basis-summary"
+    ]
+  },
+  "sha256:4308a236fd0e0dc8cdc41885d1ffb5da0a6c0dfcea4b652d54e5e5d527eb92cc": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "final-review-record",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "waiver-summary",
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary",
+      "final-review-summary",
+      "completion-assessment-summary",
+      "reported-severity-summary",
+      "finding-disposition-summary",
+      "applicable-obligation-summary",
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "waiver-summary",
+      "finding-lineage-summary",
+      "remaining-review-authority-summary",
+      "corrected-target-summary",
+      "final-review-summary",
+      "completion-assessment-summary",
+      "reported-severity-summary",
+      "finding-disposition-summary",
+      "applicable-obligation-summary",
+      "executor-handoff"
+    ],
+    "review_recovery": [
+      "same-operation-recovery",
+      "review-route-change"
+    ]
+  },
+  "sha256:e2614fb9e52bd07eeb989566c8333434be11b5184491038fc424ce6f3423c00f": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "user-direction-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "direction-summary"
+    ],
+    "delivery_items": [
+      "direction-summary"
+    ]
+  },
+  "sha256:e9d64c19ba60e92a5568535f3c219d97b57ed0322d4d5ed9bb4a60c02ad9038b": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "control",
+    "user_directions": {
+      "fix-and-review": "product-correction"
+    },
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "review-direction-decision",
+      "authority": "Original family workflow and review-routing/review-strategy contracts: actual fresh user direction after confirmation exhaustion."
+    }
+  },
+  "sha256:12ad18645af515d5656fcb6a82b865d8446d6dc57708d25626fad96361110fc3": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "low-disposition-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "delivery_items": [
+      "low-disposition-summary",
+      "completion-assessment-summary"
+    ],
+    "owned_correction": true
+  },
+  "sha256:9b9367bb861cfa58bcf0a4b4e457814ef9ff85d61ce63045c57049eec29d0f29": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "disposition-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "disposition-summary"
+    ],
+    "delivery_items": [
+      "disposition-summary"
+    ]
+  },
+  "sha256:3ba3b8ef7ddb810b3d345a0933c7149f9e3e4e849831cf58b0b3d7b4162b8432": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "stopped-goal-boundary-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [],
+    "delivery_items": [],
+    "acceptance_policy": "user-only-boundary"
+  },
+  "sha256:8f9692e68ccfd4533591a4ef9db442d508cebbcbd67fa51c643d709d5c4316a7": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "finalization",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "outcome-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "delivery_items": [
+      "outcome-summary"
+    ]
+  },
+  "sha256:c69f6e0639c8fa7c6d06954f9da3d9aaa74aa2b18f9118418eac31b8bcc75182": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "finalization",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "closeout-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "delivery_items": [
+      "closeout-summary"
+    ]
+  },
+  "sha256:6c46147e120c5692c3346ddd235d6bd5dd81b0c080568c7e844cea79f603c16d": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "validation-pass-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "pass-basis-summary"
+    ],
+    "delivery_items": [
+      "pass-basis-summary"
+    ]
+  },
+  "sha256:17be2f155bc5dd6a5ee09ab65475e06d3ef140eb74101359531ffb57acda6360": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "current-audit-basis-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "current-audit-basis-summary"
+    ],
+    "delivery_items": [
+      "current-audit-basis-summary"
+    ]
+  },
+  "sha256:71315f9ce8ff637f9278acb8c540327a288a02ecd9277d14fb9ce38d48385146": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "remediation-group-settlement-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "remediation-summary"
+    ],
+    "delivery_items": [
+      "remediation-summary"
+    ]
+  },
+  "sha256:ee1842d9908d87634cf8ed4f2435f810c7cbbc2e80d382b2332a109f0bd7fe07": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "record-audit-followup",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:bb9e2aca79c867b7a149fbbd864cf364c27e833c32443f1d452bf7a82d8b6dcb": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "record-re-audit-followup",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:a09ac366e4a41f3b88bd46cf055a9c77abebb8001f44d4e7f1cf0e8d912b0b10": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "record-remediation-followup",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:282d90d1336462a31208a4f038cb82c172dde34516482e462648b108dfb8ffa6": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "record-remediation-evidence",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:dcb6fd382647ff4144dd412b71cd80f9f1564f0c24f3bf4a1997de681c0a819f": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "record-validation-evidence-followup",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:8ae2b4d8aa31b2aaac165b07e591672c580e132586e374f49c8349065f91c8ac": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "record-validation-rework-basis",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:d6c457227b6c56b80b609506256e789bf2d149e4ee25bc3833f1e0153f90b4dd": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-validation-v2",
+      "native_version": "36",
+      "definition": "validation-assessment-candidate",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "validation-assessment-summary",
+      "candidate-evidence"
+    ],
+    "delivery_items": [
+      "validation-assessment-summary",
+      "candidate-evidence"
+    ]
+  },
+  "sha256:3279982bbafdfd77f1ea7529e52e7f8f75d27ed67db1cbcad58d111e86ce3738": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "context-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "context-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:baa70e7d4134003ea497218429495c25281cbe54c9d271a1ed6dcb16f3c37a48": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "discovery-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "discovery-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:81ebe0a24739a44ce487d32b41158cc4b909ab0d8f2575093db271b25e1c2053": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "draft-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "draft-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:0ec2cd15b2a122b217eb0a28f88c04c60867414ec7e107fb3b182ae79ac359f9": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "challenge-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "executor-handoff"
+    ]
+  },
+  "sha256:41f30306cb9903b5e0c76e2819d5ec8e64bc39cd1cb842fe22c16da545ec1d6d": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "quality-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "quality-result",
+      "quality-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:7e593f53fbeb186570313947c7b7740c3538da3d897142a3f0638c1127b41367": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "application-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "application-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:862c41e8a428a3e5f0ce8f047b1d015a79c499dfb8e3dc267ce62ffc853eb870": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "finalization",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "closeout-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "delivery_items": [
+      "closeout-summary"
+    ]
+  },
+  "sha256:b4989985ecef3935274d655ce1e0ef3648e8bd640e47cd20dace73b922a2092e": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "record-discovery-rework",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:61a013f44643844cf6cb7ebece0903f989ae10a95722b015aa40ce38048dfcb9": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "record-discovery-evidence-needed",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:6842f91d7c311c2adf5a8cc3033550e9110dd7d6f2142e5d4b7f24a30db0f151": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "record-quality-rework",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:2f08253847abff1a9187f6420f357803c9919e2eead59a292b9bf3193e9c59f7": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "record-quality-evidence-needed",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:007051a3d9c90a5583eb27ccc819b789d9f68c130ffbcad36eaa8bbd1f1cd3ee": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "record-application-rework",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:f4628513c3a70d3b7d5d5f272d7c2e059047499648726c3fd3ca6e7a47515e9b": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "record-application-evidence-needed",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:523ec26906a286a035bad5d44dcbd6382c975bff492653cba277b8544056e34e": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "final-assessment-candidate",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "final-assessment-summary",
+      "candidate-evidence"
+    ],
+    "delivery_items": [
+      "final-assessment-summary",
+      "candidate-evidence"
+    ]
+  },
+  "sha256:8be5305d01e919b98507ad91a8674fc8384e12771b132dd0805768794502d3fe": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "12",
+      "definition": "record-application-approval-gap",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:ca0eb2a9dca1d7d8f053736b051ff7d0210ba6fc47d717eaf646b40a16519ad5": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "baseline-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "reproduction-state",
+      "observed-behavior",
+      "expected-behavior",
+      "baseline-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:5d8732f71031a0388c416d11454fc7e33d2536d0d23e54cb17e919fb0ec09177": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "investigation-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "investigation-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:9b06a322b31487a8cce1bf4cc2b6476013ade5506d6ca4d5a5c3be723c4db720": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "proposal-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "proposal-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:7f78ec7877ba135b591dcbb16b8b024daa00e81576e7524539f6ffdc01f70d85": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "quality-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "quality-result",
+      "quality-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:15d91150291a0cafba25f18d0fa074f4787d17208ca6e0782b711db94d1e7d30": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "documentation-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "documentation-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:16daac9fed75140a2991fced39a410e1503d8ddc98f99e9ed8a34917d29b6ef3": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "finalization",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "closeout-record",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "delivery_items": [
+      "closeout-summary"
+    ]
+  },
+  "sha256:7766d15c867c77c6d31148c220e00689cafdea4a2a5a53505c583ddc768fbae6": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "record-investigation-rework",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:3f49298229ee610b41a9532b84b480e236d8d700ae5f65711bae4d42963bafa6": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "record-investigation-evidence-needed",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:1d92ad17359e704e5452c5b643753317e5c1a821e98f261bd0e489a1ac5f0619": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "record-quality-rework",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:c4e69ac18e6c26a15ff0c3649b7349667c6b4f2c4a7a45b441dce364e64cad9d": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "record-quality-evidence-needed",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:dc7d45b41f293d773f5faefae70e69c6cd729e13ebf0f4fad25e1911848ada41": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "record-documentation-rework",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:ecf6649564b2c0d354a2cfe5022f9e0349c5f8a9d9bdf62b7d5033f121d6fa20": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "record-documentation-evidence-needed",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:cbf60125077d530ef7ac693986a33679a3cb8b7e02a84bcd7c01fb950330cd2b": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-war-room-v2",
+      "native_version": "12",
+      "definition": "record-documentation-approval-gap",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:a56e3e5fcf66f8ec1dd67da16d35643511e4c4e8df9249319b1f1e97bea8b826": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "authority": "Shared exact suitability and established-reuse bootstrap contract",
+      "definition": "suitability-bootstrap"
+    }
+  }
+}

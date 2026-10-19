@@ -5,7 +5,7 @@ description: "Confirm and close one reviewed roadmap task, including an explicit
 
 # Task Close
 
-For an ordinary Task handler, require the applicable complete final `aquarium.judge-assessment/v2` and exact final candidate composition from [Task orchestration](../../references/task-orchestration.md). A Judge pass supplements all closeout gates and grants no user approval or commit authority.
+For an ordinary Task handler, require the applicable complete final `aquarium.evaluator-assessment/v3` and exact final candidate composition from [Task orchestration](../../references/task-orchestration.md). An Evaluator pass supplements all closeout gates and grants no user approval or commit authority.
 
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
@@ -47,7 +47,7 @@ reuse value, follow [Procedure preservation](../../references/procedure-promotio
 to prepare the read-only grouped offer with this closeout presentation. Return
 any exact content consent and separate promotion grant in the ordinary handoff;
 the parent applies it only after original finalization. Under an Epic envelope,
-let its Primary group member candidates at Epic closeout. Skip this when no
+let its Coordinator group member candidates at Epic closeout. Skip this when no
 eligible Procedure was used.
 
 ## Ask for Final Approval
@@ -72,7 +72,7 @@ For `Approve and commit`, invoke `$aquarium:task-commit` with a closeout handoff
 
 Do not stage or commit independently. The handoff grants no amend, push, PR, release, or unrelated staging authority.
 
-Return the three answers, final roadmap state, selected terminal status, approved lifecycle and record decisions, dossier disposition when applicable, release-note target and decision, mandatory commands and exit codes, task-commit result and commit identifier when created, publication state, and remaining gaps to the orchestrator.
+Return the three answers, final roadmap state, selected terminal status, approved lifecycle and record decisions, dossier disposition when applicable, release-note target and decision, mandatory commands and exit codes, task-commit result and commit identifier when created, publication state, and remaining gaps to the coordinator.
 
 When a Podway-backed handler delegates this phase, identify this session's final-closeout continuation in any commit handoff and return the verified commit or permitted no-commit result with Podway finalization pending. The current Aquarium caller must follow [Finalize Before Reporting Completion](../../references/podway-integration.md#finalize-before-reporting-completion) before declaring the handler complete. This leaf result does not establish that the session is completed; a standalone invocation does not activate Podway by implication.
 

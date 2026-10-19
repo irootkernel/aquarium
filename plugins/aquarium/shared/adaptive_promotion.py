@@ -1,7 +1,7 @@
 """Prepare and apply specifically consented reusable definitions after closeout.
 
 This source-only adapter never commits, advances sessions or assesses product work.
-Use observations and grants are ordinary closeout evidence supplied by the Primary.
+Use observations and grants are ordinary closeout evidence supplied by the Coordinator.
 """
 
 import contextlib
@@ -98,7 +98,7 @@ def source_defaults(document):
 def payload(repository, candidate, client):
     kind = candidate.get("kind")
     binding = parse_definition(source_bytes(repository, candidate["binding"]))
-    if binding["schema"] != "aquarium.procedure-binding/v1":
+    if binding["schema"] != "aquarium.procedure-binding/v2":
         raise BundleError(
             "invalid-input", "A complete representative binding is required"
         )
@@ -123,7 +123,7 @@ def payload(repository, candidate, client):
             "invalid-input", "Preservation kind must be whole or fragment"
         )
     fragment = parse_definition(source_bytes(repository, candidate["source"]))
-    if fragment["schema"] != "aquarium.procedure-fragment/v1":
+    if fragment["schema"] != "aquarium.procedure-fragment/v2":
         raise BundleError("invalid-input", "An exact fragment definition is required")
     representative = obj(candidate["representative"], "Fragment representative")
     draft = obj(representative.get("draft"), "Representative composition")
@@ -279,7 +279,7 @@ def offer(repository, request, client):
     return {
         "status": "preservation-offer",
         "proposal": result,
-        "next_owner": "Primary",
+        "next_owner": "Coordinator",
         "question": "Preserve which exact candidates after original finalization, and is a separate promotion commit authorized?",
     }
 

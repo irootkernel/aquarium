@@ -12,7 +12,7 @@ acceptance.
 The [migration contract](../../plugins/aquarium/references/herdr-migration.md)
 defines selected-route setup and preserved Orca-era state. Prior source identity,
 native validity, handler compatibility and route membership are distinct.
-An active or uncertain legacy worker blocks a replacement review until its owner
+An active or uncertain legacy executor blocks a replacement review until its owner
 establishes safe state; the current package never invokes Orca to settle it.
 Completed evidence keeps its provenance, findings and consumed ordinals, while
 an incomplete checkpoint keeps its pending ordinal. Source updates affect only
@@ -47,7 +47,7 @@ preferred route.
 | `subagent-review` | Requires explicit selection and three fresh base host reviewers, plus one UI/UX specialist for UI-related work. The expected team reviews one target and Brief; Aquarium aggregates their reports. |
 | `waived` | Launches no delegated reviewer. The coordinator performs the required criterion assessment from current authorized evidence and records `review waived`, its authority, reason, and assurance limitation. |
 
-Subagent Review uses similar-capability reviewers in the Primary's native
+Subagent Review uses similar-capability reviewers in the Coordinator's native
 Codex or Claude harness. A future Dolgorae review would have a separate route
 and admission contract.
 
@@ -285,7 +285,7 @@ new checkpoints select `subagent-review` only in a snapshot that supports it.
 
 ## Local corrections and compatibility
 
-Current Task `32`, Goal `35` and Validation `34` sources classify eligible local corrections before provider-rework authority. The admitted completed source record carries `local-correction-count` and `local-correction-eligibility`. A positive count and passing eligibility permit `local-verified-fix` under the shared disposition contract regardless of retained source priority. The existing settlement record carries `pending-local-corrections`, exact before/after targets, checks and current completion; `review-predates-local-correction` distinguishes this delta from provider coverage. Original reports and criterion rows remain unchanged. The final required Judge verifies current achievement.
+Current Task `32`, Goal `35` and Validation `34` sources classify eligible local corrections before provider-rework authority. The admitted completed source record carries `local-correction-count` and `local-correction-eligibility`. A positive count and passing eligibility permit `local-verified-fix` under the shared disposition contract regardless of retained source priority. The existing settlement record carries `pending-local-corrections`, exact before/after targets, checks and current completion; `review-predates-local-correction` distinguishes this delta from provider coverage. Original reports and criterion rows remain unchanged. The final required Evaluator verifies current achievement.
 
 This is a breaking managed-Procedure update: existing users need an authorized file update and compatible successor sessions. Active and archived snapshots retain their original meanings. Candidate installation, upgrade and affected agent behavior require exact-candidate UTM qualification before release; source tests alone do not establish that result. Design and War-room are unchanged. Earlier sources keep their admitted topology; current routing membership alone does not establish support for the new reviewer teams.
 

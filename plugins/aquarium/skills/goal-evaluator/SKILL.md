@@ -1,11 +1,11 @@
 ---
-name: goal-judge
-description: "Assess an assigned node, Task, Epic, design, or diagnosis goal against canonical criteria and original evidence, returning a report-only Judge assessment."
+name: goal-evaluator
+description: "Assess an assigned node, Task, Epic, design, or diagnosis goal against canonical criteria and original evidence, returning a report-only Evaluator assessment."
 ---
 
-# Goal Judge
+# Goal Evaluator
 
-Read the [ordinary v2 contract](../../references/ordinary-agent-orchestration.md)
+Read the [ordinary v3 contract](../../references/ordinary-agent-orchestration.md)
 for criterion states, applicability, logical lifetime, assessment documents,
 minimal public provenance and recovery. Admitted formal sessions retain their
 original role snapshot and [formal v1 contract](../../references/formal-agent-orchestration-v1.md).
@@ -28,13 +28,13 @@ Reconcile the assignment with every applicable canonical criterion, including
 omitted criteria and parent or integration constraints. A Task assessment does
 not require unfinished future Tasks to be complete. An Epic assessment covers
 integration and overall purpose even when every member Task passed. Preserve
-every original global criterion row and its actual state at each phase. Judge
+every original global criterion row and its actual state at each phase. Evaluate
 current phase obligations and already-due parent constraints separately; future
 work keeps its actual global gap. A cold
-validation reads original evidence independently and uses a fresh Judge.
+validation reads original evidence independently and uses a fresh Evaluator.
 
-Preserve the caller's logical Judge identity across feedback and reassessment.
-For a recovered or replacement Judge, establish applicability from original criteria, current artifacts, remaining authority and available
+Preserve the caller's logical Evaluator identity across feedback and reassessment.
+For a recovered or replacement Evaluator, establish applicability from original criteria, current artifacts, remaining authority and available
 public native evidence. Restored context does not establish an
 applicable verdict by itself.
 
@@ -47,7 +47,7 @@ criterion `unverified`. Distinguish firsthand reads from supplied check results
 and user-owned functional evidence. Empty technical findings cannot compensate
 for missing mandatory evidence.
 
-Return `aquarium.judge-assessment/v2` under the shared contract, including all
+Return `aquarium.evaluator-assessment/v3` under the shared contract, including all
 common fields, current assignment, available public native handles and actual
 result evidence, checkpoint, complete criterion rows, candidate applicability,
 verification freshness, technical-review basis, remaining authority and follow-up
@@ -89,10 +89,10 @@ runtime state, configuration, or artifacts; run tests, builds, generators,
 formatters, or linters; dispatch nested agents or provider reviews; commit; or
 grant authority. Name any required execution and its owner in the report.
 
-The Judge does not repeat Worker implementation or serve as a technical-review
+The Evaluator does not repeat Executor implementation or serve as a technical-review
 provider. It assesses the selected technical findings and original evidence.
-The Primary accepts the complete report under its report checks without another
-Judge assessment, then uses the verdict at the semantic Decision.
+The Coordinator accepts the complete report under its report checks without another
+Evaluator assessment, then uses the verdict at the semantic Decision.
 
 For a final candidate with an admitted local-settlement composition, retain source reviewer rows and counts as historical evidence. Assess current affected criteria from the exact permitted delta and current authorized checks, preserving unaffected coverage only with its applicability basis. A locally corrected source `unmet` row can become `met`; do not require another provider review merely because the original priority was Medium or the review predates the correction. Missing original coverage, failed checks or an unrelated delta still prevent achievement.
 

@@ -297,6 +297,7 @@ PODWAY_PROCEDURES = (
 )
 PODWAY_PRIOR_CANONICAL_SHA256 = {
     "aquarium-task-v2.yaml": {
+        "42c10cab6c412c5a63c8ebfde3f91e46b838ba999825989bb0c5bd7e64f4ee3f",
         "79a1430528934d2941551432703a68be28047bc3e8095bc52acf24c7a057466f",
         "90c8e7df6a20f8b27134be4a3507db49af4de23b5506cd7a2bfe9ae2a2836731",
         "c1a4271f89beb98f90d0280ccd42c68350fc778262a1eb24385ea171205c5541",
@@ -329,6 +330,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "865c6c6a6c4e7784e296d16bf261fd125524d773329f3344cc63cfc7b7e12d63",
     },
     "aquarium-goal-v2.yaml": {
+        "28a5db7b520372b5b97685c1c9f9a8503e0680f530a016a3a4857645c1d56d3f",
         "99ae1a42372ec91c8de98cfc61e99c1defc4c99615610bd598c57418c01ea9b5",
         "8ae119c01a94dae12b02ff17ddee6aab90f377aadd0bc3bb08e701861e87f0cc",
         "e22e244ad35dc856ddc93837fa46094aa7a6812af2996a7204da0db2360ba58a",
@@ -361,6 +363,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "67b2faa3736b4e1a9c8264c20d39968c6f47e6e194d73ae8f49044f7561d154f",
     },
     "aquarium-validation-v2.yaml": {
+        "e2eeb06b55b33abf48d2acae96eee675ffb57daf580280a8db1c1e5d66e26c93",
         "23ce1dff7afe24fc3e2aa0438db6e9c3b7a162f1e131061181018d5ec80a769a",
         "aa9bc9da3445c795af71bcc9f558977ec9e53fa48391335dbc3a493159eabba6",
         "71734334901b2f83788b5b87df6f1bc0506ee315ffaa423174c08e25f1d02d0c",
@@ -391,6 +394,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "170f0eb407c03c590f7f56314287c684ba2bd083c3e1f47831a14bf5eabe4647",
     },
     "aquarium-design-v2.yaml": {
+        "3ca2e4d6bd7506033a575eada996a15853334ec5e9570b86894e7ded28e94a08",
         "932f0f1e9625a029c3d5a553ce82bd37856a57e119e612c9bd1e966cb488ccd0",
         "d7c6dd3a2cff72bd80f85a5bc0a0e015ad0e027bffe64b01c073560913b8475a",
         "2c01c3665e555b947d4098d19a79abbc4129daa1ce1d53427325c3e76a553bb3",
@@ -403,6 +407,7 @@ PODWAY_PRIOR_CANONICAL_SHA256 = {
         "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
     },
     "aquarium-war-room-v2.yaml": {
+        "07e0f59d3681b37584199ba94bb37a3c0d0ead7f527b1af934cac0202f13dcc9",
         "e370766f3ef8e057b818eca42e2757844950b4536a3d7ac8c41624154ec41cd2",
         "0a52672bec69ead2b733b44a860bbf60c3b0028e0c8f1faf6d5827cbc0035ead",
         "5bd3bd87eb508961d654eb66e5c210b647681d1a61e33c37fd3ae2a8d97ea65e",

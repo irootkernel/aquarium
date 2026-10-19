@@ -1,15 +1,15 @@
 # Supervised agent orchestration contract
 
-Ordinary workflows follow the [ordinary native v2 contract](ordinary-agent-orchestration.md).
-The current Primary coordinates supported native Workers and an independent
-report-only Judge in its own harness. Keep original requirements, actual
+Ordinary workflows follow the [ordinary native v3 contract](ordinary-agent-orchestration.md).
+The current Coordinator coordinates supported native Executors and an independent
+report-only Evaluator in its own harness. Keep original requirements, actual
 candidate artifacts, checks, remaining authority and available public handles.
 Unavailable executor history, role snapshots, internal model telemetry and
 configuration digests do not prevent ordinary startup or recovery.
 
 Use the owning [Task](task-orchestration.md), [Epic](epic-orchestration.md),
 [Validation](validation-orchestration.md) or [Design and diagnosis](design-diagnosis-orchestration.md)
-reference for grouped work and evidence routes. The Primary retains Decisions,
+reference for grouped work and evidence routes. The Coordinator retains Decisions,
 actual approvals, selected technical reviews and scoped commit authority.
 
 Declared formal delegation and admitted historical sessions retain the
@@ -22,11 +22,11 @@ apply only through an authorized managed update and compatible successor.
 Candidate content, requirement or material check-input changes invalidate affected
 verdicts and checks. A complete existing final assessment can be reused only
 when its actual coverage, target, original evidence and authority remain applicable;
-report assembly alone does not require another Judge dispatch. Reconcile uncertain
-work before replay, and establish mutating-worker settlement before replacement.
+report assembly alone does not require another Evaluator dispatch. Reconcile uncertain
+work before replay, and establish mutating-executor settlement before replacement.
 
 Selected reviews retain the [review routing](review-routing-contract.md),
 [Review Brief](review-intent-contract.md) and [finding disposition](finding-disposition.md)
-contracts. Judge reports do not replace technical-provider evidence, authorize
+contracts. Evaluator reports do not replace technical-provider evidence, authorize
 corrections, reset ordinals or supply user acceptance. Preserve original negative
 provider rows while assessing actual verified corrections and current criteria.

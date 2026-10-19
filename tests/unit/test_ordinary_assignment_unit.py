@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-SCRIPTS = Path(__file__).parents[2] / "plugins/aquarium/skills/goal-judge/scripts"
+SCRIPTS = Path(__file__).parents[2] / "plugins/aquarium/skills/goal-evaluator/scripts"
 
 
 def load(name: str):
@@ -22,7 +22,7 @@ def load(name: str):
 @pytest.fixture
 def assignment() -> dict:
     return {
-        "schema": "aquarium.assignment/v2",
+        "schema": "aquarium.assignment/v3",
         "work": {"id": "TASK-001", "objective": "Assess current implementation"},
         "target": {"basis": "current candidate", "paths": ["src/app.py"]},
         "authority": {"allowed": ["Read original artifacts"], "excluded": ["Mutation"]},
@@ -30,11 +30,11 @@ def assignment() -> dict:
         "native": {"harness": "codex", "agent_handle": None, "model": None},
         "evidence": [{"source": "docs/requirements.md", "provenance": "original"}],
         "gaps": [],
-        "role": "judge",
+        "role": "evaluator",
         "purpose": "Independently assess due requirements",
         "instructions": "Read original artifacts. Return actual gaps.\r\nKeep scope.",
         "checkpoint": "implementation",
-        "deliverables": ["aquarium.judge-assessment/v2"],
+        "deliverables": ["aquarium.evaluator-assessment/v3"],
         "success_criteria": ["Every due requirement is assessed"],
     }
 
@@ -47,7 +47,7 @@ def test_unknown_telemetry_needs_no_snapshot_or_source_read(assignment: dict) ->
     assignment["target"]["paths"].append("later.py")
     assert prepared["target"]["paths"] == ["src/app.py"]
     rendered = renderer.render_dispatch(prepared)
-    assert rendered["schema"] == "aquarium.prepared-dispatch/v2"
+    assert rendered["schema"] == "aquarium.prepared-dispatch/v3"
     returned = json.loads(
         rendered["dispatch_text"][rendered["dispatch_text"].index("{") :]
     )
@@ -123,7 +123,7 @@ def test_cli_preparation_and_rendering_preserve_assignment(assignment: dict) -> 
         text=True,
         check=True,
     )
-    assert json.loads(rendered.stdout)["schema"] == "aquarium.prepared-dispatch/v2"
+    assert json.loads(rendered.stdout)["schema"] == "aquarium.prepared-dispatch/v3"
 
 
 @pytest.mark.parametrize("role", [[], {}])
@@ -146,3 +146,41 @@ def test_cli_rejects_nonstring_role_without_traceback(
     assert result.stdout == ""
     assert result.stderr.startswith("error:")
     assert "Traceback" not in result.stderr
+
+
+@pytest.mark.parametrize(
+    "version,roles",
+    [("v2", ("worker", "judge")), ("v3", ("executor", "evaluator"))],
+)
+def test_versioned_assignments_preserve_their_original_role_domain(
+    assignment: dict, version: str, roles: tuple[str, ...]
+) -> None:
+    preparer = load("prepare_assignment")
+    renderer = load("render_dispatch")
+    for role in roles:
+        value = copy.deepcopy(assignment)
+        value.update(schema=f"aquarium.assignment/{version}", role=role)
+        kind = {
+            "worker": "worker-handoff",
+            "judge": "judge-assessment",
+            "executor": "executor-handoff",
+            "evaluator": "evaluator-assessment",
+        }[role]
+        value["deliverables"] = [f"aquarium.{kind}/{version}"]
+        prepared = preparer.prepare(Path("/unavailable/source/root"), value)
+        assert prepared == value
+        rendered = renderer.render_dispatch(prepared)
+        assert rendered["schema"] == f"aquarium.prepared-dispatch/{version}"
+        returned = json.loads(
+            rendered["dispatch_text"][rendered["dispatch_text"].index("{") :]
+        )
+        assert returned == value
+    for role in {"worker", "judge", "executor", "evaluator", "coordinator"} - set(
+        roles
+    ):
+        value = copy.deepcopy(assignment)
+        value.update(schema=f"aquarium.assignment/{version}", role=role)
+        with pytest.raises(ValueError):
+            preparer.prepare(Path("/unavailable/source/root"), value)
+        with pytest.raises(ValueError):
+            renderer.render_dispatch(value)

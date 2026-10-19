@@ -137,10 +137,18 @@ def prepare(source_root: Path, request: dict[str, Any]) -> dict[str, Any]:
     records. Canonical sources name readable authority; selected_evidence names
     files to include in full. An explicitly empty evidence list is permitted.
     """
-    if isinstance(request, dict) and request.get("schema") == "aquarium.assignment/v2":
+    if isinstance(request, dict) and request.get("schema") in {
+        "aquarium.assignment/v2",
+        "aquarium.assignment/v3",
+    }:
+        filename = (
+            "ordinary_assignment_v2.py"
+            if request["schema"] == "aquarium.assignment/v2"
+            else "ordinary_assignment.py"
+        )
         spec = importlib.util.spec_from_file_location(
             "aquarium_ordinary_assignment",
-            Path(__file__).with_name("ordinary_assignment.py"),
+            Path(__file__).with_name(filename),
         )
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

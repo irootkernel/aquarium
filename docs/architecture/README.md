@@ -39,7 +39,7 @@ Namespace expansion preserves native semantic operation identities and declared
 formal contracts. Guarded source qualification and exact ordinary pre-start
 suitability/bootstrap use the same retained definition boundary. Task, Goal, Validation, Design and Diagnosis consume those definitions through the shared mapped execution adapter. Unexpected topology replacement uses one explicitly consented native preserve-start operation with archived lineage and same-key recovery; it adds no executor or central state.
 A running approved-source view preserves original criteria for normal mapped
-dispatch. Settled finalization additionally requires current affected Judge and
+dispatch. Settled finalization additionally requires current affected Evaluator and
 native evidence and returns no dispatch.
 Grouped post-use preservation offers and specifically consented post-finalization
 library publication use the existing source and authority boundaries. Cross-family

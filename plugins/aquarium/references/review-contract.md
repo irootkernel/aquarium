@@ -53,7 +53,7 @@ The review is static and source-read-only. Every participant runs no tests, buil
 
 ## Backend ownership
 
-`subagent-review` uses three fresh base reviewers in the Primary's native
+`subagent-review` uses three fresh base reviewers in the Coordinator's native
 harness and adds one UI/UX specialist when applicable, for one exact target
 and Review Brief. The host owns delegation lifecycle; Aquarium coordinates
 and adjudicates the reports. It creates no Dolgorae or Herdr object and never
@@ -68,7 +68,7 @@ settlement objects, invoke Orca, or use Dolgorae as a fallback. The main
 technical reviewer uses multiple native subagents under
 [review strategies](review-strategy-contract.md), adding UI expertise when
 needed. Children remain static and do not delegate further; this permission
-does not change the ordinary Judge's no-nested-dispatch boundary.
+does not change the ordinary Evaluator's no-nested-dispatch boundary.
 
 Mulgae remains independent. Common source-scope meanings do not make capture,
 provider execution, extraction, publication, retention or lifecycle guarantees

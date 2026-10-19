@@ -87,7 +87,7 @@ def test_adequate_known_design_reuses_first_due_checkpoint_without_suitability_r
     result = consume(design, entrypoint)
     assert result["status"] == "dispatch-ready"
     assert result["qualification"]["status"] == "qualified-known"
-    assert result["dispatch"]["role"] == "worker"
+    assert result["dispatch"]["role"] == "executor"
     assert result["phase_skills"] == ["interview"]
     assert result["dispatch"]["work"] == design[1]["assignment"]["work"]
     assert (
@@ -106,11 +106,11 @@ def test_adequate_known_design_reuses_first_due_checkpoint_without_suitability_r
 @pytest.mark.parametrize(
     "node,role",
     [
-        ("judge-discovery", "judge"),
-        ("quality", "worker"),
-        ("decide-quality", "orchestrator"),
-        ("approve-diff", "orchestrator"),
-        ("closeout", "orchestrator"),
+        ("evaluator-discovery", "evaluator"),
+        ("quality", "executor"),
+        ("decide-quality", "coordinator"),
+        ("approve-diff", "coordinator"),
+        ("closeout", "coordinator"),
     ],
 )
 def test_nonselecting_recovery_preserves_actual_role_and_primary_decisions(
@@ -120,9 +120,9 @@ def test_nonselecting_recovery_preserves_actual_role_and_primary_decisions(
     result = consume(design)
     assert result["role"] == role
     assert result["status"] == (
-        "primary-owned" if role == "orchestrator" else "dispatch-ready"
+        "coordinator-owned" if role == "coordinator" else "dispatch-ready"
     )
-    if role == "judge":
+    if role == "evaluator":
         assert result["dispatch"]["authority"]["effects"] == []
     if node == "quality":
         assert result["phase_skills"] == ["qa"]
@@ -312,14 +312,14 @@ def test_changed_proposal_or_target_requires_actual_reapproval(tmp_path, change)
     elif change in {"before", "after"}:
         value["targets"]["README.md"][change] = sha256(b"different")
     else:
-        approval["source"] = "judge"
+        approval["source"] = "evaluator"
     assert application(tmp_path, value, approval)["status"] in {
         "reapproval-required",
         "approval-required",
     }
 
 
-def test_application_worker_waits_for_actual_exact_diff_authority(design):
+def test_application_executor_waits_for_actual_exact_diff_authority(design):
     design[3]["guidance"]["node"]["graph_node_id"] = "apply-documents"
     assert consume(design)["status"] == "approval-required"
     value, approval = proposal(design[0])
@@ -489,7 +489,7 @@ def adaptive_design(*, conditional=False):
         for row in document["graph"]["nodes"]:
             if row["id"] == "discover":
                 row["next"] = "scope-choice"
-            if row["id"] in {"judge-discovery", "prepare-design-assessment"}:
+            if row["id"] in {"evaluator-discovery", "prepare-design-assessment"}:
                 row["evidence_from"].append(
                     {
                         "node": "research-work",
@@ -505,37 +505,41 @@ def adaptive_design(*, conditional=False):
                     {"node": "discover", "required": True, "items": ["depth"]}
                 ],
                 "routes": {
-                    "bounded": {"to": "judge-discovery", "effect": "advance"},
+                    "bounded": {"to": "evaluator-discovery", "effect": "advance"},
                     "research": {"to": "research-work", "effect": "advance"},
                 },
             },
-            {"id": "research-work", "use": "research-work", "next": "judge-discovery"},
+            {
+                "id": "research-work",
+                "use": "research-work",
+                "next": "evaluator-discovery",
+            },
         ]
         mapping["nodes"]["scope-choice"] = {
             "kind": "decision",
-            "role": "orchestrator",
+            "role": "coordinator",
             "effects": [],
             "capabilities": [],
         }
         mapping["nodes"]["research-work"] = {
             "kind": "action",
-            "role": "worker",
+            "role": "executor",
             "effects": ["work"],
             "capabilities": [],
         }
-        mapping["obligations"]["judge-discovery"]["producers"].append(
+        mapping["obligations"]["evaluator-discovery"]["producers"].append(
             {"node": "research-work", "item": "constraints"}
         )
         mapping.setdefault("semantic_contracts", {})[
             sha256(canonical_json(definitions["research-work"]))
         ] = {
-            "roles": ["worker"],
+            "roles": ["executor"],
             "effect": "work",
             "basis": "Read scoped original sources and deliver independently assessed constraints.",
             "delivery_items": ["constraints"],
         }
     mapping.setdefault("semantic_contracts", {})[sha256(canonical_json(discover))] = {
-        "roles": ["worker"],
+        "roles": ["executor"],
         "effect": "work",
         "basis": "Reconcile original authority and discovery in one independently assessed work unit.",
         "delivery_items": [item["id"] for item in discover["items"]],
@@ -554,7 +558,8 @@ def test_real_grouped_and_conditional_design_changes_preserve_obligations(condit
     assert document["graph"]["entry"] == "discover"
     assert "capture-context" not in mapping["nodes"]
     assert {
-        row["node"] for row in mapping["obligations"]["judge-discovery"]["producers"]
+        row["node"]
+        for row in mapping["obligations"]["evaluator-discovery"]["producers"]
     } == ({"discover", "research-work"} if conditional else {"discover"})
     if conditional:
         routes = next(
@@ -564,7 +569,7 @@ def test_real_grouped_and_conditional_design_changes_preserve_obligations(condit
         )
         assert {route["to"] for route in routes.values()} == {
             "research-work",
-            "judge-discovery",
+            "evaluator-discovery",
         }
 
 
@@ -573,11 +578,11 @@ def test_conditional_research_requires_actual_selected_producer_evidence():
     from test_adaptive_qualification_unit import bound
 
     document, mapping = adaptive_design(conditional=True)
-    judge = next(
-        row for row in document["graph"]["nodes"] if row["id"] == "judge-discovery"
+    evaluator = next(
+        row for row in document["graph"]["nodes"] if row["id"] == "evaluator-discovery"
     )
-    judge["evidence_from"] = [
-        row for row in judge["evidence_from"] if row["node"] != "research-work"
+    evaluator["evidence_from"] = [
+        row for row in evaluator["evidence_from"] if row["node"] != "research-work"
     ]
     assert qualify(document, bound(document, mapping))["status"] == "incompatible"
 
@@ -613,7 +618,7 @@ def test_adaptive_design_prepare_qualify_retain_and_running_consumer(
         "Combine original authority and discovery with bounded conditional research instead of separate context work."
     )
     draft["coverage"] = [
-        {**row, "obligation": "judge-discovery"} for row in draft["coverage"]
+        {**row, "obligation": "evaluator-discovery"} for row in draft["coverage"]
     ]
     plan["source_dispositions"] = {"aquarium-design-v2.yaml": draft["reason"]}
     plan["design_phases"] = {
@@ -706,20 +711,20 @@ def review_design():
     }
     document["node_definitions"]["assess"] = body
     for row in document["graph"]["nodes"]:
-        if row.get("next") == "judge-design":
+        if row.get("next") == "evaluator-design":
             row["next"] = "assess"
     document["graph"]["nodes"].append(
-        {"id": "assess", "use": "assess", "next": "judge-design"}
+        {"id": "assess", "use": "assess", "next": "evaluator-design"}
     )
     mapping["nodes"]["assess"] = {
         "kind": "action",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [],
     }
     contracts = {
         sha256(canonical_json(body)): {
-            "roles": ["orchestrator"],
+            "roles": ["coordinator"],
             "effect": "evidence",
             "basis": "Bounded selected-review index; no product mutation or authority is granted.",
             "delivery_items": ["review-summary"],

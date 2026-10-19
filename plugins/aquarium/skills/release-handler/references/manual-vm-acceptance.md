@@ -22,7 +22,7 @@ sessions.
 Run the declared guest gate only under this release workflow or an explicit
 user VM-test request. Capture the observations required by the target's scenario
 owner. Where applicable, include installed discovery, workflow progression,
-native Worker results, independent Judge assessments and application checks.
+native Executor results, independent Evaluator assessments and application checks.
 A checklist, fixture preparation or success sentence
 cannot establish acceptance. Unavailable private telemetry is not an ordinary
 workflow admission requirement.

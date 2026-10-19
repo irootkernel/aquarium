@@ -17,6 +17,8 @@ FAMILY_ENTRYPOINTS = {
 SCHEMAS = {
     "aquarium.procedure-binding/v1": "procedure-binding-v1.schema.json",
     "aquarium.procedure-fragment/v1": "procedure-fragment-v1.schema.json",
+    "aquarium.procedure-binding/v2": "procedure-binding-v2.schema.json",
+    "aquarium.procedure-fragment/v2": "procedure-fragment-v2.schema.json",
 }
 
 
@@ -86,9 +88,15 @@ def validate_definition(value):
             else "invalid-definition",
         )
     if (
-        discriminator == "aquarium.procedure-binding/v1"
+        discriminator
+        in {"aquarium.procedure-binding/v1", "aquarium.procedure-binding/v2"}
         and isinstance(value.get("compatibility"), str)
-        and value["compatibility"] != "aquarium.adaptive/v1"
+        and value["compatibility"]
+        != (
+            "aquarium.adaptive/v1"
+            if discriminator == "aquarium.procedure-binding/v1"
+            else "aquarium.adaptive/v2"
+        )
     ):
         raise DefinitionError(
             "Unsupported Aquarium compatibility contract", "unsupported-compatibility"
@@ -99,7 +107,10 @@ def validate_definition(value):
         error = errors[0]
         location = "/".join(str(part) for part in error.absolute_path)
         raise DefinitionError(f"{location or '/'}: {error.message}")
-    if value["schema"] == "aquarium.procedure-fragment/v1":
+    if value["schema"] in {
+        "aquarium.procedure-fragment/v1",
+        "aquarium.procedure-fragment/v2",
+    }:
         _validate_fragment(value)
     else:
         nodes = value["nodes"]
@@ -171,15 +182,22 @@ def _validate_fragment(value):
 
 def native_key(binding):
     validate_definition(binding)
-    if binding["schema"] != "aquarium.procedure-binding/v1":
+    if binding["schema"] not in {
+        "aquarium.procedure-binding/v1",
+        "aquarium.procedure-binding/v2",
+    }:
         raise DefinitionError("Only bindings have a native recovery key")
     procedure = binding["procedure"]
     return procedure["id"], procedure["version"], procedure["digest"]
 
 
-def capability_signatures():
+def capability_signatures(version=2):
+    if version not in {1, 2}:
+        raise DefinitionError(
+            "Unsupported capability signature contract", "unsupported-compatibility"
+        )
     return json.loads(
-        (ASSETS / "adaptive" / "capability-signatures-v1.json").read_text()
+        (ASSETS / "adaptive" / f"capability-signatures-v{version}.json").read_text()
     )
 
 

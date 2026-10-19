@@ -92,14 +92,15 @@ PYTHON_FILES := \
 	plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py \
 	plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py \
 	plugins/aquarium/skills/subagent-review/scripts/inspect_review_target.py \
-	plugins/aquarium/skills/goal-judge/scripts/prepare_assignment.py \
-	plugins/aquarium/skills/goal-judge/scripts/ordinary_assignment.py \
+	plugins/aquarium/skills/goal-evaluator/scripts/prepare_assignment.py \
+	plugins/aquarium/skills/goal-evaluator/scripts/ordinary_assignment.py \
+	plugins/aquarium/skills/goal-evaluator/scripts/ordinary_assignment_v2.py \
 	tests/unit/test_ordinary_assignment_unit.py \
-	plugins/aquarium/skills/goal-judge/scripts/map_native_delivery.py \
-	plugins/aquarium/skills/goal-judge/scripts/render_dispatch.py \
-	plugins/aquarium/skills/goal-judge/scripts/bind_prepared_delivery.py \
-	plugins/aquarium/skills/goal-judge/scripts/bind_claude_delivery.py \
-	plugins/aquarium/skills/goal-judge/scripts/read_codex_thread.py \
+	plugins/aquarium/skills/goal-evaluator/scripts/map_native_delivery.py \
+	plugins/aquarium/skills/goal-evaluator/scripts/render_dispatch.py \
+	plugins/aquarium/skills/goal-evaluator/scripts/bind_prepared_delivery.py \
+	plugins/aquarium/skills/goal-evaluator/scripts/bind_claude_delivery.py \
+	plugins/aquarium/skills/goal-evaluator/scripts/read_codex_thread.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_publication_state.py \
 	plugins/aquarium/skills/release-handler/scripts/inspect_release_notes.py \
 	plugins/aquarium/skills/release-qa/scripts/manage_release_qa.py \

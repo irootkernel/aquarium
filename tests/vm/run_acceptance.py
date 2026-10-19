@@ -1329,23 +1329,23 @@ def validate_native_case(observation, evidence, repository):
     paths = {
         key: case_artifact(repository, evidence[key])
         for key in (
-            "worker_assignment",
-            "judge_assignment",
-            "worker_result",
-            "judge_assessment",
+            "executor_assignment",
+            "evaluator_assignment",
+            "executor_result",
+            "evaluator_assessment",
         )
     }
-    worker = correlate_child(observation, evidence["worker_agent"])
-    judge = correlate_child(observation, evidence["judge_agent"])
+    executor = correlate_child(observation, evidence["executor_agent"])
+    evaluator = correlate_child(observation, evidence["evaluator_agent"])
     require(
-        worker["metadata"]["id"] != judge["metadata"]["id"],
-        "Worker cannot assess itself as Judge",
+        executor["metadata"]["id"] != evaluator["metadata"]["id"],
+        "Executor cannot assess itself as Evaluator",
         "fail",
     )
-    for role in ("worker", "judge"):
+    for role in ("executor", "evaluator"):
         assignment = read_json(paths[role + "_assignment"])
         require(
-            assignment.get("schema") == "aquarium.assignment/v2"
+            assignment.get("schema") == "aquarium.assignment/v3"
             and assignment.get("role") == role,
             f"missing original {role} assignment",
         )
@@ -1359,21 +1359,21 @@ def validate_native_case(observation, evidence, repository):
             f"{role} assignment omits original smoke criteria",
         )
     handoff = returned_report(
-        worker, paths["worker_result"], "aquarium.worker-handoff/v2"
+        executor, paths["executor_result"], "aquarium.executor-handoff/v3"
     )
     assessment = returned_report(
-        judge, paths["judge_assessment"], "aquarium.judge-assessment/v2"
+        evaluator, paths["evaluator_assessment"], "aquarium.evaluator-assessment/v3"
     )
     require(
         handoff.get("changed_artifacts") and handoff.get("results"),
-        "Worker report lacks actual delivery/check results",
+        "Executor report lacks actual delivery/check results",
     )
     require(
         any(
             item.get("type") in {"commandExecution", "fileChange"}
-            for item in worker["items"]
+            for item in executor["items"]
         ),
-        "Worker has no actual execution or file-change observation",
+        "Executor has no actual execution or file-change observation",
     )
     for report in (handoff, assessment):
         require(
@@ -1384,17 +1384,17 @@ def validate_native_case(observation, evidence, repository):
             "fail",
         )
     rows = {row["id"]: row for row in assessment.get("criteria", [])}
-    require(set(CRITERIA).issubset(rows), "Judge omitted original due criteria")
+    require(set(CRITERIA).issubset(rows), "Evaluator omitted original due criteria")
     for identifier in CRITERIA:
         row = rows[identifier]
         require(
             row.get("source") and row.get("evidence"),
-            f"Judge lacks original source/evidence for {identifier}",
+            f"Evaluator lacks original source/evidence for {identifier}",
         )
         state = row.get("state", row.get("assessment"))
         require(
             state == "met",
-            f"Judge did not establish {identifier}: {state}",
+            f"Evaluator did not establish {identifier}: {state}",
             "fail" if state == "unmet" else "incomplete",
         )
     require(
@@ -1404,8 +1404,8 @@ def validate_native_case(observation, evidence, repository):
     )
     # Global future obligations may remain unverified during this partial smoke.
     return {
-        "worker_thread": worker["metadata"]["id"],
-        "judge_thread": judge["metadata"]["id"],
+        "executor_thread": executor["metadata"]["id"],
+        "evaluator_thread": evaluator["metadata"]["id"],
     }
 
 
@@ -1445,24 +1445,24 @@ fixture operator is {request["authority"]["observer"]}; scope authority is
 Review. Ask for the ready plan/exact-result decisions when required; do not
 infer approval or Master acceptance from this prompt.
 This release smoke requests actual first-member uppercase delivery, refinement,
-checks, independent Judge assessment and the first semantic progression. Stop
+checks, independent Evaluator assessment and the first semantic progression. Stop
 at a safe partial boundary after that delivery assessment; do not claim full
 Task/Epic completion, execute the repeat member, commit or publish.
 Explicitly select the released canonical {"aquarium-task-v2" if name == "task" else "aquarium-goal-v2"} source for this fixed regression; do not use adaptive generation here.
 Original due smoke criterion IDs and meanings: {json.dumps(CRITERIA)}.
 Preserve every applicable original criterion and future global gap in ordinary
-v2 reports. Save original Worker/Judge assignments and actual JSON role reports
+v3 reports. Save original Executor/Evaluator assignments and actual JSON role reports
 under {case_root}. Keep this case's evidence and every assignment/report inside
 that directory; preserve other cases' files. Each role's actual final result must include its complete JSON
 report or its report path and sha256 digest, for this test's result collection.
-Write {evidence_file} with worker_agent and judge_agent (available native paths
-or UUIDs), worker_assignment, judge_assignment, worker_result, judge_assessment
+Write {evidence_file} with executor_agent and evaluator_agent (available native paths
+or UUIDs), executor_assignment, evaluator_assignment, executor_result, evaluator_assessment
 (absolute artifact paths). These files and assertions alone cannot prove work;
 the test independently reads public native child results, artifacts and Podway.
 Settle your native agents before returning and retain the unfinished workflow
 truthfully. Missing telemetry, child user messages or formal accepted-task
 digests are not ordinary startup requirements.
-The Primary saves the returned reports; the Judge remains report-only. Include
+The Coordinator saves the returned reports; the Evaluator remains report-only. Include
 the actual current greet.py SHA-256 as target.greet_sha256 in each delivery
 report, so this test can compare the assessed bytes without native attestation.
 """

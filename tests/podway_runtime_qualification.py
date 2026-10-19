@@ -71,8 +71,8 @@ SUCCESS_OPTIONS = {
     "confirm-stopped-task-assessment-applicability": "current",
     "confirm-design-assessment-applicability": "current",
     "confirm-diagnosis-assessment-applicability": "current",
-    "confirm-judge-validation-applicability": "current",
-    "confirm-judge-stopped-validation-applicability": "current",
+    "confirm-evaluator-validation-applicability": "current",
+    "confirm-evaluator-stopped-validation-applicability": "current",
     "confirm-application-approval": "current",
     "confirm-documentation-approval": "current",
     "confirm-closeout-substitute-applicability": "current",
@@ -2648,23 +2648,23 @@ class ManagedRuntime:
                 return {"type": "integer", "value": 0}
             if item_type == "choice" and item_id == "coverage-relationship":
                 return {"type": "choice", "value": "review-predates-local-correction"}
-        judge_gap = None
-        if self.scenario in GROUPED_TASK_OWNERS and node == "judge-verification":
-            judge_gap = "unmet"
-        if grouped_evidence and node == f"judge-{grouped_evidence[1]}":
-            judge_gap = "unverified"
+        evaluator_gap = None
+        if self.scenario in GROUPED_TASK_OWNERS and node == "evaluator-verification":
+            evaluator_gap = "unmet"
+        if grouped_evidence and node == f"evaluator-{grouped_evidence[1]}":
+            evaluator_gap = "unverified"
         if node in {
-            "judge-goal",
-            "judge-stopped-goal",
-            "judge-validation",
-            "judge-stopped-validation",
-            "judge-stopped-task",
+            "evaluator-goal",
+            "evaluator-stopped-goal",
+            "evaluator-validation",
+            "evaluator-stopped-validation",
+            "evaluator-stopped-task",
         }:
             if self.scenario in COMPLETION_GAP_SCENARIOS:
-                judge_gap = COMPLETION_GAP_SCENARIOS[self.scenario][1]
+                evaluator_gap = COMPLETION_GAP_SCENARIOS[self.scenario][1]
             elif self.scenario in STOP_EVIDENCE_SCENARIOS:
-                judge_gap = "unmet"
-        if node == "judge-review":
+                evaluator_gap = "unmet"
+        if node == "evaluator-review":
             for gap in ("unmet", "unverified"):
                 completion = self.value_for(
                     {
@@ -2675,20 +2675,20 @@ class ManagedRuntime:
                     "review",
                 )
                 if completion["value"]:
-                    judge_gap = gap
+                    evaluator_gap = gap
                     break
         if (
-            judge_gap
+            evaluator_gap
             and item_type == "integer"
             and item_id
             in {
-                "judge-unmet-criteria",
-                "judge-unverified-criteria",
+                "evaluator-unmet-criteria",
+                "evaluator-unverified-criteria",
             }
         ):
             return {
                 "type": "integer",
-                "value": int(item_id == f"judge-{judge_gap}-criteria"),
+                "value": int(item_id == f"evaluator-{evaluator_gap}-criteria"),
             }
         provider_low_ids = (
             ["provider:R1:L1"]
@@ -3271,20 +3271,20 @@ class ManagedRuntime:
                 ):
                     review_evidence_kind = "native-review"
             preferred = {
-                "judge-verdict": (
+                "evaluator-verdict": (
                     "rework"
-                    if judge_gap == "unmet"
+                    if evaluator_gap == "unmet"
                     else "evidence-needed"
-                    if judge_gap == "unverified"
+                    if evaluator_gap == "unverified"
                     else "pass"
                 ),
-                "judge-goal-outcome": (
-                    "not-achieved" if judge_gap or "stopped" in node else "achieved"
+                "evaluator-goal-outcome": (
+                    "not-achieved" if evaluator_gap or "stopped" in node else "achieved"
                 ),
-                "judge-cause-outcome": (
+                "evaluator-cause-outcome": (
                     "no-work" if self.scenario == "war-room-no-work" else "established"
                 ),
-                "judge-scope-outcome": "task",
+                "evaluator-scope-outcome": "task",
                 "workflow-owner": (
                     "epic-handler" if self.scenario == "standard" else "epic-validator"
                 ),
@@ -3630,14 +3630,14 @@ class ManagedRuntime:
         if item_type == "check_result":
             if (
                 grouped_evidence
-                and node == f"judge-{grouped_evidence[1]}"
-                and item_id == "judge-checkpoint-result"
+                and node == f"evaluator-{grouped_evidence[1]}"
+                and item_id == "evaluator-checkpoint-result"
             ):
                 outcome = "inconclusive"
             elif (
                 self.scenario in GROUPED_TASK_OWNERS
-                and node == "judge-verification"
-                and item_id == "judge-checkpoint-result"
+                and node == "evaluator-verification"
+                and item_id == "evaluator-checkpoint-result"
             ) or (
                 local_scenario
                 and node == "record-low-disposition"
@@ -3646,11 +3646,11 @@ class ManagedRuntime:
             ):
                 outcome = "fail"
             elif (
-                node == "judge-review"
-                and item_id == "judge-checkpoint-result"
-                and judge_gap
+                node == "evaluator-review"
+                and item_id == "evaluator-checkpoint-result"
+                and evaluator_gap
             ):
-                outcome = "fail" if judge_gap == "unmet" else "inconclusive"
+                outcome = "fail" if evaluator_gap == "unmet" else "inconclusive"
             elif (
                 self.scenario in GOAL_RESUME_PROVIDER_MISMATCH_SCENARIOS
                 and item_id == "route-binding-result"
@@ -3751,7 +3751,7 @@ class ManagedRuntime:
             return "unmet"
         if node == "confirm-review-completion":
             verdict = self.read_complete_evidence(
-                observation, "judge-review", "judge-verdict"
+                observation, "evaluator-review", "evaluator-verdict"
             )
             return {
                 "pass": "complete",
@@ -3835,14 +3835,14 @@ class ManagedRuntime:
                 {
                     "schema": "aquarium.synthetic-structural-report/v1",
                     "scope": "Disposable native graph and receipt qualification only.",
-                    "expected_report_schema": (
-                        "aquarium.worker-handoff/" + ("v1" if self.placements else "v2")
-                        if item["item_id"] == "worker-handoff"
-                        else "aquarium.judge-assessment/"
-                        + ("v1" if self.placements else "v2")
-                        if item["item_id"] == "judge-assessment"
-                        else None
-                    ),
+                    "expected_report_schema": {
+                        "worker-handoff": "aquarium.worker-handoff/"
+                        + ("v1" if self.placements else "v2"),
+                        "judge-assessment": "aquarium.judge-assessment/"
+                        + ("v1" if self.placements else "v2"),
+                        "executor-handoff": "aquarium.executor-handoff/v3",
+                        "evaluator-assessment": "aquarium.evaluator-assessment/v3",
+                    }.get(item["item_id"]),
                     "synthetic": True,
                     "node": observation["guidance"]["node"]["graph_node_id"],
                     "item": item["item_id"],
@@ -4330,7 +4330,7 @@ class ManagedRuntime:
                     )
                 break
             if observation["guidance"]["node"]["node_type"] == "action":
-                if not node.startswith("judge-") and node != next(
+                if not node.startswith("evaluator-") and node != next(
                     expected_actions, None
                 ):
                     raise RuntimeQualificationError("pagination fixture path drifted")
@@ -4361,7 +4361,7 @@ class ManagedRuntime:
         self.fill_action(self.observe(), "aquarium-pagination-v2")
         self.invoke_template(self.observe(), "session.complete")
         decision = self.observe()
-        if decision["guidance"]["node"]["graph_node_id"] == "judge-verification":
+        if decision["guidance"]["node"]["graph_node_id"] == "evaluator-verification":
             self.fill_action(decision, "aquarium-pagination-v2")
             self.invoke_template(self.observe(), "session.complete")
             decision = self.observe()
@@ -6355,10 +6355,10 @@ class ManagedRuntime:
         terminal = self.observe()
         if scenario in LOCAL_CORRECTION_SCENARIOS:
             source, _medium_item = LOCAL_CORRECTION_SOURCE_ITEMS[procedure_id]
-            final_judge = {
-                "aquarium-task-v2": "judge-task",
-                "aquarium-goal-v2": "judge-goal",
-                "aquarium-validation-v2": "judge-validation",
+            final_evaluator = {
+                "aquarium-task-v2": "evaluator-task",
+                "aquarium-goal-v2": "evaluator-goal",
+                "aquarium-validation-v2": "evaluator-validation",
             }[procedure_id]
             expected_visits = (
                 2 if LOCAL_CORRECTION_SCENARIOS[scenario][1] == "retry" else 1
@@ -6366,7 +6366,7 @@ class ManagedRuntime:
             if (
                 self.node_visits.get(source) != 1
                 or self.node_visits.get("record-low-disposition") != expected_visits
-                or not self.node_visits.get(final_judge)
+                or not self.node_visits.get(final_evaluator)
                 or not self.local_source_basis_checked
             ):
                 raise RuntimeQualificationError(

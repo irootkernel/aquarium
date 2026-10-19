@@ -116,6 +116,33 @@ def test_publish_resolve_and_resume_self_contained(repository, known):
     assert not (repository / "other flows").exists()
 
 
+def test_retained_v1_bundle_resolves_without_relabeling(repository):
+    source = (ROOT / "tests/fixtures/aquarium-task-v33.yaml").read_bytes()
+    path = repository / "task.yaml"
+    path.write_bytes(source)
+    client = Oracle(repository)
+    binding = admission.reference_binding(source, client.preview(path))
+    assert binding["schema"] == "aquarium.procedure-binding/v1"
+    original = definitions.canonical_json(binding)
+    result = publish(repository, (source, path, client, binding))
+    resolved = admission.resume_selected(
+        repository, ["flows"], binding["procedure"], client=client
+    )
+    assert resolved["bundle_id"] == result["bundle_id"]
+    assert resolved["source"] == source
+    assert definitions.canonical_json(resolved["binding"]) == original
+    assert (Path(result["path"]) / "binding.json").read_bytes() == original
+    with pytest.raises(bundles.BundleError) as caught:
+        admission.selection_contract(
+            source,
+            binding,
+            "task-handler",
+            route=None,
+            qualification={"assignment": {"schema": "aquarium.assignment/v3"}},
+        )
+    assert caught.value.code == "retained-contract"
+
+
 def test_identical_aliases_and_native_tuple_verification(repository, known):
     result = publish(repository, known)
     target = repository / "other flows/.local" / result["bundle_id"]
@@ -181,9 +208,9 @@ def test_mapping_conflict_across_roots_stops_without_replacing(repository, known
 
 
 def test_competing_writers_share_worktree_uniqueness(repository, known):
-    with ThreadPoolExecutor(max_workers=2) as workers:
+    with ThreadPoolExecutor(max_workers=2) as executors:
         results = list(
-            workers.map(
+            executors.map(
                 lambda root: publish(repository, known, write_root=root),
                 ["flows", "other flows"],
             )
@@ -375,7 +402,7 @@ def test_selected_source_requires_health_and_exact_reference_binding(repository,
         )
     assert error.value.code == "runtime-unavailable"
     changed = copy.deepcopy(binding)
-    changed["nodes"]["record-plan"]["role"] = "judge"
+    changed["nodes"]["record-plan"]["role"] = "evaluator"
     binding_path = repository / "binding.json"
     binding_path.write_bytes(definitions.canonical_json(changed))
     with pytest.raises(bundles.BundleError) as error:
@@ -411,7 +438,7 @@ def test_known_resume_is_independent_of_actual_origin_and_registry_changes(
     result = publish(repository, known)
     before = definitions.canonical_json(result["binding"])
     shutil.rmtree(assets / "podway/procedures")
-    (assets / "adaptive/capability-signatures-v1.json").write_text(
+    (assets / "adaptive/capability-signatures-v2.json").write_text(
         "changed registry is not this mapping's dependency"
     )
     resumed = admission.resume_selected(
@@ -778,7 +805,7 @@ def test_known_contract_covers_current_sources_and_stays_stable_when_extended(
     repository, known, tmp_path, monkeypatch
 ):
     contract = json.loads(
-        (admission.ASSETS / "adaptive/known-sources-v1.json").read_text()
+        (admission.ASSETS / "adaptive/known-sources-v2.json").read_text()
     )
     for path in (admission.ASSETS / "podway/procedures").glob("*.yaml"):
         source = path.read_bytes()
@@ -789,7 +816,7 @@ def test_known_contract_covers_current_sources_and_stays_stable_when_extended(
     (assets / "adaptive").mkdir(parents=True)
     before = admission.reference_binding(known[0], known[2].preview(known[1]))
     contract["sources"].append({"source_sha256": "sha256:" + "0" * 64})
-    (assets / "adaptive/known-sources-v1.json").write_text(json.dumps(contract))
+    (assets / "adaptive/known-sources-v2.json").write_text(json.dumps(contract))
     monkeypatch.setattr(admission, "ASSETS", assets)
     assert admission.reference_binding(known[0], known[2].preview(known[1])) == before
 
@@ -843,8 +870,8 @@ def test_subagent_route_preserves_prior_sources_without_reinterpreting_them(
 @pytest.mark.parametrize(
     "logical,signature",
     [
-        ("review-route", "aquarium.goal.review-routing/v1"),
-        ("effective-review-route", "aquarium.task.review-routing/v1"),
+        ("review-route", "aquarium.goal.review-routing/v2"),
+        ("effective-review-route", "aquarium.task.review-routing/v2"),
     ],
 )
 @pytest.mark.parametrize("aliases", ["default", "current", "history"])
@@ -905,7 +932,7 @@ def test_adaptive_route_checks_actual_choices_without_reinterpreting_history(
 
 
 @pytest.mark.parametrize("name", ["review-route", "effective-review-route", "example"])
-@pytest.mark.parametrize("signature", [None, "aquarium.task.approval/v1"])
+@pytest.mark.parametrize("signature", [None, "aquarium.task.approval/v2"])
 def test_adaptive_route_ignores_bookkeeping_names_and_unrelated_capability_aliases(
     name, signature
 ):
@@ -951,10 +978,9 @@ def test_renamed_operations_keep_established_effects_and_prior_contracts():
         before = yaml.safe_load(
             (ROOT / f"tests/fixtures/aquarium-{family}-v{version}.yaml").read_bytes()
         )
+        successor = {"task": 33, "goal": 36, "validation": 35}[family]
         after = yaml.safe_load(
-            (
-                admission.ASSETS / f"podway/procedures/aquarium-{family}-v2.yaml"
-            ).read_bytes()
+            (ROOT / f"tests/fixtures/aquarium-{family}-v{successor}.yaml").read_bytes()
         )
         changed = []
         for name, definition in before["node_definitions"].items():

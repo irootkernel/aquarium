@@ -54,7 +54,7 @@ Follow native source admission without weakening it: regular files only, whole-s
 The agent that will select the transport or start the review must first load the
 installed `$use-mulgae` skill in its own execution context and follow its
 same-release instructions. Naming the skill or loading it only in a coordinator
-does not load it for a delegated worker. Already loaded guidance may be reused
+does not load it for a delegated executor. Already loaded guidance may be reused
 while its version, scope, and relevant state remain applicable. If the skill or
 a required capability is missing, use the prerequisite and fallback contracts
 below; do not reconstruct a Mulgae lifecycle from memory or Aquarium examples.

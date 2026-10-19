@@ -39,6 +39,42 @@ def test_schemas_and_canonical_examples():
         assert adaptive.canonical_json(value) == path.read_bytes()
 
 
+@pytest.mark.parametrize(
+    "name", ["documentation.binding.json", "documentation.fragment.json"]
+)
+def test_retained_definitions_preserve_identity_and_reject_mixed_role_domains(name):
+    path = ROOT / "tests/fixtures/adaptive-v1" / name
+    legacy = adaptive.parse_definition(path.read_bytes())
+    assert adaptive.canonical_json(legacy) == path.read_bytes()
+    current = example(name)
+    if "nodes" in legacy:
+        assert adaptive.native_key(legacy) == tuple(
+            legacy["procedure"][key] for key in ("id", "version", "digest")
+        )
+        legacy["nodes"]["write"]["role"] = "executor"
+        current["nodes"]["write"]["role"] = "worker"
+        for value in (legacy, current):
+            with pytest.raises(adaptive.DefinitionError):
+                adaptive.validate_definition(value)
+    else:
+        assert legacy["schema"] == "aquarium.procedure-fragment/v1"
+        assert current["schema"] == "aquarium.procedure-fragment/v2"
+
+
+def test_current_qualification_keeps_retained_bindings_on_their_original_contract(
+    monkeypatch,
+):
+    monkeypatch.syspath_prepend(str(PLUGIN / "shared"))
+    from adaptive_qualification import qualify
+
+    raw = (ROOT / "tests/fixtures/adaptive-v1/documentation.binding.json").read_bytes()
+    binding = adaptive.parse_definition(raw)
+    result = qualify({}, binding)
+    assert result["status"] == "incompatible"
+    assert {issue["property"] for issue in result["issues"]} == {"retained-contract"}
+    assert adaptive.canonical_json(binding) == raw
+
+
 def test_canonical_identity_preserves_unicode_and_array_order():
     assert adaptive.canonical_json({"z": "한글", "a": [2, 1]}) == (
         '{"a":[2,1],"z":"한글"}'.encode()
@@ -113,20 +149,20 @@ def test_fragments_exclude_parent_goal_and_require_local_boundaries():
 
 @pytest.mark.parametrize("family", ["task", "goal", "validation", "design", "war-room"])
 def test_canonical_final_assessment_positive_control(family):
-    definition = source(family)["node_definitions"]["final-judge-assessment-record"]
+    definition = source(family)["node_definitions"]["final-evaluator-assessment-record"]
     signature = (
         "aquarium."
         + ("diagnosis" if family == "war-room" else family)
-        + ".final-assessment/v1"
+        + ".final-assessment/v2"
     )
     assert adaptive.check_capability(definition, signature)["status"] == "compatible"
     wrong = copy.deepcopy(definition)
-    next(i for i in wrong["items"] if i["id"] == "judge-verdict")["type"] = "text"
+    next(i for i in wrong["items"] if i["id"] == "evaluator-verdict")["type"] = "text"
     assert adaptive.check_capability(wrong, signature)["status"] == "incompatible"
 
 
 def test_namespaces_typed_aliases_and_extra_bookkeeping_are_supported():
-    definition = source("task")["node_definitions"]["final-judge-assessment-record"]
+    definition = source("task")["node_definitions"]["final-evaluator-assessment-record"]
     aliases = {item["id"]: "typed-" + item["id"] for item in definition["items"]}
     for item in definition["items"]:
         item["id"] = aliases[item["id"]]
@@ -134,26 +170,26 @@ def test_namespaces_typed_aliases_and_extra_bookkeeping_are_supported():
         {"id": "unrelated-note", "type": "text", "required": False}
     )
     result = adaptive.check_capability(
-        definition, "aquarium.task.final-assessment/v1", aliases
+        definition, "aquarium.task.final-assessment/v2", aliases
     )
     assert result["status"] == "compatible"
-    aliases["judge-verdict"] = aliases["judge-assessment"]
+    aliases["evaluator-verdict"] = aliases["evaluator-assessment"]
     assert (
         adaptive.check_capability(
-            definition, "aquarium.task.final-assessment/v1", aliases
+            definition, "aquarium.task.final-assessment/v2", aliases
         )["status"]
         == "incompatible"
     )
 
 
 def test_negative_results_record_but_unrelated_pass_only_checks_are_allowed():
-    definition = source("task")["node_definitions"]["final-judge-assessment-record"]
+    definition = source("task")["node_definitions"]["final-evaluator-assessment-record"]
     applicability = next(
-        i for i in definition["items"] if i["id"] == "judge-applicability"
+        i for i in definition["items"] if i["id"] == "evaluator-applicability"
     )
     applicability["accepted_outcomes"] = ["pass"]
     assert (
-        adaptive.check_capability(definition, "aquarium.task.final-assessment/v1")[
+        adaptive.check_capability(definition, "aquarium.task.final-assessment/v2")[
             "status"
         ]
         == "incompatible"
@@ -163,7 +199,7 @@ def test_negative_results_record_but_unrelated_pass_only_checks_are_allowed():
         {"id": "unrelated-check", "type": "check_result", "accepted_outcomes": ["pass"]}
     )
     assert (
-        adaptive.check_capability(definition, "aquarium.task.final-assessment/v1")[
+        adaptive.check_capability(definition, "aquarium.task.final-assessment/v2")[
             "status"
         ]
         == "compatible"
@@ -171,20 +207,20 @@ def test_negative_results_record_but_unrelated_pass_only_checks_are_allowed():
 
 
 def test_unknown_operations_are_not_established_and_explicit_extensions_work():
-    definition = source("task")["node_definitions"]["final-judge-assessment-record"]
+    definition = source("task")["node_definitions"]["final-evaluator-assessment-record"]
     signature = "aquarium.example.changed-assessment/v1"
     assert (
         adaptive.check_capability(definition, signature)["status"] == "not-established"
     )
     registry = {
-        signature: adaptive.capability_signatures()["aquarium.task.final-assessment/v1"]
+        signature: adaptive.capability_signatures()["aquarium.task.final-assessment/v2"]
     }
     assert (
         adaptive.check_capability(definition, signature, signatures=registry)["status"]
         == "compatible"
     )
     applicability = next(
-        i for i in definition["items"] if i["id"] == "judge-applicability"
+        i for i in definition["items"] if i["id"] == "evaluator-applicability"
     )
     applicability["operation_digest"] = "sha256:" + "0" * 64
     assert (
@@ -204,7 +240,8 @@ def test_binding_rejects_unknown_boundary_without_inventing_goal_success():
         adaptive.validate_definition(value)
 
 
-def test_reference_registry_matches_current_native_operation_declarations():
+def test_reference_registry_matches_current_native_operation_declarations(monkeypatch):
+    monkeypatch.syspath_prepend(str(PLUGIN / "shared"))
     families = {"diagnosis": "war-room"}
     for name in adaptive.capability_signatures():
         family = name.split(".")[1]
@@ -249,10 +286,12 @@ def test_unchanged_foreign_native_versions_are_preserved():
     assert adaptive.native_key(value)[1] == "release-a"
 
 
-def test_worker_handoff_label_cannot_supply_assessment_signature():
-    worker = source("goal")["node_definitions"]["work-record"]
+def test_executor_handoff_label_cannot_supply_assessment_signature():
+    executor = source("goal")["node_definitions"]["work-record"]
     assert (
-        adaptive.check_capability(worker, "aquarium.goal.final-assessment/v1")["status"]
+        adaptive.check_capability(executor, "aquarium.goal.final-assessment/v2")[
+            "status"
+        ]
         == "incompatible"
     )
 
@@ -270,7 +309,7 @@ def test_native_goal_mapping_and_shared_closeout_are_representable(family):
     value["nodes"] = {
         node["id"]: {
             "kind": native["node_definitions"][node["use"]]["type"],
-            "role": "orchestrator",
+            "role": "coordinator",
             "effects": [],
             "capabilities": [],
         }
@@ -310,22 +349,24 @@ def test_selected_provider_and_unused_outcome_specializations_are_supported():
         elif item["id"] == "prior-review-route":
             item["choices"] = ["not-applicable", "herdr"]
     assert (
-        adaptive.check_capability(review, "aquarium.goal.review-routing/v1")["status"]
+        adaptive.check_capability(review, "aquarium.goal.review-routing/v2")["status"]
         == "compatible"
     )
-    final = source("goal")["node_definitions"]["final-judge-assessment-record"]
-    next(i for i in final["items"] if i["id"] == "judge-goal-outcome")["choices"] = [
+    final = source("goal")["node_definitions"]["final-evaluator-assessment-record"]
+    next(i for i in final["items"] if i["id"] == "evaluator-goal-outcome")[
+        "choices"
+    ] = [
         "achieved",
         "not-achieved",
     ]
     assert (
-        adaptive.check_capability(final, "aquarium.goal.final-assessment/v1")["status"]
+        adaptive.check_capability(final, "aquarium.goal.final-assessment/v2")["status"]
         == "compatible"
     )
     approval = source("goal")["node_definitions"]["approval-decision"]
     approval["options"] = [o for o in approval["options"] if o["id"] != "delegated"]
     assert (
-        adaptive.check_capability(approval, "aquarium.goal.approval/v1")["status"]
+        adaptive.check_capability(approval, "aquarium.goal.approval/v2")["status"]
         == "compatible"
     )
 
@@ -337,13 +378,13 @@ def test_changed_conditional_requirement_needs_proof_but_stronger_requirement_ma
     )
     item["required_when"] = [{"item": "another-selector", "equals": "review"}]
     assert (
-        adaptive.check_capability(review, "aquarium.goal.review-control/v1")["status"]
+        adaptive.check_capability(review, "aquarium.goal.review-control/v2")["status"]
         == "not-established"
     )
     item["required"] = True
     item.pop("required_when")
     assert (
-        adaptive.check_capability(review, "aquarium.goal.review-control/v1")["status"]
+        adaptive.check_capability(review, "aquarium.goal.review-control/v2")["status"]
         == "compatible"
     )
 
@@ -365,7 +406,9 @@ def test_origin_versions_preserve_foreign_sources_and_parameters_exclude_run_val
 
 
 @pytest.mark.parametrize("family", ["task", "goal", "validation", "design", "war-room"])
-def test_every_required_canonical_judge_and_quality_operation_has_a_signature(family):
+def test_every_required_canonical_evaluator_and_quality_operation_has_a_signature(
+    family,
+):
     registry = adaptive.capability_signatures()
     bound_family = "diagnosis" if family == "war-room" else family
     quality_operations = {"aquarium-design-quality", "aquarium-diagnostic-quality"}
@@ -373,7 +416,7 @@ def test_every_required_canonical_judge_and_quality_operation_has_a_signature(fa
         items = definition.get("items", [])
         operations = {i["operation_id"] for i in items if "operation_id" in i}
         if (
-            not any(i["id"] == "judge-assessment" for i in items)
+            not any(i["id"] == "evaluator-assessment" for i in items)
             and not operations & quality_operations
         ):
             continue
@@ -392,12 +435,14 @@ def test_every_required_canonical_judge_and_quality_operation_has_a_signature(fa
         assert operations <= matched_operations, operations - matched_operations
 
 
-@pytest.mark.parametrize("field", ["judge-unmet-criteria", "judge-unverified-criteria"])
+@pytest.mark.parametrize(
+    "field", ["evaluator-unmet-criteria", "evaluator-unverified-criteria"]
+)
 @pytest.mark.parametrize("maximum", [0, 1, 7])
 def test_mandatory_gap_capacity_needs_exact_proof(field, maximum):
-    definition = source("task")["node_definitions"]["final-judge-assessment-record"]
+    definition = source("task")["node_definitions"]["final-evaluator-assessment-record"]
     next(i for i in definition["items"] if i["id"] == field)["maximum"] = maximum
-    signature = "aquarium.task.final-assessment/v1"
+    signature = "aquarium.task.final-assessment/v2"
     assert (
         adaptive.check_capability(definition, signature)["status"] == "not-established"
     )
@@ -467,7 +512,7 @@ def test_approval_negative_controls(mutation):
     else:
         definition["reason"]["required"] = False
     assert (
-        adaptive.check_capability(definition, "aquarium.goal.approval/v1")["status"]
+        adaptive.check_capability(definition, "aquarium.goal.approval/v2")["status"]
         == "incompatible"
     )
 
@@ -511,7 +556,7 @@ def test_acceptance_and_review_declaration_negative_controls(
         item for item in declaration["items"] if item["id"] != field
     ]
     assert (
-        adaptive.check_capability(declaration, f"aquarium.goal.{capability}/v1")[
+        adaptive.check_capability(declaration, f"aquarium.goal.{capability}/v2")[
             "status"
         ]
         == "incompatible"

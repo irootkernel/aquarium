@@ -8,57 +8,57 @@ node_definitions:
   assess:
     type: action
     title: Assess the current candidate
-    intent: Obtain the retained report-only Judge assessment of original criteria and exact evidence.
+    intent: Obtain the retained report-only Evaluator assessment of original criteria and exact evidence.
     instructions:
-      - Supply node-specific objective, purpose, instructions, complete canonical criteria and selected original evidence to the logical Judge when supported, or a fresh independent replacement supplied the complete original evidence and current authority.
-      - Record the complete applicable aquarium.judge-assessment/v2 from the independent native Judge, check coverage and current candidate applicability, then complete this ordinary Action with current fences. Do not recursively judge the report or fabricate native receipts.
+      - Supply node-specific objective, purpose, instructions, complete canonical criteria and selected original evidence to the logical Evaluator when supported, or a fresh independent replacement supplied the complete original evidence and current authority.
+      - Record the complete applicable aquarium.evaluator-assessment/v3 from the independent native Evaluator, check coverage and current candidate applicability, then complete this ordinary Action with current fences. Do not recursively evaluate the report or fabricate native receipts.
       - Missing original criteria, changed targets, missing required result or authority evidence, or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
-      - Reuse an existing complete final assessment only when its actual checkpoint coverage, candidate, original criteria, required checks and authority remain applicable. The Primary records that applicability without another Judge dispatch. Otherwise obtain a fresh independent assessment; never relabel a phase-only report as final or reuse a negative report as pass after correction.
+      - Reuse an existing complete final assessment only when its actual checkpoint coverage, candidate, original criteria, required checks and authority remain applicable. The Coordinator records that applicability without another Evaluator dispatch. Otherwise obtain a fresh independent assessment; never relabel a phase-only report as final or reuse a negative report as pass after correction.
       - Assess the coherent assigned phase from original artifacts, not report fidelity alone. Preserve due obligations, future global gaps and the original negative-result router. Use current native harness agents with available public handles, without private executor or model/configuration qualification.
     items:
-      - id: judge-assessment
+      - id: evaluator-assessment
         type: artifact
-        prompt: Reference the complete aquarium.judge-assessment/v2 report and its exact digest; Podway stores metadata only.
+        prompt: Reference the complete aquarium.evaluator-assessment/v3 report and its exact digest; Podway stores metadata only.
         required: true
         allowed_media_types:
           - application/json
-      - id: judge-verdict
+      - id: evaluator-verdict
         type: choice
-        prompt: Record the Judge verdict.
+        prompt: Record the Evaluator verdict.
         required: true
         choices:
           - pass
           - rework
           - evidence-needed
-      - id: judge-unmet-criteria
+      - id: evaluator-unmet-criteria
         type: integer
         prompt: Count mandatory unmet criteria, including omitted original criteria.
         required: true
         minimum: 0
-      - id: judge-unverified-criteria
+      - id: evaluator-unverified-criteria
         type: integer
         prompt: Count mandatory unverified criteria, including incomplete compound criteria.
         required: true
         minimum: 0
-      - id: judge-applicability
+      - id: evaluator-applicability
         type: check_result
-        prompt: Record the caller-supplied result for aquarium-task-judge-applicability against its complete declared operation. Podway does not execute or attest this check.
-        help: Verify complete original criterion coverage and all due obligations against current original evidence, candidate, requirement and check basis, actual independent Judge role, assigned work and result evidence and applicable authority. Reconcile Procedure, node, attempt and goal revision when applicable, and record available public native handles with unknowns explicit. A supported replacement Judge may establish current applicability from this evidence; private executor history, model telemetry and configuration digests are not prerequisites.
+        prompt: Record the caller-supplied result for aquarium-task-evaluator-applicability against its complete declared operation. Podway does not execute or attest this check.
+        help: Verify complete original criterion coverage and all due obligations against current original evidence, candidate, requirement and check basis, actual independent Evaluator role, assigned work and result evidence and applicable authority. Reconcile Procedure, node, attempt and goal revision when applicable, and record available public native handles with unknowns explicit. A supported replacement Evaluator may establish current applicability from this evidence; private executor history, model telemetry and configuration digests are not prerequisites.
         required: true
-        operation_id: aquarium-task-judge-applicability
-        operation_digest: sha256:ae4b16d70b5adf24b317a8d4d8522b5d1ae5b830e1c9ff03d170905bd5082f0b
+        operation_id: aquarium-task-evaluator-applicability
+        operation_digest: sha256:f74e040a04f96cabdba99e81e5473d6053af190516b7a61ed268d198468536ce
         accepted_outcomes:
           - pass
           - fail
           - inconclusive
-      - id: judge-summary
+      - id: evaluator-summary
         type: text
         prompt: Record criterion rows, original sources, evidence gaps, applicable parent constraints, technical-review limitations, remaining authority, and proposed correction or evidence owner.
         required: true
         min_length: 1
         max_length: 4000
         multiline: true
-      - id: judge-goal-outcome
+      - id: evaluator-goal-outcome
         type: choice
         prompt: Record the exact final goal outcome; explicit stopped paths cannot be achieved.
         required: true
@@ -79,19 +79,19 @@ node_definitions:
         guards:
           - evidence:
               node: assess
-              item: judge-goal-outcome
+              item: evaluator-goal-outcome
             equals: achieved
           - evidence:
               node: assess
-              item: judge-verdict
+              item: evaluator-verdict
             equals: pass
           - evidence:
               node: assess
-              item: judge-unmet-criteria
+              item: evaluator-unmet-criteria
             equals: 0
           - evidence:
               node: assess
-              item: judge-unverified-criteria
+              item: evaluator-unverified-criteria
             equals: 0
       - id: stopped
         label: stopped
@@ -99,7 +99,7 @@ node_definitions:
         guards:
           - evidence:
               node: assess
-              item: judge-goal-outcome
+              item: evaluator-goal-outcome
             equals: stopped
       - id: not-achieved
         label: not-achieved
@@ -107,7 +107,7 @@ node_definitions:
         guards:
           - evidence:
               node: assess
-              item: judge-goal-outcome
+              item: evaluator-goal-outcome
             equals: not-achieved
       - id: superseded
         label: superseded
@@ -115,7 +115,7 @@ node_definitions:
         guards:
           - evidence:
               node: assess
-              item: judge-goal-outcome
+              item: evaluator-goal-outcome
             equals: superseded
     reason:
       required: true
@@ -151,19 +151,19 @@ node_definitions:
         guards:
           - evidence:
               node: assess
-              item: judge-verdict
+              item: evaluator-verdict
             equals: pass
           - evidence:
               node: assess
-              item: judge-unmet-criteria
+              item: evaluator-unmet-criteria
             equals: 0
           - evidence:
               node: assess
-              item: judge-unverified-criteria
+              item: evaluator-unverified-criteria
             equals: 0
           - evidence:
               node: assess
-              item: judge-applicability
+              item: evaluator-applicability
             field: outcome
             equals: pass
       - id: not-current
@@ -184,7 +184,7 @@ node_definitions:
         guards:
           - evidence:
               node: assess
-              item: judge-goal-outcome
+              item: evaluator-goal-outcome
             equals: achieved
       - id: other-outcome
         label: other-outcome
@@ -192,7 +192,7 @@ node_definitions:
         guards:
           - evidence:
               node: assess
-              item: judge-goal-outcome
+              item: evaluator-goal-outcome
             not_equals: achieved
     reason:
       required: true
@@ -209,12 +209,12 @@ graph:
         - node: assess
           required: true
           items:
-            - judge-assessment
-            - judge-verdict
-            - judge-unmet-criteria
-            - judge-unverified-criteria
-            - judge-applicability
-            - judge-goal-outcome
+            - evaluator-assessment
+            - evaluator-verdict
+            - evaluator-unmet-criteria
+            - evaluator-unverified-criteria
+            - evaluator-applicability
+            - evaluator-goal-outcome
       routes:
         achieved:
           to: assessment-current
@@ -228,12 +228,12 @@ graph:
         - node: assess
           required: true
           items:
-            - judge-assessment
-            - judge-verdict
-            - judge-unmet-criteria
-            - judge-unverified-criteria
-            - judge-applicability
-            - judge-goal-outcome
+            - evaluator-assessment
+            - evaluator-verdict
+            - evaluator-unmet-criteria
+            - evaluator-unverified-criteria
+            - evaluator-applicability
+            - evaluator-goal-outcome
       routes:
         current:
           to: outcome
@@ -247,12 +247,12 @@ graph:
         - node: assess
           required: true
           items:
-            - judge-assessment
-            - judge-verdict
-            - judge-unmet-criteria
-            - judge-unverified-criteria
-            - judge-applicability
-            - judge-goal-outcome
+            - evaluator-assessment
+            - evaluator-verdict
+            - evaluator-unmet-criteria
+            - evaluator-unverified-criteria
+            - evaluator-applicability
+            - evaluator-goal-outcome
       routes:
         achieved:
           to: closeout

@@ -28,7 +28,7 @@ keeps setup degraded until its owner approves an exact update.
 Use the [Herdr migration runbook](../ops/herdr-migration.md) for Orca-era sources
 and snapshots. Updating source files affects successors only; preserve old
 evidence and custom bytes, reject retired dispatch, and establish a legacy
-worker's safe state before an authorized transition. Current source identity,
+executor's safe state before an authorized transition. Current source identity,
 native validity, handler compatibility and route membership remain separate.
 
 Podway v0.2.14 permits at most 1,024 definitions and 1,024 graph placements, eight `evidence_from` references per placement, and 16 items per reference. Split a large selection into multiple references for the same source node while staying within both reference limits; otherwise keep a single reference.
@@ -72,7 +72,7 @@ Offer useful whole/fragment preservation at closeout after successful use. Apply
 only the specifically accepted library diff after original finalization. Content
 consent and its separate promotion commit grant may be requested together; broad
 or consumed original-work grants do not cover promotion. Revalidate transformed
-definitions and state their runtime limits. Preservation adds no mandatory Judge
+definitions and state their runtime limits. Preservation adds no mandatory Evaluator
 round.
 
 ## Compatibility Evidence

@@ -216,18 +216,18 @@ def authored(performance=False):
         "graph": {"entry": entry, "nodes": nodes},
     }
     mapping = {
-        "schema": "aquarium.procedure-binding/v1",
-        "compatibility": "aquarium.adaptive/v1",
+        "schema": "aquarium.procedure-binding/v2",
+        "compatibility": "aquarium.adaptive/v2",
         "family": "task",
         "entrypoints": ["task-handler"],
         "nodes": {
             node["id"]: {
                 "kind": defs[node["use"]]["type"],
-                "role": "judge"
+                "role": "evaluator"
                 if node["id"] == "assess"
-                else "worker"
+                else "executor"
                 if node["id"] in {"measure", "deliver"}
-                else "orchestrator",
+                else "coordinator",
                 "effects": ["work"] if node["id"] in {"measure", "deliver"} else [],
                 "capabilities": [],
             }
@@ -289,8 +289,8 @@ def assignment(repository, *, mode="plan-only", performance=False):
         for part in row.get("parts", [{"id": "whole", "text": row["text"]}])
     ]
     return {
-        "schema": "aquarium.assignment/v2",
-        "role": "worker",
+        "schema": "aquarium.assignment/v3",
+        "role": "executor",
         "purpose": "Prepare the exact work definition",
         "instructions": "Preserve original criteria and authority; do no product work.",
         "checkpoint": "Before independent suitability qualification",
@@ -440,6 +440,42 @@ def test_plan_only_never_writes_or_calls_native(repository):
         else ("directory", None)
         for path in repository.rglob("*")
     }
+
+
+@pytest.mark.parametrize(
+    "contract",
+    [
+        {"schema": "aquarium.procedure-binding/v1"},
+        {"compatibility": "aquarium.adaptive/v1"},
+    ],
+)
+def test_current_preparation_refuses_retained_draft_contract(repository, contract):
+    value = assignment(repository, mode="prepare")
+    value["target"]["procedure_plan"]["drafts"][0]["mapping"].update(contract)
+    client = Oracle(repository)
+    before = {
+        path: path.read_bytes() for path in repository.rglob("*") if path.is_file()
+    }
+    assert_code(
+        "retained-contract", lambda: prep.prepare(repository, value, client=client)
+    )
+    client.read.assert_not_called()
+    client.health.assert_not_called()
+    assert before == {
+        path: path.read_bytes() for path in repository.rglob("*") if path.is_file()
+    }
+
+
+def test_current_selection_records_retained_candidate_without_reusing_it(repository):
+    value = assignment(repository)
+    path = known_candidate(repository, value)
+    source = (ROOT / "tests/fixtures/aquarium-task-v33.yaml").read_bytes()
+    path.write_bytes(source)
+    plan = value["target"]["procedure_plan"]
+    plan["candidates"][0]["sha256"] = bundles.sha256(source)
+    result = prep.select(repository, value)
+    assert result["kind"] == "author"
+    assert any(row["status"] == "retained-contract" for row in result["considered"])
 
 
 def test_known_reuse_precedes_generation_without_exhaustive_optional_dispositions(
@@ -851,7 +887,7 @@ def test_typed_review_route_alias_is_supported_without_claiming_control_continui
     )
     draft["mapping"]["nodes"]["deliver"]["capabilities"] = [
         {
-            "signature": "aquarium.task.review-routing/v1",
+            "signature": "aquarium.task.review-routing/v2",
             "fields": {"effective-review-route": "selected-provider"},
         }
     ]
@@ -1080,7 +1116,7 @@ def test_authoring_checks_require_supported_result_schemas(repository):
 
 
 @pytest.mark.parametrize(
-    "invalid", [None, [], {"schema": "aquarium.assignment/v2", "role": "judge"}]
+    "invalid", [None, [], {"schema": "aquarium.assignment/v3", "role": "evaluator"}]
 )
 def test_library_rejects_invalid_ordinary_assignment_without_attribute_errors(
     repository, invalid
@@ -1146,7 +1182,7 @@ def test_actual_mapped_route_contradiction_rejects_at_owning_placement(repositor
     draft = value["target"]["procedure_plan"]["drafts"][0]
     draft["mapping"]["nodes"]["deliver"]["capabilities"] = [
         {
-            "signature": "aquarium.task.review-routing/v1",
+            "signature": "aquarium.task.review-routing/v2",
             "fields": {"effective-review-route": "provider"},
         }
     ]
@@ -1684,12 +1720,12 @@ def test_identical_known_candidate_reuses_existing_exact_bundle(repository):
     )
 
 
-def test_valid_judge_assignment_reaches_worker_role_boundary(repository):
+def test_valid_evaluator_assignment_reaches_executor_role_boundary(repository):
     value = assignment(repository)
-    value["role"] = "judge"
+    value["role"] = "evaluator"
     spec = importlib.util.spec_from_file_location(
         "role_boundary_assignment",
-        ROOT / "plugins/aquarium/skills/goal-judge/scripts/ordinary_assignment.py",
+        ROOT / "plugins/aquarium/skills/goal-evaluator/scripts/ordinary_assignment.py",
     )
     validator = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(validator)

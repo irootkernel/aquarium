@@ -19,7 +19,7 @@ import pytest
 
 SCRIPT = (
     Path(__file__).parents[2]
-    / "plugins/aquarium/skills/goal-judge/scripts/read_codex_thread.py"
+    / "plugins/aquarium/skills/goal-evaluator/scripts/read_codex_thread.py"
 )
 SPEC = importlib.util.spec_from_file_location("read_codex_thread", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None

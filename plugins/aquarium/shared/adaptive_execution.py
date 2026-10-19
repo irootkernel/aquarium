@@ -35,25 +35,25 @@ TASK_SKILLS = {
 }
 # Exact reference leaf ownership, independent of mutable origin source files.
 REFERENCE_OPERATION_PHASES = {
-    "sha256:21646cf39875e15c523250a1b4952f8ddb51a3bef5ae4707c36b6498c2b1dbe6": [
+    "sha256:6f92e3c26ea47b4e2ab99bbb0709df1f3ad4faa048715fa02cf42dedab2d425a": [
         "task-review"
     ],
-    "sha256:d43fd605b6f031c14ba26c43122aa1c96c05e03deec33f4746bcd342c8bfe9e3": [
+    "sha256:0e353dfe8d9a4d25286d0235542649d4336b942bb29d8b486882f34c9d909604": [
         "task-plan"
     ],
     "sha256:652053b65846fea7e59961be6eefaee7f283edc98f83d7f26c66a62ad6b9dbb2": [
         "task-plan"
     ],
-    "sha256:aa00c5804c7bea07b4f9d7fb9ebe03f438ea181334e2bc4e1b5f42519df4dc10": [
+    "sha256:88562a5dc9e61f944614f110d2b36d2bd05cb7dfe1d821634aca30dfd330147a": [
         "task-implement"
     ],
-    "sha256:b2aaa79f9216a76ce57c9d4ecf37554a38aba0d3c756bd64ce56bb3bd5c2f0d7": [
+    "sha256:ccb3fb0a1e778f9ee2fd62cb9b9a238f29fe1ad56c541b65bb2144c04c2cf7ad": [
         "task-refine"
     ],
-    "sha256:1c801c722d3b2a553fc85f096e05f07c25b36a19a397fc07172c033b1ccc38d4": [
+    "sha256:b466695fa1366eb1d3d217b1592eb6818afbe42d943c07109e1b1ea8c843873a": [
         "task-verify"
     ],
-    "sha256:81e0975adc3169dfa5a6b600579be132136f482b964740e2f960db5280b237a3": [
+    "sha256:98245f4d1520d2a8a99eb6c2baadb71d6e6c2b2f853202b5736427fcd2b8c6ff": [
         "task-document"
     ],
     "sha256:435045d71cd11c7f7f1143f5c5a3918864ebef810dcdac17b9000d2be9dbbb42": [
@@ -65,7 +65,7 @@ REFERENCE_OPERATION_PHASES = {
 def ordinary(assignment):
     path = (
         Path(__file__).resolve().parents[1]
-        / "skills/goal-judge/scripts/ordinary_assignment.py"
+        / "skills/goal-evaluator/scripts/ordinary_assignment.py"
     )
     spec = importlib.util.spec_from_file_location("adaptive_ordinary_assignment", path)
     module = importlib.util.module_from_spec(spec)
@@ -324,6 +324,11 @@ def execution_context(
         source_reader=source_reader,
     )
     binding = resolved["binding"]
+    if binding["schema"] != "aquarium.procedure-binding/v2":
+        raise BundleError(
+            "retained-contract",
+            "Continue the retained definition with its supported original release contract",
+        )
     if (
         binding["family"] not in ACTIVATED[entrypoint]
         or entrypoint not in binding["entrypoints"]
@@ -367,7 +372,7 @@ def execution_context(
         ),
         "dispatch": None,
         "phase_skills": [],
-        "next_owner": "Primary",
+        "next_owner": "Coordinator",
         "limits": [
             "Caller verifies actual work identity, pending effects and current authority before acting.",
             "Native declarations and records do not establish independent execution or actual approval.",
@@ -409,7 +414,7 @@ def execution_context(
         )
         selected_assessment(binding, recovery, affected_assessment)
         result["status"] = "finalization-resolved"
-        result["next_owner"] = "Primary finalization/disposition"
+        result["next_owner"] = "Coordinator finalization/disposition"
         result["limits"].append(
             "Approved source retirement recovery permits no product dispatch and establishes no achievement."
         )
@@ -421,7 +426,7 @@ def execution_context(
     if lifecycle in {"completed", "cancelled"}:
         result["status"] = "terminal-resolved"
         result["next_owner"] = (
-            "Primary finalization/disposition or approved normal successor"
+            "Coordinator finalization/disposition or approved normal successor"
         )
         return checked(result)
     guidance = observation.get("guidance")
@@ -481,8 +486,8 @@ def execution_context(
     if handoff and handoff["status"] in {"attachment-required", "stop-before-work"}:
         result["status"] = handoff["status"]
         return checked(result)
-    if declaration["role"] == "orchestrator" or declaration["kind"] == "decision":
-        result["status"] = "primary-owned"
+    if declaration["role"] == "coordinator" or declaration["kind"] == "decision":
+        result["status"] = "coordinator-owned"
         return checked(result)
     dispatched = copy.deepcopy(assignment)
     dispatched.update(
@@ -542,7 +547,7 @@ def execution_context(
         ):
             dispatched["authority"]["effects"] = []
             dispatched["authority"]["excluded"].append("Document application")
-    if declaration["role"] == "judge":
+    if declaration["role"] == "evaluator":
         dispatched["authority"]["effects"] = []
         dispatched["authority"]["allowed"] = [
             "Independent report-only assessment of the assigned due checkpoint"
@@ -740,7 +745,7 @@ def handoff_context(
         artifact = page["page"]["data"]
     elif node in boundaries or (
         node in frontier["after_first_work"]
-        and binding["nodes"][node]["role"] in {"worker", "judge"}
+        and binding["nodes"][node]["role"] in {"executor", "evaluator"}
     ):
         if runtime["mode"] == "plan-handoff" and node not in boundaries:
             raise BundleError(

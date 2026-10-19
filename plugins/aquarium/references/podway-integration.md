@@ -68,7 +68,7 @@ For Orca-era sources and snapshots, distinguish recognized provenance, native
 validity, complete handler compatibility and selected-route membership. Preserve
 custom source bytes and session snapshots; prior-source identity alone cannot
 admit a new checkpoint. Use [herdr-migration.md](herdr-migration.md) for legacy
-worker handling and an exact, separately approved repository update.
+executor handling and an exact, separately approved repository update.
 
 ## Keep Authorities Separate
 

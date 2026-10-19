@@ -1,6 +1,0 @@
-interface:
-  display_name: "Goal Judge"
-  short_description: "Assess canonical goals from original evidence"
-  default_prompt: "Use $aquarium:goal-judge to assess the assigned exact candidate against canonical criteria and original evidence, and return a report-only assessment."
-policy:
-  allow_implicit_invocation: true

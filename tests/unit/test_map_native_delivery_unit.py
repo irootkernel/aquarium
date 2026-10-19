@@ -12,7 +12,7 @@ import pytest
 
 SCRIPT = (
     Path(__file__).parents[2]
-    / "plugins/aquarium/skills/goal-judge/scripts/map_native_delivery.py"
+    / "plugins/aquarium/skills/goal-evaluator/scripts/map_native_delivery.py"
 )
 SPEC = importlib.util.spec_from_file_location("map_native_delivery", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None

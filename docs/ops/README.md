@@ -13,7 +13,7 @@ reporting, separately authorized release refresh, managed runtime diagnosis and
 repair, record-only retry, and exact approved row removal.
 
 The [Herdr migration runbook](herdr-migration.md) covers selected-route readiness,
-preserved Orca evidence and Procedure snapshots, safe legacy-worker handling,
+preserved Orca evidence and Procedure snapshots, safe legacy-executor handling,
 and separately authorized repository updates.
 
 ## Runbook Requirements

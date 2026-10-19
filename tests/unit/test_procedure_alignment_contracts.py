@@ -25,36 +25,36 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
     identities = (
         (
             "aquarium-task-v2.yaml",
-            "33",
-            "42c10cab6c412c5a63c8ebfde3f91e46b838ba999825989bb0c5bd7e64f4ee3f",
+            "34",
+            "7cb514e2c962893fd4afd1c13641ac75c4cf5315c3b3e6c69e054477ed7497b9",
             "aquarium-task-v32.yaml",
             "79a1430528934d2941551432703a68be28047bc3e8095bc52acf24c7a057466f",
         ),
         (
             "aquarium-goal-v2.yaml",
-            "36",
-            "28a5db7b520372b5b97685c1c9f9a8503e0680f530a016a3a4857645c1d56d3f",
+            "37",
+            "6898776733c5e5480c0052c79e0456a31f82efaace6965e5a622821371af2738",
             "aquarium-goal-v35.yaml",
             "99ae1a42372ec91c8de98cfc61e99c1defc4c99615610bd598c57418c01ea9b5",
         ),
         (
             "aquarium-validation-v2.yaml",
-            "35",
-            "e2eeb06b55b33abf48d2acae96eee675ffb57daf580280a8db1c1e5d66e26c93",
+            "36",
+            "0a66ed63eb689e94388ec7bf5163c13c1ac994b2f359f782b45cb23c5ca83fa1",
             "aquarium-validation-v34.yaml",
             "23ce1dff7afe24fc3e2aa0438db6e9c3b7a162f1e131061181018d5ec80a769a",
         ),
         (
             "aquarium-design-v2.yaml",
-            "11",
-            "3ca2e4d6bd7506033a575eada996a15853334ec5e9570b86894e7ded28e94a08",
+            "12",
+            "962b64d89287050754e6ae9f16f13f1ed4300a4c624b51d1ea48b3daf5380398",
             "aquarium-design-v10.yaml",
             "932f0f1e9625a029c3d5a553ce82bd37856a57e119e612c9bd1e966cb488ccd0",
         ),
         (
             "aquarium-war-room-v2.yaml",
-            "11",
-            "07e0f59d3681b37584199ba94bb37a3c0d0ead7f527b1af934cac0202f13dcc9",
+            "12",
+            "a81bbfd4b1115df8672c0cdf408c29bd54a111cc6df850fd99c5a41bb263d937",
             "aquarium-war-room-v10.yaml",
             "e370766f3ef8e057b818eca42e2757844950b4536a3d7ac8c41624154ec41cd2",
         ),
@@ -68,6 +68,65 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
         assert (
             hashlib.sha256((FIXTURES / prior_name).read_bytes()).hexdigest()
             == prior_digest
+        )
+
+
+def test_role_rename_preserves_control_flow_and_immediate_prior_sources() -> None:
+    previous = {
+        "task": (
+            33,
+            "42c10cab6c412c5a63c8ebfde3f91e46b838ba999825989bb0c5bd7e64f4ee3f",
+        ),
+        "goal": (
+            36,
+            "28a5db7b520372b5b97685c1c9f9a8503e0680f530a016a3a4857645c1d56d3f",
+        ),
+        "validation": (
+            35,
+            "e2eeb06b55b33abf48d2acae96eee675ffb57daf580280a8db1c1e5d66e26c93",
+        ),
+        "design": (
+            11,
+            "3ca2e4d6bd7506033a575eada996a15853334ec5e9570b86894e7ded28e94a08",
+        ),
+        "war-room": (
+            11,
+            "07e0f59d3681b37584199ba94bb37a3c0d0ead7f527b1af934cac0202f13dcc9",
+        ),
+    }
+    narrative = {
+        "title",
+        "purpose",
+        "objective",
+        "prompt",
+        "help",
+        "label",
+        "criteria",
+        "evidence_guidance",
+        "instructions",
+        "intent",
+        "operation_digest",
+        "version",
+    }
+
+    def control(value):
+        if isinstance(value, dict):
+            return {
+                control(key): control(item)
+                for key, item in value.items()
+                if key not in narrative
+            }
+        if isinstance(value, list):
+            return [control(item) for item in value]
+        if isinstance(value, str):
+            return value.replace("evaluator", "judge").replace("executor", "worker")
+        return value
+
+    for family, (version, expected) in previous.items():
+        raw = (FIXTURES / f"aquarium-{family}-v{version}.yaml").read_bytes()
+        assert hashlib.sha256(raw).hexdigest() == expected
+        assert control(load_procedure(f"aquarium-{family}-v2.yaml")) == control(
+            yaml.safe_load(raw)
         )
 
 
@@ -375,7 +434,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
     graph = nodes(task)
 
-    assert graph["document"]["next"] == "judge-documentation"
+    assert graph["document"]["next"] == "evaluator-documentation"
     assert (
         graph["decide-documentation-assessment"]["routes"]["passed"]["to"]
         == "prepare-review"
@@ -457,7 +516,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
         assert set(graph[gate]["routes"]) == {"mulgae", "static-delegated", "waived"}
     assert graph["decide-backend-check"]["routes"] == {
         "non-failing": {
-            "to": "judge-review",
+            "to": "evaluator-review",
             "effect": "advance",
         },
         "failed": {
@@ -502,7 +561,7 @@ def test_task_review_uses_route_specific_serial_gates() -> None:
 
 def test_task_review_route_evidence_combinations_are_guarded() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
-    assert task["version"] == "33"
+    assert task["version"] == "34"
 
     evidence = options(task, "review-evidence-decision")
     provenance = options(task, "review-provenance-decision")
@@ -1732,7 +1791,7 @@ def test_validation_rework_authority_enters_remediation_before_reaudit() -> None
         "to": "remediate",
         "effect": "advance",
     }
-    assert graph["remediate"]["next"] == "judge-remediation"
+    assert graph["remediate"]["next"] == "evaluator-remediation"
     assert graph["decide-remediation-groups"]["routes"]["complete"]["to"] == (
         "decide-remediation-audit-authority"
     )
@@ -1870,7 +1929,7 @@ def test_validation_uses_serial_operation_completion_evidence_and_blocker_gates(
     )
     assert graph["decide-final-review-readiness"]["routes"] == {
         "passed": {
-            "to": "judge-validation-evidence",
+            "to": "evaluator-validation-evidence",
             "effect": "advance",
         },
         "incomplete": {
@@ -2110,7 +2169,7 @@ def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> N
                 (
                     "confirm-goal-assessment-core",
                     "prepare-goal-assessment",
-                    "judge-goal",
+                    "evaluator-goal",
                     "confirm-goal-assessment-applicability",
                     "assess-goal",
                     "record-outcome",
@@ -2122,7 +2181,7 @@ def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> N
                     "confirm-stopped-goal-boundary",
                     "confirm-stopped-goal-assessment-core",
                     "prepare-stopped-goal-assessment",
-                    "judge-stopped-goal",
+                    "evaluator-stopped-goal",
                     "confirm-stopped-goal-assessment-applicability",
                     "assess-stopped-goal",
                     "record-stopped-outcome",
@@ -2136,8 +2195,8 @@ def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> N
                 (
                     "confirm-goal-assessment-core",
                     "prepare-validation-assessment",
-                    "judge-validation",
-                    "confirm-judge-validation-applicability",
+                    "evaluator-validation",
+                    "confirm-evaluator-validation-applicability",
                     "assess-goal",
                     "record-outcome",
                     "approve-closeout",
@@ -2147,8 +2206,8 @@ def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> N
                     "record-stopped-goal-boundary",
                     "confirm-stopped-goal-assessment-core",
                     "prepare-stopped-validation-assessment",
-                    "judge-stopped-validation",
-                    "confirm-judge-stopped-validation-applicability",
+                    "evaluator-stopped-validation",
+                    "confirm-evaluator-stopped-validation-applicability",
                     "assess-stopped-goal",
                     "record-stopped-outcome",
                     "approve-stopped-closeout",
@@ -2165,13 +2224,13 @@ def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> N
                 ), f"{name}: {dominator} does not dominate {terminal}"
             for predecessor, node_id in pairwise(chain):
                 if name == "aquarium-goal-v2.yaml" and node_id in {
-                    "judge-goal",
-                    "judge-stopped-goal",
+                    "evaluator-goal",
+                    "evaluator-stopped-goal",
                 }:
                     assert predecessors[node_id] == {
                         predecessor,
                         "confirm-"
-                        + ("stopped-" if node_id == "judge-stopped-goal" else "")
+                        + ("stopped-" if node_id == "evaluator-stopped-goal" else "")
                         + "goal-assessment-applicability",
                     }
                 elif (
@@ -2188,8 +2247,8 @@ def test_task_070_closeout_paths_each_have_one_dominating_goal_assessment() -> N
                 ):
                     assert predecessor in predecessors[node_id]
                 elif name == "aquarium-validation-v2.yaml" and node_id in {
-                    "judge-validation",
-                    "judge-stopped-validation",
+                    "evaluator-validation",
+                    "evaluator-stopped-validation",
                 }:
                     assert predecessors[node_id] == {
                         predecessor,
@@ -2569,46 +2628,43 @@ def test_published_plugin_keeps_only_the_herdr_native_review_entrypoint() -> Non
     assert not (ROOT / "plugins/aquarium/references/orca-supervision.md").exists()
 
 
-def test_task_candidate_delivery_requires_a_separate_native_judge() -> None:
+def test_task_candidate_delivery_requires_a_separate_native_evaluator() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
     graph = nodes(task)
     checkpoints = (
-        ("record-plan", "judge-plan", "decide-plan-assessment"),
-        ("verify", "judge-verification", "decide-verification"),
-        ("document", "judge-documentation", "decide-documentation-assessment"),
-        ("review", "judge-review", "confirm-review-completion"),
-        ("prepare-task-assessment", "judge-task", "assess-goal"),
+        ("record-plan", "evaluator-plan", "decide-plan-assessment"),
+        ("verify", "evaluator-verification", "decide-verification"),
+        ("document", "evaluator-documentation", "decide-documentation-assessment"),
+        ("review", "evaluator-review", "confirm-review-completion"),
+        ("prepare-task-assessment", "evaluator-task", "assess-goal"),
         (
             "prepare-stopped-task-assessment",
-            "judge-stopped-task",
+            "evaluator-stopped-task",
             "assess-stopped-goal",
         ),
     )
-    for candidate, judge, decision in checkpoints:
-        for node_id, role in (
-            (candidate, "aquarium-worker/v1"),
-            (judge, "aquarium-goal-judge/v1"),
-        ):
+    for candidate, evaluator, decision in checkpoints:
+        for node_id in (candidate, evaluator):
             placement = graph[node_id]
             definition = task["node_definitions"][placement["use"]]
             assert definition["type"] == "action"
             assert "delegation" not in placement
         selected = {
             item
-            for source in graph[judge]["evidence_from"]
+            for source in graph[evaluator]["evidence_from"]
             if source["node"] == candidate and source["required"]
             for item in source.get("items", [])
         }
         assert (
             "candidate-evidence"
             if candidate.startswith("prepare-")
-            else "worker-handoff"
+            else "executor-handoff"
         ) in selected
-        assert judge not in reachable_nodes(
+        assert evaluator not in reachable_nodes(
             graph_edges(task), task["graph"]["entry"], without=candidate
         )
         assert decision not in reachable_nodes(
-            graph_edges(task), task["graph"]["entry"], without=judge
+            graph_edges(task), task["graph"]["entry"], without=evaluator
         )
     for placement in graph.values():
         if task["node_definitions"][placement["use"]]["type"] == "decision":
@@ -2624,38 +2680,41 @@ def test_task_semantic_pass_rejects_missing_stale_and_incomplete_reports() -> No
         ("documentation", "decide-documentation-assessment"),
         ("review", "confirm-review-completion"),
     ):
-        judge = "judge-" + suffix
+        evaluator = "evaluator-" + suffix
         actual = options(task, graph[decision]["use"])
         passing = actual["complete" if suffix == "review" else "passed"]
         values = {
-            (judge, "judge-applicability"): {"outcome": "pass"},
-            (judge, "judge-verdict"): "rework",
-            (judge, "judge-checkpoint-result"): {"outcome": "pass"},
-            (judge, "judge-unmet-criteria"): 1,
-            (judge, "judge-unverified-criteria"): 1,
+            (evaluator, "evaluator-applicability"): {"outcome": "pass"},
+            (evaluator, "evaluator-verdict"): "rework",
+            (evaluator, "evaluator-checkpoint-result"): {"outcome": "pass"},
+            (evaluator, "evaluator-unmet-criteria"): 1,
+            (evaluator, "evaluator-unverified-criteria"): 1,
         }
         assert guards_match(passing, values)
         assert not guards_match(passing, {})
-        for key in ((judge, "judge-applicability"), (judge, "judge-checkpoint-result")):
+        for key in (
+            (evaluator, "evaluator-applicability"),
+            (evaluator, "evaluator-checkpoint-result"),
+        ):
             missing = dict(values)
             del missing[key]
             assert not guards_match(passing, missing)
         for item, value in (
-            ("judge-applicability", {"outcome": "fail"}),
-            ("judge-applicability", {"outcome": "inconclusive"}),
-            ("judge-checkpoint-result", {"outcome": "fail"}),
-            ("judge-checkpoint-result", {"outcome": "inconclusive"}),
+            ("evaluator-applicability", {"outcome": "fail"}),
+            ("evaluator-applicability", {"outcome": "inconclusive"}),
+            ("evaluator-checkpoint-result", {"outcome": "fail"}),
+            ("evaluator-checkpoint-result", {"outcome": "inconclusive"}),
         ):
             rejected = dict(values)
-            rejected[judge, item] = value
+            rejected[evaluator, item] = value
             assert not guards_match(passing, rejected)
         correction = dict(values)
-        correction[judge, "judge-checkpoint-result"] = {"outcome": "fail"}
-        correction[judge, "judge-unmet-criteria"] = 1
+        correction[evaluator, "evaluator-checkpoint-result"] = {"outcome": "fail"}
+        correction[evaluator, "evaluator-unmet-criteria"] = 1
         assert guards_match(actual["rework"], correction)
         evidence = dict(values)
-        evidence[judge, "judge-checkpoint-result"] = {"outcome": "inconclusive"}
-        evidence[judge, "judge-unverified-criteria"] = 1
+        evidence[evaluator, "evaluator-checkpoint-result"] = {"outcome": "inconclusive"}
+        evidence[evaluator, "evaluator-unverified-criteria"] = 1
         assert guards_match(actual["evidence-needed"], evidence)
         assert (
             graph[decision]["routes"]["rework"]["to"]
@@ -2694,10 +2753,10 @@ def test_final_task_pass_is_exact_and_stopped_goal_cannot_achieve() -> None:
     task = load_procedure("aquarium-task-v2.yaml")
     actual = options(task, "goal-assessment")["achieved"]
     values = {
-        ("judge-task", "judge-goal-outcome"): "achieved",
-        ("judge-task", "judge-verdict"): "pass",
-        ("judge-task", "judge-unmet-criteria"): 0,
-        ("judge-task", "judge-unverified-criteria"): 0,
+        ("evaluator-task", "evaluator-goal-outcome"): "achieved",
+        ("evaluator-task", "evaluator-verdict"): "pass",
+        ("evaluator-task", "evaluator-unmet-criteria"): 0,
+        ("evaluator-task", "evaluator-unverified-criteria"): 0,
     }
     assert guards_match(actual, values)
     for key in values:
@@ -2716,7 +2775,7 @@ def test_final_task_pass_is_exact_and_stopped_goal_cannot_achieve() -> None:
         assert not guards_match(applicability, {})
         assert not guards_match(
             applicability,
-            {("judge-" + suffix, "judge-applicability"): {"outcome": "fail"}},
+            {("evaluator-" + suffix, "evaluator-applicability"): {"outcome": "fail"}},
         )
 
 
@@ -2748,13 +2807,13 @@ def test_grouped_task_delivery_keeps_handoffs_and_authorized_rework_owners() -> 
     graph = nodes(task)
     assert graph["implement"]["next"] == "refine"
     assert graph["refine"]["next"] == "verify"
-    assert graph["verify"]["next"] == "judge-verification"
+    assert graph["verify"]["next"] == "evaluator-verification"
     selected = {
         source["node"]: set(source.get("items", []))
-        for source in graph["judge-verification"]["evidence_from"]
+        for source in graph["evaluator-verification"]["evidence_from"]
     }
     for source in ("implement", "refine", "verify"):
-        assert "worker-handoff" in selected[source]
+        assert "executor-handoff" in selected[source]
     assert "record-plan" in selected
     for kind in ("followup", "evidence"):
         source = f"record-verification-{kind}"
@@ -2789,66 +2848,67 @@ def test_validation_audit_is_one_direct_assessment_with_original_gap_routes() ->
         ("audit", "confirm-audit-checkpoint"),
         ("re-audit", "confirm-re-audit-checkpoint"),
     ):
-        assert "judge-" + audit not in graph
+        assert "evaluator-" + audit not in graph
         assert graph[audit]["next"] == checkpoint
         definition = validation["node_definitions"][graph[audit]["use"]]
         fields = {item["id"] for item in definition["items"]}
         assert {
-            "judge-assessment",
-            "judge-applicability",
-            "judge-checkpoint-result",
+            "evaluator-assessment",
+            "evaluator-applicability",
+            "evaluator-checkpoint-result",
             "blocking-gap-count",
         } <= fields
-        assert "worker-handoff" not in fields
+        assert "executor-handoff" not in fields
         assert {source["node"] for source in graph[checkpoint]["evidence_from"]} == {
             audit
         }
 
 
-def test_goal_native_candidates_and_judges_dominate_semantic_progress() -> None:
+def test_goal_native_candidates_and_evaluators_dominate_semantic_progress() -> None:
     goal = load_procedure("aquarium-goal-v2.yaml")
     graph = nodes(goal)
     edges = graph_edges(goal)
     checkpoints = (
-        ("complete-work", "judge-work", "decide-work-assessment"),
-        ("record-evidence", "judge-goal-evidence", "decide-goal-evidence-assessment"),
-        ("prepare-goal-assessment", "judge-goal", "assess-goal"),
+        ("complete-work", "evaluator-work", "decide-work-assessment"),
+        (
+            "record-evidence",
+            "evaluator-goal-evidence",
+            "decide-goal-evidence-assessment",
+        ),
+        ("prepare-goal-assessment", "evaluator-goal", "assess-goal"),
         (
             "prepare-stopped-goal-assessment",
-            "judge-stopped-goal",
+            "evaluator-stopped-goal",
             "assess-stopped-goal",
         ),
     )
     expected = set()
-    for candidate, judge, decision in checkpoints:
-        expected.update((candidate, judge))
-        for node_id, role in (
-            (candidate, "aquarium-worker/v1"),
-            (judge, "aquarium-goal-judge/v1"),
-        ):
+    for candidate, evaluator, decision in checkpoints:
+        expected.update((candidate, evaluator))
+        for node_id in (candidate, evaluator):
             assert goal["node_definitions"][graph[node_id]["use"]]["type"] == "action"
             assert "delegation" not in graph[node_id]
         selected = {
             item
-            for source in graph[judge]["evidence_from"]
+            for source in graph[evaluator]["evidence_from"]
             if source["node"] == candidate and source["required"]
             for item in source.get("items", [])
         }
         assert (
             "candidate-evidence"
             if candidate.startswith("prepare-")
-            else "worker-handoff"
+            else "executor-handoff"
         ) in selected
-        assert judge not in reachable_nodes(
+        assert evaluator not in reachable_nodes(
             edges, goal["graph"]["entry"], without=candidate
         )
         assert decision not in reachable_nodes(
-            edges, goal["graph"]["entry"], without=judge
+            edges, goal["graph"]["entry"], without=evaluator
         )
     assert {node_id for node_id, node in graph.items() if "delegation" in node} == set()
     assert (
         graph["decide-operational-evidence"]["routes"]["passed"]["to"]
-        == "judge-goal-evidence"
+        == "evaluator-goal-evidence"
     )
     assert (
         graph["decide-goal-evidence-assessment"]["routes"]["passed"]["to"]
@@ -2860,9 +2920,9 @@ def test_goal_native_candidates_and_judges_dominate_semantic_progress() -> None:
         "confirm-subagent-review-finding-validity",
     ):
         # Other admitted providers and the narrow closeout substitute have their own paths.
-        assert "judge-goal-evidence" in reachable_nodes(edges, dominator)
+        assert "evaluator-goal-evidence" in reachable_nodes(edges, dominator)
     assert "assess-stopped-goal" in reachable_nodes(
-        edges, goal["graph"]["entry"], without="judge-goal-evidence"
+        edges, goal["graph"]["entry"], without="evaluator-goal-evidence"
     )
 
 
@@ -2877,19 +2937,19 @@ def test_goal_stopped_evidence_repair_cannot_reopen_ordinary_work() -> None:
     )
     assert not reached & {
         "complete-work",
-        "judge-work",
+        "evaluator-work",
         "record-evidence",
         "confirm-review-route-binding",
-        "judge-goal-evidence",
+        "evaluator-goal-evidence",
         "prepare-goal-assessment",
-        "judge-goal",
+        "evaluator-goal",
         "assess-goal",
         "closeout",
         "delegated-closeout",
     }
     repair = graph["confirm-stopped-goal-assessment-core"]["routes"]["needs-rework"]
     assert "assess-stopped-goal" in reachable_nodes(edges, repair["to"])
-    for required in ("prepare-stopped-goal-assessment", "judge-stopped-goal"):
+    for required in ("prepare-stopped-goal-assessment", "evaluator-stopped-goal"):
         assert "assess-stopped-goal" not in reachable_nodes(
             edges,
             repair["to"],
@@ -2900,39 +2960,42 @@ def test_goal_stopped_evidence_repair_cannot_reopen_ordinary_work() -> None:
 def test_goal_semantic_pass_rejects_incomplete_or_inapplicable_reports() -> None:
     goal = load_procedure("aquarium-goal-v2.yaml")
     graph = nodes(goal)
-    for judge, decision in (
-        ("judge-work", "decide-work-assessment"),
-        ("judge-goal-evidence", "decide-goal-evidence-assessment"),
+    for evaluator, decision in (
+        ("evaluator-work", "decide-work-assessment"),
+        ("evaluator-goal-evidence", "decide-goal-evidence-assessment"),
     ):
         actual = options(goal, graph[decision]["use"])
         values = {
-            (judge, "judge-applicability"): {"outcome": "pass"},
-            (judge, "judge-verdict"): "rework",
-            (judge, "judge-checkpoint-result"): {"outcome": "pass"},
-            (judge, "judge-unmet-criteria"): 1,
-            (judge, "judge-unverified-criteria"): 1,
+            (evaluator, "evaluator-applicability"): {"outcome": "pass"},
+            (evaluator, "evaluator-verdict"): "rework",
+            (evaluator, "evaluator-checkpoint-result"): {"outcome": "pass"},
+            (evaluator, "evaluator-unmet-criteria"): 1,
+            (evaluator, "evaluator-unverified-criteria"): 1,
         }
         assert guards_match(actual["passed"], values)
-        for key in ((judge, "judge-applicability"), (judge, "judge-checkpoint-result")):
+        for key in (
+            (evaluator, "evaluator-applicability"),
+            (evaluator, "evaluator-checkpoint-result"),
+        ):
             missing = dict(values)
             del missing[key]
             assert not guards_match(actual["passed"], missing)
         for item, value in (
-            ("judge-applicability", {"outcome": "fail"}),
-            ("judge-applicability", {"outcome": "inconclusive"}),
-            ("judge-checkpoint-result", {"outcome": "fail"}),
-            ("judge-checkpoint-result", {"outcome": "inconclusive"}),
+            ("evaluator-applicability", {"outcome": "fail"}),
+            ("evaluator-applicability", {"outcome": "inconclusive"}),
+            ("evaluator-checkpoint-result", {"outcome": "fail"}),
+            ("evaluator-checkpoint-result", {"outcome": "inconclusive"}),
         ):
             rejected = dict(values)
-            rejected[judge, item] = value
+            rejected[evaluator, item] = value
             assert not guards_match(actual["passed"], rejected)
         correction = dict(values)
-        correction[judge, "judge-checkpoint-result"] = {"outcome": "fail"}
-        correction[judge, "judge-unmet-criteria"] = 1
+        correction[evaluator, "evaluator-checkpoint-result"] = {"outcome": "fail"}
+        correction[evaluator, "evaluator-unmet-criteria"] = 1
         assert guards_match(actual["rework"], correction)
         evidence = dict(values)
-        evidence[judge, "judge-checkpoint-result"] = {"outcome": "inconclusive"}
-        evidence[judge, "judge-unverified-criteria"] = 1
+        evidence[evaluator, "evaluator-checkpoint-result"] = {"outcome": "inconclusive"}
+        evidence[evaluator, "evaluator-unverified-criteria"] = 1
         assert guards_match(actual["evidence-needed"], evidence)
         assert (
             graph[decision]["routes"]["rework"]["to"]
@@ -2989,15 +3052,15 @@ def test_final_epic_gap_blocks_achievement_and_closeout_substitute_stays_current
     goal = load_procedure("aquarium-goal-v2.yaml")
     achieved = options(goal, "goal-assessment")["achieved"]
     values = {
-        ("judge-goal", "judge-goal-outcome"): "achieved",
-        ("judge-goal", "judge-verdict"): "pass",
-        ("judge-goal", "judge-unmet-criteria"): 0,
-        ("judge-goal", "judge-unverified-criteria"): 0,
+        ("evaluator-goal", "evaluator-goal-outcome"): "achieved",
+        ("evaluator-goal", "evaluator-verdict"): "pass",
+        ("evaluator-goal", "evaluator-unmet-criteria"): 0,
+        ("evaluator-goal", "evaluator-unverified-criteria"): 0,
     }
     assert guards_match(achieved, values)
-    for item in ("judge-unmet-criteria", "judge-unverified-criteria"):
+    for item in ("evaluator-unmet-criteria", "evaluator-unverified-criteria"):
         seam_gap = dict(values)
-        seam_gap["judge-goal", item] = 1
+        seam_gap["evaluator-goal", item] = 1
         assert not guards_match(achieved, seam_gap)
     for key in values:
         missing = dict(values)
@@ -3013,11 +3076,11 @@ def test_final_epic_gap_blocks_achievement_and_closeout_substitute_stays_current
     for suffix in ("", "stopped-"):
         placement = graph["confirm-" + suffix + "goal-assessment-applicability"]
         current = options(goal, placement["use"])["current"]
-        judge = "judge-" + suffix + "goal"
+        evaluator = "evaluator-" + suffix + "goal"
         assert not guards_match(current, {})
         for outcome in ("fail", "inconclusive"):
             assert not guards_match(
-                current, {(judge, "judge-applicability"): {"outcome": outcome}}
+                current, {(evaluator, "evaluator-applicability"): {"outcome": outcome}}
             )
     substitute = options(goal, "closeout-substitute-applicability-decision")
     for outcome in ("fail", "inconclusive"):
@@ -3034,65 +3097,64 @@ def test_final_epic_gap_blocks_achievement_and_closeout_substitute_stays_current
     )
 
 
-def test_validation_worker_judge_pairs_dominate_their_semantic_decisions() -> None:
+def test_validation_executor_evaluator_pairs_dominate_their_semantic_decisions() -> (
+    None
+):
     validation = load_procedure("aquarium-validation-v2.yaml")
     graph = nodes(validation)
     edges = graph_edges(validation)
     checkpoints = (
-        ("remediate", "judge-remediation", "settle-remediation-group"),
+        ("remediate", "evaluator-remediation", "settle-remediation-group"),
         (
             "final-review",
-            "judge-validation-evidence",
+            "evaluator-validation-evidence",
             "confirm-completion-assessment",
         ),
-        ("prepare-validation-assessment", "judge-validation", "assess-goal"),
+        ("prepare-validation-assessment", "evaluator-validation", "assess-goal"),
         (
             "prepare-stopped-validation-assessment",
-            "judge-stopped-validation",
+            "evaluator-stopped-validation",
             "assess-stopped-goal",
         ),
     )
     expected = set()
-    for candidate, judge, consumer in checkpoints:
-        expected.update((candidate, judge))
-        for node_id, role in (
-            (candidate, "aquarium-worker/v1"),
-            (judge, "aquarium-goal-judge/v1"),
-        ):
+    for candidate, evaluator, consumer in checkpoints:
+        expected.update((candidate, evaluator))
+        for node_id in (candidate, evaluator):
             assert validation["node_definitions"][graph[node_id]["use"]]["type"] == (
                 "action"
             )
             assert "delegation" not in graph[node_id]
-        assert judge not in reachable_nodes(
+        assert evaluator not in reachable_nodes(
             edges, validation["graph"]["entry"], without=candidate
         )
         assert consumer not in reachable_nodes(
-            edges, validation["graph"]["entry"], without=judge
+            edges, validation["graph"]["entry"], without=evaluator
         )
         selected = {
             item
-            for source in graph[judge]["evidence_from"]
+            for source in graph[evaluator]["evidence_from"]
             if source["node"] == candidate and source["required"]
             for item in source.get("items", [])
         }
         assert (
             "candidate-evidence"
             if candidate.startswith("prepare-")
-            else "worker-handoff"
+            else "executor-handoff"
         ) in selected
     assert {key for key, node in graph.items() if "delegation" in node} == set()
     for node in graph.values():
         if validation["node_definitions"][node["use"]]["type"] == "decision":
             assert "delegation" not in node
     assert graph["decide-final-review-readiness"]["routes"]["passed"]["to"] == (
-        "judge-validation-evidence"
+        "evaluator-validation-evidence"
     )
 
 
 def test_validation_faithful_negative_audit_preserves_original_gap_routing() -> None:
     validation = load_procedure("aquarium-validation-v2.yaml")
     graph = nodes(validation)
-    for audit, judge, gate, destination in (
+    for audit, evaluator, gate, destination in (
         ("audit", "audit", "confirm-audit-checkpoint", "decide-gaps"),
         (
             "re-audit",
@@ -3103,21 +3165,21 @@ def test_validation_faithful_negative_audit_preserves_original_gap_routing() -> 
     ):
         ready = options(validation, graph[gate]["use"])["ready"]
         negative = {
-            (judge, "judge-applicability"): {"outcome": "pass"},
-            (judge, "judge-checkpoint-result"): {"outcome": "pass"},
-            (judge, "judge-verdict"): "rework",
-            (judge, "judge-unmet-criteria"): 2,
-            (judge, "judge-unverified-criteria"): 1,
+            (evaluator, "evaluator-applicability"): {"outcome": "pass"},
+            (evaluator, "evaluator-checkpoint-result"): {"outcome": "pass"},
+            (evaluator, "evaluator-verdict"): "rework",
+            (evaluator, "evaluator-unmet-criteria"): 2,
+            (evaluator, "evaluator-unverified-criteria"): 1,
         }
         assert guards_match(ready, negative)
         assert graph[gate]["routes"]["ready"]["to"] == destination
-        for item in ("judge-applicability", "judge-checkpoint-result"):
+        for item in ("evaluator-applicability", "evaluator-checkpoint-result"):
             for outcome in ("fail", "inconclusive"):
                 invalid = dict(negative)
-                invalid[judge, item] = {"outcome": outcome}
+                invalid[evaluator, item] = {"outcome": outcome}
                 assert not guards_match(ready, invalid)
             missing = dict(negative)
-            del missing[judge, item]
+            del missing[evaluator, item]
             assert not guards_match(ready, missing)
         basis = {
             (audit, "audit-result"): {"outcome": "pass"},
@@ -3171,7 +3233,7 @@ def test_validation_followup_and_primary_group_settlement_require_authority() ->
     edges = graph_edges(validation)
     for consumer in ("decide-remediation-audit-authority", "re-audit"):
         for required in (
-            "judge-remediation",
+            "evaluator-remediation",
             "settle-remediation-group",
             "confirm-remediation-group-settlement",
             "decide-remediation-groups",
@@ -3194,58 +3256,65 @@ def test_validation_followup_and_primary_group_settlement_require_authority() ->
         assert "remediation-summary" in sources[settlement]["items"]
 
 
-def test_validation_current_judge_report_and_integration_veto_are_required() -> None:
+def test_validation_current_evaluator_report_and_integration_veto_are_required() -> (
+    None
+):
     validation = load_procedure("aquarium-validation-v2.yaml")
     graph = nodes(validation)
-    for judge, decision in (
-        ("judge-validation-evidence", "decide-validation-evidence-assessment"),
+    for evaluator, decision in (
+        ("evaluator-validation-evidence", "decide-validation-evidence-assessment"),
     ):
         passed = options(validation, graph[decision]["use"])["passed"]
         values = {
-            (judge, "judge-applicability"): {"outcome": "pass"},
-            (judge, "judge-verdict"): "rework",
-            (judge, "judge-checkpoint-result"): {"outcome": "pass"},
-            (judge, "judge-unmet-criteria"): 1,
-            (judge, "judge-unverified-criteria"): 1,
+            (evaluator, "evaluator-applicability"): {"outcome": "pass"},
+            (evaluator, "evaluator-verdict"): "rework",
+            (evaluator, "evaluator-checkpoint-result"): {"outcome": "pass"},
+            (evaluator, "evaluator-unmet-criteria"): 1,
+            (evaluator, "evaluator-unverified-criteria"): 1,
         }
         assert guards_match(passed, values)
         for item, value in (
-            ("judge-applicability", {"outcome": "fail"}),
-            ("judge-applicability", {"outcome": "inconclusive"}),
-            ("judge-checkpoint-result", {"outcome": "fail"}),
-            ("judge-checkpoint-result", {"outcome": "inconclusive"}),
+            ("evaluator-applicability", {"outcome": "fail"}),
+            ("evaluator-applicability", {"outcome": "inconclusive"}),
+            ("evaluator-checkpoint-result", {"outcome": "fail"}),
+            ("evaluator-checkpoint-result", {"outcome": "inconclusive"}),
         ):
             rejected = dict(values)
-            rejected[judge, item] = value
+            rejected[evaluator, item] = value
             assert not guards_match(passed, rejected)
-        for key in ((judge, "judge-applicability"), (judge, "judge-checkpoint-result")):
+        for key in (
+            (evaluator, "evaluator-applicability"),
+            (evaluator, "evaluator-checkpoint-result"),
+        ):
             missing = dict(values)
             del missing[key]
             assert not guards_match(passed, missing)
     achieved = options(validation, "goal-assessment")["achieved"]
     final = {
-        ("judge-validation", "judge-goal-outcome"): "achieved",
-        ("judge-validation", "judge-verdict"): "pass",
-        ("judge-validation", "judge-unmet-criteria"): 0,
-        ("judge-validation", "judge-unverified-criteria"): 0,
+        ("evaluator-validation", "evaluator-goal-outcome"): "achieved",
+        ("evaluator-validation", "evaluator-verdict"): "pass",
+        ("evaluator-validation", "evaluator-unmet-criteria"): 0,
+        ("evaluator-validation", "evaluator-unverified-criteria"): 0,
         ("final-review", "current-applicable-blockers"): 0,
         ("final-review", "required-evidence-gaps"): 0,
     }
     assert guards_match(achieved, final)
     for item, value in (
-        ("judge-goal-outcome", "not-achieved"),
-        ("judge-verdict", "rework"),
-        ("judge-unmet-criteria", 1),
-        ("judge-unverified-criteria", 1),
+        ("evaluator-goal-outcome", "not-achieved"),
+        ("evaluator-verdict", "rework"),
+        ("evaluator-unmet-criteria", 1),
+        ("evaluator-unverified-criteria", 1),
     ):
         veto = dict(final)
-        veto["judge-validation", item] = value
+        veto["evaluator-validation", item] = value
         assert not guards_match(achieved, veto)
-    for judge in ("judge-validation", "judge-stopped-validation"):
-        current = options(validation, "confirm-" + judge + "-applicability")["current"]
+    for evaluator in ("evaluator-validation", "evaluator-stopped-validation"):
+        current = options(validation, "confirm-" + evaluator + "-applicability")[
+            "current"
+        ]
         assert not guards_match(current, {})
         assert not guards_match(
-            current, {(judge, "judge-applicability"): {"outcome": "fail"}}
+            current, {(evaluator, "evaluator-applicability"): {"outcome": "fail"}}
         )
 
 
@@ -3262,9 +3331,9 @@ def test_validation_stopped_evidence_repair_stays_inside_stopped_assessment() ->
         "re-audit",
         "final-review",
         "confirm-final-review-route-binding",
-        "judge-validation-evidence",
+        "evaluator-validation-evidence",
         "prepare-validation-assessment",
-        "judge-validation",
+        "evaluator-validation",
         "assess-goal",
         "closeout",
         "delegated-closeout",
@@ -3274,26 +3343,26 @@ def test_validation_stopped_evidence_repair_stays_inside_stopped_assessment() ->
     assert "assess-stopped-goal" in reachable_nodes(edges, repair["to"])
     for required in (
         "prepare-stopped-validation-assessment",
-        "judge-stopped-validation",
-        "confirm-judge-stopped-validation-applicability",
+        "evaluator-stopped-validation",
+        "confirm-evaluator-stopped-validation-applicability",
     ):
         assert "assess-stopped-goal" not in reachable_nodes(
             edges, repair["to"], without=required
         )
-    worker_sources = {
+    executor_sources = {
         source["node"]: source
         for source in graph["prepare-stopped-validation-assessment"]["evidence_from"]
     }
-    assert worker_sources["capture-baseline"]["required"] is True
-    assert worker_sources["record-stopped-goal-boundary"]["required"] is True
+    assert executor_sources["capture-baseline"]["required"] is True
+    assert executor_sources["record-stopped-goal-boundary"]["required"] is True
     for optional in (
         "final-review",
-        "judge-validation-evidence",
+        "evaluator-validation-evidence",
         "settle-remediation-group",
         "record-low-disposition",
         "record-current-audit-basis",
     ):
-        assert worker_sources[optional]["required"] is False
+        assert executor_sources[optional]["required"] is False
     core_sources = {
         source["node"]: source
         for source in graph["confirm-stopped-goal-assessment-core"]["evidence_from"]
@@ -3314,13 +3383,13 @@ def test_validation_group_repair_keeps_full_original_epic_gaps_negative() -> Non
     validation = load_procedure("aquarium-validation-v2.yaml")
     graph = nodes(validation)
     choices = options(validation, "decide-remediation-assessment")
-    judge = "judge-remediation"
+    evaluator = "evaluator-remediation"
     remaining_epic_gap = {
-        (judge, "judge-applicability"): {"outcome": "pass"},
-        (judge, "judge-verdict"): "rework",
-        (judge, "judge-unmet-criteria"): 1,
-        (judge, "judge-unverified-criteria"): 1,
-        (judge, "judge-group-result"): {"outcome": "pass"},
+        (evaluator, "evaluator-applicability"): {"outcome": "pass"},
+        (evaluator, "evaluator-verdict"): "rework",
+        (evaluator, "evaluator-unmet-criteria"): 1,
+        (evaluator, "evaluator-unverified-criteria"): 1,
+        (evaluator, "evaluator-group-result"): {"outcome": "pass"},
     }
     assert guards_match(choices["passed"], remaining_epic_gap)
     assert graph["decide-remediation-assessment"]["routes"]["passed"]["to"] == (
@@ -3328,31 +3397,31 @@ def test_validation_group_repair_keeps_full_original_epic_gaps_negative() -> Non
     )
     for outcome, expected in (("fail", "rework"), ("inconclusive", "evidence-needed")):
         unrepaired = dict(remaining_epic_gap)
-        unrepaired[judge, "judge-group-result"] = {"outcome": outcome}
+        unrepaired[evaluator, "evaluator-group-result"] = {"outcome": outcome}
         assert not guards_match(choices["passed"], unrepaired)
         assert guards_match(choices[expected], unrepaired)
-    for item in ("judge-group-result", "judge-applicability"):
+    for item in ("evaluator-group-result", "evaluator-applicability"):
         missing = dict(remaining_epic_gap)
-        del missing[judge, item]
+        del missing[evaluator, item]
         assert not guards_match(choices["passed"], missing)
     stale = dict(remaining_epic_gap)
-    stale[judge, "judge-applicability"] = {"outcome": "fail"}
+    stale[evaluator, "evaluator-applicability"] = {"outcome": "fail"}
     assert not guards_match(choices["passed"], stale)
     assert guards_match(choices["inapplicable"], stale)
     selected = {
         item
         for source in graph["settle-remediation-group"]["evidence_from"]
-        if source["node"] == judge and source["required"]
+        if source["node"] == evaluator and source["required"]
         for item in source.get("items", [])
     }
     assert {
-        "judge-group-result",
-        "judge-verdict",
-        "judge-unmet-criteria",
-        "judge-unverified-criteria",
+        "evaluator-group-result",
+        "evaluator-verdict",
+        "evaluator-unmet-criteria",
+        "evaluator-unverified-criteria",
     } <= selected
-    schema = validation["node_definitions"][graph[judge]["use"]]
-    item = next(i for i in schema["items"] if i["id"] == "judge-group-result")
+    schema = validation["node_definitions"][graph[evaluator]["use"]]
+    item = next(i for i in schema["items"] if i["id"] == "evaluator-group-result")
     assert item["required"] is True
     assert item["accepted_outcomes"] == ["pass", "fail", "inconclusive"]
     assert graph["decide-remediation-assessment"]["routes"]["rework"]["to"] == (
@@ -3363,19 +3432,19 @@ def test_validation_group_repair_keeps_full_original_epic_gaps_negative() -> Non
     ] == ("record-remediation-evidence")
 
 
-def test_design_diagnosis_workers_and_judges_dominate_each_phase() -> None:
+def test_design_diagnosis_executors_and_evaluators_dominate_each_phase() -> None:
     for kind, checkpoints in (
         (
             "design",
             (
-                ("discover", "judge-discovery", "decide-discovery-assessment"),
-                ("quality", "judge-quality", "decide-quality-assessment"),
+                ("discover", "evaluator-discovery", "decide-discovery-assessment"),
+                ("quality", "evaluator-quality", "decide-quality-assessment"),
                 (
                     "apply-documents",
-                    "judge-application",
+                    "evaluator-application",
                     "decide-application-assessment",
                 ),
-                ("prepare-design-assessment", "judge-design", "assess-goal"),
+                ("prepare-design-assessment", "evaluator-design", "assess-goal"),
             ),
         ),
         (
@@ -3383,40 +3452,41 @@ def test_design_diagnosis_workers_and_judges_dominate_each_phase() -> None:
             (
                 (
                     "investigate",
-                    "judge-investigation",
+                    "evaluator-investigation",
                     "decide-investigation-assessment",
                 ),
-                ("quality", "judge-quality", "decide-quality-assessment"),
-                ("document", "judge-documentation", "decide-documentation-assessment"),
-                ("prepare-diagnostic-assessment", "judge-diagnosis", "assess-goal"),
+                ("quality", "evaluator-quality", "decide-quality-assessment"),
+                (
+                    "document",
+                    "evaluator-documentation",
+                    "decide-documentation-assessment",
+                ),
+                ("prepare-diagnostic-assessment", "evaluator-diagnosis", "assess-goal"),
             ),
         ),
     ):
         procedure = load_procedure(f"aquarium-{kind}-v2.yaml")
         graph = nodes(procedure)
         edges = graph_edges(procedure)
-        for worker, judge, successor in checkpoints:
-            for placement, role in (
-                (worker, "aquarium-worker/v1"),
-                (judge, "aquarium-goal-judge/v1"),
-            ):
+        for executor, evaluator, successor in checkpoints:
+            for placement in (executor, evaluator):
                 assert "delegation" not in graph[placement]
             items = {
                 i["id"]: i
-                for i in procedure["node_definitions"][graph[worker]["use"]]["items"]
+                for i in procedure["node_definitions"][graph[executor]["use"]]["items"]
             }
             handoff = (
                 "candidate-evidence"
-                if worker.startswith("prepare-")
-                else "worker-handoff"
+                if executor.startswith("prepare-")
+                else "executor-handoff"
             )
             assert items[handoff]["required"]
             assert items[handoff]["allowed_media_types"] == ["application/json"]
-            assert judge not in reachable_nodes(
-                edges, procedure["graph"]["entry"], without=worker
+            assert evaluator not in reachable_nodes(
+                edges, procedure["graph"]["entry"], without=executor
             )
             assert successor not in reachable_nodes(
-                edges, procedure["graph"]["entry"], without=judge
+                edges, procedure["graph"]["entry"], without=evaluator
             )
         for node in graph.values():
             if procedure["node_definitions"][node["use"]]["type"] == "decision":
@@ -3427,10 +3497,12 @@ def test_design_diagnosis_workers_and_judges_dominate_each_phase() -> None:
         assert "delegation" not in graph[branch]
         assert graph[branch]["next"] == "quality"
         selected = next(
-            e for e in graph["judge-quality"]["evidence_from"] if e["node"] == branch
+            e
+            for e in graph["evaluator-quality"]["evidence_from"]
+            if e["node"] == branch
         )
         assert selected["required"] is False
-        assert "worker-handoff" in selected["items"]
+        assert "executor-handoff" in selected["items"]
 
 
 def test_phase_checkpoints_preserve_global_negative_rows_without_false_success() -> (
@@ -3443,36 +3515,39 @@ def test_phase_checkpoints_preserve_global_negative_rows_without_false_success()
             if not node_id.startswith("decide-") or not node_id.endswith("-assessment"):
                 continue
             choices = options(procedure, node["use"])
-            judge = node["evidence_from"][0]["node"]
+            evaluator = node["evidence_from"][0]["node"]
             values = {
-                (judge, "judge-applicability"): {"outcome": "pass"},
-                (judge, "judge-checkpoint-result"): {"outcome": "pass"},
-                (judge, "judge-verdict"): "rework",
-                (judge, "judge-unmet-criteria"): 1,
-                (judge, "judge-unverified-criteria"): 1,
+                (evaluator, "evaluator-applicability"): {"outcome": "pass"},
+                (evaluator, "evaluator-checkpoint-result"): {"outcome": "pass"},
+                (evaluator, "evaluator-verdict"): "rework",
+                (evaluator, "evaluator-unmet-criteria"): 1,
+                (evaluator, "evaluator-unverified-criteria"): 1,
             }
             assert guards_match(choices["passed"], values)
             assert not guards_match(choices["passed"], {})
-            for item in ("judge-applicability", "judge-checkpoint-result"):
+            for item in ("evaluator-applicability", "evaluator-checkpoint-result"):
                 missing = dict(values)
-                del missing[judge, item]
+                del missing[evaluator, item]
                 assert not guards_match(choices["passed"], missing)
                 for result in ("fail", "inconclusive"):
                     rejected = dict(values)
-                    rejected[judge, item] = {"outcome": result}
+                    rejected[evaluator, item] = {"outcome": result}
                     assert not guards_match(choices["passed"], rejected)
             for result, option in (
                 ("fail", "rework"),
                 ("inconclusive", "evidence-needed"),
             ):
                 negative = dict(values)
-                negative[judge, "judge-checkpoint-result"] = {"outcome": result}
+                negative[evaluator, "evaluator-checkpoint-result"] = {"outcome": result}
                 assert guards_match(choices[option], negative)
             assert (
                 node["routes"]["rework"]["to"]
                 != node["routes"]["evidence-needed"]["to"]
             )
-            assert node["routes"]["inapplicable"] == {"to": judge, "effect": "rework"}
+            assert node["routes"]["inapplicable"] == {
+                "to": evaluator,
+                "effect": "rework",
+            }
         assert (
             graph["decide-quality-assessment"]["routes"]["passed"]["to"]
             == "decide-quality"
@@ -3483,12 +3558,12 @@ def test_diagnostic_cause_and_scope_keep_supported_negative_outcomes() -> None:
     procedure = load_procedure("aquarium-war-room-v2.yaml")
     graph = nodes(procedure)
     for definition, item, router in (
-        ("cause-decision", "judge-cause-outcome", "decide-cause"),
-        ("scope-decision", "judge-scope-outcome", "classify-scope"),
+        ("cause-decision", "evaluator-cause-outcome", "decide-cause"),
+        ("scope-decision", "evaluator-scope-outcome", "classify-scope"),
     ):
         choices = options(procedure, definition)
         for selected in choices:
-            values = {("judge-investigation", item): selected}
+            values = {("evaluator-investigation", item): selected}
             assert [
                 key for key, option in choices.items() if guards_match(option, values)
             ] == [selected]
@@ -3504,10 +3579,10 @@ def test_diagnostic_cause_and_scope_keep_supported_negative_outcomes() -> None:
     for draft in ("draft-task", "draft-epic", "draft-incomplete", "draft-no-work"):
         for dominator in (
             "quality",
-            "judge-quality",
+            "evaluator-quality",
             "approve-diff",
             "document",
-            "judge-diagnosis",
+            "evaluator-diagnosis",
         ):
             assert "assess-goal" not in reachable_nodes(
                 graph_edges(procedure), draft, without=dominator
@@ -3586,9 +3661,13 @@ def test_changed_application_approval_requires_original_quality_and_reapproval()
 
 
 def test_design_diagnosis_final_original_outcome_vetoes_phase_success() -> None:
-    for kind, judge, applicability in (
-        ("design", "judge-design", "confirm-design-assessment-applicability"),
-        ("war-room", "judge-diagnosis", "confirm-diagnosis-assessment-applicability"),
+    for kind, evaluator, applicability in (
+        ("design", "evaluator-design", "confirm-design-assessment-applicability"),
+        (
+            "war-room",
+            "evaluator-diagnosis",
+            "confirm-diagnosis-assessment-applicability",
+        ),
     ):
         procedure = load_procedure(f"aquarium-{kind}-v2.yaml")
         choices = options(procedure, "goal-assessment")
@@ -3596,23 +3675,23 @@ def test_design_diagnosis_final_original_outcome_vetoes_phase_success() -> None:
         assert not guards_match(current, {})
         for outcome in ("fail", "inconclusive"):
             assert not guards_match(
-                current, {(judge, "judge-applicability"): {"outcome": outcome}}
+                current, {(evaluator, "evaluator-applicability"): {"outcome": outcome}}
             )
         values = {
-            (judge, "judge-goal-outcome"): "achieved",
-            (judge, "judge-verdict"): "pass",
-            (judge, "judge-unmet-criteria"): 0,
-            (judge, "judge-unverified-criteria"): 0,
+            (evaluator, "evaluator-goal-outcome"): "achieved",
+            (evaluator, "evaluator-verdict"): "pass",
+            (evaluator, "evaluator-unmet-criteria"): 0,
+            (evaluator, "evaluator-unverified-criteria"): 0,
         }
         assert guards_match(choices["achieved"], values)
         for item, value in (
-            ("judge-goal-outcome", "not-achieved"),
-            ("judge-verdict", "rework"),
-            ("judge-unmet-criteria", 1),
-            ("judge-unverified-criteria", 1),
+            ("evaluator-goal-outcome", "not-achieved"),
+            ("evaluator-verdict", "rework"),
+            ("evaluator-unmet-criteria", 1),
+            ("evaluator-unverified-criteria", 1),
         ):
             negative = dict(values)
-            negative[judge, item] = value
+            negative[evaluator, item] = value
             assert not guards_match(choices["achieved"], negative)
         for item in values:
             missing = dict(values)
@@ -3620,7 +3699,7 @@ def test_design_diagnosis_final_original_outcome_vetoes_phase_success() -> None:
             assert not guards_match(choices["achieved"], missing)
         for outcome in ("not-achieved", "superseded"):
             assert guards_match(
-                choices[outcome], {(judge, "judge-goal-outcome"): outcome}
+                choices[outcome], {(evaluator, "evaluator-goal-outcome"): outcome}
             )
 
 
@@ -3762,7 +3841,7 @@ def test_inapplicable_phase_assessment_requires_nonpassing_current_applicability
             sources = [
                 (node, item)
                 for node, item, field, operator, expected in guards
-                if item == "judge-applicability" and field == "outcome"
+                if item == "evaluator-applicability" and field == "outcome"
             ]
             assert len(sources) == 1
             source = sources[0]
@@ -3811,20 +3890,20 @@ def test_local_corrections_require_complete_eligibility_and_existing_authority()
         assert router["routes"]["none"]["to"] == fallback
         assert checker["routes"]["ordinary"]["to"] == fallback
         assert guards_match(choices["ordinary"], values)
-        judge = {
-            "task": "judge-review",
-            "goal": "judge-goal-evidence",
-            "validation": "judge-validation-evidence",
+        evaluator = {
+            "task": "evaluator-review",
+            "goal": "evaluator-goal-evidence",
+            "validation": "evaluator-validation-evidence",
         }[family]
         for placement in (router, checker):
             evidence = next(
-                item for item in placement["evidence_from"] if item["node"] == judge
+                item for item in placement["evidence_from"] if item["node"] == evaluator
             )
             assert {
-                "judge-assessment",
-                "judge-unmet-criteria",
-                "judge-unverified-criteria",
-                "judge-checkpoint-result",
+                "evaluator-assessment",
+                "evaluator-unmet-criteria",
+                "evaluator-unverified-criteria",
+                "evaluator-checkpoint-result",
             } <= set(evidence["items"])
         for missing in ("local-correction-count", "local-correction-eligibility"):
             incomplete = dict(values)
@@ -3889,19 +3968,19 @@ def test_local_settlement_rejects_pending_repairs_failed_checks_and_current_gaps
 
 
 def test_local_correction_cannot_skip_native_admission_or_final_judgment() -> None:
-    for family, backend, failure, final_judge in (
-        ("task", "decide-backend-check", "record-task-rework-basis", "judge-task"),
+    for family, backend, failure, final_evaluator in (
+        ("task", "decide-backend-check", "record-task-rework-basis", "evaluator-task"),
         (
             "goal",
             "confirm-mulgae-fail-finding-validity",
             "decide-goal-rework-authority",
-            "judge-goal",
+            "evaluator-goal",
         ),
         (
             "validation",
             "decide-final-backend-check",
             "decide-validation-rework-authority",
-            "judge-validation",
+            "evaluator-validation",
         ),
     ):
         procedure = load_procedure(f"aquarium-{family}-v2.yaml")
@@ -3914,7 +3993,7 @@ def test_local_correction_cannot_skip_native_admission_or_final_judgment() -> No
         completed = graph["decide-low-completion"]["routes"]["completed"]["to"]
         assert "assess-goal" in reachable_nodes(edges, completed)
         assert "assess-goal" not in reachable_nodes(
-            edges, completed, without=final_judge
+            edges, completed, without=final_evaluator
         )
         assembly = graph[
             {
@@ -4182,7 +4261,7 @@ def test_ordinary_applicability_and_grouped_evidence_operation_identities() -> N
         for definition in procedure["node_definitions"].values():
             for item in definition.get("items", []):
                 if item.get("id") not in {
-                    "judge-applicability",
+                    "evaluator-applicability",
                     "closeout-substitute-applicability",
                 } and item.get("operation_id") not in {
                     "aquarium-design-discovery-evidence-needed-authority",

@@ -172,7 +172,7 @@ def expand(document, mapping, namespace, fields):
             ep(evidence)
     materialized = {}
     references = json.loads(
-        (ASSETS / "adaptive/operation-contracts-v1.json").read_text()
+        (ASSETS / "adaptive/operation-contracts-v2.json").read_text()
     )
     explicit_contracts = mapping.get("semantic_contracts", {})
     if any(
@@ -465,7 +465,7 @@ def _compose(repository, draft):
         raw = source_bytes(repository, reference)
         if component["kind"] == "fragment":
             fragment = parse_definition(raw)
-            if fragment["schema"] != "aquarium.procedure-fragment/v1":
+            if fragment["schema"] != "aquarium.procedure-fragment/v2":
                 fail("Fragment import has the wrong definition kind")
             native = {
                 "node_definitions": fragment["node_definitions"],
@@ -475,8 +475,8 @@ def _compose(repository, draft):
             bound["parameters"] = copy.deepcopy(fragment["parameters"])
             check_shapes(native, bound)
             for assessor in fragment["assessors"]:
-                if bound["nodes"][assessor["node"]]["role"] != "judge":
-                    fail("Fragment assessor boundary does not map to a Judge")
+                if bound["nodes"][assessor["node"]]["role"] != "evaluator":
+                    fail("Fragment assessor boundary does not map to an Evaluator")
                 node = next(
                     node
                     for node in fragment["placements"]
@@ -513,7 +513,7 @@ def _compose(repository, draft):
                 _, native = document(repository, reference)
             bound = parse_definition(source_bytes(repository, component["binding"]))
             if (
-                bound["schema"] != "aquarium.procedure-binding/v1"
+                bound["schema"] != "aquarium.procedure-binding/v2"
                 or bound["procedure"]["source_sha256"] != sha256(raw)
                 or (native["id"], native["version"])
                 != (bound["procedure"]["id"], bound["procedure"]["version"])

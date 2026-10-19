@@ -7,11 +7,11 @@ from adaptive_design import application, object_value, quality
 
 PHASES = {"baseline", "investigation", "proposal", "quality", "documentation"}
 OPERATIONS = {
-    "sha256:cd1829ab2b0844c653d87281f2322a0e72912be287aa8f3983a7c0719a0683aa": "baseline",
-    "sha256:eb8d5a130f9e853d46b32bfa93c700bc850cbbfc167aa41a16451640484aa616": "investigation",
-    "sha256:e955f1171edb08a38b9fab4678e76b4df2117f35bc679510e5b70c76909dbb68": "proposal",
-    "sha256:109d3a6614e046d232c017f274b629c418a479cfb319b421d8e6fabaabdd5524": "quality",
-    "sha256:eae0700bcd738f27488e204d6490e978d0a6af8d0a59a72e7792498099a1173e": "documentation",
+    "sha256:ca0eb2a9dca1d7d8f053736b051ff7d0210ba6fc47d717eaf646b40a16519ad5": "baseline",
+    "sha256:5d8732f71031a0388c416d11454fc7e33d2536d0d23e54cb17e919fb0ec09177": "investigation",
+    "sha256:9b06a322b31487a8cce1bf4cc2b6476013ade5506d6ca4d5a5c3be723c4db720": "proposal",
+    "sha256:7f78ec7877ba135b591dcbb16b8b024daa00e81576e7524539f6ffdc01f70d85": "quality",
+    "sha256:15d91150291a0cafba25f18d0fa074f4787d17208ca6e0782b711db94d1e7d30": "documentation",
 }
 
 
@@ -82,7 +82,11 @@ def conclusion(value):
 
 def context(repository, assignment, phase):
     value = object_value(assignment["target"].get("diagnosis", {}), "target.diagnosis")
-    result = {"phase": phase, "product_implementation": False, "next_owner": "Primary"}
+    result = {
+        "phase": phase,
+        "product_implementation": False,
+        "next_owner": "Coordinator",
+    }
     if "conclusion" in value:
         result["conclusion"] = conclusion(value["conclusion"])
     if "quality" in value:

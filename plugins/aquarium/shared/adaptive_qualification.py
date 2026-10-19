@@ -36,31 +36,34 @@ def guarantee_minima(signature):
     """Independent structural floors; custom operations cannot define these away."""
     kind = guarantee(signature)
     assessment = {
-        "final-assessment": ["judge-goal-outcome"],
-        "phase-assessment": ["judge-checkpoint-result"],
-        "audit-assessment": ["audit-result", "judge-checkpoint-result"],
-        "confirmation-audit-assessment": ["audit-result", "judge-checkpoint-result"],
-        "correction-group-assessment": ["judge-group-result"],
-        "quality-assessment": ["judge-checkpoint-result"],
-        "application-assessment": ["judge-checkpoint-result"],
-        "documentation-assessment": ["judge-checkpoint-result"],
+        "final-assessment": ["evaluator-goal-outcome"],
+        "phase-assessment": ["evaluator-checkpoint-result"],
+        "audit-assessment": ["audit-result", "evaluator-checkpoint-result"],
+        "confirmation-audit-assessment": [
+            "audit-result",
+            "evaluator-checkpoint-result",
+        ],
+        "correction-group-assessment": ["evaluator-group-result"],
+        "quality-assessment": ["evaluator-checkpoint-result"],
+        "application-assessment": ["evaluator-checkpoint-result"],
+        "documentation-assessment": ["evaluator-checkpoint-result"],
     }
     fields, counts = {}, []
     if kind in assessment or (isinstance(kind, str) and "assessment" in kind):
         fields = {
-            "judge-assessment": {
+            "evaluator-assessment": {
                 "type": "artifact",
                 "required": True,
                 "allowed_media_types": ["application/json"],
             },
-            "judge-verdict": {
+            "evaluator-verdict": {
                 "type": "choice",
                 "required": True,
                 "choices": ["pass", "rework", "evidence-needed"],
             },
-            "judge-applicability": {"type": "check_result", "required": True},
+            "evaluator-applicability": {"type": "check_result", "required": True},
         }
-        counts = ["judge-unmet-criteria", "judge-unverified-criteria"]
+        counts = ["evaluator-unmet-criteria", "evaluator-unverified-criteria"]
         fields.update(
             {
                 name: {"type": "integer", "required": True, "minimum": 0}
@@ -74,7 +77,7 @@ def guarantee_minima(signature):
                     "required": True,
                     "choices": ["achieved", "not-achieved"],
                 }
-                if name == "judge-goal-outcome"
+                if name == "evaluator-goal-outcome"
                 else {"type": "check_result", "required": True}
             )
     elif kind == "approval":
@@ -104,7 +107,7 @@ def guarantee_minima(signature):
     elif kind == "upstream-quality":
         fields = {
             "quality-result": {"type": "check_result", "required": True},
-            "worker-handoff": {
+            "executor-handoff": {
                 "type": "artifact",
                 "required": True,
                 "allowed_media_types": ["application/json"],
@@ -185,7 +188,7 @@ class Qualification:
         self.operations = operation_contracts
         self.verified_operation_contracts = verified_operation_contracts or {}
         self.established_operations = json.loads(
-            (ASSETS / "adaptive/operation-contracts-v1.json").read_text()
+            (ASSETS / "adaptive/operation-contracts-v2.json").read_text()
         )
         self.inspect_declarations()
         predicates = defaultdict(list)
@@ -374,7 +377,7 @@ class Qualification:
                 if (
                     "assessment" in kind
                     and kind != "upstream-quality"
-                    and declaration["role"] != "judge"
+                    and declaration["role"] != "evaluator"
                 ):
                     self.issues.append(
                         issue("incompatible", "independent-assessment-role", node)
@@ -770,11 +773,11 @@ class Qualification:
             *(
                 self.equal(node, fields, logical, value)
                 for logical, value in [
-                    ("judge-goal-outcome", "achieved"),
-                    ("judge-verdict", "pass"),
-                    ("judge-unmet-criteria", 0),
-                    ("judge-unverified-criteria", 0),
-                    ("judge-applicability", "pass"),
+                    ("evaluator-goal-outcome", "achieved"),
+                    ("evaluator-verdict", "pass"),
+                    ("evaluator-unmet-criteria", 0),
+                    ("evaluator-unverified-criteria", 0),
+                    ("evaluator-applicability", "pass"),
                 ]
             ),
         )
@@ -808,11 +811,11 @@ class Qualification:
             for name in signature["fields"]
             if name
             in {
-                "judge-applicability",
-                "judge-checkpoint-result",
-                "judge-group-result",
-                "judge-goal-outcome",
-                "judge-assessment",
+                "evaluator-applicability",
+                "evaluator-checkpoint-result",
+                "evaluator-group-result",
+                "evaluator-goal-outcome",
+                "evaluator-assessment",
             }
         ]
         return (
@@ -852,7 +855,7 @@ class Qualification:
             for kind, values in self.capabilities.items():
                 if "assessment" in kind:
                     outputs += [
-                        fields.get("judge-assessment", "judge-assessment")
+                        fields.get("evaluator-assessment", "evaluator-assessment")
                         for node, fields, _ in values
                         if node == current
                     ]
@@ -1093,7 +1096,7 @@ class Qualification:
             return "work"
         if definition["type"] == "decision":
             return "control"
-        if declaration["role"] == "judge" and any(
+        if declaration["role"] == "evaluator" and any(
             node == value[0]
             for kind, values in self.capabilities.items()
             if "assessment" in kind
@@ -1102,7 +1105,7 @@ class Qualification:
             return "assessment"
         contract = self.operation_cache.get(node, {})
         if contract:
-            if declaration["role"] == "worker" and contract["effect"] != "work":
+            if declaration["role"] == "executor" and contract["effect"] != "work":
                 return "unknown"
             return contract["effect"]
         return (
@@ -1868,7 +1871,7 @@ class Qualification:
             for node, _, _ in self.capabilities["final-assessment"]:
                 if self.order.index(node) > self.order.index(application):
                     # A later renewed approval and application can supersede this
-                    # application, but a Judge alone cannot renew approved bytes.
+                    # application, but an Evaluator alone cannot renew approved bytes.
                     alternatives = [
                         logic.all(result, self.unchanged_between(application, node))
                     ]
@@ -2194,6 +2197,11 @@ def qualify(
     execution_info=False,
 ):
     """Qualify a natively checked exact source; no providers, files or sessions."""
+    if binding.get("schema") == "aquarium.procedure-binding/v1":
+        return {
+            "status": "incompatible",
+            "issues": [issue("incompatible", "retained-contract", "schema")],
+        }
     context = {} if context is None else context
     registry = capability_signatures()
     supplied_signatures = {
@@ -2215,7 +2223,7 @@ def qualify(
         }
     registry = {**registry, **supplied_signatures}
     contracts = json.loads(
-        (ASSETS / "adaptive/operation-contracts-v1.json").read_text()
+        (ASSETS / "adaptive/operation-contracts-v2.json").read_text()
     )
     supplied = {
         **(operation_contracts or {}),

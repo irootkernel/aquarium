@@ -32,15 +32,30 @@ The aggregate uses recursive Make recipe calls in prepare, unit, integration, an
 
 Dependency installation is outside every handler. Prepare may rewrite only the Python files listed in the root `Makefile` through deterministic Ruff formatting; later stages exercise the resulting candidate.
 
-Goal Judge helper tests in `test-unit` cover assignment preparation and filesystem
+Goal Evaluator helper tests in `test-unit` cover assignment preparation and filesystem
 safety, operative dispatch rendering, supplied native-record correlation, Codex
 and Claude delivery binding, and the public Codex read client's protocol behavior.
 Formal v1 cases use synthetic records and disposable transports and preserve their
-original digest domains. Ordinary v2 cases validate schema-selected preparation
+original digest domains. Ordinary v3 cases validate schema-selected preparation
 and rendering without snapshot reads or telemetry and reject ordinary input at
 formal binders. These tests do not establish skill functionality. Actual native
 dispatch, feedback, settlement and recovery need separate observations; declared
 formal delegation additionally retains its genuine qualification contract.
+
+Role-name migration tests preserve ordinary v2 inputs and dispatches separately
+from v3, reject mixed adaptive v1/v2 role values, and check the unchanged typed
+control flow of all five renamed Procedures against exact prior-source fixtures.
+Retained source registries and formal role identities keep their original meaning.
+
+The renamed roles still need manual verification in the dedicated UTM VM.
+Verify fresh `goal-evaluator` discovery and actual Coordinator, Executor
+and independent report-only Evaluator progression across the seven handlers.
+Include research, planning and documentation assignments, negative assessments,
+corrections and recovery. Check that retained sessions and reports keep their
+original identities and that a v3 workflow cannot reinterpret a v1 binding.
+Record the exact installed candidate and tool combination. These observations
+require the existing installation and VM-test authorization; ordinary tests do
+not install the candidate or run `make test-vm`.
 
 `test-podway-compat` is an external-artifact gate outside the ordinary `make test` aggregate. It requires a clean committed candidate and one absolute, executable, nonsymlink official v0.2.14 CLI. It records Aquarium HEAD, the executable SHA-256 and native release source/manifest identities. All five canonical Procedures pass format check, validate, vet, lint and check with warnings as errors, and preview with exact digest-fenced start suggestions. Declaration-limit and unknown-field fixtures must fail.
 
@@ -141,7 +156,7 @@ collects the result.
 
 Observe meaningful released-version state before upgrading. Release acceptance
 checks the exact candidate upgrade, state preservation, managed-file updates,
-fresh skill discovery and actual Task/Epic startup with initial Worker/Judge
+fresh skill discovery and actual Task/Epic startup with initial Executor/Evaluator
 progression. Development verification covers full functionality and recovery
 before release; the release gate does not repeat the full feature suite or Epic
 lifecycle. Preserve both evidence classes and the separate offline release-QA
@@ -168,7 +183,7 @@ meaningful application artifacts are required; success sentences are insufficien
 
 `tests/unit/test_adaptive_definitions_unit.py` exercises closed binding/fragment
 parsing, canonical bytes and identities, exact native keys, all family overlays,
-every current canonical Judge/upstream-quality operation signature, typed aliases,
+every current canonical Evaluator/upstream-quality operation signature, typed aliases,
 negative recording, bounded mandatory gap counts and unknown-signature results.
 An inverse canonical-to-registry control catches omitted required operations.
 Documentation and performance binding examples have
@@ -255,10 +270,10 @@ failure. The plan-only snapshot includes directories. Produced source structures
 are inspected after preparation; synthetic canonical digests remain distinct
 from raw source SHA.
 
-The task-plan, Worker-guidance and ordinary-orchestration changes still need
+The task-plan, Executor-guidance and ordinary-orchestration changes still need
 manual functional verification: read-only fit planning; source-only preparation
 under the original effect/review grants; complete original and adopted-source
-handoff without a new requirements authority or a fabricated Judge pass; and
+handoff without a new requirements authority or a fabricated Evaluator pass; and
 known reuse without extra assessment cycles. These skill behaviors remain
 unverified by the unit and source-only native checks. Candidate installation and
 installed observations stay with the authorized VM integration work.
@@ -306,7 +321,7 @@ Gaori is optional evidence compression. Each command wraps one authoritative Mak
 | `test-e2e` | `make test-e2e` | pytest | `pytest` |
 | `test-podway-compat` | `make test-podway-compat` | Mixed Python and Podway runtime output | `generic` |
 
-The Podway compatibility command inherits `PODWAY_BIN` from the Gaori process environment. The required invocation is `PODWAY_BIN=<absolute-path-to-extracted-v0.2.14-podway> gaori run test-podway-compat`; this expresses the command and environment rather than bypassing `$use-gaori`. The executing agent must load that skill and let it select the transport and completion-waiting path. An attached MCP path is eligible only when it demonstrably preserves the exact environment input. Changing the agent shell environment does not prove that an already running MCP server received it. When the native contract selects CLI, run it once and await the same process handle. Do not start or restart an MCP server or change host configuration to make MCP eligible. The configured gate allows up to 9000 seconds for the complete native runtime scenario inventory, running the canonical lifecycle alone before the independent batches with at most four workers. The existing scenario and command limits remain 900 and 20 seconds. The configured gate does not use Gaori's shorter ad-hoc default.
+The Podway compatibility command inherits `PODWAY_BIN` from the Gaori process environment. The required invocation is `PODWAY_BIN=<absolute-path-to-extracted-v0.2.14-podway> gaori run test-podway-compat`; this expresses the command and environment rather than bypassing `$use-gaori`. The executing agent must load that skill and let it select the transport and completion-waiting path. An attached MCP path is eligible only when it demonstrably preserves the exact environment input. Changing the agent shell environment does not prove that an already running MCP server received it. When the native contract selects CLI, run it once and await the same process handle. Do not start or restart an MCP server or change host configuration to make MCP eligible. The configured gate allows up to 9000 seconds for the complete native runtime scenario inventory, running the canonical lifecycle alone before the independent batches with at most four executors. The existing scenario and command limits remain 900 and 20 seconds. The configured gate does not use Gaori's shorter ad-hoc default.
 
 ## E2E Environment
 
@@ -355,14 +370,14 @@ Check retired-route refusal, preserved snapshots and findings, and explicitly
 authorized compatible continuation. These installed outcomes remain unverified
 until Master supplies the actual candidate-bound results.
 
-Procedure guard and graph tests cover local-correction eligibility, retained source gaps, serial pending-correction admission, failed checks, ordinary rework for nonlocal or mixed issues, native backend admission and required final Judge dominance. Existing native fixtures default to zero local candidates and retain their original rework scenarios. C-17 adds six native qualification scenarios: Task, Goal and Validation each record one eligible Medium correction with an original unmet criterion, then settle immediately or retry a failed local check. Each scenario requires final judgment and preserves the original review count and source obligations. Helper unit tests verify the generated values; native execution of these new scenarios is unverified until an exact-artifact qualification receipt records it. These checks do not prove skill decisions.
+Procedure guard and graph tests cover local-correction eligibility, retained source gaps, serial pending-correction admission, failed checks, ordinary rework for nonlocal or mixed issues, native backend admission and required final Evaluator dominance. Existing native fixtures default to zero local candidates and retain their original rework scenarios. C-17 adds six native qualification scenarios: Task, Goal and Validation each record one eligible Medium correction with an original unmet criterion, then settle immediately or retry a failed local check. Each scenario requires final judgment and preserves the original review count and source obligations. Helper unit tests verify the generated values; native execution of these new scenarios is unverified until an exact-artifact qualification receipt records it. These checks do not prove skill decisions.
 
 Before release, exercise these cases against the exact candidate installed in the dedicated UTM VM, over the host's installed release combination:
 
 | Case | Agent-observed expectation |
 | --- | --- |
 | LOCAL-01 | A documentation correction that originally fails a completion criterion is read back and checked, then advances with current criterion evidence and no new provider ordinal or approval request. |
-| LOCAL-02 | A simple behavioral fix passes its focused regression and affected required checks, retains the original Medium priority and proceeds through the final Judge without provider re-review. |
+| LOCAL-02 | A simple behavioral fix passes its focused regression and affected required checks, retains the original Medium priority and proceeds through the final Evaluator without provider re-review. |
 | LOCAL-03 | A harmless unauthorized command, read or file creation is reported separately; prohibited results are excluded and usable complete reports remain admitted. Covered cleanup creates no product finding or provider round. |
 | LOCAL-04 | A target write, lost reviewer coverage or missing required evidence keeps the affected verdict pending; recovery addresses that guarantee and never converts an apology into proof. |
 | LOCAL-05 | A mixed set containing a design or safety issue takes ordinary authorized rework and necessary review; a failed local check or unresolved final criterion cannot advance. |
@@ -380,7 +395,7 @@ TASK-141 adds `test_adaptive_qualification_unit.py` and
 `test_adaptive_suitability_unit.py` to the existing unit/Ruff enrollment. The same
 symbolic analyzer checks all five canonical sources and adaptive documentation,
 measured branching, grouped evidence, namespaces and equivalent typed operations.
-Mutations cover missing Judge facts, forged role/type/outcome declarations,
+Mutations cover missing Evaluator facts, forged role/type/outcome declarations,
 unselected or absent original evidence, review-route/ordinal/acceptance controls,
 post-assessment and post-approval changes, native suffix re-entry, compound
 renewal scopes, JSON-safe unknown effects and stale suitability.
@@ -398,8 +413,8 @@ self-contained custom contracts, retained recovery and local write authority.
 
 Source-only native checks validate exact generated bootstrap representatives and
 known original sources using released Podway. These prove authoring/structure and
-mechanical target preparation, not an actual independent Judge, runtime bootstrap
-recording, installed handlers or skill decisions. Task-plan/Worker/orchestration
+mechanical target preparation, not an actual independent Evaluator, runtime bootstrap
+recording, installed handlers or skill decisions. Task-plan/Executor/orchestration
 functional checks and all seven installed entrypoints remain unverified until
 their authorized family/VM observations. No ordinary Make target invokes an LLM,
 a generated session or candidate installation.
@@ -419,11 +434,11 @@ controls cover canonical Validation past baseline and interrupted finalization
 with a requirement-source lifecycle edit in the single fixture commit.
 Finalization recovery controls keep pinned original criteria after an approved
 source edit or deletion. They cover ordinary and historical checkpoint shapes,
-current report postimages and deleted before-images, mapped Judge evidence,
+current report postimages and deleted before-images, mapped Evaluator evidence,
 work and goal identity, native invalidation and concurrent drift, immutable Git
 source recovery, and the public context CLI. Pending applied-source controls
-keep the original criteria readable for the normal mapped Worker, Judge or
-Primary without requiring its future report. They require the current valid
+keep the original criteria readable for the normal mapped Executor, Evaluator or
+Coordinator without requiring its future report. They require the current valid
 native attempt, including its released `active` lifecycle, and reject unapproved
 postimages, invalidated attempts and concurrent drift. Public CLI controls use
 the actual NativeClient transport with synthetic native envelopes. Delegated
@@ -438,7 +453,7 @@ public context CLI in disposable native worktrees. Known Task/Goal/Validation
 reuse preserves original first-due checkpoints. Actual pre-start reports remain
 distinct from synthetic native control fixtures and product/reviewer execution.
 These checks do not establish installed handler decisions or Master acceptance.
-Task-plan/Worker/orchestration functional behavior and installed upgrade/startup
+Task-plan/Executor/orchestration functional behavior and installed upgrade/startup
 remain separately unverified until actual dedicated-VM observations.
 
 Adaptive Design consumer controls in `tests/unit/test_adaptive_design_unit.py`
@@ -481,7 +496,7 @@ exact target and user decision checks, selected upstream readiness and leaf
 results, conditional PM clipboard authority, no-initialization and unchanged
 product oracles. Exact installed-byte `qualified-known` reuse is reported
 separately from genuine producer/evidence/Decision adaptation; both retain native
-role, tuple and selected Judge evidence checks. The declared negative Validation
+role, tuple and selected Evaluator evidence checks. The declared negative Validation
 fixture keeps its original completion obligation unmet or unverified while the
 three process criteria pass; neither report delivery nor the negative-case oracle
 asserts native achievement. Fixed Task/Epic canonical regressions retain their
@@ -511,17 +526,17 @@ applicable. Missing prerequisites, approvals, role evidence or installed
 observations remain incomplete. Candidate installation stays in the dedicated
 UTM VM under its separate authority, using committed matching verification tools.
 
-| Case | Required result | Primary owner |
+| Case | Required result | Implementation owner |
 | --- | --- | --- |
 | ADAPT-01 | Suitable existing Procedure is reused with a concrete fit reason and no unnecessary generation. | TASK-139 |
 | ADAPT-02 | Documentation and performance work both qualify with different producer/evidence/Decision structures, not just different IDs or no-op phases. Documentation-only work needs no unused implementation/refine/Deslop prerequisite absent an independent requirement. | TASK-139; TASK-141; TASK-142 |
 | ADAPT-03 | Whole and partial reuse preserve operation identities and resolve ports/rework; conflicting composition inputs reject. Fragment checks use exact flattened instances and origins need not remain available for resume. | TASK-140 |
-| ADAPT-04 | Reject missing final-Judge predicates, invalid applicability routed forward, unguarded achieved mappings and product work after the last covering assessment. Exercise forward post-approval/assessment content changes separately from native rework invalidation. | TASK-141 |
+| ADAPT-04 | Reject missing final-Evaluator predicates, invalid applicability routed forward, unguarded achieved mappings and product work after the last covering assessment. Exercise forward post-approval/assessment content changes separately from native rework invalidation. | TASK-141 |
 | ADAPT-05 | A real fail/inconclusive assessment completes its operation and routes to rework/evidence/stop without false success. | TASK-142 |
 | ADAPT-06 | Seed original-source and compound-criterion omissions and goal-destroying remedies; current assessments discover them without changing the authoritative requirement set to match the plan. | TASK-141; TASK-142 |
 | ADAPT-07 | Selected route and complete expected Independent UI or Herdr child team survive composition; missing required reports remain incomplete. | TASK-142 |
 | ADAPT-08 | Truncated/unreadable delivery recovers the same operation, with no new reviewer, ordinal or synthetic receipt requirement. | TASK-142 |
-| ADAPT-09 | Eligible local corrections use current checks and final Judge without needless re-review or Procedure regeneration. | TASK-142 |
+| ADAPT-09 | Eligible local corrections use current checks and final Evaluator without needless re-review or Procedure regeneration. | TASK-142 |
 | ADAPT-10 | Every member can pass while an Epic seam still blocks final acceptance; future members are not required prematurely. | TASK-142 |
 | ADAPT-11 | Feature, project and refactor designs preserve QA verdicts, exact application approval and no-implementation boundaries. | TASK-143 |
 | ADAPT-12 | Non-Git project planning and opted-out work perform no Podway discovery, source rendering, session mutation or Git initialization. | TASK-143 |
@@ -538,8 +553,8 @@ UTM VM under its separate authority, using committed matching verification tools
 | ADAPT-23 | Committed driver/fixture and exact installed-candidate checks reject mismatches, missing selected Ouroboros/clipboard authority and pending descendants. Old result files cannot supply a new PASS. | TASK-145; TASK-146 |
 | ADAPT-24 | Source-pinned canonical regressions keep fixed checkpoints. Adaptive smoke derives its checkpoint from the admitted verified binding plus actual native work and fixture oracle, accepting valid different node IDs without accepting missing work or a wrong family. | TASK-145; TASK-146 |
 | ADAPT-25 | All five canonical bindings accept their legitimate achieved/stopped paths, including a shared closeout terminal. Missing goal tracking, arbitrary success labels and parent-goal assessment inside an ordinary work fragment cannot manufacture success. | TASK-137; TASK-140; TASK-141 |
-| ADAPT-26 | Valid namespaced capability signatures and typed aliases qualify. Worker-labeled fake Judge evidence, text-nonempty verdicts and pass-only assessment records cannot satisfy independent assessment. Legitimate unrelated pass-only native checks remain usable. | TASK-137; TASK-140; TASK-141 |
+| ADAPT-26 | Valid namespaced capability signatures and typed aliases qualify. Executor-labeled fake Evaluator evidence, text-nonempty verdicts and pass-only assessment records cannot satisfy independent assessment. Legitimate unrelated pass-only native checks remain usable. | TASK-137; TASK-140; TASK-141 |
 | ADAPT-27 | Reject missing ordinal continuity, incomplete-operation consumption, cross-provider resume, excess confirmation without new authority and delegated final/cold acceptance. An authorized in-session switch preserves findings and authority without requiring unselected providers at startup. | TASK-141; TASK-142 |
 | ADAPT-28 | Positive canonical and composed controls pass. Native-invalid, proven incompatible and valid-but-not-established cases remain distinct; test infeasible guarded paths and practical analysis cost without exhaustive-path assumptions or matching skill prose. | TASK-141; TASK-146 |
 | ADAPT-29 | Preserve applicable adopted-customization obligations and disclose a justified replacement in the existing envelope. Optional reusable templates and historic local files do not become mandatory policies merely by existing. | TASK-138; TASK-139; TASK-145 |
-| ADAPT-30 | Known unmodified reuse keeps existing assessment boundaries, including Goal without a plan Judge. New/changed candidates receive exact-target pre-start suitability and truthful bootstrap import; changed basis on re-entry cannot replay an old pass as a fresh assessment. | TASK-139; TASK-141; TASK-142 |
+| ADAPT-30 | Known unmodified reuse keeps existing assessment boundaries, including Goal without a plan Evaluator. New/changed candidates receive exact-target pre-start suitability and truthful bootstrap import; changed basis on re-entry cannot replay an old pass as a fresh assessment. | TASK-139; TASK-141; TASK-142 |

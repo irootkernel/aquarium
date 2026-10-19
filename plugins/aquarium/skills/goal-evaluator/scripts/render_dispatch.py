@@ -117,13 +117,18 @@ def _block(kind: str, file: dict, text: str) -> str:
 
 def render_dispatch(preparation: dict) -> dict:
     """Return a verified local rendering; native acknowledgement remains separate."""
-    if (
-        isinstance(preparation, dict)
-        and preparation.get("schema") == "aquarium.assignment/v2"
-    ):
+    if isinstance(preparation, dict) and preparation.get("schema") in {
+        "aquarium.assignment/v2",
+        "aquarium.assignment/v3",
+    }:
+        filename = (
+            "ordinary_assignment_v2.py"
+            if preparation["schema"] == "aquarium.assignment/v2"
+            else "ordinary_assignment.py"
+        )
         spec = importlib.util.spec_from_file_location(
             "aquarium_ordinary_assignment",
-            Path(__file__).with_name("ordinary_assignment.py"),
+            Path(__file__).with_name(filename),
         )
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

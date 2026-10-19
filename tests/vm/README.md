@@ -254,18 +254,18 @@ child execution, final results, role assignments, assessed source bytes,
 fixture oracles and Podway progression establish the startup result together.
 The reader starts no provider turn or daemon and exits after reading.
 
-For these test cases, the Primary saves original ordinary v2 assignments and
+For these test cases, the Coordinator saves original ordinary v3 assignments and
 role reports inside `run_root/task-startup` or `run_root/epic-startup`, with each
 case's `startup-evidence.json` pointing only to files in that directory. Preserve
 the other case's evidence during incomplete runs and resumes. Actual child final
 results include their JSON report or its path
 and digest. Reports identify `greet.py` bytes through `target.greet_sha256`;
-Judge rows retain the original smoke IDs, sources, evidence and states. The
-Judge remains report-only. Native role metadata may be null; child user messages,
+Evaluator rows retain the original smoke IDs, sources, evidence and states. The
+Evaluator remains report-only. Native role metadata may be null; child user messages,
 model telemetry, full private history and formal accepted-task bindings are not
 required. This collection protocol belongs to VM acceptance, not ordinary startup.
 
-Use a cumulative delivery handoff that lists the Worker's actual implementation
+Use a cumulative delivery handoff that lists the Executor's actual implementation
 changes and subsequent refinement and check results. Preserve a verification
 phase's no-op result without dropping the earlier changes from that handoff.
 Both reports use a 64-character lowercase SHA-256 hex digest for
@@ -363,7 +363,7 @@ selection remains unchanged. Development success and failure use
 `aquarium.vm-adaptive-result/v1` at `adaptive-result.json`; release `run` uses
 `aquarium.vm-acceptance-result/v1` at `result.json`.
 
-Each case captures original assignments and actual returned ordinary v2 reports
+Each case captures original assignments and actual returned ordinary v3 reports
 inside its own `<case>-capture` directory, the only adaptive `--add-dir` scope.
 Driver-owned original recursive product images and candidate bindings live outside
 that agent capture, under `adaptive-state/<case>/`, including on same-thread
@@ -380,8 +380,8 @@ This is fixture scope, not a production path policy. Reasoned no-change requires
 an empty string diff, empty targets, unchanged bytes and a nonblank reason;
 every proposal diff must be a string.
 Reports identify assessed files as `target.files`, a relative-path to SHA-256 map. The driver correlates real native
-Worker/Judge children and complete returned results; cold validation can use a
-Judge without an unused corrective Worker. It compares every due original
+Executor/Evaluator children and complete returned results; cold validation can use a
+Evaluator without an unused corrective Executor. It compares every due original
 criterion, current target bytes and the case oracle while preserving future
 unverified rows. Synthetic unit reports prove only the checks, never installed
 agent behavior.
@@ -395,7 +395,7 @@ requires the installed public context's `qualified-known` result and exact bytes
 of the installed released family source. The collector reports `known-reuse`
 separately from `structurally-adapted`, which requires an actual producer/evidence/
 Decision difference. Edited bytes or renamed placements alone cannot establish
-either claim. Fenced native evidence reads must include the real returned Judge
+either claim. Fenced native evidence reads must include the real returned Evaluator
 report or its exact content digest. This instrumentation belongs only to these
 VM cases and adds no ordinary startup receipt or authentication protocol.
 Non-Git project verification checks documents and absence of Git/Podway without

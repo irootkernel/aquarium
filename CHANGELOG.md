@@ -10,9 +10,11 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Select and compose work-specific Procedures for Task, Epic Goal, Validation, feature/project/refactor Design and Diagnosis with exact qualification, mapped work and self-contained recovery while preserving review and acceptance authority, including explicitly consented native atomic replacement that preserves running-session history and remaining grants when topology is missing; Podway-backed adaptive helpers require a supported Python environment with PyYAML and `jsonschema`, and existing installed workflows require an authorized compatible update.
 
-- Add a separate guest-side `make test-vm` gate with reusable manual upgrade and Task/Epic startup scenarios, preserving existing state and requiring actual native Worker/Judge results for the exact candidate.
+- Add a separate guest-side `make test-vm` gate with reusable manual upgrade and Task/Epic startup scenarios, preserving existing state and requiring actual native Executor/Evaluator results for the exact candidate.
 
 ### Changed
+
+- Rename workflow roles to Coordinator, Evaluator and Executor, replace `goal-judge` with `goal-evaluator`, and align ordinary v3 reports with adaptive v2 definitions. Existing sources, admitted sessions and historical evidence retain their original contracts; new workflows require an authorized compatible update.
 
 - Replace `independent-review` with `subagent-review` for standalone and workflow reviews without a compatibility alias; existing definitions need an authorized compatible update, and historical review evidence retains its original identity.
 - Recommend review routes by work size and complexity, add UI/UX specialists and native Herdr review teams, and preserve goals and complete result handoffs; existing managed workflows need authorized Procedure updates.
@@ -24,7 +26,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Accept official development candidate identities in the status runtime and preserve them in recorded state, so installed setup can proceed during guest upgrade verification.
 - Require Podway-backed workflows to finish and verify session closeout after their final commit or approved no-commit/no-change result, report pending finalization separately, and recover without repeating an existing commit.
-- Restore ordinary native workflow startup and recovery without private executor or configuration qualification. Assess coherent Worker delivery with an independent Judge, retain formal delegation and historical snapshots, and require authorized managed-Procedure updates with compatible successor sessions.
+- Restore ordinary native workflow startup and recovery without private executor or configuration qualification. Assess coherent Executor delivery with an independent Evaluator, retain formal delegation and historical snapshots, and require authorized managed-Procedure updates with compatible successor sessions.
 
 ## v0.1.19 - 2026-10-14
 

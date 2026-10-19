@@ -5,7 +5,7 @@ description: "Strengthen and verify evidence for one implemented roadmap task. U
 
 # Task Verify
 
-Under an ordinary `task-handler`, follow [Task orchestration](../../references/task-orchestration.md). Return the node-specific `aquarium.worker-handoff/v2` with exact target, original requirements, actual results, available public handles, performed and omitted checks, authority and gaps. The Primary owns Podway records and Decisions; the independent Judge assesses coherent delivery phases. Admitted formal snapshots retain their original v1 contract. Direct invocation keeps this phase's existing authority.
+Under an ordinary `task-handler`, follow [Task orchestration](../../references/task-orchestration.md). Return the node-specific `aquarium.executor-handoff/v3` with exact target, original requirements, actual results, available public handles, performed and omitted checks, authority and gaps. The Coordinator owns Podway records and Decisions; the independent Evaluator assesses coherent delivery phases. Admitted formal snapshots retain their original v1 contract. Direct invocation keeps this phase's existing authority.
 
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
@@ -36,7 +36,7 @@ Before running a check, account for current user-run evidence:
 
 ## Run Checks in Order
 
-Run focused checks first, then repository-required broader gates. Treat the underlying process exit status as authoritative when Gaori or another evidence-compression wrapper is used. If an applicable E2E gate cannot run under repository policy or the current environment, request or accept explicit user-run evidence and keep the phase incomplete until it exists. Stop and escalate to the orchestrator when a required gate is permanently blocked by repository policy, environment, or authority; never substitute a narrower check for it.
+Run focused checks first, then repository-required broader gates. Treat the underlying process exit status as authoritative when Gaori or another evidence-compression wrapper is used. If an applicable E2E gate cannot run under repository policy or the current environment, request or accept explicit user-run evidence and keep the phase incomplete until it exists. Stop and escalate to the coordinator when a required gate is permanently blocked by repository policy, environment, or authority; never substitute a narrower check for it.
 
 When a selected check uses Gaori, read [gaori-integration.md](../../references/gaori-integration.md). The agent that performs the check must load and follow the installed `$use-gaori` skill before selecting a transport or starting work. Supply the exact repository-owned command and current target. Preserve an existing invocation across continuation and consume its terminal result through the shared contract.
 
@@ -44,4 +44,4 @@ Return command results, evidence quality, and verification acceptance separately
 
 Do not stage, update lifecycle documentation, invoke Mulgae, commit, or publish in this phase.
 
-Return the matrix, agent-run and user-run commands, exit codes, Gaori evidence metadata when applicable, skipped layers, task-caused failures, pre-existing failures, and unresolved evidence gaps to the orchestrator.
+Return the matrix, agent-run and user-run commands, exit codes, Gaori evidence metadata when applicable, skipped layers, task-caused failures, pre-existing failures, and unresolved evidence gaps to the coordinator.

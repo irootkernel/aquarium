@@ -11,8 +11,8 @@ Use [Procedure node contracts](procedure-node-contracts.md) and the owning
 workflow reference for the admitted placement.
 
 The operative role instructions are in
-[Goal Judge](../skills/goal-judge/SKILL.md) and
-[Worker guidance](worker-guidance.md). The
+[Goal Judge](../skills/goal-evaluator/SKILL.md) and
+[Worker guidance](executor-guidance.md). The
 [native mapping profiles](native-agent-mappings.md) describe local preparation
 and delivery-mapping components and their qualification domains. An unsupported
 required binding or recovery path blocks execution without direct fallback.

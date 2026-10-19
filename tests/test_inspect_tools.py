@@ -4519,7 +4519,7 @@ else:
                 "aquarium-task-v2.yaml",
                 "decide-backend-check",
                 "non-failing",
-                "judge-review",
+                "evaluator-review",
             ),
             (
                 "aquarium-task-v2.yaml",
@@ -5962,6 +5962,9 @@ else:
             {
                 "aquarium-task-v2.yaml": {
                     hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-task-v33.yaml").read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-task-v32.yaml").read_bytes()
                     ).hexdigest(),
                     hashlib.sha256(
@@ -6006,6 +6009,9 @@ else:
                 },
                 "aquarium-goal-v2.yaml": {
                     hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-goal-v36.yaml").read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-goal-v35.yaml").read_bytes()
                     ).hexdigest(),
                     hashlib.sha256(
@@ -6049,6 +6055,11 @@ else:
                     "a7b1d024de777e5535e71fa86d1bb23ce31ff69ffec1e0be20829a88ae3b2b94",
                 },
                 "aquarium-validation-v2.yaml": {
+                    hashlib.sha256(
+                        (
+                            ROOT / "tests/fixtures/aquarium-validation-v35.yaml"
+                        ).read_bytes()
+                    ).hexdigest(),
                     hashlib.sha256(
                         (
                             ROOT / "tests/fixtures/aquarium-validation-v34.yaml"
@@ -6104,6 +6115,9 @@ else:
                 },
                 "aquarium-design-v2.yaml": {
                     hashlib.sha256(
+                        (ROOT / "tests/fixtures/aquarium-design-v11.yaml").read_bytes()
+                    ).hexdigest(),
+                    hashlib.sha256(
                         (ROOT / "tests/fixtures/aquarium-design-v10.yaml").read_bytes()
                     ).hexdigest(),
                     hashlib.sha256(
@@ -6123,6 +6137,11 @@ else:
                     "7582829afbb5c188c349e8f57c486a8de5eae2327e331680d7ccc09e1c6ecda8",
                 },
                 "aquarium-war-room-v2.yaml": {
+                    hashlib.sha256(
+                        (
+                            ROOT / "tests/fixtures/aquarium-war-room-v11.yaml"
+                        ).read_bytes()
+                    ).hexdigest(),
                     hashlib.sha256(
                         (
                             ROOT / "tests/fixtures/aquarium-war-room-v10.yaml"

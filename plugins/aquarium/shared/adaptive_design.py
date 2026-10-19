@@ -7,12 +7,12 @@ from adaptive_bundles import BundleError, contained, directory, read_regular, sh
 
 LEAVES = {"interview", "pm", "seed", "qa"}
 OPERATIONS = {
-    "sha256:b891096f858bee3995ecc5588c8efbe0672abfd05d28042249484d6a05099be8": "context",
-    "sha256:088fb738744c383c0a6bf628bbfa29ae4f53fab060ead5642e62afc1a4ddcc9a": "discovery",
-    "sha256:96970035e3c2a943448c1602838bcc00ecde2c067a03cf8085fcfbae04515d8f": "draft",
-    "sha256:51ea64185007a77ef7b4e5ba62cc0308bebcc0e2a71348276452439ef29ca5fd": "challenge",
-    "sha256:564ebf6e69d47943d6d6c7caf1afb610443dce1dfd0f55ecd89e4710e5d67d96": "quality",
-    "sha256:6f50b59fb6c2f641c8ae2cf8352df1119155346ede82700bf4ed1130a63918e6": "application",
+    "sha256:3279982bbafdfd77f1ea7529e52e7f8f75d27ed67db1cbcad58d111e86ce3738": "context",
+    "sha256:baa70e7d4134003ea497218429495c25281cbe54c9d271a1ed6dcb16f3c37a48": "discovery",
+    "sha256:81ebe0a24739a44ce487d32b41158cc4b909ab0d8f2575093db271b25e1c2053": "draft",
+    "sha256:0ec2cd15b2a122b217eb0a28f88c04c60867414ec7e107fb3b182ae79ac359f9": "challenge",
+    "sha256:41f30306cb9903b5e0c76e2819d5ec8e64bc39cd1cb842fe22c16da545ec1d6d": "quality",
+    "sha256:7e593f53fbeb186570313947c7b7740c3538da3d897142a3f0638c1127b41367": "application",
 }
 
 
@@ -100,7 +100,7 @@ def approved_targets(proposal, approval, *, approval_sources=("user",)):
         or approval.get("source") not in approval_sources
         or approval.get("decision") != "approved"
     ):
-        return {"status": "approval-required", "next_owner": "Primary"}
+        return {"status": "approval-required", "next_owner": "Coordinator"}
     if approval.get("proposal") != proposal:
         return {
             "status": "reapproval-required",
@@ -162,7 +162,7 @@ def current_targets(repository, targets, *, applied=False):
 def application(
     repository, proposal, approval, *, applied=False, approval_sources=("user",)
 ):
-    """Re-read the exact approved targets before dispatch; the Worker rechecks before writes."""
+    """Re-read the exact approved targets before dispatch; the Executor rechecks before writes."""
     approved = approved_targets(proposal, approval, approval_sources=approval_sources)
     if approved["status"] != "approved":
         return approved
@@ -176,7 +176,7 @@ def context(repository, assignment, phase):
         "phase": phase,
         "product_implementation": False,
         "delivery_commit": "separate-authority",
-        "next_owner": "Primary",
+        "next_owner": "Coordinator",
     }
     if "quality" in value:
         result["quality"] = quality(value["quality"])
@@ -184,7 +184,7 @@ def context(repository, assignment, phase):
         if "proposal" not in value:
             result["application"] = {
                 "status": "approval-required",
-                "next_owner": "Primary",
+                "next_owner": "Coordinator",
             }
         else:
             result["application"] = application(

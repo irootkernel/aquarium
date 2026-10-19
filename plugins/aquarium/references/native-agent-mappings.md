@@ -3,14 +3,16 @@
 ## Status and scope
 
 These v1 profiles serve declared formal delegation and historical records.
-Ordinary work follows the [v2 contract](ordinary-agent-orchestration.md) and does
+Ordinary work follows the [v3 contract](ordinary-agent-orchestration.md) and does
 not require native qualification or a private executor-record collector. The
 assignment preparer and renderer select the ordinary branch for
-`aquarium.assignment/v2`: preparation validates and copies supplied assignment
+`aquarium.assignment/v3`: preparation validates and copies supplied assignment
 content without reading a role snapshot; rendering returns
-`aquarium.prepared-dispatch/v2` with operative `dispatch_text`. It creates no
+`aquarium.prepared-dispatch/v3` with operative `dispatch_text`. The retained
+[v2 contract](ordinary-agent-orchestration-v2.md) routes `aquarium.assignment/v2`
+to `aquarium.prepared-dispatch/v2` separately. Ordinary preparation creates no
 accepted-task, configuration or result binding. Existing v1 inputs, outputs and
-digest encodings below remain unchanged; formal binders reject ordinary v2.
+digest encodings below remain unchanged; formal binders reject ordinary v2 and v3.
 
 These profiles describe the public surfaces and qualification obligations for
 `aquarium.codex-native/v1` and `aquarium.claude-native/v1`. Local preparation and
@@ -74,7 +76,7 @@ read after the task cannot replace the applicable native records.
 ### Prepare local assignment input
 
 The caller can use
-[prepare_assignment.py](../skills/goal-judge/scripts/prepare_assignment.py) with
+[prepare_assignment.py](../skills/goal-evaluator/scripts/prepare_assignment.py) with
 `--source-root <absolute-source-directory> --input <request.json-or-dash>`.
 The source directory contains the explicitly resolved role, dependencies and
 selected evidence; a caller-owned disposable bundle can hold resources from
@@ -102,7 +104,7 @@ preparation helper itself.
 
 ### Render operative instructions
 
-[render_dispatch.py](../skills/goal-judge/scripts/render_dispatch.py) accepts
+[render_dispatch.py](../skills/goal-evaluator/scripts/render_dispatch.py) accepts
 `--input <preparation.json-or-dash>`. It verifies the prepared domains, file
 inventories, sizes and hashes, then supplies role and dependency text as operative
 instructions. It includes the complete node assignment and selected evidence as
@@ -114,7 +116,7 @@ dispatch and establishes no native acceptance.
 
 ### Capture Codex thread records
 
-[read_codex_thread.py](../skills/goal-judge/scripts/read_codex_thread.py) accepts
+[read_codex_thread.py](../skills/goal-evaluator/scripts/read_codex_thread.py) accepts
 `--socket <existing-absolute-Unix-socket> --thread-id <actual-native-id>`.
 It connects to that explicit existing WebSocket endpoint, initializes one client,
 and issues `thread/read` with `includeTurns: true`. It does not discover sockets,
@@ -132,7 +134,7 @@ acceptance and settlement.
 
 ### Map a native delivery
 
-[map_native_delivery.py](../skills/goal-judge/scripts/map_native_delivery.py)
+[map_native_delivery.py](../skills/goal-evaluator/scripts/map_native_delivery.py)
 accepts `--input <request.json-or-dash>`. Its
 `aquarium.native-delivery-request/v1` contains `profile`, `expected`, and
 `records`. Expected identities are `scope_ref`, `supervisor_ref`, `worker_ref`,
@@ -312,7 +314,7 @@ Podway acceptance document.
 
 ### Bind a prepared delivery
 
-[bind_prepared_delivery.py](../skills/goal-judge/scripts/bind_prepared_delivery.py)
+[bind_prepared_delivery.py](../skills/goal-evaluator/scripts/bind_prepared_delivery.py)
 accepts `--input <binding-request.json-or-dash>` containing
 `aquarium.prepared-delivery-request/v1`, `preparation`, and `mapping_request`.
 It reruns rendering and native correlation rather than trusting a supplied
@@ -343,7 +345,7 @@ binding and durable host qualification.
 
 ### Bind a prepared Claude delivery
 
-[bind_claude_delivery.py](../skills/goal-judge/scripts/bind_claude_delivery.py)
+[bind_claude_delivery.py](../skills/goal-evaluator/scripts/bind_claude_delivery.py)
 accepts `--input <binding-request.json-or-dash>` containing
 `aquarium.claude-prepared-delivery-request/v1`, `preparation` and `mapping_request`.
 It reruns rendering and the synchronous Claude SDK delivery mapping, requiring

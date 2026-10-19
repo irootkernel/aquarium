@@ -22,8 +22,8 @@ behavior belongs to full development verification.
 
 Record exact fixture inputs and original criteria with the implementation. Grant
 the bounded fixture effects through the handler's normal approval boundary.
-Observe installed handler calls, real Worker outputs, relevant checks and an
-independent Judge assessment. A standalone agent call or fabricated ACK cannot
+Observe installed handler calls, real Executor outputs, relevant checks and an
+independent Evaluator assessment. A standalone agent call or fabricated ACK cannot
 substitute for the workflow. All cases use manual UTM operation and Codex.
 
 Unavailable incidental executor telemetry is not a required observation in any
@@ -82,15 +82,15 @@ exact repository root and roadmap Task ID. Discover the installed
    entry and approval boundary with the bounded fixture scope. An initial scope
    grant does not accept an unseen plan or exact candidate. Resume the actual
    invocation with the fixture operator's decision when needed.
-2. Observe an actual native Worker assignment, meaningful fixture change and
+2. Observe an actual native Executor assignment, meaningful fixture change and
    relevant check result. Collect the actual returned result.
-3. Observe an independent Judge assess the original due criteria and artifacts.
-4. Confirm the Primary can advance past initial work using the applicable
+3. Observe an independent Evaluator assess the original due criteria and artifacts.
+4. Confirm the Coordinator can advance past initial work using the applicable
    evidence and Podway state. Stop at a safe boundary under the cleanup rules.
 
 ### Criteria
 
-Pass requires actual Worker/Judge work and semantic progression beyond initial
+Pass requires actual Executor/Evaluator work and semantic progression beyond initial
 admission. A plan, session creation or agent success sentence alone cannot pass.
 An unexpected prior-qualification gate or demand for inaccessible executor
 records fails the case. A genuine fixture defect follows normal rework; it must
@@ -111,7 +111,7 @@ discover the installed `aquarium:epic-handler` normally.
    through the normal boundary, retaining actual later result decisions.
 2. Observe entry into the first member goal with the correct Procedure and
    admitted review route.
-3. Observe actual native Worker output and an independent Judge assessment of
+3. Observe actual native Executor output and an independent Evaluator assessment of
    the original due criteria, then the first semantic progression.
 4. Settle agents and stop the partial smoke run through supported operations.
    Record the partial state accurately; do not claim full completion.

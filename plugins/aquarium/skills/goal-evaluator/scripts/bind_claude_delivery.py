@@ -350,12 +350,14 @@ def bind_delivery(preparation: dict | list[dict], mapping_request: dict) -> dict
     try:
         preparations = preparation if isinstance(preparation, list) else [preparation]
         if any(
-            isinstance(value, dict) and value.get("schema") == "aquarium.assignment/v2"
+            isinstance(value, dict)
+            and value.get("schema")
+            in {"aquarium.assignment/v2", "aquarium.assignment/v3"}
             for value in preparations
         ):
             raise BindingError(
                 "INVALID_PREPARATION",
-                "ordinary v2 assignments are not formal native preparations",
+                "ordinary assignments are not formal native preparations",
             )
         output["request_digest"] = native.digest(
             {

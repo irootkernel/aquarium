@@ -57,7 +57,7 @@ def fragment_plan(repository, *, performance=False, mode="prepare"):
             node["terminal"] = True
     used = {node["use"] for node in placements}
     fragment = {
-        "schema": "aquarium.procedure-fragment/v1",
+        "schema": "aquarium.procedure-fragment/v2",
         "id": "bounded-work",
         "version": "1",
         "purpose": "Deliver and independently assess the actual approved work.",
@@ -389,7 +389,7 @@ def evidence_plan(repository):
     record = copy.deepcopy(item)
     record["id"] = "record"
     second = {
-        "schema": "aquarium.procedure-fragment/v1",
+        "schema": "aquarium.procedure-fragment/v2",
         "id": "read-assessment",
         "version": "1",
         "purpose": "Read the exact selected upstream assessment.",
@@ -437,7 +437,7 @@ def evidence_plan(repository):
                 "nodes": {
                     "collect": {
                         "kind": "action",
-                        "role": "worker",
+                        "role": "executor",
                         "effects": [],
                         "capabilities": [],
                     }
@@ -590,7 +590,7 @@ def rework_plan(repository):
     }
     part["mapping"]["nodes"]["route"] = {
         "kind": "decision",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [],
     }
@@ -748,15 +748,15 @@ def product_plan(repository):
         "nodes": {
             "record": {
                 "kind": "action",
-                "role": "worker",
+                "role": "executor",
                 "effects": [],
                 "capabilities": [
-                    {"signature": "aquarium.task.review-control/v1", "fields": {}}
+                    {"signature": "aquarium.task.review-control/v2", "fields": {}}
                 ],
             },
             "route": {
                 "kind": "decision",
-                "role": "orchestrator",
+                "role": "coordinator",
                 "effects": [],
                 "capabilities": [],
             },
@@ -1092,7 +1092,7 @@ def distinct_decision_control_plan(repository):
     fragment["exits"] = {"selected": "split"}
     part["mapping"]["nodes"]["split"] = {
         "kind": "decision",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [],
     }
@@ -1124,7 +1124,7 @@ def distinct_decision_control_plan(repository):
     )
     draft["mapping"]["nodes"]["note"] = {
         "kind": "action",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [],
     }
@@ -1290,7 +1290,7 @@ def test_real_root_entry_and_public_rework_target_remain_supported(repository):
     )
     draft["mapping"]["nodes"]["basis"] = {
         "kind": "action",
-        "role": "worker",
+        "role": "executor",
         "effects": [],
         "capabilities": [],
     }
@@ -1539,7 +1539,8 @@ def test_reachable_graph_rejects_actual_evidence_violations(repository, case):
 
 
 @pytest.mark.parametrize(
-    "fields", [{}, {"judge-verdict": "judge-verdict"}, {"logical": "judge-verdict"}]
+    "fields",
+    [{}, {"evaluator-verdict": "evaluator-verdict"}, {"logical": "evaluator-verdict"}],
 )
 def test_alias_expansion_preserves_implicit_and_explicit_logical_fields(
     repository, fields
@@ -1551,7 +1552,7 @@ def test_alias_expansion_preserves_implicit_and_explicit_logical_fields(
     def change(fragment):
         fragment["node_definitions"]["assess"]["items"].append(
             {
-                "id": "judge-verdict",
+                "id": "evaluator-verdict",
                 "type": "choice",
                 "required": True,
                 "prompt": "Record current verdict",
@@ -1560,17 +1561,17 @@ def test_alias_expansion_preserves_implicit_and_explicit_logical_fields(
         )
 
     amend_fragment(repository, draft, change)
-    component["fields"] = {"assess": {"judge-verdict": "current-verdict"}}
+    component["fields"] = {"assess": {"evaluator-verdict": "current-verdict"}}
     component["mapping"]["nodes"]["assess"]["capabilities"] = [
         {"signature": "example.explicit-operation/v1", "fields": fields}
     ]
     result = composition.compose(repository, draft)
     aliases = result["mapping"]["nodes"]["work-assess"]["capabilities"][0]["fields"]
     assert (
-        aliases.get("logical" if "logical" in fields else "judge-verdict")
+        aliases.get("logical" if "logical" in fields else "evaluator-verdict")
         == "current-verdict"
     )
-    assert aliases.get("judge-verdict", "judge-verdict") == "current-verdict"
+    assert aliases.get("evaluator-verdict", "evaluator-verdict") == "current-verdict"
 
 
 @pytest.mark.parametrize("aliased", [False, True])
@@ -1592,7 +1593,7 @@ def test_mapped_route_contradiction_survives_aliasing(repository, aliased):
 
     amend_fragment(repository, draft, change)
     component["mapping"]["nodes"]["assess"]["capabilities"] = [
-        {"signature": "aquarium.task.review-routing/v1", "fields": {}}
+        {"signature": "aquarium.task.review-routing/v2", "fields": {}}
     ]
     if aliased:
         component["fields"] = {
@@ -1684,7 +1685,7 @@ def test_fragment_contract_violations_reach_their_actual_boundaries(repository, 
             {"node": "assess", "kind": "shared", "requires": []}
         ]
     elif case == "role":
-        component["mapping"]["nodes"]["assess"]["role"] = "worker"
+        component["mapping"]["nodes"]["assess"]["role"] = "executor"
     elif case == "parameter":
         component["parameters"]["undeclared"] = "value"
     else:
@@ -1797,21 +1798,23 @@ def test_own_control_achieved_path_requires_current_complete_assessment(case):
         (assets / "task-goal-control.yaml").read_bytes()
     )
     facts = {
-        "judge-verdict": "pass",
-        "judge-unmet-criteria": 0,
-        "judge-unverified-criteria": 0,
-        "judge-applicability": {"outcome": "pass"},
-        "judge-goal-outcome": "achieved",
+        "evaluator-verdict": "pass",
+        "evaluator-unmet-criteria": 0,
+        "evaluator-unverified-criteria": 0,
+        "evaluator-applicability": {"outcome": "pass"},
+        "evaluator-goal-outcome": "achieved",
     }
     if case in {"rework", "evidence-needed"}:
-        facts["judge-verdict"] = case
+        facts["evaluator-verdict"] = case
     elif case in {"unmet", "unverified"}:
-        facts["judge-" + case + "-criteria"] = 1
+        facts["evaluator-" + case + "-criteria"] = 1
     elif case.startswith("applicability-"):
-        facts["judge-applicability"]["outcome"] = case.removeprefix("applicability-")
+        facts["evaluator-applicability"]["outcome"] = case.removeprefix(
+            "applicability-"
+        )
     elif case in {"stopped", "not-achieved", "superseded"}:
-        facts["judge-goal-outcome"] = case
-        facts["judge-verdict"] = "rework"
+        facts["evaluator-goal-outcome"] = case
+        facts["evaluator-verdict"] = "rework"
 
     def satisfied(guard):
         value = facts[guard["evidence"]["item"]]
@@ -1830,7 +1833,7 @@ def test_own_control_achieved_path_requires_current_complete_assessment(case):
     ]
     assert len(eligible) == 1
     route = nodes["goal-route"]["routes"][eligible[0]]
-    if facts["judge-goal-outcome"] == "achieved":
+    if facts["evaluator-goal-outcome"] == "achieved":
         assert route["to"] == "assessment-current"
         option = document["node_definitions"]["assessment-current"]["options"][0]
         current = all(map(satisfied, option["guards"]))

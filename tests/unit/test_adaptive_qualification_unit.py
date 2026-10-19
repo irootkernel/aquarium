@@ -43,7 +43,7 @@ def known(family):
 def with_review(document, mapping, context):
     """A work-specific review operation with current route and internal recovery."""
     registry = capability_signatures()
-    control = copy.deepcopy(registry["aquarium.task.review-control/v1"])
+    control = copy.deepcopy(registry["aquarium.task.review-control/v2"])
     wanted = {
         "review-operation",
         "assessment-ordinal",
@@ -53,7 +53,7 @@ def with_review(document, mapping, context):
     }
     fields = {key: value for key, value in control["fields"].items() if key in wanted}
     route = copy.deepcopy(
-        registry["aquarium.goal.review-control/v1"]["fields"]["route-binding-result"]
+        registry["aquarium.goal.review-control/v2"]["fields"]["route-binding-result"]
     )
     fields["route-binding-result"] = route
     native = yaml.safe_load(
@@ -178,7 +178,7 @@ def with_review(document, mapping, context):
             },
         },
     ]
-    mapping.setdefault("capability_definitions", {})["fixture.review-routing/v1"] = {
+    mapping.setdefault("capability_definitions", {})["fixture.review-routing/v2"] = {
         "kind": "action",
         "guarantee": "review-routing",
         "fields": {"route-binding-result": route},
@@ -186,33 +186,33 @@ def with_review(document, mapping, context):
     }
     mapping["nodes"]["collect-review"] = {
         "kind": "action",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [
-            {"signature": "aquarium.task.review-control/v1", "fields": {}},
-            {"signature": "fixture.review-routing/v1", "fields": {}},
+            {"signature": "aquarium.task.review-control/v2", "fields": {}},
+            {"signature": "fixture.review-routing/v2", "fields": {}},
         ],
     }
     # Use a minimal declared control signature; unrelated canonical finding-count
     # fields are neither selected obligations nor a native topology requirement.
-    mapping["capability_definitions"]["fixture.review-control/v1"] = {
+    mapping["capability_definitions"]["fixture.review-control/v2"] = {
         "kind": "action",
         "guarantee": "review-control",
         "fields": fields,
         "relationships": [],
     }
     mapping["nodes"]["collect-review"]["capabilities"][0]["signature"] = (
-        "fixture.review-control/v1"
+        "fixture.review-control/v2"
     )
     mapping["nodes"]["check-review"] = {
         "kind": "decision",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [],
     }
     context["review"] = {"route": "herdr"}
     context["operation_contracts"][sha256(canonical_json(record))] = {
-        "roles": ["orchestrator"],
+        "roles": ["coordinator"],
         "effect": "evidence",
         "basis": "Explicit selected review operation with bounded original route/authority and same-operation report recovery.",
         "review_recovery": ["same-operation-recovery", "review-route-change"],
@@ -283,7 +283,7 @@ def adaptive(*, performance=False):
                 {
                     "node": "assess",
                     "required": True,
-                    "items": ["judge-assessment", "judge-goal-outcome"],
+                    "items": ["evaluator-assessment", "evaluator-goal-outcome"],
                 }
             ],
             "routes": {
@@ -295,15 +295,15 @@ def adaptive(*, performance=False):
     document["graph"]["entry"] = "deliver"
     mapping["nodes"]["deliver"] = {
         "kind": "action",
-        "role": "worker",
+        "role": "executor",
         "effects": ["work"],
         "capabilities": [],
     }
     mapping["nodes"]["accept"] = {
         "kind": "decision",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
-        "capabilities": [{"signature": "aquarium.task.approval/v1", "fields": {}}],
+        "capabilities": [{"signature": "aquarium.task.approval/v2", "fields": {}}],
     }
     mapping["obligations"]["original-goal"]["producers"] = [
         {"node": "deliver", "item": "documentation"}
@@ -313,7 +313,7 @@ def adaptive(*, performance=False):
         "review": {"route": "not-applicable"},
         "operation_contracts": {
             sha256(canonical_json(closeout)): {
-                "roles": ["orchestrator"],
+                "roles": ["coordinator"],
                 "effect": "finalization",
                 "basis": "Explicit verified fixture result-delivery operation; no product writes or grants.",
             }
@@ -402,7 +402,7 @@ def adaptive(*, performance=False):
         mapping["nodes"]["preserve"] = copy.deepcopy(mapping["nodes"]["deliver"])
         mapping["nodes"]["classify"] = {
             "kind": "decision",
-            "role": "orchestrator",
+            "role": "coordinator",
             "effects": [],
             "capabilities": [],
         }
@@ -462,11 +462,11 @@ def test_missing_or_unsupported_native_values_remain_explicit_unknown(predicate)
 @pytest.mark.parametrize(
     "field",
     [
-        "judge-goal-outcome",
-        "judge-verdict",
-        "judge-unmet-criteria",
-        "judge-unverified-criteria",
-        "judge-applicability",
+        "evaluator-goal-outcome",
+        "evaluator-verdict",
+        "evaluator-unmet-criteria",
+        "evaluator-unverified-criteria",
+        "evaluator-applicability",
     ],
 )
 def test_each_final_fact_is_required_directly_or_through_guarded_chain(field):
@@ -488,17 +488,21 @@ def test_each_final_fact_is_required_directly_or_through_guarded_chain(field):
     )
 
 
-@pytest.mark.parametrize("case", ["worker-label", "text-verdict", "pass-only"])
+@pytest.mark.parametrize("case", ["executor-label", "text-verdict", "pass-only"])
 def test_binding_labels_cannot_forge_independent_assessment_capabilities(case):
     document, binding, context = adaptive()
-    if case == "worker-label":
-        binding["nodes"]["assess"]["role"] = "worker"
+    if case == "executor-label":
+        binding["nodes"]["assess"]["role"] = "executor"
     else:
         item = next(
             item
             for item in document["node_definitions"]["assess"]["items"]
             if item["id"]
-            == ("judge-verdict" if case == "text-verdict" else "judge-applicability")
+            == (
+                "evaluator-verdict"
+                if case == "text-verdict"
+                else "evaluator-applicability"
+            )
         )
         if case == "text-verdict":
             item.update(type="text", min_length=1)
@@ -526,7 +530,7 @@ def test_post_assessment_effects_distinguish_unknown_from_proven_work(declared):
     )
     binding["nodes"]["polish"] = {
         "kind": "action",
-        "role": "worker",
+        "role": "executor",
         "effects": ["work"] if declared else [],
         "capabilities": [],
     }
@@ -605,7 +609,7 @@ def insert_action(document, binding, before, identifier, *, declared=True):
     )
     binding["nodes"][identifier] = {
         "kind": "action",
-        "role": "worker",
+        "role": "executor",
         "effects": ["work"] if declared else [],
         "capabilities": [],
     }
@@ -726,8 +730,8 @@ def test_typed_aliases_and_namespaces_keep_actual_operation_identity():
         "query",
         {
             "assess": {
-                "judge-verdict": "assessment-state",
-                "judge-applicability": "current-target",
+                "evaluator-verdict": "assessment-state",
+                "evaluator-applicability": "current-target",
             }
         },
     )
@@ -741,7 +745,7 @@ def equivalent_assessment():
     fields = next(
         cap
         for cap in binding["nodes"]["assess"]["capabilities"]
-        if cap["signature"].endswith("final-assessment/v1")
+        if cap["signature"].endswith("final-assessment/v2")
     )
     from adaptive_definitions import capability_signatures
 
@@ -750,14 +754,16 @@ def equivalent_assessment():
     item = next(
         item
         for item in document["node_definitions"]["assess"]["items"]
-        if item["id"] == "judge-applicability"
+        if item["id"] == "evaluator-applicability"
     )
     item["operation_id"] = "repository-current-assessment"
     item["operation_digest"] = sha256(
         b"Explicit equivalent current-source assessment contract"
     )
-    signature["fields"]["judge-applicability"]["operation_id"] = item["operation_id"]
-    signature["fields"]["judge-applicability"]["operation_digest"] = item[
+    signature["fields"]["evaluator-applicability"]["operation_id"] = item[
+        "operation_id"
+    ]
+    signature["fields"]["evaluator-applicability"]["operation_digest"] = item[
         "operation_digest"
     ]
     binding["capability_definitions"] = {
@@ -791,7 +797,7 @@ def test_native_bound_placement_count_uses_shared_analysis_without_path_enumerat
     }
     document["node_definitions"]["note"] = definition
     context["operation_contracts"][sha256(canonical_json(definition))] = {
-        "roles": ["orchestrator"],
+        "roles": ["coordinator"],
         "effect": "evidence",
         "basis": "Explicit fixture bookkeeping with no product effects",
     }
@@ -803,7 +809,7 @@ def test_native_bound_placement_count_uses_shared_analysis_without_path_enumerat
         )
         binding["nodes"][name] = {
             "kind": "action",
-            "role": "orchestrator",
+            "role": "coordinator",
             "effects": [],
             "capabilities": [],
         }
@@ -819,7 +825,7 @@ def test_native_bound_placement_count_uses_shared_analysis_without_path_enumerat
 
 def test_confirmation_cannot_run_new_product_work_before_fresh_direction():
     document, binding = known("task")
-    insert_action(document, binding, "judge-review", "another-remediation")
+    insert_action(document, binding, "evaluator-review", "another-remediation")
     result = qualify(document, binding)
     assert result["status"] == "incompatible"
     assert any(
@@ -858,12 +864,12 @@ def test_unrelated_pass_only_native_operation_has_no_assessment_claim():
     document["graph"]["entry"] = "prerequisite"
     binding["nodes"]["prerequisite"] = {
         "kind": "action",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [],
     }
     context["operation_contracts"][sha256(canonical_json(operation))] = {
-        "roles": ["orchestrator"],
+        "roles": ["coordinator"],
         "effect": "evidence",
         "basis": "Explicit no-product-effects prerequisite",
     }
@@ -973,33 +979,36 @@ def test_custom_signature_cannot_weaken_its_own_final_assessment_guarantee(mutat
         item["id"]: item for item in document["node_definitions"]["assess"]["items"]
     }
     if mutation == "pass-only":
-        items["judge-applicability"]["accepted_outcomes"] = ["pass"]
-        signature["fields"]["judge-applicability"]["accepted_outcomes"] = ["pass"]
+        items["evaluator-applicability"]["accepted_outcomes"] = ["pass"]
+        signature["fields"]["evaluator-applicability"]["accepted_outcomes"] = ["pass"]
     elif mutation == "missing-negative-verdict":
-        items["judge-verdict"]["choices"] = ["pass", "rework"]
-        signature["fields"]["judge-verdict"]["choices"] = ["pass", "rework"]
+        items["evaluator-verdict"]["choices"] = ["pass", "rework"]
+        signature["fields"]["evaluator-verdict"]["choices"] = ["pass", "rework"]
     elif mutation == "optional-report":
-        items["judge-assessment"]["required"] = False
-        signature["fields"]["judge-assessment"]["required"] = False
+        items["evaluator-assessment"]["required"] = False
+        signature["fields"]["evaluator-assessment"]["required"] = False
     elif mutation == "wrong-count-type":
-        items["judge-unmet-criteria"].update(type="text", min_length=1)
-        items["judge-unmet-criteria"].pop("minimum")
-        signature["fields"]["judge-unmet-criteria"] = {"type": "text", "required": True}
+        items["evaluator-unmet-criteria"].update(type="text", min_length=1)
+        items["evaluator-unmet-criteria"].pop("minimum")
+        signature["fields"]["evaluator-unmet-criteria"] = {
+            "type": "text",
+            "required": True,
+        }
     elif mutation == "unbounded-count-claim":
         signature.pop("criterion_counts")
-        items["judge-unmet-criteria"]["maximum"] = 0
+        items["evaluator-unmet-criteria"]["maximum"] = 0
     else:
         # Remove the item and the custom signature requirement together. Keep
         # source references internally valid so the guarantee floor is exercised.
         document["node_definitions"]["assess"]["items"].remove(
-            items["judge-assessment"]
+            items["evaluator-assessment"]
         )
-        signature["fields"].pop("judge-assessment")
+        signature["fields"].pop("evaluator-assessment")
         for node in document["graph"]["nodes"]:
             for row in node.get("evidence_from", []):
                 if row["node"] == "assess" and "items" in row:
                     row["items"] = [
-                        item for item in row["items"] if item != "judge-assessment"
+                        item for item in row["items"] if item != "evaluator-assessment"
                     ]
     result = qualify(
         document,
@@ -1018,7 +1027,7 @@ def test_custom_signature_cannot_weaken_its_own_final_assessment_guarantee(mutat
         (
             "task",
             "record-plan",
-            {"plan-summary": "current-plan", "worker-handoff": "current-handoff"},
+            {"plan-summary": "current-plan", "executor-handoff": "current-handoff"},
         ),
         ("goal", "record-evidence", {"goal-kind": "current-goal-kind"}),
         ("task", "closeout", {"closeout-summary": "current-closeout"}),
@@ -1034,7 +1043,7 @@ def test_registered_semantic_aliases_remain_closed_and_qualified(
         node["use"] for node in document["graph"]["nodes"] if node["id"] == placement
     )
     registry = json.loads(
-        (ASSETS / "adaptive/operation-contracts-v1.json").read_bytes()
+        (ASSETS / "adaptive/operation-contracts-v2.json").read_bytes()
     )
     original_contract = registry[
         sha256(canonical_json(document["node_definitions"][use]))
@@ -1076,17 +1085,17 @@ def test_registered_semantic_aliases_remain_closed_and_qualified(
 @pytest.mark.parametrize(
     "family,signature_id",
     [
-        ("task", "aquarium.task.phase-assessment/v1"),
-        ("validation", "aquarium.validation.audit-assessment/v1"),
-        ("validation", "aquarium.validation.confirmation-audit-assessment/v1"),
-        ("validation", "aquarium.validation.correction-group-assessment/v1"),
-        ("design", "aquarium.design.quality-assessment/v1"),
-        ("design", "aquarium.design.application-assessment/v1"),
-        ("war-room", "aquarium.diagnosis.documentation-assessment/v1"),
-        ("design", "aquarium.design.upstream-quality/v1"),
-        ("design", "aquarium.design.application-approval/v1"),
-        ("task", "aquarium.task.review-control/v1"),
-        ("task", "aquarium.task.review-routing/v1"),
+        ("task", "aquarium.task.phase-assessment/v2"),
+        ("validation", "aquarium.validation.audit-assessment/v2"),
+        ("validation", "aquarium.validation.confirmation-audit-assessment/v2"),
+        ("validation", "aquarium.validation.correction-group-assessment/v2"),
+        ("design", "aquarium.design.quality-assessment/v2"),
+        ("design", "aquarium.design.application-assessment/v2"),
+        ("war-room", "aquarium.diagnosis.documentation-assessment/v2"),
+        ("design", "aquarium.design.upstream-quality/v2"),
+        ("design", "aquarium.design.application-approval/v2"),
+        ("task", "aquarium.task.review-control/v2"),
+        ("task", "aquarium.task.review-routing/v2"),
     ],
 )
 def test_other_recognized_guarantees_preserve_negative_check_recording(
@@ -1160,7 +1169,7 @@ def test_due_success_is_not_established_by_an_impossible_achieved_guard():
     item = next(
         item
         for item in document["node_definitions"]["assess"]["items"]
-        if item["id"] == "judge-goal-outcome"
+        if item["id"] == "evaluator-goal-outcome"
     )
     item["choices"].remove("achieved")
     result = qualify(document, binding, context=context)
@@ -1177,7 +1186,7 @@ def test_declared_product_change_dominates_a_custom_effect_claim(claim):
     context["operation_contracts"][
         sha256(canonical_json(document["node_definitions"]["polish"]))
     ] = {
-        "roles": ["worker"],
+        "roles": ["executor"],
         "effect": claim,
         "basis": "Unsupported attempt to hide a declared product change.",
     }
@@ -1197,11 +1206,11 @@ def test_privileged_custom_labels_need_actual_operation_evidence(claim):
     if claim == "user_directions":
         definition = document["node_definitions"]["accept"]
         value = {"approved": "product-correction"}
-        role, effect = "orchestrator", "control"
+        role, effect = "coordinator", "control"
     else:
         definition = document["node_definitions"]["closeout"]
         value = True if claim == "owned_correction" else ["result"]
-        role, effect = "orchestrator", "finalization"
+        role, effect = "coordinator", "finalization"
     context["operation_contracts"][sha256(canonical_json(definition))] = {
         "roles": [role],
         "effect": effect,
@@ -1227,7 +1236,7 @@ def test_unestablished_contract_cannot_supply_context_or_hide_product_work(claim
     definition = document["node_definitions"]["deliver"]
     contract = context["operation_contracts"].setdefault(
         sha256(canonical_json(definition)),
-        {"roles": ["worker"], "effect": "work", "basis": "Actual product producer"},
+        {"roles": ["executor"], "effect": "work", "basis": "Actual product producer"},
     )
     contract[claim] = {
         "documentation": "task-plan" if claim == "output_scopes" else "goal_kind"
@@ -1306,7 +1315,7 @@ def test_custom_discriminator_cannot_establish_delegated_acceptance(
     definition = document["node_definitions"][use]
     definition["intent"] += " Collect a different source-specific context."
     binding.setdefault("semantic_contracts", {})[sha256(canonical_json(definition))] = {
-        "roles": ["orchestrator"],
+        "roles": ["coordinator"],
         "effect": "evidence",
         "basis": "Unproved source-specific context declaration",
         "discriminators": {field: meaning},
@@ -1320,7 +1329,7 @@ def test_custom_discriminator_cannot_establish_delegated_acceptance(
     assert any(row["property"] == "acceptance-provenance" for row in result["issues"])
 
 
-def compact_goal(*, worker=False):
+def compact_goal(*, executor=False):
     document, binding = known("goal")
     definition = {
         "type": "action",
@@ -1341,31 +1350,31 @@ def compact_goal(*, worker=False):
         0, {"id": "scope", "use": "scope", "next": document["graph"]["entry"]}
     )
     document["graph"]["entry"] = "scope"
-    role = "worker" if worker else "orchestrator"
+    role = "executor" if executor else "coordinator"
     binding["nodes"]["scope"] = {
         "kind": "action",
         "role": role,
-        "effects": ["work"] if worker else [],
+        "effects": ["work"] if executor else [],
         "capabilities": [],
     }
     digest = sha256(canonical_json(definition))
     contract = {
         "roles": [role],
-        "effect": "work" if worker else "evidence",
+        "effect": "work" if executor else "evidence",
         "basis": "Explicit independently verified current invocation semantics.",
         "discriminators": {"current-kind": "goal_kind"},
     }
     binding.setdefault("semantic_contracts", {})[digest] = contract
-    judge = next(
+    evaluator = next(
         node
         for node in document["graph"]["nodes"]
-        if node["id"] == "judge-goal-evidence"
+        if node["id"] == "evaluator-goal-evidence"
     )
-    judge.setdefault("evidence_from", []).append(
+    evaluator.setdefault("evidence_from", []).append(
         {"node": "scope", "required": True, "items": ["current-kind"]}
     )
     binding["obligations"]["current-work-scope"] = copy.deepcopy(
-        binding["obligations"]["judge-goal-evidence"]
+        binding["obligations"]["evaluator-goal-evidence"]
     )
     binding["obligations"]["current-work-scope"]["producers"] = [
         {"node": "scope", "item": "current-kind"}
@@ -1401,7 +1410,7 @@ def test_verified_semantics_need_actual_native_output_fields():
     document, binding, context = adaptive()
     definition = document["node_definitions"]["deliver"]
     contract = {
-        "roles": ["worker"],
+        "roles": ["executor"],
         "effect": "work",
         "basis": "Synthetic exact verified planning operation",
         "output_scopes": {"documentation": "task-plan"},
@@ -1425,7 +1434,7 @@ def test_verified_planning_claim_cannot_hide_declared_post_gate_work():
     definition = document["node_definitions"]["late-plan"]
     digest = sha256(canonical_json(definition))
     contract = {
-        "roles": ["worker"],
+        "roles": ["executor"],
         "effect": "evidence",
         "basis": "Synthetic semantic proof; actual declared work remains work.",
         "output_scopes": {"changed-target": "task-plan"},
@@ -1459,7 +1468,7 @@ def test_custom_continuity_must_not_borrow_completed_operation_implication(guard
             b"Only ordinal positivity; no operation completion guarantee."
         ),
     )
-    signature = binding["capability_definitions"]["fixture.review-control/v1"]
+    signature = binding["capability_definitions"]["fixture.review-control/v2"]
     signature["fields"]["assessment-ordinal-continuity"].update(
         operation_id=item["operation_id"], operation_digest=item["operation_digest"]
     )
@@ -1489,7 +1498,7 @@ def test_custom_continuity_must_not_borrow_completed_operation_implication(guard
 
 def test_custom_control_signature_omission_still_consumes_independent_floor_fields():
     document, binding, context = adaptive()
-    binding["capability_definitions"]["fixture.review-control/v1"]["fields"].pop(
+    binding["capability_definitions"]["fixture.review-control/v2"]["fields"].pop(
         "assessment-ordinal-continuity"
     )
     result = qualify(document, binding, context=context)
@@ -1505,9 +1514,9 @@ def test_unrecognized_assessment_guarantee_cannot_hide_a_pass_only_assessor():
     item = next(
         item
         for item in document["node_definitions"]["assess"]["items"]
-        if item["id"] == "judge-applicability"
+        if item["id"] == "evaluator-applicability"
     )
-    item["accepted_outcomes"] = signature["fields"]["judge-applicability"][
+    item["accepted_outcomes"] = signature["fields"]["evaluator-applicability"][
         "accepted_outcomes"
     ] = ["pass"]
     result = qualify(document, binding, context=context)
@@ -1633,14 +1642,14 @@ def test_selected_review_guards_are_actual_obligations(item):
             operation_id="only-positive-ordinal",
             operation_digest=sha256(b"No completed-operation implication."),
         )
-        binding["capability_definitions"]["fixture.review-control/v1"]["fields"][
+        binding["capability_definitions"]["fixture.review-control/v2"]["fields"][
             "assessment-ordinal-continuity"
         ].update(
             operation_id=actual["operation_id"],
             operation_digest=actual["operation_digest"],
         )
         context["operation_contracts"][sha256(canonical_json(record))] = {
-            "roles": ["orchestrator"],
+            "roles": ["coordinator"],
             "effect": "evidence",
             "basis": "Actual local record operation",
             "review_recovery": ["same-operation-recovery", "review-route-change"],
@@ -1711,7 +1720,10 @@ def reentry_source(*, renew=False, manual=False):
                 "stopped",
                 [
                     {
-                        "evidence": {"node": "assess", "item": "judge-goal-outcome"},
+                        "evidence": {
+                            "node": "assess",
+                            "item": "evaluator-goal-outcome",
+                        },
                         "not_equals": "achieved",
                     }
                 ],
@@ -1724,7 +1736,11 @@ def reentry_source(*, renew=False, manual=False):
             "id": "choose-work",
             "use": "choose-work",
             "evidence_from": [
-                {"node": "assess", "items": ["judge-goal-outcome"], "required": True}
+                {
+                    "node": "assess",
+                    "items": ["evaluator-goal-outcome"],
+                    "required": True,
+                }
             ],
             "routes": {
                 "polish": {"to": "polish", "effect": "advance"},
@@ -1736,7 +1752,11 @@ def reentry_source(*, renew=False, manual=False):
             "id": "settle-polish",
             "use": "settle-polish",
             "evidence_from": [
-                {"node": "assess", "items": ["judge-goal-outcome"], "required": True},
+                {
+                    "node": "assess",
+                    "items": ["evaluator-goal-outcome"],
+                    "required": True,
+                },
                 {"node": "polish", "items": ["result"], "required": True},
             ],
             "routes": {
@@ -1751,13 +1771,13 @@ def reentry_source(*, renew=False, manual=False):
     for name in ("choose-work", "settle-polish"):
         binding["nodes"][name] = {
             "kind": "decision",
-            "role": "orchestrator",
+            "role": "coordinator",
             "effects": [],
             "capabilities": [],
         }
     binding["nodes"]["polish"] = {
         "kind": "action",
-        "role": "worker",
+        "role": "executor",
         "effects": ["work"],
         "capabilities": [],
     }
@@ -1809,7 +1829,7 @@ def correlation_source(width):
     }
     document["node_definitions"]["retain-match"] = relay
     context["operation_contracts"][sha256(canonical_json(relay))] = {
-        "roles": ["orchestrator"],
+        "roles": ["coordinator"],
         "effect": "evidence",
         "basis": "Harmless paired-evidence note only.",
     }
@@ -1835,12 +1855,12 @@ def correlation_source(width):
         )
         binding["nodes"][name] = {
             "kind": "action",
-            "role": "orchestrator",
+            "role": "coordinator",
             "effects": [],
             "capabilities": [],
         }
         context["operation_contracts"][sha256(canonical_json(definition))] = {
-            "roles": ["orchestrator"],
+            "roles": ["coordinator"],
             "effect": "evidence",
             "basis": "Actual comparison evidence only; no product mutation",
         }
@@ -1898,13 +1918,13 @@ def correlation_source(width):
             )
             binding["nodes"][note] = {
                 "kind": "action",
-                "role": "orchestrator",
+                "role": "coordinator",
                 "effects": [],
                 "capabilities": [],
             }
         binding["nodes"][identifier] = {
             "kind": "decision",
-            "role": "orchestrator",
+            "role": "coordinator",
             "effects": [],
             "capabilities": [],
         }
@@ -2007,18 +2027,18 @@ def optional_result_source(*, required=False):
     for name in ("probe", "polish"):
         binding["nodes"][name] = {
             "kind": "action",
-            "role": "orchestrator" if name == "probe" else "worker",
+            "role": "coordinator" if name == "probe" else "executor",
             "effects": [] if name == "probe" else ["work"],
             "capabilities": [],
         }
     binding["nodes"]["inspect-probe"] = {
         "kind": "decision",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [],
     }
     context["operation_contracts"][sha256(canonical_json(definition))] = {
-        "roles": ["orchestrator"],
+        "roles": ["coordinator"],
         "effect": "evidence",
         "basis": "Explicit recording-only operation with optional nonaccepted results.",
     }
@@ -2136,7 +2156,7 @@ def test_achieved_terminal_cannot_bypass_native_session_goal_assessment():
     context["operation_contracts"][
         sha256(canonical_json(document["node_definitions"]["unassessed-terminal"]))
     ] = {
-        "roles": ["orchestrator"],
+        "roles": ["coordinator"],
         "effect": "finalization",
         "basis": "Result delivery only; no native goal assessment.",
     }
@@ -2156,7 +2176,7 @@ def test_achieved_terminal_cannot_bypass_native_session_goal_assessment():
     for name, kind in [("choose-entry", "decision"), ("unassessed-terminal", "action")]:
         binding["nodes"][name] = {
             "kind": kind,
-            "role": "orchestrator",
+            "role": "coordinator",
             "effects": [],
             "capabilities": [],
         }
@@ -2290,7 +2310,7 @@ def test_explicit_operation_registry_cannot_override_established_work_semantics(
         binding,
         operation_contracts={
             sha256(canonical_json(body)): {
-                "roles": ["worker"],
+                "roles": ["executor"],
                 "effect": "evidence",
                 "basis": "Attempt to hide actual established product work.",
             }
@@ -2408,7 +2428,7 @@ def renewal_scopes_source(*, complete=False, inactive_alternative=False):
                     ],
                     "required": True,
                 },
-                {"node": "assess", "items": ["judge-assessment"], "required": True},
+                {"node": "assess", "items": ["evaluator-assessment"], "required": True},
             ],
         },
         {
@@ -2417,7 +2437,7 @@ def renewal_scopes_source(*, complete=False, inactive_alternative=False):
             "evidence_from": [
                 {
                     "node": "renewed-assessor",
-                    "items": ["judge-goal-outcome"],
+                    "items": ["evaluator-goal-outcome"],
                     "required": True,
                 }
             ],
@@ -2447,7 +2467,7 @@ def renewal_scopes_source(*, complete=False, inactive_alternative=False):
     for node in ("renewed-current", "renewed-outcome"):
         binding["nodes"][node] = {
             "kind": "decision",
-            "role": "orchestrator",
+            "role": "coordinator",
             "effects": [],
             "capabilities": [],
         }
@@ -2467,7 +2487,7 @@ def renewal_scopes_source(*, complete=False, inactive_alternative=False):
                     else "documentation",
                 }
             ],
-            evidence=[{"node": "renewed-assessor", "item": "judge-applicability"}],
+            evidence=[{"node": "renewed-assessor", "item": "evaluator-applicability"}],
         )
         binding["obligations"][identifier] = current
     return (

@@ -159,7 +159,7 @@ def test_exact_user_consent_before_mutation(transition, change):
     if change == "absent":
         consent = None
     elif change == "wrong-source":
-        consent["source"] = "judge"
+        consent["source"] = "evaluator"
     else:
         consent["disclosure"]["missing_topology"] = "different"
     with pytest.raises(BundleError) as error:

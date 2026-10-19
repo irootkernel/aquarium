@@ -1,0 +1,277 @@
+schema: podway.procedure/v2
+id: aquarium-task-goal-control
+version: "2"
+name: Task goal assessment and result control
+purpose: Reusable whole-session goal control. Full family obligations and exact suitability remain due before adaptive admission.
+goal_tracking: true
+node_definitions:
+  assess:
+    type: action
+    title: Assess the current candidate
+    intent: Obtain the retained report-only Judge assessment of original criteria and exact evidence.
+    instructions:
+      - Supply node-specific objective, purpose, instructions, complete canonical criteria and selected original evidence to the logical Judge when supported, or a fresh independent replacement supplied the complete original evidence and current authority.
+      - Record the complete applicable aquarium.judge-assessment/v2 from the independent native Judge, check coverage and current candidate applicability, then complete this ordinary Action with current fences. Do not recursively judge the report or fabricate native receipts.
+      - Missing original criteria, changed targets, missing required result or authority evidence, or unreadable evidence prevent a pass; a negative verdict grants no correction or provider authority.
+      - Reuse an existing complete final assessment only when its actual checkpoint coverage, candidate, original criteria, required checks and authority remain applicable. The Primary records that applicability without another Judge dispatch. Otherwise obtain a fresh independent assessment; never relabel a phase-only report as final or reuse a negative report as pass after correction.
+      - Assess the coherent assigned phase from original artifacts, not report fidelity alone. Preserve due obligations, future global gaps and the original negative-result router. Use current native harness agents with available public handles, without private executor or model/configuration qualification.
+    items:
+      - id: judge-assessment
+        type: artifact
+        prompt: Reference the complete aquarium.judge-assessment/v2 report and its exact digest; Podway stores metadata only.
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: judge-verdict
+        type: choice
+        prompt: Record the Judge verdict.
+        required: true
+        choices:
+          - pass
+          - rework
+          - evidence-needed
+      - id: judge-unmet-criteria
+        type: integer
+        prompt: Count mandatory unmet criteria, including omitted original criteria.
+        required: true
+        minimum: 0
+      - id: judge-unverified-criteria
+        type: integer
+        prompt: Count mandatory unverified criteria, including incomplete compound criteria.
+        required: true
+        minimum: 0
+      - id: judge-applicability
+        type: check_result
+        prompt: Record the caller-supplied result for aquarium-task-judge-applicability against its complete declared operation. Podway does not execute or attest this check.
+        help: Verify complete original criterion coverage and all due obligations against current original evidence, candidate, requirement and check basis, actual independent Judge role, assigned work and result evidence and applicable authority. Reconcile Procedure, node, attempt and goal revision when applicable, and record available public native handles with unknowns explicit. A supported replacement Judge may establish current applicability from this evidence; private executor history, model telemetry and configuration digests are not prerequisites.
+        required: true
+        operation_id: aquarium-task-judge-applicability
+        operation_digest: sha256:ae4b16d70b5adf24b317a8d4d8522b5d1ae5b830e1c9ff03d170905bd5082f0b
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: judge-summary
+        type: text
+        prompt: Record criterion rows, original sources, evidence gaps, applicable parent constraints, technical-review limitations, remaining authority, and proposed correction or evidence owner.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: judge-goal-outcome
+        type: choice
+        prompt: Record the exact final goal outcome; explicit stopped paths cannot be achieved.
+        required: true
+        choices:
+          - achieved
+          - not-achieved
+          - superseded
+          - stopped
+  outcome:
+    type: decision
+    title: Assess original goal outcome
+    objective: Use the complete independent original-source assessment without inferring acceptance from terminal names.
+    prompt: Which original goal outcome is established?
+    options:
+      - id: achieved
+        label: achieved
+        criteria: All original requirements and applicable workflow, review and acceptance obligations are independently established.
+        guards:
+          - evidence:
+              node: assess
+              item: judge-goal-outcome
+            equals: achieved
+          - evidence:
+              node: assess
+              item: judge-verdict
+            equals: pass
+          - evidence:
+              node: assess
+              item: judge-unmet-criteria
+            equals: 0
+          - evidence:
+              node: assess
+              item: judge-unverified-criteria
+            equals: 0
+      - id: stopped
+        label: stopped
+        criteria: Work stops with original unmet/unverified criteria preserved; no success or acceptance is claimed.
+        guards:
+          - evidence:
+              node: assess
+              item: judge-goal-outcome
+            equals: stopped
+      - id: not-achieved
+        label: not-achieved
+        criteria: Current independent assessment identifies owned work remaining; the original workflow controls correction authority.
+        guards:
+          - evidence:
+              node: assess
+              item: judge-goal-outcome
+            equals: not-achieved
+      - id: superseded
+        label: superseded
+        criteria: A separately consented supported native replacement preserves old history and remaining authority.
+        guards:
+          - evidence:
+              node: assess
+              item: judge-goal-outcome
+            equals: superseded
+    reason:
+      required: true
+      prompt: Cite original criteria, actual assessment, selected reviews, acceptance provenance and remaining grants.
+    assessment:
+      target: session_goal
+      outcomes:
+        achieved: achieved
+        stopped: not_achieved
+        not-achieved: not_achieved
+        superseded: superseded
+  closeout:
+    type: action
+    title: Deliver the complete result
+    intent: Return actual work, evidence, original gaps and remaining authority. Preserve Master acceptance and separate commit grants.
+    items:
+      - id: result
+        type: text
+        prompt: Deliver the complete result, limitations and next owner; this record grants no acceptance or commit authority.
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  assessment-current:
+    type: decision
+    title: Check current assessment suitability
+    objective: Preserve negative assessment facts before original goal outcome routing.
+    prompt: Is the independent assessment current and complete?
+    options:
+      - id: current
+        label: current
+        criteria: The current independent assessment passes with no mandatory unmet or unverified criteria and established applicability.
+        guards:
+          - evidence:
+              node: assess
+              item: judge-verdict
+            equals: pass
+          - evidence:
+              node: assess
+              item: judge-unmet-criteria
+            equals: 0
+          - evidence:
+              node: assess
+              item: judge-unverified-criteria
+            equals: 0
+          - evidence:
+              node: assess
+              item: judge-applicability
+            field: outcome
+            equals: pass
+      - id: not-current
+        label: not-current
+        criteria: The independent assessment requires correction, lacks complete original evidence, or has failed or inconclusive applicability. Preserve the original negative facts and remaining authority.
+    reason:
+      required: true
+      prompt: Cite the current independent assessment, original criterion coverage and applicability evidence.
+  goal-route:
+    type: decision
+    title: Route declared original goal outcome
+    objective: Use the complete independent original-source assessment without inferring acceptance from terminal names.
+    prompt: Which original goal outcome is established?
+    options:
+      - id: achieved
+        label: achieved
+        criteria: All original requirements and applicable workflow, review and acceptance obligations are independently established.
+        guards:
+          - evidence:
+              node: assess
+              item: judge-goal-outcome
+            equals: achieved
+      - id: other-outcome
+        label: other-outcome
+        criteria: Preserve the declared stopped, not-achieved or superseded outcome without requiring an achieved assessment.
+        guards:
+          - evidence:
+              node: assess
+              item: judge-goal-outcome
+            not_equals: achieved
+    reason:
+      required: true
+      prompt: Cite original criteria, actual assessment, selected reviews, acceptance provenance and remaining grants.
+graph:
+  entry: assess
+  nodes:
+    - id: assess
+      use: assess
+      next: goal-route
+    - id: goal-route
+      use: goal-route
+      evidence_from:
+        - node: assess
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-goal-outcome
+      routes:
+        achieved:
+          to: assessment-current
+          effect: advance
+        other-outcome:
+          to: outcome
+          effect: advance
+    - id: assessment-current
+      use: assessment-current
+      evidence_from:
+        - node: assess
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-goal-outcome
+      routes:
+        current:
+          to: outcome
+          effect: advance
+        not-current:
+          to: assess
+          effect: rework
+    - id: outcome
+      use: outcome
+      evidence_from:
+        - node: assess
+          required: true
+          items:
+            - judge-assessment
+            - judge-verdict
+            - judge-unmet-criteria
+            - judge-unverified-criteria
+            - judge-applicability
+            - judge-goal-outcome
+      routes:
+        achieved:
+          to: closeout
+          effect: advance
+        stopped:
+          to: closeout
+          effect: advance
+        not-achieved:
+          to: closeout
+          effect: advance
+        superseded:
+          to: closeout
+          effect: advance
+    - id: closeout
+      use: closeout
+      evidence_from:
+        - node: outcome
+          required: true
+      terminal: true
+manual_rework:
+  allowed_targets:
+    - assess

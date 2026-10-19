@@ -25,7 +25,7 @@ def branch(repository, entrypoint, *, opt_out=False):
             "reason": "explicit-opt-out" if opt_out else "non-git-new-project",
             "entrypoint": entrypoint,
             "dispatch": None,
-            "next_owner": "Primary",
+            "next_owner": "Coordinator",
             "requirements": [
                 "Original entrypoint artifacts and independent grouped assessment",
                 "Approved upstream leaves and separate PM clipboard authority",

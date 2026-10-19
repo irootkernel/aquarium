@@ -5,7 +5,7 @@ description: "Implement the approved plan for one named roadmap task. Use when $
 
 # Task Implement
 
-Under an ordinary `task-handler`, follow [Task orchestration](../../references/task-orchestration.md). Return the node-specific `aquarium.worker-handoff/v2` with exact target, original requirements, actual results, available public handles, performed and omitted checks, authority and gaps. The Primary owns Podway records and Decisions; the independent Judge assesses coherent delivery phases. Admitted formal snapshots retain their original v1 contract. Direct invocation keeps this phase's existing authority.
+Under an ordinary `task-handler`, follow [Task orchestration](../../references/task-orchestration.md). Return the node-specific `aquarium.executor-handoff/v3` with exact target, original requirements, actual results, available public handles, performed and omitted checks, authority and gaps. The Coordinator owns Podway records and Decisions; the independent Evaluator assesses coherent delivery phases. Admitted formal snapshots retain their original v1 contract. Direct invocation keeps this phase's existing authority.
 
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
@@ -28,4 +28,4 @@ Implement the smallest maintainable change that satisfies the approved requireme
 
 Continue diagnosing task-caused failures until the focused implementation is sound or a real authority or environment blocker appears. Do not stage, update lifecycle documentation, invoke Mulgae, commit, or publish in this phase.
 
-Return the implemented requirements, task-owned paths, focused commands and exit codes, remaining verification work, and blockers to the orchestrator.
+Return the implemented requirements, task-owned paths, focused commands and exit codes, remaining verification work, and blockers to the coordinator.

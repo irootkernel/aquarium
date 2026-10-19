@@ -30,7 +30,7 @@ bounded eligible artifacts under the evidence-residency contract.
 | Completion and output | Correlate the actual fresh reviewer with submission and observed activity. Read the complete purpose-specific result; settled or unknown state alone cannot pass. Exercise expanded native reads and the Markdown file fallback from the same reviewer when needed. |
 | Failure and recovery | Timeout, stalled submission, blocked UI, replacement identity, missing output and lost observation preserve the exact operation and available evidence. Reject duplicate prompts and false completion. A failed or incomplete operation consumes no assessment ordinal. |
 | Embedded workflows | Task, Epic and validation preserve route selection, complete staged preparation, assessment kind and ordinal, finding lineage, correction authority, closeout acceptance and commit handoff, including after context restoration. |
-| Legacy migration | Prior canonical and custom sources, completed Orca evidence, incomplete checkpoints, active or unknown workers and old snapshots follow the documented preservation or refusal path. Verify terminal settlement before another review and eligible archival before a successor. |
+| Legacy migration | Prior canonical and custom sources, completed Orca evidence, incomplete checkpoints, active or unknown executors and old snapshots follow the documented preservation or refusal path. Verify terminal settlement before another review and eligible archival before a successor. |
 | Peer routes | Mulgae, Subagent Review and waiver keep their native prerequisites, evidence, recovery, verification and acceptance contracts. No Herdr readiness requirement reaches them. |
 
 Every required observation needs its actual outcome for the exact candidate.

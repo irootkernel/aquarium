@@ -14,7 +14,7 @@ import pytest
 
 SCRIPT = (
     Path(__file__).parents[2]
-    / "plugins/aquarium/skills/goal-judge/scripts/prepare_assignment.py"
+    / "plugins/aquarium/skills/goal-evaluator/scripts/prepare_assignment.py"
 )
 SPEC = importlib.util.spec_from_file_location("prepare_assignment", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None

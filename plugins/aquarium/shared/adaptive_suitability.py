@@ -1,4 +1,4 @@
-"""Exact pre-start Judge targets and bootstrap import using ordinary v2 evidence."""
+"""Exact pre-start Evaluator targets and bootstrap import using ordinary v3 evidence."""
 
 import copy
 import json
@@ -24,10 +24,10 @@ from adaptive_definitions import (
 from adaptive_preparation import fit, object_value, requirements, source_authority
 from adaptive_qualification import guarantee_minima, qualify
 
-BOOTSTRAP_SIGNATURE = "aquarium.shared.suitability-bootstrap/v1"
+BOOTSTRAP_SIGNATURE = "aquarium.shared.suitability-bootstrap/v2"
 BOOTSTRAP_OPERATION = "aquarium-adaptive-suitability-applicability"
 BOOTSTRAP_MEANING = (
-    "For a new or changed definition verify the actual independent pre-start ordinary Judge assessment covers the exact candidate bundle, native tuple, source bytes and complete current original requirement and approved plan basis, with passing due phase criteria. "
+    "For a new or changed definition verify the actual independent pre-start ordinary Evaluator assessment covers the exact candidate bundle, native tuple, source bytes and complete current original requirement and approved plan basis, with passing due phase criteria. "
     "For adequate unchanged established reuse verify the exact retained qualified definition and its actual prior independent evidence plus current original-source fit; record established-reuse timing and preserve normal first-due checkpoints, without presenting prior evidence as a current assessment. "
     "Material in-session definition or plan changes require affected reassessment. Recording authenticates no agent or authority."
 )
@@ -141,13 +141,13 @@ def add_bootstrap(document, mapping):
     ]
     mapping["nodes"][record] = {
         "kind": "action",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [{"signature": BOOTSTRAP_SIGNATURE, "fields": {}}],
     }
     mapping["nodes"][decision] = {
         "kind": "decision",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [],
     }
@@ -250,13 +250,13 @@ def suitability_target(binding, basis, *, combined_task_plan=False, coverage_pla
     }
 
 
-def judge_assignment(assignment, target, assessment_requirements=None):
+def evaluator_assignment(assignment, target, assessment_requirements=None):
     result = copy.deepcopy(assignment)
     result.update(
-        role="judge",
+        role="evaluator",
         purpose="Assess exact Procedure suitability before native start",
         checkpoint="pre-start-procedure-suitability",
-        instructions="Report only. Reconcile complete original sources and compound criteria with the exact candidate and selected reviews/effects. Assess the execution definition, not future product completion. Preserve independent role and authority. Return aquarium.judge-assessment/v2 with this exact target; unknown evidence cannot pass. If a new discriminator or planning-output semantic contract needs establishment, include applicability.operation_contracts keyed by its exact operation-definition digest, with the exact retained contract and readable supporting evidence. This is part of the same due assessment, never proof that an agent executed.",
+        instructions="Report only. Reconcile complete original sources and compound criteria with the exact candidate and selected reviews/effects. Assess the execution definition, not future product completion. Preserve independent role and authority. Return aquarium.evaluator-assessment/v3 with this exact target; unknown evidence cannot pass. If a new discriminator or planning-output semantic contract needs establishment, include applicability.operation_contracts keyed by its exact operation-definition digest, with the exact retained contract and readable supporting evidence. This is part of the same due assessment, never proof that an agent executed.",
         deliverables=["Exact current independent suitability assessment"],
     )
     result["target"]["preparation_native_context"] = copy.deepcopy(result["native"])
@@ -288,13 +288,13 @@ def judge_assignment(assignment, target, assessment_requirements=None):
 def assess_current(report, target):
     if (
         not isinstance(report, dict)
-        or report.get("schema") != "aquarium.judge-assessment/v2"
+        or report.get("schema") != "aquarium.evaluator-assessment/v3"
     ):
         raise BundleError(
             "not-established",
-            "Actual ordinary independent Judge assessment is required",
+            "Actual ordinary independent Evaluator assessment is required",
         )
-    report_target = object_value(report.get("target"), "Judge target")
+    report_target = object_value(report.get("target"), "Evaluator target")
     if report_target.get("procedure_suitability") != target:
         raise BundleError(
             "reassessment-required", "Suitability target or original basis changed"
@@ -308,7 +308,7 @@ def assess_current(report, target):
         )
     gaps = report.get("gaps")
     if not isinstance(gaps, list):
-        raise BundleError("invalid-input", "Ordinary Judge gaps must be a list")
+        raise BundleError("invalid-input", "Ordinary Evaluator gaps must be a list")
     if any(
         isinstance(gap, dict) and gap.get("scope") in target["scopes"] for gap in gaps
     ):
@@ -332,7 +332,7 @@ def assess_current(report, target):
     rows = report.get("criteria")
     if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
         raise BundleError(
-            "invalid-input", "Judge criteria must be ordinary criterion rows"
+            "invalid-input", "Evaluator criteria must be ordinary criterion rows"
         )
 
     def indexed(values):
@@ -366,7 +366,7 @@ def assess_current(report, target):
                 and bool(row["reason"].strip())
             )
         # A nonfinal scoped pass preserves truthful global future gaps. The
-        # Judge's phase result covers definition/plan fit, not product delivery.
+        # Evaluator's phase result covers definition/plan fit, not product delivery.
         return (
             global_row
             and phase_pass
@@ -400,7 +400,9 @@ def assess_current(report, target):
         if not isinstance(parts, list) or any(
             not isinstance(part, dict) for part in parts
         ):
-            raise BundleError("invalid-input", "Compound Judge criteria must be rows")
+            raise BundleError(
+                "invalid-input", "Compound Evaluator criteria must be rows"
+            )
         supplied = indexed(parts)
         for part in criterion["parts"]:
             actual = supplied.get(part["id"])
@@ -698,7 +700,7 @@ def qualify_prepared(
             if reuse
             else None,
             "limits": [
-                "Known reuse preserves original first-due assessments, including Goal without a plan Judge."
+                "Known reuse preserves original first-due assessments, including Goal without a plan Evaluator."
             ],
         }
     if not any(
@@ -839,13 +841,13 @@ def qualify_prepared(
         if in_session:
             raise BundleError(
                 "reassessment-required",
-                "Retrieve the actual existing assessment or use an affected in-session planning/Judge capability; a new call cannot be pre-start",
+                "Retrieve the actual existing assessment or use an affected in-session planning/Evaluator capability; a new call cannot be pre-start",
                 reassessment_route(document, binding),
             )
         return {
             "status": "assessment-required",
             "structural": structural,
-            "assignment": judge_assignment(
+            "assignment": evaluator_assignment(
                 assignment, target, assessment_requirements(document, binding)
             ),
             "target": target,
@@ -939,7 +941,7 @@ def assessment_requirements(document, binding):
             "report_field": "applicability.criterion_capacity",
             "basis": "Exact current original criteria, including all compound parts",
         },
-        "evidence_scope": "Include any due proof in this same current affected ordinary report; this description supplies no proof or authority and requests no additional Judge or bootstrap.",
+        "evidence_scope": "Include any due proof in this same current affected ordinary report; this description supplies no proof or authority and requests no additional Evaluator or bootstrap.",
     }
 
 
@@ -948,7 +950,7 @@ def reassessment_route(document, binding):
     from adaptive_definitions import ASSETS
 
     operations = json.loads(
-        (ASSETS / "adaptive/operation-contracts-v1.json").read_text()
+        (ASSETS / "adaptive/operation-contracts-v2.json").read_text()
     )
     operations.update(binding.get("semantic_contracts", {}))
     available = []
@@ -960,7 +962,7 @@ def reassessment_route(document, binding):
         for node, placement in placements.items()
     }
     for node, declaration in binding["nodes"].items():
-        if declaration["role"] != "judge" or "task-plan" not in contracts[node].get(
+        if declaration["role"] != "evaluator" or "task-plan" not in contracts[node].get(
             "checkpoint_scopes", []
         ):
             continue
@@ -981,9 +983,9 @@ def reassessment_route(document, binding):
         if selected and not other_work:
             available.append(node)
     return {
-        "status": "existing-planning-judge" if available else "missing-topology",
+        "status": "existing-planning-evaluator" if available else "missing-topology",
         "nodes": available,
-        "next_owner": "Orchestrator",
+        "next_owner": "Coordinator",
         "required_scope": ["affected-planning", "procedure-suitability"],
         "assessment_requirements": assessment_requirements(document, binding),
         "same_operation_retrieval": "Recover a pending actual result before assigning replacement assessment",
@@ -1184,14 +1186,14 @@ def reuse_import(document, binding, assignment, basis, prior):
         )
     }
     checkpoint.update(
-        schema="aquarium.orchestration-checkpoint/v2",
+        schema="aquarium.orchestration-checkpoint/v3",
         checkpoint="adequate-established-definition-reuse",
         current_basis=basis,
         prior_definition_assessment=prior,
         current_fit=assignment["target"]["prepared_definition"]["coverage_plan"],
         pending_operations=[],
         next_owner="Original first-due workflow checkpoint",
-        limits="Prior independent evidence establishes the unchanged definition; this is current selection/fit evidence, not a new Judge or product pass.",
+        limits="Prior independent evidence establishes the unchanged definition; this is current selection/fit evidence, not a new Evaluator or product pass.",
     )
     values = {
         "suitability-target": json.dumps(

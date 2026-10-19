@@ -6,7 +6,7 @@ Skill changes are contract changes, even when the implementation is Markdown. Tr
 
 1. Read the complete owning `SKILL.md`, its directly linked references, and the matching Procedure if one exists.
 2. Identify whether the rule belongs in one entrypoint or a shared reference. Put cross-skill semantics in one shared owner and keep entrypoints focused on routing and lifecycle order.
-3. Trace callers and consumers. A leaf skill can be correct in isolation while breaking an orchestrator's handoff or approval boundary.
+3. Trace callers and consumers. A leaf skill can be correct in isolation while breaking a Coordinator's handoff or approval boundary.
 4. Confirm the public disclosure impact in the root README, privacy policy, terms, testing contract, and changelog.
 
 ## Preserve Contract Shape

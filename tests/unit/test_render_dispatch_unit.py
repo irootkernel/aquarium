@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-SCRIPTS = Path(__file__).parents[2] / "plugins/aquarium/skills/goal-judge/scripts"
+SCRIPTS = Path(__file__).parents[2] / "plugins/aquarium/skills/goal-evaluator/scripts"
 SCRIPT = SCRIPTS / "render_dispatch.py"
 
 

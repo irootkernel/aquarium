@@ -317,14 +317,17 @@ def native_case(tmp_path):
     case_root = tmp_path / "task-startup"
     case_root.mkdir()
     (repository / "greet.py").write_text("Assessed source bytes")
-    evidence = {"worker_agent": "/root/worker", "judge_agent": "/root/judge"}
+    evidence = {
+        "executor_agent": "/root/executor",
+        "evaluator_agent": "/root/evaluator",
+    }
     reports = {}
-    for role in ("worker", "judge"):
+    for role in ("executor", "evaluator"):
         assignment = case_root / f"{role}-assignment.json"
         write_json(
             assignment,
             {
-                "schema": "aquarium.assignment/v2",
+                "schema": "aquarium.assignment/v3",
                 "role": role,
                 "work": {"repository": str(repository)},
                 "success_criteria": list(gate.CRITERIA),
@@ -332,14 +335,14 @@ def native_case(tmp_path):
         )
         evidence[role + "_assignment"] = str(assignment)
     target = {"greet_sha256": gate.sha256(repository / "greet.py")}
-    reports["worker"] = {
-        "schema": "aquarium.worker-handoff/v2",
+    reports["executor"] = {
+        "schema": "aquarium.executor-handoff/v3",
         "changed_artifacts": ["greet.py"],
         "results": [{"command": "make test", "exit": 0}],
         "target": target,
     }
-    reports["judge"] = {
-        "schema": "aquarium.judge-assessment/v2",
+    reports["evaluator"] = {
+        "schema": "aquarium.evaluator-assessment/v3",
         "target": target,
         "checkpoint_result": "pass",
         "verdict": "evidence-needed",
@@ -362,12 +365,12 @@ def native_case(tmp_path):
         },
         "descendants": [],
     }
-    for role in ("worker", "judge"):
+    for role in ("executor", "evaluator"):
         path = case_root / f"{role}-report.json"
         write_json(path, reports[role])
-        evidence["worker_result" if role == "worker" else "judge_assessment"] = str(
-            path
-        )
+        evidence[
+            "executor_result" if role == "executor" else "evaluator_assessment"
+        ] = str(path)
         observation["root"]["items"].extend(
             {
                 "type": "subAgentActivity",
@@ -401,18 +404,20 @@ def native_case(tmp_path):
 
 def test_public_native_roles_allow_null_metadata_and_future_global_gap(native_case):
     assert gate.validate_native_case(*native_case) == {
-        "worker_thread": "worker",
-        "judge_thread": "judge",
+        "executor_thread": "executor",
+        "evaluator_thread": "evaluator",
     }
 
 
-@pytest.mark.parametrize("role", ["worker", "judge"])
+@pytest.mark.parametrize("role", ["executor", "evaluator"])
 @pytest.mark.parametrize("digest", ["bare", "wrong-bytes", "wrong-algorithm"])
 def test_report_digest_representation_preserves_exact_source_check(
     native_case, role, digest
 ):
     observation, evidence, repository = native_case
-    path = Path(evidence["worker_result" if role == "worker" else "judge_assessment"])
+    path = Path(
+        evidence["executor_result" if role == "executor" else "evaluator_assessment"]
+    )
     report = gate.read_json(path)
     value = report["target"]["greet_sha256"].removeprefix("sha256:")
     if digest == "wrong-bytes":
@@ -436,14 +441,14 @@ def test_report_digest_representation_preserves_exact_source_check(
 def test_final_success_assertion_without_native_children_is_incomplete(native_case):
     observation, evidence, repository = native_case
     observation["root"]["items"] = [
-        {"type": "agentMessage", "text": "Worker and Judge succeeded"}
+        {"type": "agentMessage", "text": "Executor and Evaluator succeeded"}
     ]
     with pytest.raises(gate.GateError) as caught:
         gate.validate_native_case(observation, evidence, repository)
     assert caught.value.outcome == "incomplete"
 
 
-@pytest.mark.parametrize("role", ["worker", "judge"])
+@pytest.mark.parametrize("role", ["executor", "evaluator"])
 @pytest.mark.parametrize(
     "representation",
     [
@@ -460,7 +465,9 @@ def test_native_report_path_delivery_checks_exact_digest(
     native_case, role, representation
 ):
     observation, evidence, repository = native_case
-    path = Path(evidence["worker_result" if role == "worker" else "judge_assessment"])
+    path = Path(
+        evidence["executor_result" if role == "executor" else "evaluator_assessment"]
+    )
     digest = gate.sha256(path).removeprefix("sha256:")
     if representation == "prefixed":
         digest = "sha256:" + digest
@@ -490,9 +497,9 @@ def test_native_report_path_delivery_checks_exact_digest(
             gate.validate_native_case(observation, evidence, repository)
 
 
-def test_worker_cannot_be_its_own_judge(native_case):
+def test_executor_cannot_be_its_own_evaluator(native_case):
     observation, evidence, repository = native_case
-    evidence["judge_agent"] = evidence["worker_agent"]
+    evidence["evaluator_agent"] = evidence["executor_agent"]
     with pytest.raises(gate.GateError) as caught:
         gate.validate_native_case(observation, evidence, repository)
     assert caught.value.outcome == "fail"
@@ -517,11 +524,11 @@ def test_incomplete_or_changed_native_evidence_cannot_pass(native_case, problem)
         gate.validate_native_case(observation, evidence, repository)
 
 
-def test_explicit_due_judge_failure_remains_failure(native_case):
+def test_explicit_due_evaluator_failure_remains_failure(native_case):
     observation, evidence, repository = native_case
-    report = gate.read_json(evidence["judge_assessment"])
+    report = gate.read_json(evidence["evaluator_assessment"])
     report["criteria"][0]["state"] = "unmet"
-    write_json(Path(evidence["judge_assessment"]), report)
+    write_json(Path(evidence["evaluator_assessment"]), report)
     observation["descendants"][1]["items"][-1]["text"] = json.dumps(report)
     with pytest.raises(gate.GateError) as caught:
         gate.validate_native_case(observation, evidence, repository)
@@ -1251,10 +1258,10 @@ def test_incomplete_epic_resume_preserves_task_case_artifacts(native_case, monke
     epic_root = root / "epic-startup"
     epic_evidence = copy.deepcopy(evidence)
     for key in (
-        "worker_assignment",
-        "judge_assignment",
-        "worker_result",
-        "judge_assessment",
+        "executor_assignment",
+        "evaluator_assignment",
+        "executor_result",
+        "evaluator_assessment",
     ):
         original_path = Path(evidence[key])
         target = epic_root / original_path.name
@@ -1268,7 +1275,7 @@ def test_incomplete_epic_resume_preserves_task_case_artifacts(native_case, monke
     assert gate.files(task_root) == preserved
     assert gate.smoke(request, root, "task")["outcome"] == "pass"
     wrong_case = copy.deepcopy(evidence)
-    wrong_case["worker_assignment"] = epic_evidence["worker_assignment"]
+    wrong_case["executor_assignment"] = epic_evidence["executor_assignment"]
     with pytest.raises(gate.GateError) as caught:
         gate.validate_native_case(observation, wrong_case, repository)
     assert caught.value.outcome == "incomplete"
@@ -1280,7 +1287,7 @@ def test_malformed_report_refreshes_stale_pass_with_structured_incomplete(
     native_case, monkeypatch, capsys, malformed
 ):
     observation, evidence, repository = native_case
-    path = Path(evidence["judge_assessment"])
+    path = Path(evidence["evaluator_assessment"])
     document = gate.read_json(path)
     if malformed == "null-target":
         document["target"] = None
@@ -1437,8 +1444,8 @@ def test_terminal_recovery_history_does_not_require_every_old_turn_to_succeed(
         0, {"status": "interrupted", "error": None}
     )
     assert (
-        gate.validate_native_case(observation, evidence, repository)["worker_thread"]
-        == "worker"
+        gate.validate_native_case(observation, evidence, repository)["executor_thread"]
+        == "executor"
     )
 
 
@@ -1459,10 +1466,10 @@ def test_public_reader_uses_bounded_native_read_api_and_exits(tmp_path, monkeypa
         " method=q['method']; params=q['params']; tid=params.get('threadId','root')\n"
         " if method=='initialize': result={}\n"
         " elif method=='thread/read': result={'thread':{'id':tid,'cwd':'.','parentThreadId':None if tid=='root' else 'root','path':'unneeded-private-path','status':{'type':'notLoaded'}}}\n"
-        " elif method=='thread/list': result={'data':[{'id':'worker'}],'nextCursor':None}\n"
+        " elif method=='thread/list': result={'data':[{'id':'executor'}],'nextCursor':None}\n"
         " elif method=='thread/turns/list': result={'data':[{'id':'turn','status':'completed','error':None}],'nextCursor':None}\n"
         " elif method=='thread/items/list':\n"
-        "  items=[{'type':'subAgentActivity','id':'spawn','kind':'started','agentPath':'/root/worker','agentThreadId':'worker'}] if tid=='root' else [{'type':'agentMessage','text':'Actual child result','phase':'final_answer'}]\n"
+        "  items=[{'type':'subAgentActivity','id':'spawn','kind':'started','agentPath':'/root/executor','agentThreadId':'executor'}] if tid=='root' else [{'type':'agentMessage','text':'Actual child result','phase':'final_answer'}]\n"
         "  items.append({'type':'reasoning','text':'unneeded'})\n"
         "  result={'data':[{'item':i} for i in items],'nextCursor':None}\n"
         " else: raise RuntimeError(method)\n"

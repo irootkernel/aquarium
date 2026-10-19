@@ -20,7 +20,7 @@ If a repository has never enrolled a registry, `release-qa` runs only its releas
 
 ## Release QA Evidence
 
-The coordinator reads the exact candidate registry and records every active gate ID in `active_design_gates`. The `design_gate_matrix` has one row per ID, with `gate`, non-empty `positive_scenarios`, and non-empty `failure_scenarios` referencing retained worker scenario IDs. Assign every required procedure and its evidence to a fresh scenario worker; an unavailable procedure or missing observation is a `gap`, not a pass.
+The coordinator reads the exact candidate registry and records every active gate ID in `active_design_gates`. The `design_gate_matrix` has one row per ID, with `gate`, non-empty `positive_scenarios`, and non-empty `failure_scenarios` referencing retained executor scenario IDs. Assign every required procedure and its evidence to a fresh scenario executor; an unavailable procedure or missing observation is a `gap`, not a pass.
 
 An unenrolled repository records both lists as empty. An enrolled registry with no active gates may also have empty lists; enrollment and active inventory are separate facts. Gate scenarios cannot also supply the commit or surface release-delta matrices. A registry change still needs its own delta inspection.
 

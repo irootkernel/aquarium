@@ -77,13 +77,13 @@ def consume(fixture):
 @pytest.mark.parametrize(
     "node,role,phase",
     [
-        ("capture-baseline", "worker", "baseline"),
-        ("investigate", "worker", "investigation"),
-        ("draft-incomplete", "worker", "proposal"),
-        ("quality", "worker", "quality"),
-        ("judge-investigation", "judge", None),
-        ("judge-diagnosis", "judge", None),
-        ("decide-cause", "orchestrator", None),
+        ("capture-baseline", "executor", "baseline"),
+        ("investigate", "executor", "investigation"),
+        ("draft-incomplete", "executor", "proposal"),
+        ("quality", "executor", "quality"),
+        ("evaluator-investigation", "evaluator", None),
+        ("evaluator-diagnosis", "evaluator", None),
+        ("decide-cause", "coordinator", None),
     ],
 )
 def test_exact_known_diagnosis_current_operation(diagnosis, node, role, phase):
@@ -92,7 +92,7 @@ def test_exact_known_diagnosis_current_operation(diagnosis, node, role, phase):
     assert result["role"] == role
     assert result["qualification"]["status"] == "qualified-known"
     assert result["diagnosis"]["phase"] == phase
-    if role == "orchestrator":
+    if role == "coordinator":
         assert result["dispatch"] is None
     else:
         assert result["dispatch"]["role"] == role
@@ -104,7 +104,7 @@ def test_exact_known_diagnosis_current_operation(diagnosis, node, role, phase):
             result["dispatch"]["target"]["diagnosis_context"]["product_implementation"]
             is False
         )
-        if role == "judge":
+        if role == "evaluator":
             assert result["dispatch"]["authority"]["effects"] == []
 
 
@@ -194,7 +194,7 @@ def test_unreproduced_or_unproved_is_not_fixed_or_no_work(value, code):
     assert error.value.code == code
 
 
-def test_no_change_still_requires_exact_actual_approval_and_final_judge(diagnosis):
+def test_no_change_still_requires_exact_actual_approval_and_final_evaluator(diagnosis):
     value = diagnosis[1]["assignment"]
     proposal = {
         "no_change": True,
@@ -216,8 +216,8 @@ def test_no_change_still_requires_exact_actual_approval_and_final_judge(diagnosi
     assert consume(diagnosis)["dispatch"]["authority"]["effects"] == []
     proposal["reason"] += " Changed."
     assert consume(diagnosis)["status"] == "reapproval-required"
-    diagnosis[3]["guidance"]["node"]["graph_node_id"] = "judge-diagnosis"
-    assert consume(diagnosis)["dispatch"]["role"] == "judge"
+    diagnosis[3]["guidance"]["node"]["graph_node_id"] = "evaluator-diagnosis"
+    assert consume(diagnosis)["dispatch"]["role"] == "evaluator"
 
 
 def test_changed_document_target_returns_to_investigation(tmp_path):
@@ -300,7 +300,7 @@ def adaptive_diagnosis():
             )
         )
     mapping.setdefault("semantic_contracts", {})[sha256(canonical_json(body))] = {
-        "roles": ["worker"],
+        "roles": ["executor"],
         "effect": "work",
         "basis": "Safe original baseline and hypothesis evidence are grouped under one independent investigation assessment.",
         "delivery_items": [row["id"] for row in body["items"]],
@@ -317,11 +317,13 @@ def test_grouped_diagnosis_qualifies_with_real_changed_producer_and_evidence():
     assert result["status"] == "compatible", result["issues"]
     assert document["graph"]["entry"] == "investigate"
     assert "capture-baseline" not in mapping["nodes"]
-    judge = next(
-        row for row in document["graph"]["nodes"] if row["id"] == "judge-investigation"
+    evaluator = next(
+        row
+        for row in document["graph"]["nodes"]
+        if row["id"] == "evaluator-investigation"
     )
-    assert {row["node"] for row in judge["evidence_from"]} == {"investigate"}
-    judge["evidence_from"] = []
+    assert {row["node"] for row in evaluator["evidence_from"]} == {"investigate"}
+    evaluator["evidence_from"] = []
     assert qualify(document, bound(document, mapping))["status"] == "incompatible"
 
 
@@ -350,7 +352,7 @@ def test_grouped_diagnosis_prepare_qualify_retain_current_phase_and_recovery(tmp
         reason="The actual isolated incident fits a coherent baseline and hypothesis producer.",
     )
     draft["coverage"] = [
-        {**row, "obligation": "judge-investigation"} for row in draft["coverage"]
+        {**row, "obligation": "evaluator-investigation"} for row in draft["coverage"]
     ]
     plan["source_dispositions"] = {"aquarium-war-room-v2.yaml": draft["reason"]}
     client = SuitabilityOracle(tmp_path)
@@ -461,7 +463,7 @@ def conditional_diagnosis():
     for row in document["graph"]["nodes"]:
         if row["id"] == "investigate":
             row["next"] = "experiment-choice"
-        if row["id"] in {"judge-investigation", "prepare-diagnostic-assessment"}:
+        if row["id"] in {"evaluator-investigation", "prepare-diagnostic-assessment"}:
             row["evidence_from"].append(
                 {
                     "node": "experiment-work",
@@ -477,29 +479,29 @@ def conditional_diagnosis():
                 {"node": "investigate", "required": True, "items": ["experiment-due"]}
             ],
             "routes": {
-                "bounded": {"to": "judge-investigation", "effect": "advance"},
+                "bounded": {"to": "evaluator-investigation", "effect": "advance"},
                 "experiment": {"to": "experiment-work", "effect": "advance"},
             },
         },
         {
             "id": "experiment-work",
             "use": "experiment-work",
-            "next": "judge-investigation",
+            "next": "evaluator-investigation",
         },
     ]
     mapping["nodes"]["experiment-choice"] = {
         "kind": "decision",
-        "role": "orchestrator",
+        "role": "coordinator",
         "effects": [],
         "capabilities": [],
     }
     mapping["nodes"]["experiment-work"] = {
         "kind": "action",
-        "role": "worker",
+        "role": "executor",
         "effects": ["work"],
         "capabilities": [],
     }
-    mapping["obligations"]["judge-investigation"]["producers"].append(
+    mapping["obligations"]["evaluator-investigation"]["producers"].append(
         {"node": "experiment-work", "item": "experiment-evidence"}
     )
     for name in ["investigation-record", "experiment-work"]:
@@ -507,7 +509,7 @@ def conditional_diagnosis():
         mapping.setdefault("semantic_contracts", {})[
             sha256(canonical_json(definition))
         ] = {
-            "roles": ["worker"],
+            "roles": ["executor"],
             "effect": "work",
             "basis": "Isolated baseline and competing hypothesis evidence are independently assessed before cause/scope decisions.",
             "delivery_items": [item["id"] for item in definition["items"]],
@@ -527,13 +529,15 @@ def test_conditional_hypothesis_changes_actual_work_evidence_and_decision():
     )
     assert {row["to"] for row in choice["routes"].values()} == {
         "experiment-work",
-        "judge-investigation",
+        "evaluator-investigation",
     }
-    judge = next(
-        row for row in document["graph"]["nodes"] if row["id"] == "judge-investigation"
+    evaluator = next(
+        row
+        for row in document["graph"]["nodes"]
+        if row["id"] == "evaluator-investigation"
     )
-    judge["evidence_from"] = [
-        row for row in judge["evidence_from"] if row["node"] != "experiment-work"
+    evaluator["evidence_from"] = [
+        row for row in evaluator["evidence_from"] if row["node"] != "experiment-work"
     ]
     assert qualify(document, bound(document, mapping))["status"] == "incompatible"
 
@@ -587,7 +591,7 @@ def test_unknown_qa_correction_owner_is_incompatible():
 
 
 @pytest.mark.parametrize(
-    "source,decision", [("judge", "approved"), ("user", "changes-requested")]
+    "source,decision", [("evaluator", "approved"), ("user", "changes-requested")]
 )
 def test_no_change_rejects_non_user_or_non_approved_authority_without_dispatch(
     diagnosis, source, decision
@@ -608,4 +612,4 @@ def test_no_change_rejects_non_user_or_non_approved_authority_without_dispatch(
     diagnosis[3]["guidance"]["node"]["graph_node_id"] = "document"
     result = consume(diagnosis)
     assert result["status"] == "approval-required"
-    assert result["dispatch"] is None and result["next_owner"] == "Primary"
+    assert result["dispatch"] is None and result["next_owner"] == "Coordinator"

@@ -98,7 +98,7 @@ def fixture(repository, family, name, entrypoint, node):
 
 
 @pytest.mark.parametrize("family,name,entrypoint,node", CASES)
-def test_alias_and_mutated_origin_recover_prepared_then_running_without_new_judge(
+def test_alias_and_mutated_origin_recover_prepared_then_running_without_new_evaluator(
     tmp_path, family, name, entrypoint, node
 ):
     source, client, qualification, observation, retained = fixture(

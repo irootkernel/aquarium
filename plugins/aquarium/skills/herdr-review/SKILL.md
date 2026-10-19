@@ -82,7 +82,7 @@ Every prompt includes the complete Brief and these review instructions:
   authentication, unrelated network operations or provider reviews other than
   the main reviewer's native subagents. Only the main technical reviewer
   delegates to its native subagents; children do not delegate further. This
-  does not authorize nested dispatch by the ordinary report-only Judge.
+  does not authorize nested dispatch by the ordinary report-only Evaluator.
 - As the main reviewer, use multiple native subagents to review code,
   requirements and verification, adding a UI/UX specialist for UI-related work.
   Give each the same target, complete Brief and assigned focus.

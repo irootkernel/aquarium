@@ -251,18 +251,20 @@ def checkpoint_case(tmp_path, monkeypatch):
     qualifier.write_text(
         json.dumps({"assignment": {"authority": {"preparation": {"roots": ["local"]}}}})
     )
-    report = directory / "judge.json"
+    report = directory / "evaluator.json"
     report.write_text(
         json.dumps(
             {
-                "schema": "aquarium.judge-assessment/v2",
+                "schema": "aquarium.evaluator-assessment/v3",
                 "target": {"files": {"product.py": "sha256:original"}},
             }
         )
     )
     roles = {
-        "nodes": {"worker": "deliver", "judge": "assess"},
-        "deliveries": {"judge": {"path": str(report), "sha256": gate.sha256(report)}},
+        "nodes": {"executor": "deliver", "evaluator": "assess"},
+        "deliveries": {
+            "evaluator": {"path": str(report), "sha256": gate.sha256(report)}
+        },
     }
     current = {
         "status": {
@@ -285,11 +287,11 @@ def checkpoint_case(tmp_path, monkeypatch):
         ],
     }
     context = {
-        "status": "primary-owned",
+        "status": "coordinator-owned",
         "source_path": str(source),
         "binding_path": str(binding_path),
         "procedure": current["status"],
-        "role": "orchestrator",
+        "role": "coordinator",
     }
     native = {
         "schema": "podway.output/v4",
@@ -327,7 +329,7 @@ def checkpoint_case(tmp_path, monkeypatch):
     )
 
 
-def test_adaptive_checkpoint_accepts_actual_distinct_graph_and_reads_selected_judge(
+def test_adaptive_checkpoint_accepts_actual_distinct_graph_and_reads_selected_evaluator(
     checkpoint_case,
 ):
     (
@@ -425,7 +427,7 @@ def test_adaptive_checkpoint_rejects_broken_native_or_report_connections(
     elif damage == "truncated":
         native["result"]["truncated"] = True
     else:
-        roles["nodes"]["judge"] = "deliver"
+        roles["nodes"]["evaluator"] = "deliver"
     with pytest.raises(gate.GateError):
         cases.checkpoint(
             gate, request, repo, directory, case, evidence, installed, roles=roles
@@ -968,18 +970,18 @@ def report_case(tmp_path):
     product.write_text("current product")
     observation = {"root": {"metadata": {"id": "root"}, "items": []}, "descendants": []}
     evidence = {}
-    for role in ["worker", "judge"]:
+    for role in ["executor", "evaluator"]:
         assignment = {
-            "schema": "aquarium.assignment/v2",
+            "schema": "aquarium.assignment/v3",
             "role": role,
             "work": {"repository": str(repository)},
             "success_criteria": ["required-original"],
             "procedure": {"node": role + "-node"},
         }
         report = {
-            "schema": "aquarium.worker-handoff/v2"
-            if role == "worker"
-            else "aquarium.judge-assessment/v2",
+            "schema": "aquarium.executor-handoff/v3"
+            if role == "executor"
+            else "aquarium.evaluator-assessment/v3",
             "target": {"files": {"product.txt": gate.sha256(product)}},
             "results": [{"exit": 0}],
             "checkpoint_result": "pass",
@@ -1000,9 +1002,9 @@ def report_case(tmp_path):
         rpath.write_text(json.dumps(report))
         evidence[role + "_assignment"] = str(apath)
         evidence[role + "_agent"] = "/root/" + role
-        evidence["worker_result" if role == "worker" else "judge_assessment"] = str(
-            rpath
-        )
+        evidence[
+            "executor_result" if role == "executor" else "evaluator_assessment"
+        ] = str(rpath)
         observation["root"]["items"].extend(
             {
                 "type": "subAgentActivity",
@@ -1045,13 +1047,13 @@ def report_case(tmp_path):
     [
         None,
         "bare-digest",
-        "bare-worker-digest",
-        "bare-judge-digest",
+        "bare-executor-digest",
+        "bare-evaluator-digest",
         "self-assessment",
         "target-drift",
         "missing-criterion",
         "unmet-criterion",
-        "no-worker-work",
+        "no-executor-work",
     ],
 )
 def test_reports_bind_actual_distinct_roles_current_targets_and_due_criteria(
@@ -1059,14 +1061,16 @@ def test_reports_bind_actual_distinct_roles_current_targets_and_due_criteria(
 ):
     repository, directory, observation, evidence, case = report_case
     bare_digests = {
-        "bare-digest": ["worker", "judge"],
-        "bare-worker-digest": ["worker"],
-        "bare-judge-digest": ["judge"],
+        "bare-digest": ["executor", "evaluator"],
+        "bare-executor-digest": ["executor"],
+        "bare-evaluator-digest": ["evaluator"],
     }
     if damage in bare_digests:
         for role in bare_digests[damage]:
             path = Path(
-                evidence["worker_result" if role == "worker" else "judge_assessment"]
+                evidence[
+                    "executor_result" if role == "executor" else "evaluator_assessment"
+                ]
             )
             report = gate.read_json(path)
             report["target"]["files"]["product.txt"] = gate.sha256(
@@ -1080,11 +1084,11 @@ def test_reports_bind_actual_distinct_roles_current_targets_and_due_criteria(
             )
             child["items"][-1]["text"] = json.dumps(report)
     elif damage == "self-assessment":
-        evidence["judge_agent"] = evidence["worker_agent"]
+        evidence["evaluator_agent"] = evidence["executor_agent"]
     elif damage == "target-drift":
         (repository / "product.txt").write_text("changed after assessment")
     elif damage in {"missing-criterion", "unmet-criterion"}:
-        path = Path(evidence["judge_assessment"])
+        path = Path(evidence["evaluator_assessment"])
         report = gate.read_json(path)
         if damage == "missing-criterion":
             report["criteria"] = []
@@ -1092,15 +1096,18 @@ def test_reports_bind_actual_distinct_roles_current_targets_and_due_criteria(
             report["criteria"][0]["state"] = "unverified"
         path.write_text(json.dumps(report))
         observation["descendants"][1]["items"][-1]["text"] = json.dumps(report)
-    elif damage == "no-worker-work":
+    elif damage == "no-executor-work":
         observation["descendants"][0]["items"].pop(0)
     if damage and damage not in bare_digests:
         with pytest.raises(gate.GateError):
             cases.reports(gate, observation, evidence, directory, repository, case)
     else:
         result = cases.reports(gate, observation, evidence, directory, repository, case)
-        assert result["actors"] == {"worker": "worker", "judge": "judge"}
-        assert result["nodes"] == {"worker": "worker-node", "judge": "judge-node"}
+        assert result["actors"] == {"executor": "executor", "evaluator": "evaluator"}
+        assert result["nodes"] == {
+            "executor": "executor-node",
+            "evaluator": "evaluator-node",
+        }
         assert result["files"] == {
             "product.txt": gate.sha256(repository / "product.txt")
         }
@@ -1483,7 +1490,7 @@ def qualify_report_original(report_case, namespace="vm", *, absolute=False):
             }
         )
     )
-    for role in ("worker", "judge"):
+    for role in ("executor", "evaluator"):
         path = Path(evidence[role + "_assignment"])
         value = gate.read_json(path)
         value["work"]["requirement_sources"] = [
@@ -1495,7 +1502,7 @@ def qualify_report_original(report_case, namespace="vm", *, absolute=False):
             }
         ]
         path.write_text(json.dumps(value))
-    path = Path(evidence["judge_assessment"])
+    path = Path(evidence["evaluator_assessment"])
     report = gate.read_json(path)
     report["criteria"][0].update(
         id=namespace + ":required-original",
@@ -1508,12 +1515,12 @@ def qualify_report_original(report_case, namespace="vm", *, absolute=False):
 
 def deliver_criterion_report(observation, path, report):
     path.write_text(json.dumps(report))
-    judge = next(
+    evaluator = next(
         actor
         for actor in observation["descendants"]
-        if actor["metadata"]["id"] == "judge"
+        if actor["metadata"]["id"] == "evaluator"
     )
-    judge["items"][-1]["text"] = json.dumps(report)
+    evaluator["items"][-1]["text"] = json.dumps(report)
 
 
 @pytest.mark.parametrize(
@@ -1531,7 +1538,7 @@ def test_reports_accept_exact_original_assignment_source_qualification_without_r
     }
     assert cases.reports(gate, observation, evidence, directory, repository, case)[
         "actors"
-    ] == {"worker": "worker", "judge": "judge"}
+    ] == {"executor": "executor", "evaluator": "evaluator"}
     assert before == {path: Path(path).read_bytes() for path in before}
 
 
@@ -1563,9 +1570,9 @@ def test_qualified_report_requires_unique_current_authoritative_original_source(
 ):
     repository, directory, observation, evidence, case = report_case
     original = qualify_report_original(report_case)
-    path = Path(evidence["judge_assessment"])
+    path = Path(evidence["evaluator_assessment"])
     report = gate.read_json(path)
-    assignment_path = Path(evidence["judge_assignment"])
+    assignment_path = Path(evidence["evaluator_assignment"])
     assignment = gate.read_json(assignment_path)
     reference = assignment["work"]["requirement_sources"][0]
     if damage == "wrong-namespace":
@@ -1617,33 +1624,37 @@ def test_qualified_report_requires_unique_current_authoritative_original_source(
         cases.reports(gate, observation, evidence, directory, repository, case)
 
 
-def test_source_qualified_validation_uses_its_actual_judge_only_assignment(report_case):
+def test_source_qualified_validation_uses_its_actual_evaluator_only_assignment(
+    report_case,
+):
     repository, directory, observation, evidence, case = report_case
     qualify_report_original(report_case, "VM-REQUIREMENTS-json")
     case["family"] = "validation"
     observation["descendants"] = [
         actor
         for actor in observation["descendants"]
-        if actor["metadata"]["id"] == "judge"
+        if actor["metadata"]["id"] == "evaluator"
     ]
     evidence = {
-        key: value for key, value in evidence.items() if not key.startswith("worker")
+        key: value for key, value in evidence.items() if not key.startswith("executor")
     }
     assert cases.reports(gate, observation, evidence, directory, repository, case)[
         "actors"
-    ] == {"judge": "judge"}
+    ] == {"evaluator": "evaluator"}
 
 
 def report_check_inputs(report_case):
     _, directory, observation, evidence, _ = report_case
     originals = {}
-    for role in ("worker", "judge"):
+    for role in ("executor", "evaluator"):
         capture = directory / (role + "-check-input.json")
         capture.write_text(
             json.dumps({"role": role, "observed_check": "synthetic fixture"})
         )
         path = Path(
-            evidence["worker_result" if role == "worker" else "judge_assessment"]
+            evidence[
+                "executor_result" if role == "executor" else "evaluator_assessment"
+            ]
         )
         report = gate.read_json(path)
         report["target"]["files"]["../capture/" + capture.name] = gate.sha256(capture)
@@ -1665,7 +1676,7 @@ def test_reports_preserve_independent_capture_inputs_and_compare_repository_targ
     originals = report_check_inputs(report_case)
     result = cases.reports(gate, observation, evidence, directory, repository, case)
     assert result["files"] == {"product.txt": gate.sha256(repository / "product.txt")}
-    assert result["deliveries"]["judge"]["path"] == evidence["judge_assessment"]
+    assert result["deliveries"]["evaluator"]["path"] == evidence["evaluator_assessment"]
     assert originals == {path: Path(path).read_bytes() for path in originals}
 
 
@@ -1686,28 +1697,28 @@ def test_report_check_inputs_are_confined_current_and_cannot_replace_product_tar
 ):
     repository, directory, observation, evidence, case = report_case
     report_check_inputs(report_case)
-    path = Path(evidence["judge_assessment"])
+    path = Path(evidence["evaluator_assessment"])
     report = gate.read_json(path)
-    capture_key = "../capture/judge-check-input.json"
+    capture_key = "../capture/evaluator-check-input.json"
     if damage == "escape":
         outside = directory.parent / "sibling-capture.json"
         outside.write_text("unrelated case input")
         report["target"]["files"]["../sibling-capture.json"] = gate.sha256(outside)
     elif damage == "absolute":
-        report["target"]["files"][str(directory / "judge-check-input.json")] = report[
-            "target"
-        ]["files"].pop(capture_key)
+        report["target"]["files"][str(directory / "evaluator-check-input.json")] = (
+            report["target"]["files"].pop(capture_key)
+        )
     elif damage == "digest":
         report["target"]["files"][capture_key] = "sha256:" + "0" * 64
     elif damage == "symlink":
         link = directory / "alias.json"
-        link.symlink_to(directory / "judge-check-input.json")
+        link.symlink_to(directory / "evaluator-check-input.json")
         report["target"]["files"]["../capture/alias.json"] = gate.sha256(link)
     elif damage == "parent-symlink":
         link = directory / "alias"
         link.symlink_to(directory, target_is_directory=True)
-        report["target"]["files"]["../capture/alias/judge-check-input.json"] = (
-            gate.sha256(directory / "judge-check-input.json")
+        report["target"]["files"]["../capture/alias/evaluator-check-input.json"] = (
+            gate.sha256(directory / "evaluator-check-input.json")
         )
     elif damage == "outside-only":
         report["target"]["files"].pop("product.txt")
@@ -1818,13 +1829,15 @@ def known_checkpoint(checkpoint_case, monkeypatch, family):
         entrypoint="epic-handler" if family == "goal" else "epic-validator",
     )
     current["status"]["procedure"] = binding["procedure"]
-    judge = "judge-goal" if family == "goal" else "judge-validation"
-    roles["nodes"] = {"judge": judge}
+    evaluator = "evaluator-goal" if family == "goal" else "evaluator-validation"
+    roles["nodes"] = {"evaluator": evaluator}
     if family == "goal":
-        roles["nodes"]["worker"] = "complete-work"
+        roles["nodes"]["executor"] = "complete-work"
     current["guidance"]["node"]["graph_node_id"] = "assess-goal"
-    current["guidance"]["readback"][0]["source_graph_node_id"] = judge
-    placement = next(row for row in document["graph"]["nodes"] if row["id"] == judge)
+    current["guidance"]["readback"][0]["source_graph_node_id"] = evaluator
+    placement = next(
+        row for row in document["graph"]["nodes"] if row["id"] == evaluator
+    )
     current["guidance"]["readback"][0]["items"][0]["item_id"] = next(
         row["id"]
         for row in document["node_definitions"][placement["use"]]["items"]
@@ -1855,12 +1868,13 @@ def test_checkpoint_accepts_exact_qualified_known_reuse_without_claiming_adaptat
         gate, request, repo, directory, case, evidence, installed, roles=roles
     )
     assert result["definition_selection"] == "known-reuse"
-    assert result["selected_evidence"][0]["node"] == roles["nodes"]["judge"]
+    assert result["selected_evidence"][0]["node"] == roles["nodes"]["evaluator"]
     assert source.read_bytes() == before
 
 
 @pytest.mark.parametrize(
-    "damage", ["edited-bytes", "unqualified", "wrong-binding-tuple", "missing-judge"]
+    "damage",
+    ["edited-bytes", "unqualified", "wrong-binding-tuple", "missing-evaluator"],
 )
 def test_known_reuse_keeps_exact_source_native_and_selected_report_guards(
     checkpoint_case, monkeypatch, damage
@@ -1924,7 +1938,7 @@ def negative_validation_report(report_case, state="unmet", checkpoint=None):
             }
         )
     )
-    assignment_path = Path(evidence["judge_assignment"])
+    assignment_path = Path(evidence["evaluator_assignment"])
     assignment = gate.read_json(assignment_path)
     assignment["success_criteria"] = case["criteria"][:]
     assignment["work"]["requirement_sources"] = [
@@ -1937,7 +1951,7 @@ def negative_validation_report(report_case, state="unmet", checkpoint=None):
         }
     ]
     assignment_path.write_text(json.dumps(assignment))
-    path = Path(evidence["judge_assessment"])
+    path = Path(evidence["evaluator_assessment"])
     report = gate.read_json(path)
     report.update(
         verdict="rework" if state == "unmet" else "evidence-needed",
@@ -1980,7 +1994,7 @@ def test_declared_negative_validation_preserves_truthful_goal_and_checkpoint_res
         deliver_criterion_report(observation, path, report)
     original = path.read_bytes()
     result = cases.reports(gate, observation, evidence, directory, repo, case)
-    assert result["actors"] == {"judge": "judge"}
+    assert result["actors"] == {"evaluator": "evaluator"}
     assert result["assessment"]["verdict"] == report["verdict"]
     assert result["assessment"]["goal_outcome"] == "not-achieved"
     assert result["assessment"]["checkpoint_result"] == report.get("checkpoint_result")

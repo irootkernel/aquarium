@@ -66,7 +66,10 @@ def prepared(
     document, binding, context = adaptive(performance=performance)
     if criterion_maximum is not None:
         for item in document["node_definitions"]["assess"]["items"]:
-            if item["id"] in {"judge-unmet-criteria", "judge-unverified-criteria"}:
+            if item["id"] in {
+                "evaluator-unmet-criteria",
+                "evaluator-unverified-criteria",
+            }:
                 item["maximum"] = criterion_maximum
     if privileged:
         document["node_definitions"]["sketch-plan"] = {
@@ -126,7 +129,7 @@ def prepared(
         ]
         binding["nodes"]["sketch-plan"] = {
             "kind": "action",
-            "role": "worker",
+            "role": "executor",
             "effects": ["work"],
             "capabilities": [],
         }
@@ -136,7 +139,7 @@ def prepared(
         binding.setdefault("semantic_contracts", {})[
             sha256(canonical_json(document["node_definitions"]["sketch-plan"]))
         ] = {
-            "roles": ["worker"],
+            "roles": ["executor"],
             "effect": "work",
             "basis": "Work-specific planning-only output, independently assessed with exact original scope.",
             "output_scopes": {"plan-summary": "task-plan"},
@@ -159,13 +162,13 @@ def prepared(
 
 def report_for(target):
     return {
-        "schema": "aquarium.judge-assessment/v2",
+        "schema": "aquarium.evaluator-assessment/v3",
         "work": target["basis"]["work"],
         "target": {"procedure_suitability": copy.deepcopy(target)},
         "authority": {"allowed": ["Independent report only"], "excluded": ["Mutation"]},
         "procedure": None,
-        "native": {"harness": "Codex", "public_handle": "synthetic-judge"},
-        "assignment": "synthetic ordinary Judge assignment",
+        "native": {"harness": "Codex", "public_handle": "synthetic-evaluator"},
+        "assignment": "synthetic ordinary Evaluator assignment",
         "checkpoint": "pre-start-procedure-suitability",
         "evidence": ["synthetic original-source observation"],
         "gaps": [],
@@ -207,10 +210,10 @@ def prove_operations(report, binding):
     return report
 
 
-@pytest.mark.parametrize("worker", [False, True])
+@pytest.mark.parametrize("executor", [False, True])
 def test_new_goal_discriminator_uses_exact_ordinary_report_and_original_scope(
     repository,
-    worker,
+    executor,
 ):
     from adaptive_bundles import sha256
     from test_adaptive_qualification_unit import compact_goal
@@ -223,7 +226,7 @@ def test_new_goal_discriminator_uses_exact_ordinary_report_and_original_scope(
     )
     path.write_text(json.dumps(original))
     value["work"]["requirement_sources"][0]["sha256"] = sha256(path.read_bytes())
-    document, binding, digest, contract = compact_goal(worker=worker)
+    document, binding, digest, contract = compact_goal(executor=executor)
     plan = value["target"]["procedure_plan"]
     plan.update(
         family="goal",
@@ -241,7 +244,7 @@ def test_new_goal_discriminator_uses_exact_ordinary_report_and_original_scope(
         row["obligation"] = (
             "current-work-scope"
             if row["criterion"] == "original:omitted"
-            else "judge-work"
+            else "evaluator-work"
         )
     value["target"]["qualification_context"] = {"goal_kind": "member-task"}
     client = Oracle(repository)
@@ -285,7 +288,7 @@ def test_pending_semantics_do_not_relax_an_independent_structural_violation(
         document["node_definitions"]["outcome"]["options"][0]["guards"] = [
             row
             for row in document["node_definitions"]["outcome"]["options"][0]["guards"]
-            if row["evidence"]["item"] != "judge-goal-outcome"
+            if row["evidence"]["item"] != "evaluator-goal-outcome"
         ]
     else:
         from test_adaptive_qualification_unit import insert_action
@@ -481,7 +484,7 @@ def test_public_preparation_to_exact_suitability_import_and_retained_recovery(
     client = Oracle(repository)
     requested = qualify_prepared(repository, value, client=client)
     assert requested["status"] == "assessment-required"
-    assert requested["assignment"]["role"] == "judge"
+    assert requested["assignment"]["role"] == "evaluator"
     assert requested["assignment"]["procedure"] is None
     assert (
         requested["target"]["candidate"]["procedure"]["digest"]
@@ -586,7 +589,7 @@ def test_changed_original_source_and_plan_basis_need_reassessment(repository):
     assert error.value.code == "source-drift"
 
 
-def test_compatible_due_task_plan_shares_one_exact_judge_scope(repository):
+def test_compatible_due_task_plan_shares_one_exact_evaluator_scope(repository):
     value = prepared(repository)
     request = qualify_prepared(
         repository, value, client=Oracle(repository), combined_task_plan=True
@@ -994,14 +997,14 @@ def test_public_qualifier_returns_typed_invalid_input_without_native_work(
     assert result.stderr == ""
 
 
-def test_existing_actual_task_planning_judge_is_a_reassessment_route():
+def test_existing_actual_task_planning_evaluator_is_a_reassessment_route():
     from adaptive_suitability import reassessment_route
     from test_adaptive_qualification_unit import known
 
     document, binding = known("task")
     result = reassessment_route(document, binding)
-    assert result["status"] == "existing-planning-judge"
-    assert result["nodes"] == ["judge-plan"]
+    assert result["status"] == "existing-planning-evaluator"
+    assert result["nodes"] == ["evaluator-plan"]
     document, binding = known("goal")
     assert reassessment_route(document, binding)["status"] == "missing-topology"
 
@@ -1084,7 +1087,7 @@ def test_bounded_gap_capacity_requires_exact_independent_original_basis(
     value = assignment(repository, mode="prepare")
     document, binding, context = adaptive()
     for item in document["node_definitions"]["assess"]["items"]:
-        if item["id"] in {"judge-unmet-criteria", "judge-unverified-criteria"}:
+        if item["id"] in {"evaluator-unmet-criteria", "evaluator-unverified-criteria"}:
             item["maximum"] = maximum
     draft = value["target"]["procedure_plan"]["drafts"][0]
     draft.update(
@@ -1173,7 +1176,7 @@ def test_formatter_contract_materialization_requires_native_semantic_identity(
             if value["effect"] != "finalization"
         },
         sha256(canonical_json(closeout)): {
-            "roles": ["orchestrator"],
+            "roles": ["coordinator"],
             "effect": "finalization",
             "basis": "Explicit static fixture result delivery",
         },
@@ -1322,7 +1325,7 @@ def test_exact_retained_adaptive_reuse_preserves_first_due_assessment(repository
     assert imported["items"]["suitability-timing"] == "established-reuse"
     checkpoint = imported["artifact_evidence"]["suitability-assessment"]
     assert checkpoint["prior_definition_assessment"] == prior
-    assert checkpoint["schema"] == "aquarium.orchestration-checkpoint/v2"
+    assert checkpoint["schema"] == "aquarium.orchestration-checkpoint/v3"
     resumed = resume_selected(
         repository,
         ["definitions"],
@@ -1375,12 +1378,14 @@ def test_existing_adaptive_reuse_obeys_read_only_and_current_native_scope(
     client.read.assert_not_called()
 
 
-def test_pre_start_judge_assignment_does_not_impersonate_preparing_worker(repository):
+def test_pre_start_evaluator_assignment_does_not_impersonate_preparing_executor(
+    repository,
+):
     sys.path.insert(
         0,
         str(
             Path(__file__).resolve().parents[2]
-            / "plugins/aquarium/skills/goal-judge/scripts"
+            / "plugins/aquarium/skills/goal-evaluator/scripts"
         ),
     )
     from ordinary_assignment import render_dispatch
@@ -1388,22 +1393,22 @@ def test_pre_start_judge_assignment_does_not_impersonate_preparing_worker(reposi
     value = prepared(repository)
     value["native"] = {
         "harness": "Codex",
-        "available_handle": "preparing-worker",
+        "available_handle": "preparing-executor",
         "observed_lifecycle": "working",
     }
     result = qualify_prepared(repository, value, client=Oracle(repository))
-    judged = result["assignment"]
-    assert judged["native"] == {
+    evaluated = result["assignment"]
+    assert evaluated["native"] == {
         "harness": "Codex",
         "assigned_agent": "unknown",
         "lifecycle": "not-dispatched",
     }
-    assert judged["target"]["preparation_native_context"] == value["native"]
-    rendered = render_dispatch(judged)
+    assert evaluated["target"]["preparation_native_context"] == value["native"]
+    rendered = render_dispatch(evaluated)
     actual = json.loads(
         rendered["dispatch_text"][rendered["dispatch_text"].index("{") :]
     )
-    assert actual["native"] == judged["native"]
+    assert actual["native"] == evaluated["native"]
     assert actual["target"]["preparation_native_context"] == value["native"]
 
 
@@ -1424,7 +1429,7 @@ def test_valid_exact_semantic_proof_does_not_waive_assessed_structural_violation
     document["node_definitions"]["outcome"]["options"][0]["guards"] = [
         row
         for row in document["node_definitions"]["outcome"]["options"][0]["guards"]
-        if row["evidence"]["item"] != "judge-goal-outcome"
+        if row["evidence"]["item"] != "evaluator-goal-outcome"
     ]
     source.write_text(yaml.safe_dump(document, sort_keys=False, width=float("inf")))
     client = Oracle(repository)
@@ -1484,8 +1489,8 @@ def test_same_due_in_session_assessment_receives_exact_semantic_and_capacity_inp
         if contract.get("discriminators") or contract.get("output_scopes")
     }
     assert {row["item"] for row in demands["criterion_capacity"]["bounded_fields"]} == {
-        "judge-unmet-criteria",
-        "judge-unverified-criteria",
+        "evaluator-unmet-criteria",
+        "evaluator-unverified-criteria",
     }
     assert {
         row["maximum"] for row in demands["criterion_capacity"]["bounded_fields"]
@@ -1500,12 +1505,12 @@ def test_same_due_in_session_assessment_receives_exact_semantic_and_capacity_inp
         )
     assert error.value.code == "reassessment-required"
     assert error.value.details["assessment_requirements"] == demands
-    assert error.value.details["next_owner"] == "Orchestrator"
+    assert error.value.details["next_owner"] == "Coordinator"
     assert "assignment" not in error.value.details
     assert "bootstrap" not in error.value.details
 
 
-def test_existing_mapped_planning_judge_gets_current_equivalent_operation_inputs():
+def test_existing_mapped_planning_evaluator_gets_current_equivalent_operation_inputs():
     from adaptive_bundles import sha256
     from adaptive_definitions import ASSETS, canonical_json
     from adaptive_suitability import reassessment_route
@@ -1514,34 +1519,36 @@ def test_existing_mapped_planning_judge_gets_current_equivalent_operation_inputs
     document, binding = known("task")
     definition = document["node_definitions"]["plan-record"]
     operations = json.loads(
-        (ASSETS / "adaptive/operation-contracts-v1.json").read_text()
+        (ASSETS / "adaptive/operation-contracts-v2.json").read_text()
     )
     contract = operations[sha256(canonical_json(definition))]
     definition["title"] = "Record the actual revised documentation plan"
     digest = sha256(canonical_json(definition))
     binding.setdefault("semantic_contracts", {})[digest] = contract
-    judge = next(row for row in document["graph"]["nodes"] if row["id"] == "judge-plan")
-    judge_definition = document["node_definitions"][judge["use"]]
-    judge_contract = operations[sha256(canonical_json(judge_definition))]
-    for item in document["node_definitions"][judge["use"]]["items"]:
-        if item["id"] in {"judge-unmet-criteria", "judge-unverified-criteria"}:
+    evaluator = next(
+        row for row in document["graph"]["nodes"] if row["id"] == "evaluator-plan"
+    )
+    evaluator_definition = document["node_definitions"][evaluator["use"]]
+    evaluator_contract = operations[sha256(canonical_json(evaluator_definition))]
+    for item in document["node_definitions"][evaluator["use"]]["items"]:
+        if item["id"] in {"evaluator-unmet-criteria", "evaluator-unverified-criteria"}:
             item["maximum"] = 3
-    binding["semantic_contracts"][sha256(canonical_json(judge_definition))] = (
-        judge_contract
+    binding["semantic_contracts"][sha256(canonical_json(evaluator_definition))] = (
+        evaluator_contract
     )
     route = reassessment_route(document, binding)
-    assert route["status"] == "existing-planning-judge"
-    assert route["nodes"] == ["judge-plan"]
+    assert route["status"] == "existing-planning-evaluator"
+    assert route["nodes"] == ["evaluator-plan"]
     requirements = route["assessment_requirements"]
     assert requirements["operation_contracts"][digest] == contract
     planning_counts = [
         row
         for row in requirements["criterion_capacity"]["bounded_fields"]
-        if row["node"] == "judge-plan"
+        if row["node"] == "evaluator-plan"
     ]
     assert {row["item"] for row in planning_counts} == {
-        "judge-unmet-criteria",
-        "judge-unverified-criteria",
+        "evaluator-unmet-criteria",
+        "evaluator-unverified-criteria",
     }
     assert {row["maximum"] for row in planning_counts} == {3}
     assert "assignment" not in route
@@ -1756,7 +1763,7 @@ def test_prestart_accepts_noncanonical_grouped_task_phase_owners(repository):
         retain=True,
     )
     assert result["status"] == "qualified"
-    assert result["retention"]["binding"]["nodes"]["deliver"]["role"] == "worker"
+    assert result["retention"]["binding"]["nodes"]["deliver"]["role"] == "executor"
 
 
 @pytest.mark.parametrize(

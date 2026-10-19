@@ -5,7 +5,7 @@ description: "Deslop and optimize the implementation-checked diff for one roadma
 
 # Task Refine
 
-Under an ordinary `task-handler`, follow [Task orchestration](../../references/task-orchestration.md). Return the node-specific `aquarium.worker-handoff/v2` with exact target, original requirements, actual results, available public handles, performed and omitted checks, authority and gaps. The Primary owns Podway records and Decisions; the independent Judge assesses coherent delivery phases. Admitted formal snapshots retain their original v1 contract. Direct invocation keeps this phase's existing authority.
+Under an ordinary `task-handler`, follow [Task orchestration](../../references/task-orchestration.md). Return the node-specific `aquarium.executor-handoff/v3` with exact target, original requirements, actual results, available public handles, performed and omitted checks, authority and gaps. The Coordinator owns Podway records and Decisions; the independent Evaluator assesses coherent delivery phases. Admitted formal snapshots retain their original v1 contract. Direct invocation keeps this phase's existing authority.
 
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
@@ -40,4 +40,4 @@ Do not manufacture an edit when no safe, useful optimization exists. Record a no
 
 Do not broaden refinement into a general refactor. Re-run focused checks after every cleanup that touches executed code and broader gates after an optimization that changes code. After verification, stage only the confirmed task-owned optimization delta. For a no-op pass, keep the staged baseline unchanged and do not rerun gates solely because the pass made no change.
 
-Return deslop actions, optimization reasoning, staged baseline scope, optimization delta, commands and exit codes, and the final staged task-owned implementation and test paths to the orchestrator.
+Return deslop actions, optimization reasoning, staged baseline scope, optimization delta, commands and exit codes, and the final staged task-owned implementation and test paths to the coordinator.

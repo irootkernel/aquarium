@@ -123,7 +123,7 @@ def approved_sources(
         )
     checkpoint = object_value(recovery.get("checkpoint"), "Finalization checkpoint")
     same_work(repository, assignment["work"], checkpoint.get("work"))
-    # Ordinary v2 separates public workflow context from native agent metadata.
+    # Ordinary v3 separates public workflow context from native agent metadata.
     # Older local captures put the public status in native; retain those only
     # when no canonical procedure field was declared.
     context_field = "procedure" if "procedure" in checkpoint else "native"
@@ -133,7 +133,7 @@ def approved_sources(
         native = object_value(native["native"], "Checkpoint dispatched native context")
     native_procedure = object_value(native.get("procedure"), "Checkpoint procedure")
     if (
-        checkpoint.get("schema") != "aquarium.orchestration-checkpoint/v2"
+        checkpoint.get("schema") != "aquarium.orchestration-checkpoint/v3"
         or native.get("session") != status["session"]
         or type(status.get("goal_revision")) is not int
         or native.get("goal_revision") != status.get("goal_revision")
@@ -332,7 +332,7 @@ def finalization_sources(repository, assignment, recovery, observation):
     if checkpoint_result is None:
         checkpoint_result = report.get("verdict")
     if (
-        report.get("schema") != "aquarium.judge-assessment/v2"
+        report.get("schema") != "aquarium.evaluator-assessment/v3"
         or checkpoint_result != "pass"
         or not report.get("criteria")
         or not report.get("evidence")
@@ -341,7 +341,7 @@ def finalization_sources(repository, assignment, recovery, observation):
             "not-established", "Current affected ordinary assessment is missing"
         )
     # Only approved affected postimages are mechanically checked here. Other
-    # candidate/check-input applicability remains the ordinary Primary/Judge
+    # candidate/check-input applicability remains the ordinary Coordinator/Evaluator
     # contract; this helper does not introduce another report/freshness engine.
     deleted = object_value(
         target.get("deleted_before", {}), "Assessment deleted targets"
@@ -429,11 +429,11 @@ def finalization_sources(repository, assignment, recovery, observation):
 
 
 def selected_assessment(binding, recovery, report):
-    """A native record cannot borrow an unrelated producer's Judge role."""
+    """A native record cannot borrow an unrelated producer's Evaluator role."""
     producer = recovery["selected_evidence"]["result"]["source"]["graph_node_id"]
-    if binding["nodes"].get(producer, {}).get("role") != "judge":
+    if binding["nodes"].get(producer, {}).get("role") != "evaluator":
         raise BundleError(
-            "not-established", "Selected report is not from a mapped Judge"
+            "not-established", "Selected report is not from a mapped Evaluator"
         )
     procedure = object_value(report.get("procedure") or {}, "Assessment procedure")
     for field, expected in (

@@ -29,19 +29,19 @@ Workflows prefer re-observation over replay. Unknown or interrupted external exe
 
 ## Ordinary native orchestration
 
-The [ordinary v2 contract](../../plugins/aquarium/references/ordinary-agent-orchestration.md)
+The [ordinary v3 contract](../../plugins/aquarium/references/ordinary-agent-orchestration.md)
 owns the current source roles, assignments, handoffs and recovery boundaries.
-The current Primary's harness runs native Workers and an independent report-only
-Judge. Workers deliver coherent implementation or documentation with refinement
-and required checks; the Judge assesses due criteria from original artifacts.
-The Primary records workflow evidence and makes permitted Decisions. Operational
-bookkeeping and unchanged final-report assembly create no extra Judge cycle.
+The current Coordinator's harness runs native Executors and an independent report-only
+Evaluator. Executors deliver coherent implementation or documentation with refinement
+and required checks; the Evaluator assesses due criteria from original artifacts.
+The Coordinator records workflow evidence and makes permitted Decisions. Operational
+bookkeeping and unchanged final-report assembly create no extra Evaluator cycle.
 
 Ordinary Podway Actions retain structural progression and current fences without
 native receipts. Available public handles and actual results support recovery;
 private executor history, internal model telemetry and configuration digests are
 not startup prerequisites. Reconcile unknown work before replay and settle a
-mutating Worker before replacement. A fresh independent Judge can restore
+mutating Executor before replacement. A fresh independent Evaluator can restore
 original criteria, current artifacts, prior gaps and remaining authority.
 
 Selected technical reviews, required checks, scope, correction grants, actual

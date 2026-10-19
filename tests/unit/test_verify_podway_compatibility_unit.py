@@ -28,69 +28,69 @@ def reversed_json(value: dict[str, object]) -> str:
         (
             "goal-completion-unmet",
             "goal",
-            "judge-goal",
+            "evaluator-goal",
             ("rework", "not-achieved", 1, 0),
         ),
         (
             "goal-completion-unverified",
             "goal",
-            "judge-goal",
+            "evaluator-goal",
             ("evidence-needed", "not-achieved", 0, 1),
         ),
         (
             "validation-completion-unmet",
             "validation",
-            "judge-validation",
+            "evaluator-validation",
             ("rework", "not-achieved", 1, 0),
         ),
         (
             "validation-completion-unverified",
             "validation",
-            "judge-stopped-validation",
+            "evaluator-stopped-validation",
             ("evidence-needed", "not-achieved", 0, 1),
         ),
         (
             "task-stop-preserves-completion",
             "task",
-            "judge-stopped-task",
+            "evaluator-stopped-task",
             ("rework", "not-achieved", 1, 0),
         ),
         (
             "goal-stop-preserves-completion",
             "goal",
-            "judge-stopped-goal",
+            "evaluator-stopped-goal",
             ("rework", "not-achieved", 1, 0),
         ),
         (
             "validation-stop-preserves-completion",
             "validation",
-            "judge-stopped-validation",
+            "evaluator-stopped-validation",
             ("rework", "not-achieved", 1, 0),
         ),
-        ("goal-completion-unmet", "goal", "judge-work", ("pass", "achieved", 0, 0)),
+        ("goal-completion-unmet", "goal", "evaluator-work", ("pass", "achieved", 0, 0)),
         (
             "goal-completion-unverified",
             "goal",
-            "judge-goal-evidence",
+            "evaluator-goal-evidence",
             ("pass", "achieved", 0, 0),
         ),
         (
             "validation-completion-unmet",
             "validation",
-            "judge-remediation",
+            "evaluator-remediation",
             ("pass", "achieved", 0, 0),
         ),
         (
             "validation-completion-unverified",
             "validation",
-            "judge-validation-evidence",
+            "evaluator-validation-evidence",
             ("pass", "achieved", 0, 0),
         ),
-        ("standard", "goal", "judge-goal", ("pass", "achieved", 0, 0)),
-        ("standard", "validation", "judge-validation", ("pass", "achieved", 0, 0)),
+        ("standard", "goal", "evaluator-goal", ("pass", "achieved", 0, 0)),
+        ("standard", "validation", "evaluator-validation", ("pass", "achieved", 0, 0)),
     ],
 )
-def test_fixture_judge_preserves_final_gaps_and_phase_results(
+def test_fixture_evaluator_preserves_final_gaps_and_phase_results(
     tmp_path: Path,
     scenario: str,
     procedure: str,
@@ -103,14 +103,18 @@ def test_fixture_judge_preserves_final_gaps_and_phase_results(
     managed.current_procedure_id = f"aquarium-{procedure}-v2"
     actual = []
     for item_id, item_type, constraints in [
-        ("judge-verdict", "choice", {"choices": ["pass", "rework", "evidence-needed"]}),
         (
-            "judge-goal-outcome",
+            "evaluator-verdict",
+            "choice",
+            {"choices": ["pass", "rework", "evidence-needed"]},
+        ),
+        (
+            "evaluator-goal-outcome",
             "choice",
             {"choices": ["achieved", "not-achieved", "superseded"]},
         ),
-        ("judge-unmet-criteria", "integer", {"minimum": 0}),
-        ("judge-unverified-criteria", "integer", {"minimum": 0}),
+        ("evaluator-unmet-criteria", "integer", {"minimum": 0}),
+        ("evaluator-unverified-criteria", "integer", {"minimum": 0}),
     ]:
         record = managed.value_for(
             {"item_id": item_id, "type": item_type, "constraints": constraints}, node
@@ -136,7 +140,7 @@ def git(repository: Path, *arguments: str) -> None:
         ("task-completion-owner-inconsistent", 2, "rework", 1, 0, "fail"),
     ],
 )
-def test_fixture_review_judge_preserves_completion_and_checkpoint_results(
+def test_fixture_review_evaluator_preserves_completion_and_checkpoint_results(
     tmp_path: Path,
     scenario: str,
     review_visit: int,
@@ -152,15 +156,15 @@ def test_fixture_review_judge_preserves_completion_and_checkpoint_results(
     managed.node_visits["review"] = review_visit
     for item_id, item_type, constraints, expected in [
         (
-            "judge-verdict",
+            "evaluator-verdict",
             "choice",
             {"choices": ["pass", "rework", "evidence-needed"]},
             verdict,
         ),
-        ("judge-unmet-criteria", "integer", {"minimum": 0}, unmet),
-        ("judge-unverified-criteria", "integer", {"minimum": 0}, unverified),
+        ("evaluator-unmet-criteria", "integer", {"minimum": 0}, unmet),
+        ("evaluator-unverified-criteria", "integer", {"minimum": 0}, unverified),
         (
-            "judge-checkpoint-result",
+            "evaluator-checkpoint-result",
             "check_result",
             {
                 "operation_id": "fixture-checkpoint",
@@ -169,7 +173,7 @@ def test_fixture_review_judge_preserves_completion_and_checkpoint_results(
             checkpoint,
         ),
         (
-            "judge-applicability",
+            "evaluator-applicability",
             "check_result",
             {
                 "operation_id": "fixture-applicability",
@@ -180,7 +184,7 @@ def test_fixture_review_judge_preserves_completion_and_checkpoint_results(
     ]:
         record = managed.value_for(
             {"item_id": item_id, "type": item_type, "constraints": constraints},
-            "judge-review",
+            "evaluator-review",
         )
         assert record["type"] == item_type
         assert record["outcome" if item_type == "check_result" else "value"] == expected
@@ -716,18 +720,31 @@ def test_grouped_owner_fixture_records_failure_and_selects_exact_route(
     check = managed.value_for(
         {
             "type": "check_result",
-            "item_id": "judge-checkpoint-result",
+            "item_id": "evaluator-checkpoint-result",
             "constraints": {"operation_id": "checkpoint", "operation_digest": digest},
         },
-        f"judge-{phase}",
+        f"evaluator-{phase}",
     )
     assert check["outcome"] == expected_outcome
 
 
-@pytest.mark.parametrize("formal", [False, True])
-@pytest.mark.parametrize("item_id", ["worker-handoff", "judge-assessment"])
+@pytest.mark.parametrize(
+    "item_id,formal,expected_schema",
+    [
+        ("worker-handoff", True, "aquarium.worker-handoff/v1"),
+        ("judge-assessment", True, "aquarium.judge-assessment/v1"),
+        ("worker-handoff", False, "aquarium.worker-handoff/v2"),
+        ("judge-assessment", False, "aquarium.judge-assessment/v2"),
+        ("executor-handoff", False, "aquarium.executor-handoff/v3"),
+        ("evaluator-assessment", False, "aquarium.evaluator-assessment/v3"),
+    ],
+)
 def test_structural_reports_select_contract_without_claiming_actual_delivery(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, formal: bool, item_id: str
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    formal: bool,
+    item_id: str,
+    expected_schema: str,
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
     managed = runtime.ManagedRuntime(tmp_path / "podway", tmp_path, 1)
@@ -749,10 +766,7 @@ def test_structural_reports_select_contract_without_claiming_actual_delivery(
     report = json.loads(next(tmp_path.glob("synthetic-*.json")).read_text())
     assert report["schema"] == "aquarium.synthetic-structural-report/v1"
     assert report["synthetic"] is True
-    assert (
-        report["expected_report_schema"]
-        == f"aquarium.{item_id}/{'v1' if formal else 'v2'}"
-    )
+    assert report["expected_report_schema"] == expected_schema
 
 
 def test_prepare_scenario_restores_procedure_and_resets_session_state(
@@ -2151,7 +2165,7 @@ def test_local_qualification_profiles_retain_source_and_retry_current_checks(
         ("evidence-needed", "evidence-needed"),
     ],
 )
-def test_local_task_qualification_routes_latest_judge_verdict(
+def test_local_task_qualification_routes_latest_evaluator_verdict(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, verdict: str, expected: str
 ) -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
@@ -2159,7 +2173,7 @@ def test_local_task_qualification_routes_latest_judge_verdict(
     managed.scenario = "task-local-settled"
 
     def read(observation: dict, node: str, item: str) -> str:
-        assert node == "judge-review" and item == "judge-verdict"
+        assert node == "evaluator-review" and item == "evaluator-verdict"
         return verdict
 
     monkeypatch.setattr(managed, "read_complete_evidence", read)

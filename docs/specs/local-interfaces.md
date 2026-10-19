@@ -115,12 +115,12 @@ A successful unregistered result is `registration_required`. A valid native reso
 
 `plugins/aquarium/tools/aquarium-dev/aquarium_dev.py` owns diagnose, enrollment, hook repair, build request, rebuild, worker, cleanup, launcher installation, and managed-service planning and application. Managed-service producers emit `aquarium-dev-producer-description/v2` and `aquarium-dev-artifact-manifest/v2`; their controllers emit `aquarium-dev-service-status/v1`, `aquarium-dev-service-plan/v1`, and `aquarium-dev-service-result/v1`. It has no Codex-configuration or production-tool setup operation. The installed `aquarium-dev` CLI exposes the manager commands; its tool-invocation form accepts a supported tool and arguments, falls back only an absent foreground tool to the caller's global `PATH` outside both Aquarium roots, and requires a matching ready managed service without production fallback while leaving the caller's environment unchanged.
 
-The release-QA evidence lifecycle accepts `aquarium-release-qa-cluster-result/v1` worker results and the `aquarium-release-qa-full-pass/v2`, `aquarium-release-qa-confirmation-prepare/v2`, `aquarium-release-qa-confirmation-begin/v2`, and `aquarium-release-qa-confirmation-finish/v2` command inputs. Full-pass v2 and record/manifest v3 explicitly bind a previous-release or first-release baseline; the latter retains every reachable commit and current tree path with null previous-release identity. They freeze the active Design Gate inventory and positive/failure scenario matrix separately from delta coverage. Confirmation preserves those exact fields, and claim, admission, and result schemas remain unchanged. These inputs and artifacts use closed shapes, create-once outputs with physically normalized parents and byte-bounded basenames, canonical bytes, and exact digests. Before a settlement admission exists, repeating an identical begin verifies the existing artifact and returns the same successful claim receipt without replacing it; begin cannot authorize another worker dispatch after admission. Finish creates one claim-keyed settlement admission that binds the canonical request, submitted evidence bytes, and terminal output path, matches scenario identities independently of array order, and computes its verdict from the same cluster bytes verified against the admission before converging on one terminal `PASS`, `FINDINGS`, `INCOMPLETE`, or `REJECTED` result. A canonical admission with a malformed snapshot shape settles as `REJECTED`. A changed request or output path reports `settlement_pending` before a terminal exists and `settlement_replay` afterward; neither can replace an artifact. Unexpected transient settlement failures remain recoverable by the exact admitted request and output path. Contract failures return `aquarium-release-qa-error/v1` with a nonzero exit.
+The release-QA evidence lifecycle accepts `aquarium-release-qa-cluster-result/v1` executor results and the `aquarium-release-qa-full-pass/v2`, `aquarium-release-qa-confirmation-prepare/v2`, `aquarium-release-qa-confirmation-begin/v2`, and `aquarium-release-qa-confirmation-finish/v2` command inputs. Full-pass v2 and record/manifest v3 explicitly bind a previous-release or first-release baseline; the latter retains every reachable commit and current tree path with null previous-release identity. They freeze the active Design Gate inventory and positive/failure scenario matrix separately from delta coverage. Confirmation preserves those exact fields, and claim, admission, and result schemas remain unchanged. These inputs and artifacts use closed shapes, create-once outputs with physically normalized parents and byte-bounded basenames, canonical bytes, and exact digests. Before a settlement admission exists, repeating an identical begin verifies the existing artifact and returns the same successful claim receipt without replacing it; begin cannot authorize another executor dispatch after admission. Finish creates one claim-keyed settlement admission that binds the canonical request, submitted evidence bytes, and terminal output path, matches scenario identities independently of array order, and computes its verdict from the same cluster bytes verified against the admission before converging on one terminal `PASS`, `FINDINGS`, `INCOMPLETE`, or `REJECTED` result. A canonical admission with a malformed snapshot shape settles as `REJECTED`. A changed request or output path reports `settlement_pending` before a terminal exists and `settlement_replay` afterward; neither can replace an artifact. Unexpected transient settlement failures remain recoverable by the exact admitted request and output path. Contract failures return `aquarium-release-qa-error/v1` with a nonzero exit.
 
 ## Adaptive definition interfaces
 
 The [shared adaptive contract](../../plugins/aquarium/references/adaptive-procedures.md)
-owns `aquarium.procedure-binding/v1`, `aquarium.procedure-fragment/v1`, their
+owns `aquarium.procedure-binding/v2`, `aquarium.procedure-fragment/v2`, their
 closed JSON schemas and necessary native declaration signatures. The shared
 Python helper parses definitions, calculates canonical UTF-8 JSON identities,
 extracts native recovery tuples and checks declaration slices with typed aliases.
@@ -131,7 +131,7 @@ helpers admit exact known sources and implement atomic locally ignored
 retention and exact native `(id, version, digest)` recovery across all approved
 searched roots. Their retained complete source/binding does not depend on mutable
 origin libraries. Fit selection and source-only preparation now use ordinary
-Worker assignment/plan data and retain ignored `.candidates` bundles without
+Executor assignment/plan data and retain ignored `.candidates` bundles without
 adoption. `adaptive_composition.py` expands explicit whole/fragment inputs and
 typed ports through that same preparation CLI. It retains operation identities,
 resolves native references and dependencies, and rejects unresolved/private
@@ -259,7 +259,7 @@ accepts `--repository`, `--assignment <file-or->`, `--podway <exact-binary>`,
 optional `--assessment <ordinary-report-file>`, `--combined-task-plan` and
 `--retain`. The preparation CLI's optional `--bootstrap` adds recording topology
 for changed/new sources without modifying known reuse or plan-only behavior.
-Qualification returns exact target and ordinary Judge assignment when assessment
+Qualification returns exact target and ordinary Evaluator assignment when assessment
 is due (exit 3), `qualified` or `qualified-known` on current passage (exit 0), and
 a distinct JSON failure (exit 2). The shared adaptive contract defines scoped
 phase/global criteria, bootstrap artifact representation, current retention
@@ -270,7 +270,7 @@ operation definitions inside the existing two-file/hash boundary.
 Adequate unchanged adaptive reuse uses a candidate's actual `prior_suitability`
 ordinary report together with its exact retained binding/source, current native
 and structural proof and original-source fit. It returns `qualified-known`
-without a new Judge assignment. Bootstrap timing is `established-reuse`; its
+without a new Evaluator assignment. Bootstrap timing is `established-reuse`; its
 artifact evidence is an ordinary selection checkpoint carrying prior definition
 evidence and current applicability, never an old report relabeled as current.
 Plan-only cannot run the retained native proof and reports not-established
@@ -328,9 +328,9 @@ inspector forwards corresponding `--podway-binding` and
 binding path from the retained native tuple before qualification; it does not
 require a bootstrap item to be selected.
 
-On the native path, `context` needs an existing session and the exact ordinary invocation context. It returns `prepared-resolved`, `dispatch-ready`, `primary-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, `finalization-resolved`, or Design/Diagnosis `approval-required` / `reapproval-required`, with native
+On the native path, `context` needs an existing session and the exact ordinary invocation context. It returns `prepared-resolved`, `dispatch-ready`, `coordinator-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, `finalization-resolved`, or Design/Diagnosis `approval-required` / `reapproval-required`, with native
 status/templates, active items, selected evidence, current role/capabilities,
-due phase skills, original authority and an ordinary v2 dispatch when applicable.
+due phase skills, original authority and an ordinary v3 dispatch when applicable.
 The Design/Diagnosis approval statuses return no dispatch; they preserve the actual exact-diff approval and changed-target reapproval boundary. Successful read-only resolution exits 0, including those approval stops and a requested handoff stop. The early `podway-inapplicable` exit-0 branch needs no session;
 errors retain status/message/details and exit 2. Terminal state does not imply
 achievement. Missing topology preserves the running session; `context` does not replace it. The separate explicitly consented transition actions own that mutation. This context adapter launches no agent and performs no native mutation.
@@ -347,7 +347,7 @@ Optional `qualification.applied_source_recovery` reconciles already applied,
 exactly approved source edits or deletion before the next due assessment exists.
 It uses pinned capture/Git originals, actual approval and the current ordinary
 checkpoint. Only a running session with a valid current native attempt can return
-its existing mapped Worker/Judge dispatch or Primary ownership. Original criteria,
+its existing mapped Executor/Evaluator dispatch or Coordinator ownership. Original criteria,
 coverage, selected reviews and grants remain unchanged. Dispatched
 `target.applied_source_context` includes readable original references and the
 existing approval evidence; the helper supplies no new effect or acceptance.
@@ -365,7 +365,7 @@ requirements and grants do not change.
 
 Optional `qualification.finalization_recovery` remains the separate settled path:
 it reconciles approved source edits or deletion using exact original bytes, the
-current affected Judge assessment and selected native evidence. Both inputs
+current affected Evaluator assessment and selected native evidence. Both inputs
 cannot be supplied together.
 Its `finalization-resolved` response has no dispatch and preserves current authority
 and pending operations; it establishes no achievement. The execution contract

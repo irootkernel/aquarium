@@ -76,8 +76,8 @@ optional recommendations, preserving original reports and finding identity.
 
 | Target | Interpretation |
 | --- | --- |
-| Staged | Judge the index candidate and its transition from HEAD. Unstaged bytes cannot satisfy a criterion. |
-| HEAD | Judge the immutable resolved HEAD tree, not current index or worktree bytes. |
+| Staged | Evaluate the index candidate and its transition from HEAD. Unstaged bytes cannot satisfy a criterion. |
+| HEAD | Evaluate the immutable resolved HEAD tree, not current index or worktree bytes. |
 | Commit or range | Preserve native comparison semantics and use the resulting candidate tree for completion context. |
 | Workspace or dirty | Use only the selected backend's supported native meaning and eligible files. |
 
@@ -137,4 +137,4 @@ Completion is supported only when every applicable criterion is `met` or legitim
 
 Apply the same aggregate decision at initial approval, after eligible local settlement, member-Task goal assessment, and whole-Epic validation. Standalone review reports the assessment without implementing or remediating it; embedded workflows route it through their existing decisions and budgets.
 
-For a completed review followed by eligible local corrections, preserve the provider's source assessment unchanged and reassess affected criteria under coordinator provenance in the settlement composition. The current aggregate may resolve an originally negative row only with direct evidence for the exact correction and authorized checks; it does not claim provider coverage of new bytes. The final required Judge reads original criteria and this composition. Missing provider responsibility coverage cannot be supplied by that composition.
+For a completed review followed by eligible local corrections, preserve the provider's source assessment unchanged and reassess affected criteria under coordinator provenance in the settlement composition. The current aggregate may resolve an originally negative row only with direct evidence for the exact correction and authorized checks; it does not claim provider coverage of new bytes. The final required Evaluator reads original criteria and this composition. Missing provider responsibility coverage cannot be supplied by that composition.
