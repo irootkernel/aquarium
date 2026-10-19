@@ -24,6 +24,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Remove arbitrary size limits from release-QA records, text fields and evidence while preserving immutable settlement and integrity checks.
 - Accept official development candidate identities in the status runtime and preserve them in recorded state, so installed setup can proceed during guest upgrade verification.
 - Require Podway-backed workflows to finish and verify session closeout after their final commit or approved no-commit/no-change result, report pending finalization separately, and recover without repeating an existing commit.
 - Restore ordinary native workflow startup and recovery without private executor or configuration qualification. Assess coherent Executor delivery with an independent Evaluator, retain formal delegation and historical snapshots, and require authorized managed-Procedure updates with compatible successor sessions.

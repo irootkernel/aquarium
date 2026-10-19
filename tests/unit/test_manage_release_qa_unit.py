@@ -1294,15 +1294,15 @@ def test_finish_rejects_wrong_claim_digest_before_result(release_case):
         shutil.rmtree(confirmation, ignore_errors=True)
 
 
-@pytest.mark.parametrize("value", [None, 1, [], {}, "", "x" * 4097])
-def test_changed_schema_text_fields_reject_invalid_bounds(value):
+@pytest.mark.parametrize("value", [None, 1, [], {}, ""])
+def test_changed_schema_text_fields_reject_invalid_values(value):
     with pytest.raises(qa.EvidenceError) as invalid:
         qa.text(value, "changed_schema_field")
     assert invalid.value.code == "field_invalid"
 
 
 def test_changed_schema_shared_boundaries_are_closed_and_deduplicated():
-    assert qa.text("x" * 4096, "changed_schema_field") == "x" * 4096
+    assert qa.text("x" * 10000, "changed_schema_field") == "x" * 10000
     with pytest.raises(qa.EvidenceError) as missing:
         qa.require_fields({"schema": "v"}, "changed schema", {"schema", "value"})
     assert missing.value.code == "schema_invalid"
@@ -2386,24 +2386,57 @@ def test_previous_release_record_requires_exact_baseline_sha(
     )
 
 
-def test_oversized_frozen_record_does_not_consume_output(release_case, monkeypatch):
+def test_large_records_and_evidence_preserve_bytes_through_confirmation(release_case):
     repo, candidate, evidence = release_case
     result = cluster(evidence, candidate)
-    spec = full_spec(repo, candidate, evidence, result, first_release=True)
-    reference = evidence / "reference.json"
-    qa.freeze_full(spec, str(reference))
-    size = reference.stat().st_size
-    assert result.stat().st_size < size
-    monkeypatch.setattr(qa, "MAX_JSON_BYTES", size - 1)
+    observation = "x" * (5 * 1024 * 1024)
+    raw = b"complete native evidence\n" * 450000
+    submitted = json.loads(result.read_text())
+    submitted["scenarios"][0]["observed"] = observation
+    write_json(result, submitted)
+    (evidence / "scenario.txt").write_bytes(raw)
+    spec = full_spec(repo, candidate, evidence, result)
     output = evidence / "record.json"
-    before = set(evidence.iterdir())
-    with pytest.raises(qa.EvidenceError) as rejected:
-        qa.freeze_full(spec, str(output))
-    assert rejected.value.code == "output_too_large"
-    assert set(evidence.iterdir()) == before
-    monkeypatch.setattr(qa, "MAX_JSON_BYTES", size)
     receipt = qa.freeze_full(spec, str(output))
     assert qa.load_record(str(output))[1] == receipt["digest"]
+    assert output.stat().st_size > 5 * 1024 * 1024
+    assert (evidence / "scenario.txt").read_bytes() == raw
+    remediated = remediate(repo)
+    manifest = prepare(repo, remediated, evidence, output)
+    confirmation = Path(tempfile.mkdtemp(prefix="release-qa.", dir="/tmp")).resolve()
+    try:
+        begin = qa.begin_confirmation(
+            {
+                "schema": qa.BEGIN_SCHEMA,
+                "repository": str(repo),
+                "full_record": str(output),
+                "manifest": str(manifest),
+                "confirmation_root": str(confirmation),
+            }
+        )
+        confirmation_cluster = cluster(confirmation, remediated, outcome="pass")
+        (confirmation / "scenario.txt").write_bytes(raw)
+        request = {
+            "schema": qa.FINISH_SCHEMA,
+            "repository": str(repo),
+            "full_record": str(output),
+            "manifest": str(manifest),
+            "claim": begin["path"],
+            "claim_digest": begin["digest"],
+            "confirmation_root": str(confirmation),
+            "cluster_results": [str(confirmation_cluster)],
+        }
+        settled = confirmation / "result.json"
+        receipt = qa.finish_confirmation(request, str(settled))
+        assert receipt["verdict"] == "PASS"
+        assert qa.finish_confirmation(request, str(settled)) == receipt
+        assert (confirmation / "scenario.txt").read_bytes() == raw
+        (confirmation / "scenario.txt").write_bytes(raw + b"changed")
+        with pytest.raises(qa.EvidenceError) as changed:
+            qa.finish_confirmation(request, str(settled))
+        assert changed.value.code == "result_invalid"
+    finally:
+        shutil.rmtree(confirmation, ignore_errors=True)
 
 
 def test_previous_record_schema_is_not_admitted(release_case):

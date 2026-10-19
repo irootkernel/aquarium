@@ -313,9 +313,9 @@ def test_cli_rejects_empty_wrong_type_and_malformed_json_without_traceback(
     assert response["error"]["code"] == "input_invalid"
 
 
-def test_cli_rejects_oversized_json_without_creating_output(tmp_path: Path):
+def test_cli_validates_large_json_without_a_size_quota(tmp_path: Path):
     request = tmp_path / "request.json"
-    request.write_text(" " * (4 * 1024 * 1024 + 1), encoding="utf-8")
+    dump(request, {"schema": "wrong", "observation": "x" * (5 * 1024 * 1024)})
     output = tmp_path / "output.json"
     response = run(
         "freeze-full",
@@ -325,5 +325,5 @@ def test_cli_rejects_oversized_json_without_creating_output(tmp_path: Path):
         str(output),
         expected=2,
     )
-    assert response["error"]["code"] == "input_too_large"
+    assert response["error"]["code"] == "schema_invalid"
     assert not output.exists()

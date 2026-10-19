@@ -24,7 +24,6 @@ CLAIM_SCHEMA = "aquarium-release-qa-confirmation-claim/v2"
 FINISH_SCHEMA = "aquarium-release-qa-confirmation-finish/v2"
 ADMISSION_SCHEMA = "aquarium-release-qa-confirmation-settlement-admission/v1"
 RESULT_SCHEMA = "aquarium-release-qa-confirmation-result/v2"
-MAX_JSON_BYTES = 4 * 1024 * 1024
 MAX_OUTPUT_BASENAME_BYTES = 240
 OUTCOMES = {"pass", "finding", "gap"}
 
@@ -45,8 +44,6 @@ def read_json(path_value: str) -> dict[str, Any]:
     path = Path(path_value)
     if path.is_symlink() or not path.is_file():
         fail("input_invalid", f"JSON input must be a regular non-symlink file: {path}")
-    if path.stat().st_size > MAX_JSON_BYTES:
-        fail("input_too_large", f"JSON input exceeds {MAX_JSON_BYTES} bytes: {path}")
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
@@ -83,8 +80,6 @@ def require_fields(value: dict[str, Any], field: str, expected: set[str]) -> Non
 def create_once_write(path_value: str | Path, value: Any) -> Path:
     path = Path(path_value)
     payload = canonical_bytes(value)
-    if len(payload) > MAX_JSON_BYTES:
-        fail("output_too_large", f"JSON output exceeds {MAX_JSON_BYTES} bytes: {path}")
     descriptor, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:
         os.fchmod(descriptor, 0o600)
@@ -110,8 +105,8 @@ def create_once_write(path_value: str | Path, value: Any) -> Path:
 
 
 def text(value: Any, field: str) -> str:
-    if not isinstance(value, str) or not value or len(value) > 4096:
-        fail("field_invalid", f"{field} must be a non-empty bounded string")
+    if not isinstance(value, str) or not value:
+        fail("field_invalid", f"{field} must be a non-empty string")
     return value
 
 
@@ -1135,11 +1130,7 @@ def load_claim(
 
 def snapshot_bytes(root: Path, value: Any, field: str) -> tuple[str, bytes]:
     path = evidence_file(root, value, field)
-    if Path(path).stat().st_size > MAX_JSON_BYTES:
-        fail("input_too_large", f"{field} exceeds {MAX_JSON_BYTES} bytes")
     raw = Path(path).read_bytes()
-    if len(raw) > MAX_JSON_BYTES:
-        fail("input_too_large", f"{field} exceeds {MAX_JSON_BYTES} bytes")
     return path, raw
 
 
