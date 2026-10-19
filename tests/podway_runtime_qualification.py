@@ -131,6 +131,7 @@ SUCCESS_OPTIONS = {
     "decide-quality": "passed",
     "decide-review": "clean",
     "validate-review-route-entry": "planned",
+    "confirm-changed-review-continuity": "pass",
     "authorize-planned-review-route": "planned-mulgae",
     "enter-mulgae-review-route": "start",
     "enter-herdr-review-route": "start",
