@@ -56,6 +56,43 @@ Existing handlers, their single
 logical Evaluator, admitted sessions and selected technical reviews retain their
 contracts. Preserve existing callers' behavior when extending shared integrations.
 
+## Scope and implementation choices
+
+Assess both missing required behavior and unnecessary additions against the
+original requirements, approved design and applicable repository/tool contracts.
+A reviewed Task plan remains an implementation proposal within those sources.
+Agent agreement, internal plan approval or documentation rewritten to match an
+implementation cannot authorize a product scope expansion.
+
+Executors, Evaluators and the Coordinator share responsibility for keeping the
+solution within scope. Whoever proposes an addition must explain which existing
+requirement it serves and what reachable problem would remain without it.
+Apply this to material additions of features, abstractions, configuration,
+constraints and verification. Use the existing plan or finding report; ordinary
+implementation choices need no separate justification record.
+
+Allow internal implementation choices and defect corrections needed to satisfy
+existing requirements, even when the design omits their details. Prefer the
+simplest sufficient approach that fits the project. Changes beyond those sources
+to product capabilities, usage restrictions, operational obligations or design
+direction need the user's scope decision before implementation; reuse existing
+authorization when it covers the proposed change. Leave optional additions out
+of current delivery when necessity is not established.
+General claims of safety, extensibility or possible future need are insufficient.
+
+Keep checks proportionate to required behavior, reachable failure paths and
+actual regression risk. Preserve mandatory checks and necessary protections.
+Do not add tests that merely mirror implementation, pin prose or cover states
+excluded by established invariants. A complete result may pass without an
+additional improvement or test. Do not add a review stage, scorecard or state
+store to enforce this assessment.
+
+For Aquarium, check whether a proposed restriction would block behavior supported
+by an integrated tool's native contract. Such a restriction needs a basis in
+applicable instructions, user authority, repository requirements, that native
+contract or a concrete safety or external-action boundary. Do not invent
+Aquarium-only quotas, retry caps, evidence demands or approval prerequisites.
+
 ## Invocation and shared context
 
 The skill requires an explicit invocation identifying one mutable repository,
@@ -64,8 +101,11 @@ groups such as EPIC-000; they are not Epic-wide delivery targets. Reuse the
 existing meanings of `execute`, `plan-only`, `plan-handoff` and `resume`.
 
 Read repository instructions, the documentation index, canonical Epic and Task
-requirements, architecture and existing implementation. Resolve the execution
-SOT under the existing
+requirements, architecture and existing implementation. Discover applicable
+directory guidance and maintain affected documents under the existing
+[directory guidance contract](../../plugins/aquarium/references/directory-agent-guidance.md).
+This does not add a per-Task setup operation or make absent guides a prerequisite.
+Resolve the execution SOT under the existing
 [dossier contract](../../plugins/aquarium/references/epic-execution-sot.md).
 Inspect branch, HEAD, staged, unstaged, untracked and conflicted state; identify
 owned changes and preserve unrelated work. Start from the appropriate unfinished
@@ -86,17 +126,19 @@ Implement the new incoming/return caller in `new-feature`, the shared execution
 SOT routing and repository guidance templates, preserving existing `epic-handler`
 behavior. Other modes report the required continuation; refactor, diagnosis and
 new-project work retain their appropriate explicit routes. Missing meaning cannot
-be waived. Apply the linked dossier contract's explicit composite-SOT waiver and
-active-session recovery rules. Report unmet external prerequisites and keep
-delivery blocked; authorized read-only helpers may investigate discoverable gaps.
+be waived. Apply the linked dossier contract's Epic-level composite-SOT waiver
+and active-session recovery rules; member Task delivery adds no separate dossier
+waiver. Report unmet external prerequisites and keep delivery blocked; authorized
+read-only helpers may investigate discoverable gaps.
 
 Prepare a concise Context Brief containing project purpose and users, conventions
 and architectural principles with their sources, the Epic outcome, member Tasks
 and dependencies, Must-Do and Must-Not-Do constraints, acceptance criteria and
-user scenarios, boundaries and unresolved questions. Give agents original source
-references and enough local context for their assignment. Identify the scope,
-expected result, plan revision or implementation candidate, current Writer and
-result channel. Investigate discoverable questions before asking the user.
+user scenarios, non-goals, boundaries and unresolved questions. Give agents
+original source references and enough local context for their assignment.
+Identify the scope, expected result, plan revision or implementation candidate,
+current Writer and result channel. Investigate discoverable questions before
+asking the user.
 
 Maintain one active Task delivery goal in dependency order. Native goal creation
 follows the current harness's actual contract; in Codex it requires an explicit
@@ -120,6 +162,8 @@ full plans, detailed review exchanges or agent transcripts into this context.
 With applicable plan passes and existing authority, assign implementation to
 the Writer.
 Investigate or escalate a concrete concern when needed.
+Check whether proposed mandatory work has a source and a necessary effect on the
+current outcome. An Evaluator request alone does not make an addition required.
 
 For result review, after the required Evaluator approvals, personally inspect
 the candidate in the project and product context.
@@ -128,6 +172,8 @@ correctness, compatibility, product direction and affected user journeys. For a
 CLI, API or library, include interface consistency, error and recovery behavior
 and documentation. Native review helpers may assist; read their actual findings
 and form your own final judgment. Confirming verdicts alone is insufficient.
+Examine cumulative usage restrictions and whether normal supported user
+scenarios remain usable.
 
 The Coordinator may edit, integrate or debug after taking the Writer role.
 Exclusively own staging, unstaging and local commits through the required commit
@@ -150,6 +196,8 @@ Task assessment as support. Detailed implementation choices, local edge cases
 and test design belong to the Task Evaluator unless they expose an Epic-level
 direction or dependency concern. Do not require future Tasks' implementation
 prematurely.
+Reject unjustified expansion of the Epic's capabilities or obligations, including
+complexity accumulated across individually small Task additions.
 
 Keep Epic context focused on consequential decisions, shared contracts,
 verified delivered outputs and downstream obligations or risks. Retain source
@@ -171,20 +219,25 @@ Use a dedicated context for each Task, fresh when supported. Independently
 assess its plan and actual result against original requirements, correctness,
 verification and documentation. Own detailed plan readiness: requirement
 coverage, implementation feasibility, local assumptions and edge cases, checks
-and documentation. Resolve required findings from the independent Executor
-reviews and refresh affected assessment of revisions before passing the current
-plan revision for Epic assessment. Report unresolved substantive disagreements
+and documentation. Assess unnecessary additions as well as omissions, including
+redundant abstractions, unsupported restrictions and disproportionate tests.
+Apply the same necessity standard to proposed review corrections.
+Resolve required findings from the independent Executor reviews and refresh
+affected assessment of revisions before passing the current plan revision for
+Epic assessment. Report unresolved substantive disagreements
 as material exceptions; they do not establish plan readiness.
 Keep detailed planning and correction context within this Task role; send concise
 phase-specific assessments, material exceptions and accessible source references
 to the Coordinator and Epic Evaluator. Keep the role recoverable through
-corrections, Epic assessment, Coordinator review and commit verification. Do not resume an
-earlier Task's conversation as the new Task's context.
+corrections, Epic assessment, Coordinator review and commit verification.
 
 ### Executors and optional coordination
 
 Assign bounded investigation, analysis, planning, implementation, verification,
 documentation and independent review. Delivery Executors first produce a plan.
+Choose the simplest sufficient implementation and explain material additions
+under the scope contract above. Assess review requests on that same basis before
+implementing them; report unsupported additions for disposition.
 Task implementation requires both plan passes on the current revision and the
 Coordinator's bounded implementation assignment to the Writer. Earlier tracked
 planning edits require a Coordinator-assigned Writer scoped to planning within
@@ -196,6 +249,26 @@ Use a Leader only when coordinating a group helps. It returns actual descendant
 findings and a synthesis, with no extra acceptance, Writer or commit authority.
 Do not require fixed CLI-specific groups. The Coordinator manages its own native
 helpers and any Leaders; a Leader cannot authorize another Writer.
+
+### Task team contexts
+
+At each new Task, assign new delivery and review Executor instances and a
+dedicated Task Evaluator. Start fresh conversations where supported; do not
+resume the preceding Task team's conversations for the new Task. Pass concise
+verified outcomes, shared contracts, important decisions, remaining obligations
+and original source references. A shared Executor profile supplies configuration
+for distinct instances across Tasks.
+
+Within the same Task, retain or recover the contexts needed for planning,
+implementation, review, corrections and commit verification. Non-authoring plan
+reviewers may also review that Task's result. Retire completed Task roles after
+the verified commit and handoff. Keep the Epic Evaluator's accumulated context
+throughout the Epic under the existing continuation and recovery rules.
+
+Configuration inheritance and conversation inheritance are separate. Disclose
+unavoidable inherited context and require original-source assessment; do not
+claim a clean context when the CLI cannot provide one. These limitations do not
+authorize reuse of the preceding Task agent's conversation.
 
 ### Independent assessment
 
@@ -231,17 +304,20 @@ those capabilities. Preserve its default contract for existing callers.
 
 For every Task:
 
-1. Align the team on the original outcome and criteria. Executors investigate
-   and consolidate an actionable plan covering design, affected interfaces,
-   dependencies, assumptions, risks, meaningful Milestones, checks and docs.
+1. Start the Task team under the context rules above and align it on the original
+   outcome, criteria and non-goals. Executors investigate and consolidate an
+   actionable plan covering design, affected interfaces, dependencies,
+   assumptions, risks, meaningful Milestones, checks and docs.
    Identify relevant earlier Task outputs and how they are used, and the
    deliverables or contracts later Tasks will consume, within this same plan.
+   Identify material additions and their necessity in the same plan.
    Investigation does not grant implementation authority; tracked planning edits
    use the planning-scoped Writer assignment described above.
 2. Have the Task Evaluator and at least two distinct non-authoring Executor
    instances independently assess the same plan revision before comparing
    findings. Give complementary concerns and original sources. The Task
-   Evaluator assesses detailed readiness. Resolve required independent findings
+   Evaluator assesses detailed readiness, including scope compliance and
+   unnecessary additions. Resolve required independent findings
    and refresh affected assessments of any plan revisions. The Task Evaluator
    passes the resulting current revision before the Epic Evaluator assesses it
    for Epic direction, use of earlier work and downstream handoff design.
@@ -259,7 +335,9 @@ For every Task:
 5. At meaningful Milestone and Task result boundaries, stop project modifications.
    The Task Evaluator and at least two distinct non-authoring Executor instances
    independently assess the same candidate, actual behavior, verification and
-   documentation. Plan passage does not establish implementation correctness.
+   documentation against the original sources. Check for overimplementation in
+   both the reviewed plan and the actual result. Plan passage does not establish
+   implementation correctness or justify an unnecessary addition.
 6. Resolve findings and verify corrections. Refresh the affected independent
    assessments, retaining still-applicable evidence. After Task Evaluator passage,
    obtain the Epic Evaluator's explicit Task-context approval of that candidate.
@@ -305,6 +383,18 @@ State phase, scope, exact plan or candidate, evidence and concrete reasons with
 mandatory evidence gaps from optional preferences. A plan needs phase-appropriate
 evidence, not completed implementation. Preserve original criterion states,
 including unverified future obligations and unassessed parts of compound criteria.
+
+Use `rework` for an addition shown to violate the scope or necessity criteria,
+even when required features work. Identify the violated requirement or scope
+boundary and the unnecessary behavior or burden; a preference for a smaller
+design is insufficient.
+Apply this rule to additions requested by reviewers or the Coordinator as well
+as those proposed by an Executor. A mandatory correction needs a source or
+contract basis, a reachable problem and its impact if left unchanged, with a
+bounded correction direction. Assess result evidence independently of the plan;
+post-hoc documentation does not supply missing scope authority. Optional
+suggestions remain non-blocking, and a sufficient candidate may receive `pass`
+without more work. Missing evidence for a due requirement remains a gap.
 
 Respect the
 [ordinary v3](../../plugins/aquarium/references/ordinary-agent-orchestration.md)
@@ -814,6 +904,8 @@ what each Task must deliver and demonstrate; they do not record lifecycle state.
   authorship and the permission-enforcement disclosure.
 - Define detailed Task plan assessment, mandatory Epic plan assessment of
   direction/prior-output use/downstream handoff, and concise Coordinator intake.
+- Define shared necessity criteria for proposed work and review corrections,
+  including unjustified additions as rework and new Task team contexts.
 - Define the phase-to-record mapping, intermediate-Milestone boundary and bounded
   design continuation, including `new-feature` eligibility and return handoffs
   for the new entrypoint while preserving existing callers.
@@ -832,12 +924,15 @@ what each Task must deliver and demonstrate; they do not record lifecycle state.
   user directs a configuration change.
 - Implement direct native role assignments, independent plan and result reviews,
   both scoped plan passes, Coordinator Writer assignment and bounded corrections.
+- Start new Task teams, preserve same-Task corrections and apply scope/necessity
+  assessment to both plans and actual results.
 - Preserve actual results, context limits and configuration across sequential
   scheduling, direct helpers, descendants and one-shot replacements.
 - Acceptance: the same candidate receives the required independent assessments;
   implementation waits for both plan passes on the current revision and the
   Coordinator's assignment, authors cannot review their work and
-  uncertain Writer activity prevents transfer.
+  uncertain Writer activity prevents transfer. Unjustified additions cannot pass
+  merely because required behavior works or reviewers requested them.
 
 ### TASK-149: Squad execution and commit authority
 
@@ -915,6 +1010,8 @@ what each Task must deliver and demonstrate; they do not record lifecycle state.
 
 - Reuse the shared plan/result/Task/Epic/Coordinator sequence and Writer rules
   while preserving each configured role route and optional Coordinator helpers.
+- Apply the same necessity criteria and new-Task context boundaries to native,
+  Herdr and mixed teams.
 - Extend and verify Squad's existing workflow owner and adaptive execution/commit
   handoffs for mixed execution, Podway opt-out and selected technical reviews.
 - Reuse the no-additional-technical-review state and preserve retained bindings,
@@ -973,6 +1070,12 @@ actual routes.
 | Plan defect or material design change | Refresh affected plan assessments before implementation; both Evaluator passes apply to the same revision before Coordinator Writer assignment. | TASK-148 / TASK-154; both |
 | Task plan direction and continuity | Every plan receives detailed Task review and an Epic review of direction, verified prior-output use and downstream deliverable design, including plans with no material cross-Task change. | TASK-147, TASK-148 / TASK-154; both |
 | Role-scoped planning context | Actual concise assessments and source references reach the Coordinator; the Epic role retains consequential continuity decisions and the Task role retains detail. Concrete concerns allow targeted source inspection; final product review remains substantive. | TASK-147, TASK-148 / TASK-154; both |
+| New Task team | Each new Task starts distinct Executor and Task Evaluator instances with fresh conversations where supported, concise source-based handoffs and disclosed inheritance limits; same-Task roles remain recoverable through commit verification while the Epic Evaluator retains continuity. | TASK-147, TASK-148 / TASK-153, TASK-154; both |
+| Executor scope expansion | A plan or result adds an unsupported feature, abstraction or restriction; required behavior working does not prevent rework of the unjustified addition. | TASK-147, TASK-148 / TASK-154; both |
+| Reviewer scope expansion | An Evaluator or Coordinator proposes optional hardening, an unsupported prerequisite or disproportionate tests; the team excludes it from mandatory work despite reviewer agreement. | TASK-148 / TASK-154; both |
+| Necessary internal implementation | A required outcome needs an internal mechanism or defect correction omitted from the design detail; a concrete necessity basis allows it without demanding literal specification of every implementation choice. | TASK-148 / TASK-154; both |
+| Required and excessive verification | Required checks and tests for reachable failure paths remain due; speculative or implementation-mirroring tests are excluded, and sufficient evidence permits pass without extra tests. | TASK-148 / TASK-154; both |
+| Cumulative restrictions and rewritten docs | Epic review catches normal supported user scenarios blocked by accumulated restrictions; agent approval or documentation changed to match those restrictions does not establish scope authority. | TASK-150 / TASK-154, TASK-155; both |
 | Result defect or missing evidence | Required corrections/evidence are distinguished from preferences; due gaps prevent passage. | TASK-148 / TASK-154; both |
 | Coordinator/Evaluator disagreement | Original findings remain visible; focused evidence resolves readiness without forced consensus or evaluator shopping. | TASK-150 / TASK-155; both |
 | Changed candidate | Affected checks and approvals are refreshed or explicitly reaffirmed by the responsible Evaluators. | TASK-149 / TASK-154; both |

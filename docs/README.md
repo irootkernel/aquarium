@@ -44,8 +44,13 @@ The [Epic collaboration dossier](todo/TODO-EPIC-COLLABORATION.md) defines planne
 profiles when supplied. Independent plan and result assessments combine Task/Epic
 Evaluators with the Coordinator's project and product review. Task plans receive
 detailed Task assessment and Epic direction/continuity/handoff assessment;
-the Coordinator uses concise conclusions to assign implementation. The
-[roadmap](roadmap/README.md#epic-027-add-native-epic-squad-collaboration) owns
+the Coordinator uses concise conclusions to assign implementation. All roles
+assess missing requirements and unjustified additions; material additions need
+a reason tied to existing requirements, and product scope expansion requires
+the user's authority.
+Each Task starts new Executor and Task Evaluator instances with fresh
+conversations where supported, while the Epic Evaluator retains context across
+Tasks. The [roadmap](roadmap/README.md#epic-027-add-native-epic-squad-collaboration) owns
 implementation order: the native foundation first, then Herdr and mixed execution
 in the same skill. Existing Handler/Validator behavior remains unchanged;
 `epic-squad` is not implemented yet.
