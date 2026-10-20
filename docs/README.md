@@ -58,8 +58,10 @@ and affected maintenance. `dev-setup` now includes basic discovery and maintenan
 rules in its root guidance source. `new-project` creates initial documentation
 without adopting directory guides. `docs-setup` now defines source-grounded audit,
 bootstrap, adoption and migration with explicit coverage and preserved local
-instructions. Delivery integration and installed verification remain pending
-under the [dossier](todo/TODO-DIRECTORY-AGENT-GUIDANCE.md) and
+instructions. Task and Epic delivery now read sources for affected paths,
+maintain canonical documents and guides before review, and preserve the accepted
+candidate through commit. Installed verification remains pending under the
+[dossier](todo/TODO-DIRECTORY-AGENT-GUIDANCE.md) and
 [roadmap](roadmap/README.md#epic-029-add-directory-agentsmd-documentation-indexes).
 These source changes do not adopt directory guides in this repository or update
 its installed managed guidance.

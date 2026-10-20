@@ -13,10 +13,12 @@ Implementation proceeds under the approved Epic scope. The
 now owns directory-guidance ownership, lifecycle and compatibility; `dev-setup`
 and `new-project` define the root and initial-documentation source boundaries.
 `docs-setup` now defines directory audit, bootstrap, adoption and migration with
-source mappings, explicit coverage and preserved local instructions. Delivery
-integration and installed verification remain pending. Installation, publication,
-provider operations and changes to other projects require authority beyond this
-dossier's requirements.
+source mappings, explicit coverage and preserved local instructions. Task and
+Epic delivery now read and maintain affected documents and guides through their
+existing review, validation and commit responsibilities. Cross-workflow scenarios
+and installed verification remain pending. Installation, publication, provider
+operations and changes to other projects require authority beyond this dossier's
+requirements.
 
 ## Problem and selected approach
 

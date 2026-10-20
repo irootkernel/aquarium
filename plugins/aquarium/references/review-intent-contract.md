@@ -45,6 +45,16 @@ Before an authorized dispatch through an enabled route, build one concise Review
 
 Reuse existing requirement identifiers. When none exist, cite a source path and section or a local report label without creating a canonical identifier. The brief is a guide to authoritative sources, not a replacement for them.
 
+For affected implementation paths, include applicable root, ancestor and
+directory guides, the adoption declaration and relevant original canonical
+sources under [directory agent guidance](directory-agent-guidance.md). Review
+implementation, tests, affected canonical documents and guides as one candidate.
+Check guide links and local instructions against their original owners and
+declared coverage; do not infer that missing guidance blocks legacy delivery or
+that a source read proves automatic harness loading. Existing guide maintenance
+and authorized feature moves remain due outside coverage, without adopting or
+backfilling surrounding areas. Unaffected guides need no edit.
+
 ## Use Subagent Review subagents
 
 Give each expected fresh host subagent the same exact target, complete

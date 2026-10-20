@@ -13,6 +13,15 @@ Validate a completed epic independently of how it was delivered. Run no more tha
 
 Always read [evidence-residency.md](../../references/evidence-residency.md), [finding-disposition.md](../../references/finding-disposition.md), [documentation-governance.md](../../references/documentation-governance.md), and [epic-execution-sot.md](../../references/epic-execution-sot.md). On the Podway path also read [procedure-node-contracts.md](../../references/procedure-node-contracts.md).
 
+Read [directory agent guidance](../../references/directory-agent-guidance.md).
+Resolve applicable root, ancestor and directory guides and declared adoption
+coverage from affected implementation paths, then read the original canonical
+sources. Audit implementation, tests, canonical documents and applicable guides
+together, including cross-Task feature boundaries, links and local instructions.
+Assess maintenance against declared coverage while preserving existing guides
+outside it; missing guides alone do not establish a legacy-workflow blocker or
+authorize adoption. Source reads do not establish actual harness loading.
+
 Use Podway by default. Exclude it only when the current user explicitly opts this validation out before its managed session starts or a higher-priority instruction prohibits it. For an opted-out validation, do not inspect Podway, load `$use-podway`, or read [podway-integration.md](../../references/podway-integration.md), and do not carry the opt-out into a later workflow.
 
 Otherwise read the Podway contract and use one adequately selected Validation-family session for this exact cold-validation lifecycle. Podway records each bounded pass and user disposition; the roadmap and current implementation remain the semantic authority. A session created from an earlier managed Procedure version keeps its immutable snapshot and is not migrated in place.

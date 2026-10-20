@@ -10,8 +10,9 @@ not route every link through `docs/`.
 This contract defines ownership and lifecycle. `dev-setup` and `new-project`
 apply their boundaries below. `docs-setup` defines directory adoption through its
 [operation contract](../skills/docs-setup/references/directory-guidance.md).
-Delivery integration and installed observations retain separate implementation
-and verification work; source contracts alone do not establish those outcomes.
+The delivery consumers below apply maintenance in their existing flows.
+Installed observations remain separate verification work; source contracts alone
+do not establish actual harness loading or successful installed execution.
 
 ## Ownership and instruction scope
 
@@ -129,11 +130,21 @@ automatically add another provider review. Commit the accepted composition
 without appending unreviewed semantic guidance. Final Epic integration and cold
 validation check consistency across affected feature boundaries and Tasks.
 
-Task-handler delivery uses its documentation phase. Epic-handler delivery applies
-the obligation in its own flow without invoking Task-handler phase skills.
-Adaptive phase selection accounts for affected canonical documents or applicable
-guides when deciding whether documentation work is due. These responsibilities
-add no new review stage and do not run setup for every Task.
+[Task planning](../skills/task-plan/SKILL.md) discovers affected sources, and
+[Task documentation](../skills/task-document/SKILL.md) maintains them through the
+[Task handler](../skills/task-handler/SKILL.md) and its
+[orchestration contract](task-orchestration.md).
+[Epic delivery](../skills/epic-handler/SKILL.md) applies the obligation directly
+under [Epic orchestration](epic-orchestration.md) without invoking Task-handler
+phase skills. [Review intent](review-intent-contract.md) and
+[cold Epic validation](../skills/epic-validator/SKILL.md) assess the complete
+applicable candidate from original authorities.
+[Task commit](../skills/task-commit/SKILL.md) checks the exact accepted composition
+without authoring semantic guidance. [Adaptive selection](adaptive-procedures.md)
+and [mapped execution](adaptive-execution.md) account for affected canonical
+documents or applicable guides when deciding whether documentation work is due.
+These responsibilities add no new review stage and do not run setup for every
+Task.
 
 ## Compatibility and verification
 

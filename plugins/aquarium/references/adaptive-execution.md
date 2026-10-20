@@ -89,9 +89,13 @@ instructions. A documentation delivery can own documentation and verification
 without an unused implementation or refinement step. Code/test changes retain
 due refinement and Deslop under original repository requirements. Determine
 applicability from the actual work before constructing the candidate; graph
-omission cannot waive an obligation. Goal and Validation never inherit the Task
-phase sequence. Cold Validation uses a fresh independent Evaluator; internal
-Validation keeps its logical Epic Evaluator when supported.
+omission cannot waive an obligation. Affected canonical documents or applicable
+directory guides make documentation work due under
+[directory agent guidance](directory-agent-guidance.md), including required final
+prose passes and pre-review maintenance. Apply this through the existing
+phase mapping and Goal/Validation responsibilities. Goal and Validation never
+inherit the Task phase sequence. Cold Validation uses a fresh independent
+Evaluator; internal Validation keeps its logical Epic Evaluator when supported.
 
 Selection and pre-start qualification validate every configured placement in the
 selected family's `phase_skills`, `design_phases` or `diagnosis_phases` map,

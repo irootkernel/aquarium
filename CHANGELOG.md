@@ -8,6 +8,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Add explicit directory `AGENTS.md` adoption and migration through documentation setup, with declared coverage and preserved local guidance.
 
+### Changed
+
+- Maintain affected canonical documents and directory guidance during Task and Epic delivery before review and commit.
+
 ## v0.1.20 - 2026-10-19
 
 ### Added

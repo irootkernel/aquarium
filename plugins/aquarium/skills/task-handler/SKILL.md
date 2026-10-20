@@ -17,6 +17,13 @@ Otherwise read the Podway contract, use one adequately selected Task-family sess
 
 Read [task-orchestration.md](../../references/task-orchestration.md) for ordinary native v3 assignments, coherent Executor delivery, independent Evaluator assessments, recovery and final Task assessment. No role-snapshot or native telemetry qualification is required. Existing formal snapshots retain their admitted v1 integration and receipt contract.
 
+Read [directory agent guidance](../../references/directory-agent-guidance.md).
+Planning resolves applicable guides and original canonical sources from affected
+paths. The existing documentation phase maintains affected canonical documents,
+guide links and local rules within the shared adoption and preservation
+boundaries. Include that work in the complete candidate before final prose
+passes and review; do not run setup for every Task.
+
 ## Adaptive Procedure selection and execution
 
 On the Podway path, read [adaptive-execution.md](../../references/adaptive-execution.md) and use its fit selection, exact qualification/retention and mapped current-node consumer for Task, Goal and Validation. Known canonical/custom/formal and previously admitted sessions retain their original supported contracts. Read-only planning performs no native or filesystem mutation. The shared adaptive path governs source selection, due phase loading and mapped handoff boundaries below; literal canonical node names describe the canonical reference contract.
@@ -93,7 +100,7 @@ After each coherent delivery group, re-read the roadmap entry, Git state and exa
 | Implement | The approved behavior exists as an isolated task-owned diff and focused implementation checks have current evidence. |
 | Refine | Deslop and bounded optimization are complete; the post-deslop baseline and confirmed optimization delta follow the staged-diff contract. |
 | Verify | Every applicable roadmap requirement maps to current passing agent-run or explicit user-run evidence for the refined target, no required check is failing or stale, and any layer recorded as not applicable carries evidence for that judgment. |
-| Document | Canonical documents, any active dossier, roadmap, and release note are current; documentation validation has current evidence; accepted task information is promoted to its canonical owner; every repository handoff is actionable for a named future consumer with a clear Internal or External lifecycle; completion or runtime evidence is not duplicated as handoff prose; consumed or stale Internal entries are removed or updated. |
+| Document | Canonical documents, affected directory guides, any active dossier, roadmap, and release note are current; applicable final prose passes and documentation validation have current evidence; accepted task information is promoted to its canonical owner; every repository handoff is actionable for a named future consumer with a clear Internal or External lifecycle; completion or runtime evidence is not duplicated as handoff prose; consumed or stale Internal entries are removed or updated. |
 | Review | One exact complete Task target received its selected completed delegated review or explicit waiver assessment; the route-specific evidence combination is valid; every actual requirement has a conservative criterion-level completion assessment; no criterion is `unmet` or `unverified`; every valid Medium-or-higher finding is fixed and checked, with local settlement or required provider reassessment on corrected bytes; and every finding in the frozen eligible Low set has one completed shared disposition and current local verification. Historical Low counts may remain nonzero. |
 | Close | The user approved tests, documentation, the exact final implementation, and the terminal status; any authorized commit succeeded through `$aquarium:task-commit`. |
 

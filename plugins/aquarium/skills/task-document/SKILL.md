@@ -21,6 +21,20 @@ Promote accepted behavior to specifications, current components and boundaries t
 
 Update only affected durable owners, generated-document sources, any active dossier, and roadmap entries.
 
+Apply [directory agent guidance](../../references/directory-agent-guidance.md)
+to the final affected paths. Recheck applicable root, ancestor and directory
+guides, the adoption declaration and original canonical sources. Update changed
+behavior at its canonical owner, then maintain affected guide links and local
+instructions, preserving useful content and local exceptions. Maintain existing
+applicable guides outside declared coverage as well. Within declared coverage,
+add a guide when authorized delivery creates a new independently meaningful
+feature boundary; outside it, report the gap without adopting or backfilling the
+area. An authorized feature move maintains its existing guide and affected
+references even across a coverage boundary, without expanding adoption.
+Unaffected guides need no edit, and missing guidance alone adds no legacy
+workflow prerequisite. Include all due document and guide changes in the
+candidate before the required final prose pass, validation and review.
+
 When a dossier exists, keep it current for remaining tasks and consumer epics. Remove or revise only this task's consumed handoffs and stale assumptions; retain requirements and acceptance needed by any remaining consumer until its applicable closeout.
 
 For a repository-defined standing group such as Aquarium's `EPIC-000`, settle the task-linked dossier at this Task's closeout under the shared execution-SOT contract; the parent group stays active. Prepare its canonical promotion, task-link replacement, TODO-index change, and any approved last-consumer deletion in the documentation candidate before review. Inventory every canonical consumer first. If deletion authority or a durable owner is missing, return the exact proposed disposition to the handler before mutation or review; do not defer this Task's settlement to an Epic closeout that the standing group does not have.

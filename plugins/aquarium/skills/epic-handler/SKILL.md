@@ -31,6 +31,12 @@ Classify the complete current issue set first. Local settlement is available onl
 
 Read [epic-orchestration.md](../../references/epic-orchestration.md) for ordinary native v3 roles, original evidence, grouped assessments, recovery and final integration. Current Goal version 35 uses ordinary Actions without qualification prerequisites. Admitted formal snapshots retain their original v1 integration and receipts.
 
+Read [directory agent guidance](../../references/directory-agent-guidance.md)
+for affected-path discovery, declared coverage and maintenance. During Epic and
+member planning, read applicable root, ancestor and directory guides, the adoption
+declaration and original canonical sources. Keep source-reading evidence separate
+from actual observed harness loading.
+
 After approval, retain one logical Evaluator across member and correction Goals, successors, internal Validation and closeout. Supply complete current assignments and original criteria at every work-bearing checkpoint. Retain available public handles, actual results and remaining authority; reconnect or use a fresh independent Evaluator when supported without requiring complete executor history. Cold independent validation alone starts a fresh Evaluator. Accept complete Executor delivery, then obtain and accept an applicable report-only Evaluator assessment before the Coordinator semantic Decision. Keep Decisions, simple operational records, actual approval and grant consumption with the Coordinator.
 
 In the ordinary Goal source, complete-work delivery reaches evaluator-work before evidence acquisition. Admitted technical evidence reaches evaluator-goal-evidence only after its existing serial route, ordinal, provenance, finding and operational gates. Use scoped applicable Evaluator verdicts while preserving provider completion rows and finite Low routing. Final assembly is Coordinator bookkeeping. Reuse a complete actual final assessment only when coverage and current candidate remain applicable; otherwise obtain a fresh independent Evaluator assessment, including after corrections or changed stopped boundaries. Every member passing cannot erase an Epic integration gap. Missing or stale reports, unmet or unverified mandatory criteria and uncovered followup effects block semantic passage. Negative verdicts grant no additional effect or review. Preserve existing review budgets, user direction and exact member/correction grants.
@@ -86,6 +92,15 @@ For each non-terminal task in order:
 1. Reconfirm every member-task predecessor is successfully terminal with its required commit and evidence, and recheck any pre-epic or external prerequisite at its exact revision. Stop on a gap; otherwise establish the task ID and required outcome. When a Codex goal is explicitly authorized, create one or continue the matching existing goal under its tool contract, and omit a token budget unless the user supplied one.
 2. Work from current authority and code toward the task goal. Choose the implementation, investigation, documentation, and verification sequence that best fits the repository and task; do not manufacture phase artifacts or pause for routine choices already inside the approved envelope.
 3. Implement the complete task outcome, including runtime wiring, tests, generated or derived artifacts, canonical specifications, architecture, decisions, implementation tips, operations and public usage where affected, current guidance for later tasks in the resolved execution SOT, and roadmap state that the authority requires. In an enrolled repository, include one concise release-note `entry` for a shipped outcome or record `intentional no-note` before review; otherwise record `not-enrolled`. Preserve unrelated work.
+   Maintain changed behavior in its canonical owner, then affected guide links
+   and local instructions, including existing guides outside declared coverage.
+   Create a guide for a new independently meaningful feature boundary only within
+   declared coverage and authorized Task scope. Report uncovered areas without
+   backfill. An authorized feature move maintains its existing guide and affected
+   references across a coverage boundary without expanding adoption. Missing
+   guidance alone does not block legacy work; unaffected guides need no edit.
+   Finish this work directly in the member Goal before the final prose pass and
+   review, without invoking Task-handler phase skills.
 4. Run proportionate repository-authorized checks. Focused green checks prove only mapped requirements; forbidden or unavailable database, E2E, live, or broad gates remain explicit evidence gaps and are never run merely because another workflow normally would.
    Complete any repository-required final humanizer pass on human-authored documentation before candidate review, using the installed language-appropriate skill. Preserve protected content, validate the resulting documentation, and follow repository scratch-file cleanup rules. An unavailable or invalid required pass stops the candidate. For a missing or incompatible skill, return an exact `$aquarium:dev-setup-global` continuation naming the repository, roadmap, Task, required skill, and observed gap. For invalid output, report the failed protection or validation check and return the candidate for correction under current authority. A later prose correction follows the same rework or Low-settlement rules as other documentation changes.
 5. Run no more than three `work-unit` assessments and one `remediation-confirmation` on the latest member-task target. Each `work-unit` brief names the Task objective and criteria, base revision, exact candidate, ordered work commits when present, task-owned staged, unstaged, untracked, generated and derived files, excluded state, and verification evidence. A committed Epic candidate may use an exact Herdr `HEAD`, commit, or range target; an uncommitted member-task candidate must satisfy the same isolated `staged` rule as Task delivery. Ordinals one through three are `remediation-eligible`; ordinal four is `confirmation-only`. Stop after any clean result or completed local settlement, because unused budget is not a reason to run another assessment.
@@ -114,6 +129,12 @@ Keep implementation, verification, review target, lifecycle, commit, publication
 ## Audit and Remediate the Epic
 
 After all tasks are terminal, the Coordinator or an authorized Executor executes due repository checks and supplies actual results for the latest committed Epic state. The report-only Evaluator audits its original requirements and current artifacts without source mutation or check execution; the Coordinator records the aggregate audit and check result. Build a requirement-to-owner-to-production-to-test-to-document matrix across every task and inspect integration seams, consumers, persistence, concurrency, migrations, generated artifacts, recovery, operations, and roadmap consistency.
+
+Include applicable guides and their original canonical sources in that matrix.
+Check affected feature boundaries across Tasks for current behavior, links and
+local instructions. Complete due canonical-document and guide corrections,
+required final prose passes and affected checks before whole-Epic review under
+the existing correction and evidence rules.
 
 - Before a whole-epic review, verify every member-task `Aquarium-Evidence` manifest and payload without local runtime. Load findings only for `hardening-deferral`; retain other purposes for named consumers. Use an available exact run for legacy `Mulgae-Deferred-Run` and `Mulgae-Deferred-Finding` trailers. When that run is gone, do not promote it: record an evidence gap and cover its paths and current requirements in the current remediation-eligible whole-epic audit. Podway and trailer prose never replace evidence.
 - Revalidate each deferred finding against the latest epic snapshot when its native evidence remains available. Otherwise use the promoted ID, disposition, and affected paths only to scope fresh whole-epic audit coverage; do not claim finding-level equivalence from the package. Remediate every issue established by current evidence and explicitly record unavailable, invalid, or resolved prior findings. This reconciliation and its local verification do not consume an epic review round and do not invoke a Mulgae child workflow.

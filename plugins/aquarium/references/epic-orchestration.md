@@ -16,6 +16,15 @@ replacement. Independent cold validation uses a fresh Evaluator.
 Admitted formal snapshots keep the [v1 contract](formal-agent-orchestration-v1.md)
 and genuine receipts. Ordinary execution cannot reinterpret them.
 
+Use [directory agent guidance](directory-agent-guidance.md) directly in
+goal-centered work. Planning reads applicable root, ancestor and directory
+guides, the adoption declaration and original canonical sources for affected
+paths. Member delivery maintains changed canonical behavior and affected guide
+links and local instructions before final prose passes and technical review.
+The existing work assessment covers these obligations without invoking Task
+phase skills. Preserve the shared rules for coverage, feature moves and missing
+guides.
+
 ## Goal checkpoints
 
 | Work or Coordinator evidence record | Independent Evaluator | Coordinator progression |
@@ -97,6 +106,12 @@ unmet or unverified. Final `achieved` requires the exact current Evaluator achie
 outcome, applicable pass and zero mandatory gaps. Stopped paths confirm their
 explicit boundary and expose no achievable outcome. Negative outcomes authorize
 neither success status nor reopening stopped work.
+
+Integration checks affected implementation and tests against original canonical
+documents and applicable guides across member Tasks and feature boundaries.
+Resolve stale links or conflicting local instructions at their exact owner
+before the final candidate enters review; unchanged guides need no artificial
+edit. Any correction follows the existing affected-evidence and settlement rules.
 
 When stopped core evidence needs repair, the Coordinator records the gaps at
 `record-stopped-core-gaps` and supplies that record and the Decision to the

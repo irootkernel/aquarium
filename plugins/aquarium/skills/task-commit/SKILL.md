@@ -80,6 +80,15 @@ Apply no other documentation change, re-run the release-notes inspector and appl
 
 Apply only the lifecycle or record edit explicitly selected by the user or supplied by a valid handler handoff. Preserve the selected task's exact current state for an approved checkpoint. Any candidate change after acceptance or its handoff makes that exact-candidate acceptance stale. For delegated Epic work, return the changed candidate to `epic-handler` for fresh evidence and acceptance within the current grant; do not demand user acceptance merely because the candidate changed. Direct user acceptance and final Epic acceptance must be renewed by the user when their accepted candidate changes.
 
+Follow [directory agent guidance](../../references/directory-agent-guidance.md)
+when checking the accepted composition. Affected canonical documents and guides
+belong to the reviewed candidate or its exact accepted and verified settlement
+delta. Verify their inclusion and identity with the implementation and tests;
+return missing semantic maintenance to its delivery owner. Do not author or
+append semantic guide changes during commit preparation. Preserve the exact
+authorized lifecycle, record and release-note preparation operations above;
+any resulting candidate still needs its applicable exact acceptance.
+
 Require the release-note decision to match the final diff. An `entry` must appear exactly once under the current open target in the authorized changelog path. `intentional no-note` normally permits no changelog edit, and `not-enrolled` is valid only when no authority is declared.
 
 With an exact `$aquarium:release-handler` handoff, `intentional no-note` may include only the approved settlement, open-target retarget, release heading transition with unchanged entry bytes, or empty next-cycle section. Reject a stale target, missing decision, mismatched entry, self-referential settlement entry, unapproved note edit, or rewrite of completed release history.

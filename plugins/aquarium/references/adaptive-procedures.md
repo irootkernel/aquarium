@@ -335,9 +335,11 @@ Task capability applicability comes from actual postconditions. Code/test change
 retain due refinement, required Deslop and delta verification. Documentation-only
 work needs no unused implementation, refinement or Deslop prerequisite unless an
 independent authority requires one. Documentation capability is due when canonical
-documents or their required postconditions change; coherent documentation work
-may own writing and verification. Direct phase-skill and admitted legacy contracts
-continue separately. Goals do not inherit Task's phase workflow.
+documents, applicable directory guides or their required postconditions change
+under [directory agent guidance](directory-agent-guidance.md). Coherent
+documentation work may own writing and verification. Direct phase-skill and
+admitted legacy contracts continue separately. Goals do not inherit Task's phase
+workflow.
 
 Ordinary Executor/Evaluator work stays separate from technical review. The selected
 route retains its expected base/UI team, original reports, finding responses,

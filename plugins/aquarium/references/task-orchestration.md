@@ -18,6 +18,13 @@ obtains actual approval and any required dossier waiver. `plan-only` ends there.
 After approval and session admission, revalidate the exact approved artifact
 against the current record-plan inputs without inventing formal acceptance.
 
+The plan reads applicable guides, declared adoption coverage and original
+canonical sources under [directory agent guidance](directory-agent-guidance.md).
+The existing documentation delivery maintains affected canonical content, guide
+links and local instructions before final prose passes and review. Its Evaluator
+assesses those due obligations with the complete candidate. Guide absence alone
+adds no prerequisite, and delivery does not implicitly expand adoption.
+
 | Work or Coordinator evidence record | Independent Evaluator | Coordinator Decision |
 | --- | --- | --- |
 | `record-plan` | `evaluator-plan` | `decide-plan-assessment` |
