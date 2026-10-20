@@ -529,11 +529,7 @@ qualification, installation, activation in other repositories, host-tool
 removal and release publication retain their separate authority. `EPIC-019`
 is not a prerequisite, and no producer engine change or broker handoff is required.
 
-**Canonical Outcomes:** [Review routing](../specs/review-routing.md),
-[tool integrations](../specs/tool-integrations.md),
-[Herdr migration runbook](../ops/herdr-migration.md),
-[qualification guidance](../implementation-tips/qualifying-herdr-review.md),
-and [testing contract](../../TESTING.md).
+**Canonical Outcomes:** [Review routing](../specs/review-routing.md), [tool integrations](../specs/tool-integrations.md), [Herdr migration runbook](../ops/herdr-migration.md), [qualification guidance](../implementation-tips/qualifying-herdr-review.md), [testing contract](../../TESTING.md)
 
 Master accepted completion of this Epic with the disclosed verification limits.
 Whole-skill Task, Epic, and validation scenarios, complete peer-route recovery
