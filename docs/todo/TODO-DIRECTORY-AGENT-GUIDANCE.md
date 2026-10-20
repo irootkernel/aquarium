@@ -12,9 +12,11 @@ Implementation proceeds under the approved Epic scope. The
 [shared contract](../../plugins/aquarium/references/directory-agent-guidance.md)
 now owns directory-guidance ownership, lifecycle and compatibility; `dev-setup`
 and `new-project` define the root and initial-documentation source boundaries.
-Directory adoption, delivery integration and installed verification remain
-pending. Installation, publication, provider operations and changes to other
-projects require authority beyond this dossier's requirements.
+`docs-setup` now defines directory audit, bootstrap, adoption and migration with
+source mappings, explicit coverage and preserved local instructions. Delivery
+integration and installed verification remain pending. Installation, publication,
+provider operations and changes to other projects require authority beyond this
+dossier's requirements.
 
 ## Problem and selected approach
 

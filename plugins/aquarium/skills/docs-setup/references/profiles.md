@@ -40,3 +40,19 @@ Map an existing directory or file to a role only when its content and repository
 Preserve established archives, semantic epic codes, slug-derived task IDs, adopted design dossiers, and language conventions. Treat `ops`, `operations`, and `runbooks` as discovery candidates but map one only when its content establishes operational ownership. Report a missing architecture or operations owner, competing roadmap, mixed current/future specification, status-bearing TODO, or ambiguous declared dossier owner as a gap; do not silently declare it conforming.
 
 Adoption writes the minimum root index and missing role indexes needed to make authority discoverable. It does not rename valid paths, normalize IDs, archive history, or rewrite content without a separately approved migration.
+
+## Directory-guide coverage
+
+For `bootstrap` and `adopt`, follow [directory-guidance.md](directory-guidance.md)
+to map implementation areas to their canonical documents and preserve existing
+local instructions. All profiles use the existing root documentation index for
+the approved coverage declaration. In `multi-scope`, name the implementation
+areas and their actual delivery owners; a documentation role directory alone
+does not establish an implementation boundary.
+
+Declare whole-repository coverage or exact named areas, completed coverage,
+remaining gaps and the next area when adoption is partial. Include the declaration
+and guide changes in the same proposal. A greenfield declaration may precede
+implementation; create guides only for existing meaningful boundaries. Recheck
+current sources when resuming partial adoption. Preserve completed mappings that
+remain valid and report a no-op when no changes are needed.

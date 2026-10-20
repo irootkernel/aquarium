@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.21 - Unreleased
 
+### Added
+
+- Add explicit directory `AGENTS.md` adoption and migration through documentation setup, with declared coverage and preserved local guidance.
+
 ## v0.1.20 - 2026-10-19
 
 ### Added

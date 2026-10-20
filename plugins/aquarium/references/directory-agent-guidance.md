@@ -8,9 +8,10 @@ contract. Code-adjacent and legacy authorities remain valid targets; a guide nee
 not route every link through `docs/`.
 
 This contract defines ownership and lifecycle. `dev-setup` and `new-project`
-apply their boundaries below. Directory adoption in `docs-setup`, delivery
-integration and installed observations have separate implementation and
-verification work; this contract alone does not establish those outcomes.
+apply their boundaries below. `docs-setup` defines directory adoption through its
+[operation contract](../skills/docs-setup/references/directory-guidance.md).
+Delivery integration and installed observations retain separate implementation
+and verification work; source contracts alone do not establish those outcomes.
 
 ## Ownership and instruction scope
 

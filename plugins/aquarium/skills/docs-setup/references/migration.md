@@ -29,3 +29,25 @@ Run the bundled inspector and every repository-native checker covering the affec
 ## Path and Profile Migration
 
 Path or profile migration does not change roadmap identifiers or lifecycle state and is not subject to the identifier-eligibility rule above. It may proceed while work is active only when the selected canonical owners remain unambiguous, every tracked reference and repository instruction can be rewritten atomically, and the approved diff preserves current roadmap and history contents byte-for-byte apart from necessary path references. Stop on an unresolved ownership conflict, an unsafe reference, or concurrent drift in any affected path.
+
+Inventory directory-guide references to every moved canonical document, including
+relative paths, section links and references in existing untracked guides within
+the approved scope. Use [directory-guidance.md](directory-guidance.md) to verify
+the source mapping and preserve local instructions, managed blocks and unrelated
+guide text. Show each affected guide and exact rewrite with the canonical path
+mapping before approval. Include necessary coverage-declaration references in the
+same diff without expanding adoption.
+
+Before applying, verify each existing source and the approved destination content,
+including relevant sections and canonical ownership. A planned destination may
+be absent: verify its path is safe and snapshot its expected absence. Stop if a
+source is missing, the approved destination content cannot resolve a reference,
+ownership is unresolved, a destination is unexpectedly occupied or any affected
+snapshot has changed.
+
+Apply document moves and affected guide references together. After applying,
+verify that actual destination files and sections exist, retain the approved
+ownership and resolve the rewritten references. A move with stale guide links is
+not a completed migration. If application partially fails, report the observed
+state and reconcile it under the approved recovery boundary before continuing.
+Feature-path moves remain delivery work.
