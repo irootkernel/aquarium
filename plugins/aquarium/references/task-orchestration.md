@@ -14,7 +14,7 @@ public handles remain necessary. Existing formal sessions retain their original
 ## Planning and phase progression
 
 Before a session, a read-only `task-plan` Executor proposes the plan. The Coordinator
-obtains actual approval and any required dossier waiver. `plan-only` ends there.
+obtains actual approval. `plan-only` ends there.
 After approval and session admission, revalidate the exact approved artifact
 against the current record-plan inputs without inventing formal acceptance.
 

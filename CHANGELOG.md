@@ -11,6 +11,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Changed
 
 - Maintain affected canonical documents and directory guidance during Task and Epic delivery before review and commit, and add matching discovery and maintenance rules to the root `AGENTS.md` guidance that repository setup proposes.
+- Run Task delivery from a declared dossier or the disclosed canonical sources without a dossier waiver or creation-threshold choice; Epic dossier decisions are unchanged.
 
 ## v0.1.20 - 2026-10-19
 
