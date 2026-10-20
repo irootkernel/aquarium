@@ -29,6 +29,9 @@ applicable instructions before each group. Do not copy candidate skill text into
 an agent prompt as a substitute for installed discovery. Use actual native
 Executor and independent report-only Evaluator work, the selected review route
 and the workflow's normal approvals. A fixture instruction grants none of them.
+Run commit-bearing steps under a native sandbox that permits writes to the
+disposable fixture's `.git`, and record the sandbox and approval settings with
+each observation.
 
 This suite has no automatic driver or new `make test-vm` operation. The existing
 release and adaptive suites keep their current contracts. Follow the

@@ -81,14 +81,16 @@ Apply no other documentation change, re-run the release-notes inspector and appl
 Apply only the lifecycle or record edit explicitly selected by the user or supplied by a valid handler handoff. Preserve the selected task's exact current state for an approved checkpoint. Any candidate change after acceptance or its handoff makes that exact-candidate acceptance stale. For delegated Epic work, return the changed candidate to `epic-handler` for fresh evidence and acceptance within the current grant; do not demand user acceptance merely because the candidate changed. Direct user acceptance and final Epic acceptance must be renewed by the user when their accepted candidate changes.
 
 Follow [directory agent guidance](../../references/directory-agent-guidance.md)
-when checking the accepted composition. Affected canonical documents and guides
-belong to the reviewed candidate or its exact accepted and verified settlement
-delta. Verify that the staged diff contains them unchanged, together with the
-accepted implementation and tests. Return a mismatch or unreviewed semantic
-change to its delivery owner; do not author or append semantic guide changes
-during commit preparation. Preserve the exact authorized lifecycle, record and
-release-note preparation operations above; any resulting candidate still needs
-its applicable exact acceptance.
+when checking the accepted composition. For a handler handoff, affected canonical
+documents and guides belong to the reviewed candidate or its exact accepted and
+verified settlement delta; verify that the staged diff contains them unchanged,
+together with the accepted implementation and tests. For a direct commit, the
+diff the user accepted is that composition. Return only a difference between the
+staged diff and the accepted composition to its owner. Do not judge whether
+documentation is complete or consistent, and do not author or append semantic
+guide changes during commit preparation. Preserve the exact authorized lifecycle,
+record and release-note preparation operations above; any resulting candidate
+still needs its applicable exact acceptance.
 
 Require the release-note decision to match the final diff. An `entry` must appear exactly once under the current open target in the authorized changelog path. `intentional no-note` normally permits no changelog edit, and `not-enrolled` is valid only when no authority is declared.
 

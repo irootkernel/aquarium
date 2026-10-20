@@ -4,6 +4,21 @@ This file owns fixture work identity and lifecycle. The operator selects the
 bounded work and supplies actual workflow approvals. These entries are initial
 inputs, without recorded execution or acceptance.
 
+## Lifecycle
+
+| Status | Meaning |
+| --- | --- |
+| Planned | Adopted but implementation has not started |
+| In Progress | Implementation is active |
+| In Review | Implementation is complete and acceptance evidence is under review |
+| Completed | The work unit passed its explicit acceptance and closeout |
+| Deferred | Adopted work is intentionally postponed with a re-entry condition |
+| Cancelled | Adopted work is withdrawn; its ID and decision remain recorded |
+| Blocked | Progress cannot continue until a named condition changes |
+
+`EPIC-000` stays `In Progress` and is never closed; each member task has its own
+lifecycle.
+
 ## Epic summary
 
 | Epic | Title | Status |
