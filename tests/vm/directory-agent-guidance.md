@@ -1,7 +1,9 @@
 # Directory guidance development scenarios
 
-TASK-161 uses these TASK-160 scenarios to verify the installed EPIC-029 candidate.
-No scenario has been executed or passed in this definition record.
+These scenarios verify an installed directory-guidance candidate. This definition
+record holds no results; candidate-bound results stay outside it, and the
+[roadmap](../../docs/roadmap/README.md#epic-029-add-directory-agentsmd-documentation-indexes)
+summarizes EPIC-029's verified scope and limits.
 [TESTING.md](../../TESTING.md#directory-guidance-verification) owns their
 verification meaning. The acceptance table below retains EPIC-029's original
 obligations. The
@@ -244,7 +246,7 @@ or mark unfinished work achieved to clean it up. Unsettled mutating or native
 operations and missing mandatory evidence keep the result incomplete; retaining
 disposable files does not.
 
-The TASK-161 handoff records each original acceptance row, candidate/combination,
+The handoff records each original acceptance row, candidate/combination,
 fixture variant, actual steps, source reads, native-loading evidence, approvals,
 behavior checks, retained handles, outcome and limits. Keep structural checks,
 manual installed results, release acceptance and Master's final Epic acceptance

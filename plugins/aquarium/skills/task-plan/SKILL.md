@@ -23,8 +23,7 @@ directory guides, the adoption declaration in the documentation index, and the
 relevant original canonical sources. Include affected document and guide
 maintenance in the plan, including new feature boundaries within declared
 coverage and existing guide or reference moves. Report uncovered areas without
-backfill; guide absence alone does not block legacy delivery. Source reads do
-not establish that the selected harness automatically loaded those guides.
+backfill; guide absence alone does not block legacy delivery.
 
 When invoked directly, perform the shared semantic discovery and return the resolved dossier or composite execution SOT to the owning handler. Do not create a dossier or route to `docs-setup`. When no dossier is declared, its absence is not a semantic gap by itself, but execution requires the shared explicit waiver. Treat a declared dossier whose link cannot be resolved as a semantic gap, and report the exact missing or ambiguous semantic owner when the canonical sources are incomplete. When the work meets a creation threshold, require the owning handler's prior choice to consider a waiver before preparing the final plan; otherwise return to the owning handler to obtain that choice.
 

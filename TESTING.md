@@ -196,12 +196,13 @@ cover label normalization and export behavior. Its existing local instructions,
 legacy policy, code-adjacent contract and undeclared adoption state support
 separate observations of setup, scoped adoption, migration and delivery.
 
-The definitions and fixture do not record installed verification. TASK-161 owns
-actual candidate-bound observations in the dedicated UTM VM, including source
-reads, separately observed native instruction loading, review corrections,
-recovery and existing-session preservation. These scenarios add no automatic
-driver, LLM evaluation or `make test-vm` operation. Keep their manual results
-separate from structural checks and release upgrade/startup acceptance.
+The definitions and fixture do not record installed verification.
+Candidate-bound observations from the dedicated UTM VM, including source reads,
+separately observed native instruction loading, review corrections, recovery
+and existing-session preservation, stay outside these definitions. These
+scenarios add no automatic driver, LLM evaluation or `make test-vm` operation.
+Keep their manual results separate from structural checks and release
+upgrade/startup acceptance.
 
 Use actual installed operations to assess source-grounded adoption, preservation
 of local instructions, new features inside and outside declared coverage,

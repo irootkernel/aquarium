@@ -34,8 +34,7 @@ Read [epic-orchestration.md](../../references/epic-orchestration.md) for ordinar
 Read [directory agent guidance](../../references/directory-agent-guidance.md)
 for affected-path discovery, declared coverage and maintenance. During Epic and
 member planning, read applicable root, ancestor and directory guides, the adoption
-declaration and original canonical sources. Keep source-reading evidence separate
-from actual observed harness loading.
+declaration and original canonical sources.
 
 After approval, retain one logical Evaluator across member and correction Goals, successors, internal Validation and closeout. Supply complete current assignments and original criteria at every work-bearing checkpoint. Retain available public handles, actual results and remaining authority; reconnect or use a fresh independent Evaluator when supported without requiring complete executor history. Cold independent validation alone starts a fresh Evaluator. Accept complete Executor delivery, then obtain and accept an applicable report-only Evaluator assessment before the Coordinator semantic Decision. Keep Decisions, simple operational records, actual approval and grant consumption with the Coordinator.
 

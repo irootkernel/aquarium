@@ -858,19 +858,17 @@ affected canonical documents and guides before review and preserve the accepted
 composition through commit. Cross-workflow path regressions and manual VM
 scenarios are prepared under [the testing authority](../../TESTING.md#directory-guidance-verification).
 Installed Codex observations cover root setup, scoped adoption, migration and
-affected Task/Epic delivery in the dedicated UTM VM. Native automatic loading,
-unobserved partial-write recovery and production-scale behavior remain unverified.
+affected Task/Epic delivery with Podway opted out in the dedicated UTM VM.
+Native automatic loading, partial-write recovery, production-scale behavior,
+the Podway-backed handler path and complete standalone cold validation
+remain unverified.
 Structural checks and agent-run observations do not replace Master's functional
 verification or release acceptance. Existing projects remain usable before
 explicit adoption; a missing directory guide alone adds no workflow blocker.
 Source changes do not install the candidate, adopt guidance here or roll it out
 to other projects.
 
-**Canonical Outcomes:** [Workflow specification](../specs/workflow-contracts.md#directory-agent-guidance),
-[component ownership](../architecture/components.md#directory-documentation-flow),
-[maintenance guidance](../implementation-tips/changing-skills.md#maintain-directory-guidance),
-[shared contract](../../plugins/aquarium/references/directory-agent-guidance.md) and
-[verification scenarios](../../tests/vm/directory-agent-guidance.md).
+**Canonical Outcomes:** [Workflow specification](../specs/workflow-contracts.md#directory-agent-guidance), [component ownership](../architecture/components.md#directory-documentation-flow), [maintenance guidance](../implementation-tips/changing-skills.md#maintain-directory-guidance), [shared contract](../../plugins/aquarium/references/directory-agent-guidance.md), [verification scenarios](../../tests/vm/directory-agent-guidance.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |

@@ -11,8 +11,6 @@ This contract defines ownership and lifecycle. `dev-setup` and `new-project`
 apply their boundaries below. `docs-setup` defines directory adoption through its
 [operation contract](../skills/docs-setup/references/directory-guidance.md).
 The delivery consumers below apply maintenance in their existing flows.
-Installed observations remain separate verification work; source contracts alone
-do not establish actual harness loading or successful installed execution.
 
 ## Ownership and instruction scope
 
@@ -57,8 +55,8 @@ ordinary authentication implementation from credential-bearing files: this
 contract grants no access to secrets. Exclude generated, vendored and ignored
 runtime material unless the selected repository scope explicitly makes it
 relevant. Do not follow links to widen write scope, edit another repository or
-create a central Aquarium state file. If a guide would enter a distributed
-package, assess that shipped-content effect in the adoption proposal.
+create a central Aquarium state file. If a new guide would enter a distributed
+package, assess that shipped-content effect in the proposal or plan that adds it.
 
 Identify the canonical documents relevant to the change even when guidance is
 missing. Reading original sources and observing a harness load instructions are
@@ -143,22 +141,14 @@ applicable candidate from original authorities.
 without authoring semantic guidance. [Adaptive selection](adaptive-procedures.md)
 and [mapped execution](adaptive-execution.md) account for affected canonical
 documents or applicable guides when deciding whether documentation work is due.
-These responsibilities add no new review stage and do not run setup for every
-Task.
+Later delivery workflows, including collaboration workflows, inherit the same
+obligations. These responsibilities add no new review stage and do not run setup
+for every Task.
 
-## Compatibility and verification
+## Compatibility
 
 The capability is additive: adoption is explicit, existing projects remain
 usable, and guide absence adds no prerequisite. Preserve admitted sessions and
-installed managed Procedure copies. A required migration, runtime-contract
-change or companion-tool update requires a revised breaking-change decision.
-Plugin installation alone does not rewrite repository guidance; repository
-adoption and changes to other repositories require their own authorized scope.
-
-Structural checks establish only objective structure and executable-helper
-behavior. They cannot establish semantic completeness, source selection,
-multi-step skill behavior or actual harness loading. Keep manual scenarios with
-the testing authority and actual observations separate from release acceptance.
-Installation-dependent verification uses the exact candidate and installed
-combination in the dedicated UTM VM; host candidate installation is outside
-development verification.
+installed managed Procedure copies. Plugin installation alone does not rewrite
+repository guidance; repository adoption and changes to other repositories
+require their own authorized scope.

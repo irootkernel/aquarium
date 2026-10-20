@@ -6,11 +6,11 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Added
 
-- Add explicit directory `AGENTS.md` adoption and migration through documentation setup, with declared coverage and preserved local guidance.
+- Add explicit directory `AGENTS.md` adoption and migration through documentation setup, with declared coverage and preserved local guidance; mapping a selected scope reads its ordinary implementation sources, including authentication code, but never credential files.
 
 ### Changed
 
-- Maintain affected canonical documents and directory guidance during Task and Epic delivery before review and commit.
+- Maintain affected canonical documents and directory guidance during Task and Epic delivery before review and commit, and add matching discovery and maintenance rules to the root `AGENTS.md` guidance that repository setup proposes.
 
 ## v0.1.20 - 2026-10-19
 

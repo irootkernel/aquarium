@@ -18,9 +18,9 @@ Resolve applicable root, ancestor and directory guides and declared adoption
 coverage from affected implementation paths, then read the original canonical
 sources. Audit implementation, tests, canonical documents and applicable guides
 together, including cross-Task feature boundaries, links and local instructions.
-Assess maintenance against declared coverage while preserving existing guides
-outside it; missing guides alone do not establish a legacy-workflow blocker or
-authorize adoption. Source reads do not establish actual harness loading.
+Assess new guides against declared coverage, and assess maintenance of existing
+applicable guides wherever they live; missing guides alone do not establish a
+legacy-workflow blocker or authorize adoption.
 
 Use Podway by default. Exclude it only when the current user explicitly opts this validation out before its managed session starts or a higher-priority instruction prohibits it. For an opted-out validation, do not inspect Podway, load `$use-podway`, or read [podway-integration.md](../../references/podway-integration.md), and do not carry the opt-out into a later workflow.
 

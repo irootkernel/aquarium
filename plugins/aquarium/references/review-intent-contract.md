@@ -50,10 +50,10 @@ directory guides, the adoption declaration and relevant original canonical
 sources under [directory agent guidance](directory-agent-guidance.md). Review
 implementation, tests, affected canonical documents and guides as one candidate.
 Check guide links and local instructions against their original owners and
-declared coverage; do not infer that missing guidance blocks legacy delivery or
-that a source read proves automatic harness loading. Existing guide maintenance
-and authorized feature moves remain due outside coverage, without adopting or
-backfilling surrounding areas. Unaffected guides need no edit.
+declared coverage; do not infer that missing guidance blocks legacy delivery.
+Existing guide maintenance and authorized feature moves remain due outside
+coverage, without adopting or backfilling surrounding areas. Unaffected guides
+need no edit.
 
 ## Use Subagent Review subagents
 

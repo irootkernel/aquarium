@@ -30,7 +30,7 @@ excluded. The bundled inspector may exclude a Markdown file with an
 authentication-related name even when it contains ordinary documentation. Report
 that exclusion and the structural coverage it leaves unverified. An independent
 workflow read of safely identified ordinary source does not change the
-inspector's result or establish actual harness loading.
+inspector's result.
 
 Report missing canonical targets, competing owners and unresolved instruction
 conflicts at their exact paths. For a destination that an approved move will
@@ -54,8 +54,8 @@ before implementation exists; create no predicted directories or guides.
 `adopt` preserves valid document paths, identifiers and useful local guidance.
 Reconcile existing guides and propose missing guides within the selected coverage.
 For each guide, show the source mapping, complete diff, preserved instructions and
-managed blocks. Assess any change to distributed package contents. Adoption does
-not implicitly migrate another instruction format or widen the selected area.
+managed blocks. Adoption does not implicitly migrate another instruction format
+or widen the selected area.
 
 `migrate` includes affected guide references in the approved canonical-document
 mapping and atomic rewrite described in [migration.md](migration.md). Preserve
@@ -86,7 +86,8 @@ creation leaves adoption to a later explicit `docs-setup` operation.
 ## Apply and verify safely
 
 Before approval, show all selected mappings and the complete path-by-path diff,
-including preserved content, the coverage declaration and reference rewrites.
+including preserved content, the coverage declaration, reference rewrites and
+any change to distributed package contents.
 Record exclusions and unresolved gaps. Snapshot affected tracked and untracked
 files, mapping sources, reference inventory and expected absent targets.
 
@@ -105,5 +106,4 @@ Reconcile the observed state and obtain approval for any changed recovery diff.
 Verify guide links and targets, preserved instructions and managed blocks,
 coverage accuracy, and the complete migration mapping where applicable. Run the
 inspector and repository-native non-writing checks, and report their structural
-results separately from semantic source review. Checker results and source reads
-do not prove multi-step skill behavior or native instruction loading.
+results separately from semantic source review.

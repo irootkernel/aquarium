@@ -83,11 +83,12 @@ Apply only the lifecycle or record edit explicitly selected by the user or suppl
 Follow [directory agent guidance](../../references/directory-agent-guidance.md)
 when checking the accepted composition. Affected canonical documents and guides
 belong to the reviewed candidate or its exact accepted and verified settlement
-delta. Verify their inclusion and identity with the implementation and tests;
-return missing semantic maintenance to its delivery owner. Do not author or
-append semantic guide changes during commit preparation. Preserve the exact
-authorized lifecycle, record and release-note preparation operations above;
-any resulting candidate still needs its applicable exact acceptance.
+delta. Verify that the staged diff contains them unchanged, together with the
+accepted implementation and tests. Return a mismatch or unreviewed semantic
+change to its delivery owner; do not author or append semantic guide changes
+during commit preparation. Preserve the exact authorized lifecycle, record and
+release-note preparation operations above; any resulting candidate still needs
+its applicable exact acceptance.
 
 Require the release-note decision to match the final diff. An `entry` must appear exactly once under the current open target in the authorized changelog path. `intentional no-note` normally permits no changelog edit, and `not-enrolled` is valid only when no authority is declared.
 
