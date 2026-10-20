@@ -855,10 +855,12 @@ The shared directory-guidance contract and root/new-project source boundaries
 are defined. Documentation setup now defines source-grounded guide mappings,
 explicit coverage, preservation and migration. Task and Epic delivery now maintain
 affected canonical documents and guides before review and preserve the accepted
-composition through commit. Cross-workflow scenarios and installed verification
-remain pending. Existing projects remain usable before explicit
-adoption; a missing directory guide alone adds no workflow blocker. Source changes do not
-install the candidate, adopt guidance here or roll it out to other projects.
+composition through commit. Cross-workflow path regressions and manual VM
+scenarios are prepared under [the testing authority](../../TESTING.md#directory-guidance-verification).
+Installed verification remains pending. Existing projects remain usable before
+explicit adoption; a missing directory guide alone adds no workflow blocker.
+Source changes do not install the candidate, adopt guidance here or roll it out
+to other projects.
 
 **Detailed SOT:** [Directory agent guidance dossier](../todo/TODO-DIRECTORY-AGENT-GUIDANCE.md)
 
@@ -867,5 +869,5 @@ install the candidate, adopt guidance here or roll it out to other projects.
 | TASK-157 | Define directory guidance ownership and lifecycle | Define scoped guidance, canonical links, root-versus-directory ownership, declared adoption coverage, maintenance and compatibility; verify any executable changes within this Task. | Completed | None |
 | TASK-158 | Add directory guidance to documentation setup | Extend audit, bootstrap, adopt and migrate with source-grounded discovery, exact proposals, recorded coverage and preserved rules; include focused tests for this Task's executable changes. | Completed | TASK-157 |
 | TASK-159 | Maintain guidance during Task and Epic delivery | Read applicable guidance, update affected canonical documents and indexes before review, and preserve exact reviewed content through acceptance and commit. | Completed | TASK-158 |
-| TASK-160 | Add cross-workflow regressions and verification scenarios | Add integration regressions across adoption, migration and delivery; prepare testing-authority updates, manual scenarios and fixtures for installed verification. Earlier Tasks retain their own acceptance tests. | Planned | TASK-159 |
+| TASK-160 | Add cross-workflow regressions and verification scenarios | Add integration regressions across adoption, migration and delivery; prepare testing-authority updates, manual scenarios and fixtures for installed verification. Earlier Tasks retain their own acceptance tests. | Completed | TASK-159 |
 | TASK-161 | Verify installed workflows and promote canonical documentation | Observe candidate-bound setup and delivery in the dedicated UTM VM, record actual verification limits and promote implemented outcomes before Epic closeout. | Planned | TASK-160 |

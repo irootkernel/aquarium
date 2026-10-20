@@ -15,8 +15,10 @@ and `new-project` define the root and initial-documentation source boundaries.
 `docs-setup` now defines directory audit, bootstrap, adoption and migration with
 source mappings, explicit coverage and preserved local instructions. Task and
 Epic delivery now read and maintain affected documents and guides through their
-existing review, validation and commit responsibilities. Cross-workflow scenarios
-and installed verification remain pending. Installation, publication, provider
+existing review, validation and commit responsibilities. Cross-workflow path
+regressions and manual scenarios are prepared under
+[the testing authority](../../TESTING.md#directory-guidance-verification);
+installed verification remains pending. Installation, publication, provider
 operations and changes to other projects require authority beyond this dossier's
 requirements.
 
@@ -282,6 +284,16 @@ retains the tests needed to accept its own changes; this Task supplies additiona
 cross-workflow evidence. Use meaningful inputs, outputs and failure paths where
 executable helpers exist. Do not assert skill prose, private helper names or exact
 sentences, and keep manual semantic checks separate from structural proof.
+
+The existing local-reference helper now has integration regressions for a
+canonical-document move to an initially absent destination and a feature move to
+a different directory depth. Both exercise valid, stale and repaired references.
+[Five manual VM groups](../../tests/vm/directory-agent-guidance.md) map all 13
+acceptance scenarios to an independent base fixture, separate greenfield and
+bootstrap preparation, actual installed operations and retained evidence.
+These definitions do not establish semantic adoption, native instruction loading
+or an installed pass; TASK-161 retains those observations. No release-note entry
+is due for this test and scenario preparation alone.
 
 ### TASK-161: Verify installed workflows and promote canonical documentation
 

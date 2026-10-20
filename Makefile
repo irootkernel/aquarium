@@ -66,6 +66,9 @@ PYTHON_FILES := \
 	tests/check_test_requirements.py \
 	tests/unit/test_check_test_requirements_unit.py \
 	tests/unit/test_setup_package_contracts.py \
+	tests/vm/fixtures/directory-guidance/src/catalog/labels.py \
+	tests/vm/fixtures/directory-guidance/src/exports/render.py \
+	tests/vm/fixtures/directory-guidance/tests/test_workflow.py \
 	plugins/aquarium/skills/dev-setup-global/scripts/inspect_skill_inventory.py \
 	tests/unit/test_aquarium_dev_tool_unit.py \
 	tests/unit/test_aquarium_status_install_unit.py \

@@ -313,6 +313,22 @@ Reuse these definitions across releases; results apply only to their recorded
 candidate and installed combination under the release policy. Future EPIC-019
 Haepari host submission reuses this guest entrypoint and scenario catalog.
 
+## Directory guidance development verification
+
+[Directory guidance scenarios](directory-agent-guidance.md) define five manual
+groups covering EPIC-029's 13 acceptance scenarios. The
+[independent base fixture](fixtures/directory-guidance/) has two implementation
+areas, existing local instructions, legacy and code-adjacent canonical contracts
+and executable baseline checks. It starts without a directory-guide adoption
+declaration. Separate empty greenfield and authority-free bootstrap repositories
+are prepared only under the scenario operator's approved scope.
+
+TASK-160 prepares these definitions; TASK-161 records actual installed results
+for the exact candidate and combination. Use the dedicated UTM VM and the
+candidate, authority, preservation and evidence rules above. These manual groups
+have no driver operation and are outside `make test-vm` and the adaptive suite.
+Their outcomes and installed native-loading claims remain unverified until observed.
+
 ## Adaptive development verification
 
 EPIC-026 extends this driver with committed

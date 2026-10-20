@@ -175,6 +175,58 @@ def test_nested_links_can_reach_package_root(tmp_path):
     assert result.returncode == 0, result.stderr
 
 
+def test_guide_links_follow_canonical_document_migration(tmp_path):
+    source = tmp_path / "legacy/labels.md"
+    source.parent.mkdir()
+    source.write_text("# Label policy\n\nTrim surrounding whitespace.\n")
+    destination = tmp_path / "docs/specs/labels.md"
+    guide = tmp_path / "src/catalog/AGENTS.md"
+    guide.parent.mkdir(parents=True)
+    guide.write_text("[Label policy](../../legacy/labels.md)\n")
+    assert not destination.exists()
+    result = check_links(tmp_path)
+    assert result.returncode == 0, result.stderr
+
+    original = source.read_bytes()
+    destination.parent.mkdir(parents=True)
+    source.rename(destination)
+    assert not source.exists()
+    assert destination.read_bytes() == original
+    assert check_links(tmp_path).returncode != 0
+
+    guide.write_text("[Label policy](../../docs/specs/labels.md)\n")
+    result = check_links(tmp_path)
+    assert result.returncode == 0, result.stderr
+
+
+def test_feature_move_requires_rebased_guide_links(tmp_path):
+    canonical = tmp_path / "docs/specs/labels.md"
+    canonical.parent.mkdir(parents=True)
+    canonical.write_text("# Label policy\n\nTrim surrounding whitespace.\n")
+    feature = tmp_path / "src/catalog"
+    feature.mkdir(parents=True)
+    (feature / "labels.py").write_text(
+        "def normalize(value):\n    return value.strip()\n"
+    )
+    guide = feature / "AGENTS.md"
+    guide.write_text("[Label policy](../../docs/specs/labels.md)\n")
+    result = check_links(tmp_path)
+    assert result.returncode == 0, result.stderr
+
+    destination = tmp_path / "src/products/catalog"
+    destination.parent.mkdir()
+    feature.rename(destination)
+    assert not feature.exists()
+    assert (destination / "labels.py").is_file()
+    assert check_links(tmp_path).returncode != 0
+
+    (destination / "AGENTS.md").write_text(
+        "[Label policy](../../../docs/specs/labels.md)\n"
+    )
+    result = check_links(tmp_path)
+    assert result.returncode == 0, result.stderr
+
+
 @pytest.mark.parametrize(
     "arguments", [{"tree_sha": "abc"}, {"skill_path": "skills/use-example/.."}]
 )

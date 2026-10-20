@@ -179,6 +179,30 @@ Preparation cannot pass the acceptance gate. Operator decisions
 resume actual native handles without automatic replay. Public observations and
 meaningful application artifacts are required; success sentences are insufficient.
 
+## Directory guidance verification
+
+`tests/unit/test_setup_package_contracts.py` adds filesystem integration cases for
+canonical-document migration to an initially absent destination and feature moves
+to a different directory depth. Each case checks valid references before the move,
+rejects stale links after the isolated move and passes after the guide links are
+updated. These cases exercise the existing Ruby local-reference helper; it checks
+containment, symlinks and target existence. It does not check section anchors,
+document ownership, adoption or skill behavior.
+
+[Directory guidance scenarios](tests/vm/directory-agent-guidance.md) map all
+EPIC-029 acceptance obligations to five manual development groups using an
+[independent fixture](tests/vm/fixtures/directory-guidance/). Its executable checks
+cover label normalization and export behavior. Its existing local instructions,
+legacy policy, code-adjacent contract and undeclared adoption state support
+separate observations of setup, scoped adoption, migration and delivery.
+
+The definitions and fixture do not record installed verification. TASK-161 owns
+actual candidate-bound observations in the dedicated UTM VM, including source
+reads, separately observed native instruction loading, review corrections,
+recovery and existing-session preservation. These scenarios add no automatic
+driver, LLM evaluation or `make test-vm` operation. Keep their manual results
+separate from structural checks and release upgrade/startup acceptance.
+
 ## Adaptive definition checks
 
 `tests/unit/test_adaptive_definitions_unit.py` exercises closed binding/fragment

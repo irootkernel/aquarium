@@ -60,7 +60,9 @@ without adopting directory guides. `docs-setup` now defines source-grounded audi
 bootstrap, adoption and migration with explicit coverage and preserved local
 instructions. Task and Epic delivery now read sources for affected paths,
 maintain canonical documents and guides before review, and preserve the accepted
-candidate through commit. Installed verification remains pending under the
+candidate through commit. [Testing authority](../TESTING.md#directory-guidance-verification)
+now links cross-workflow path regressions and independent manual VM scenarios.
+Installed verification remains pending under the
 [dossier](todo/TODO-DIRECTORY-AGENT-GUIDANCE.md) and
 [roadmap](roadmap/README.md#epic-029-add-directory-agentsmd-documentation-indexes).
 These source changes do not adopt directory guides in this repository or update
