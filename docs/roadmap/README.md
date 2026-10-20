@@ -59,7 +59,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | Completed |
 | EPIC-027 | Add native Epic Squad collaboration | Planned |
 | EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | Planned |
-| EPIC-029 | Add directory AGENTS.md documentation indexes | In Progress |
+| EPIC-029 | Add directory AGENTS.md documentation indexes | Completed |
 
 ## EPIC-000: Independent Tasks
 
@@ -836,7 +836,7 @@ Do not add a second skill or owner.
 
 ## EPIC-029: Add directory AGENTS.md documentation indexes
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Connect implementation features to their canonical requirements, architecture,
 decisions and development guidance through scoped directory `AGENTS.md` files.
@@ -866,7 +866,11 @@ explicit adoption; a missing directory guide alone adds no workflow blocker.
 Source changes do not install the candidate, adopt guidance here or roll it out
 to other projects.
 
-**Detailed SOT:** [Directory agent guidance dossier](../todo/TODO-DIRECTORY-AGENT-GUIDANCE.md)
+**Canonical Outcomes:** [Workflow specification](../specs/workflow-contracts.md#directory-agent-guidance),
+[component ownership](../architecture/components.md#directory-documentation-flow),
+[maintenance guidance](../implementation-tips/changing-skills.md#maintain-directory-guidance),
+[shared contract](../../plugins/aquarium/references/directory-agent-guidance.md) and
+[verification scenarios](../../tests/vm/directory-agent-guidance.md).
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |

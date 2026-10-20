@@ -26,10 +26,6 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
   and mixed execution, assessments, configuration, authority and recovery for
   `EPIC-027` and `EPIC-028`.
 
-- [Directory agent guidance dossier](TODO-DIRECTORY-AGENT-GUIDANCE.md) defines
-  directory `AGENTS.md` ownership, greenfield and brownfield adoption,
-  pre-review maintenance and verification for `EPIC-029`.
-
 ## Unadopted TODO Candidates
 
 There are no current unadopted TODO candidates. A work-definition workflow promotes an approved candidate by allocating the next roadmap-local epic and task IDs, applying the shared dossier threshold, and moving or linking only the resulting approved documents in one reviewed change.

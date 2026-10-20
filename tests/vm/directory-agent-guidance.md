@@ -3,8 +3,8 @@
 TASK-161 uses these TASK-160 scenarios to verify the installed EPIC-029 candidate.
 No scenario has been executed or passed in this definition record.
 [TESTING.md](../../TESTING.md#directory-guidance-verification) owns their
-verification meaning; the [dossier](../../docs/todo/TODO-DIRECTORY-AGENT-GUIDANCE.md#acceptance-scenarios)
-owns the original acceptance obligations. The
+verification meaning. The acceptance table below retains EPIC-029's original
+obligations. The
 [shared contract](../../plugins/aquarium/references/directory-agent-guidance.md)
 and installed workflow sources own behavior.
 
