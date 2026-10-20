@@ -57,6 +57,8 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-024 | Restore native agent workflows and add manual VM release acceptance | Completed |
 | EPIC-025 | Align review strategies with delivery goals | Completed |
 | EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | Completed |
+| EPIC-027 | Add native Epic Squad collaboration | Planned |
+| EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | Planned |
 
 ## EPIC-000: Independent Tasks
 
@@ -764,3 +766,69 @@ review control and user-versus-delegated acceptance, and exact binding recovery.
 Equivalent noncanonical graphs and approved custom roots remain supported.
 Optional library files do not become repository obligations by existing, and
 preservation does not require new native authentication or extra routine review.
+
+## EPIC-027: Add native Epic Squad collaboration
+
+**Status:** `Planned`
+
+Add explicitly invoked `epic-squad` delivery through the current Coordinator's
+native subagents as the first phase of one role-configurable workflow. Combine
+independent plan and result assessments, Task and Epic Evaluator scopes, and the
+Coordinator's own project and product review during
+implementation. Deliver each Task with an authorized local commit, then assess
+the assembled Epic before asking for overall user acceptance.
+
+The Task Evaluator owns detailed plan review. Every Task plan also receives an
+Epic Evaluator assessment of Epic direction, prior Task output use and downstream
+handoff design. With both plan passes, the Coordinator uses concise assessments
+to assign implementation under existing authority; it does not add a routine
+third plan review. Its substantive final product review remains required.
+
+Preserve `epic-handler`, `epic-validator`, their existing roles and admitted
+sessions. Squad has its own completion procedure; a separate cold-validator
+session remains an explicitly selected additional check. Reuse existing
+adaptive Goal/Validation and commit contracts under Squad's actual workflow
+owner, with Podway enabled by default and explicit opt-out supported.
+Omitted role profiles select native execution. Recognize explicit CLI/model
+profiles but report their execution as unsupported until their required
+Herdr/mixed execution, commit and recovery integration from EPIC-028 is complete.
+Changing the selected route requires user direction. Preserve native-only
+delivery while the extension develops.
+
+**Detailed SOT:** [Epic collaboration dossier](../todo/TODO-EPIC-COLLABORATION.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-147 | Establish collaboration contracts and native readiness | Define the single workflow's roles, detailed Task and scoped Epic plan assessments, concise Coordinator intake, source-based assessments, omitted/explicit profile routing, phase/record mapping, bounded design continuation and native readiness without changing existing handler defaults. | Planned | EPIC-026 |
+| TASK-148 | Implement native Squad collaboration | Add native assignments, both scoped plan passes and independent Executor reviews, independent result review, bounded implementation and Writer transfers; report explicit profiles as unimplemented until their required Herdr integration is complete. | Planned | TASK-147 |
+| TASK-149 | Integrate Squad execution and commit authority | Admit Squad under its own owner, map assessments and absence of additional technical review to adaptive Goal/Validation and commit contracts, and preserve retained legacy bindings. | Planned | TASK-148 |
+| TASK-150 | Complete Squad integration and recovery | Deliver Epic integration and Coordinator review, interrupted-session recovery, post-commit inspection, rejection/rework/stopped paths and user-accepted closeout. | Planned | TASK-149 |
+| TASK-151 | Verify Squad and promote documentation | Observe installed delivery in a named native harness, verify recovery and existing-handler preservation, separate functional evidence from acceptance, and promote implemented contracts. | Planned | TASK-150 |
+
+## EPIC-028: Extend Epic Squad with Herdr and mixed collaboration
+
+**Status:** `Planned`
+
+Extend the existing `epic-squad` skill and workflow owner after EPIC-027 is
+complete. Resolve each role independently: omitted profiles use the Coordinator's
+native agents; explicit CLI/model profiles use Herdr even when they match the
+Coordinator. An effort omitted from an explicit profile defaults to `high`,
+while native roles match the Coordinator's current model and effort.
+
+Support common or scoped Evaluator profiles and one or more Executor profiles.
+The Coordinator directly manages distinct Epic and Task Evaluators. Reuse the
+verified assessment, Writer, acceptance, Podway and commit flow for native,
+external and mixed roles. Report unsupported settings; profile or route changes
+need user direction. Retain actual results, configurations and pending work
+across both lifecycles.
+Do not add a second skill or owner.
+
+**Detailed SOT:** [Epic collaboration dossier](../todo/TODO-EPIC-COLLABORATION.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-152 | Resolve Squad profiles and capabilities | Resolve omitted/explicit role profiles, common/scoped Evaluators, Executor pools and actual CLI/model/effort controls; preserve requested inputs and report unsupported settings. | Planned | EPIC-027 |
+| TASK-153 | Implement Squad Herdr and mixed execution | Extend the same entrypoint with verified helper allocation, direct distinct Evaluators, same-CLI Herdr and native/external role combinations; retrieve complete original results and configurations. | Planned | TASK-152 |
+| TASK-154 | Extend Squad delivery and commit flow | Reuse Squad's existing owner, detailed Task/scoped Epic plan assessments, concise Coordinator intake, result/Writer/commit flow and Podway contracts for mixed roles; preserve native-only bindings and absence of additional technical review. | Planned | TASK-153 |
+| TASK-155 | Complete Squad mixed recovery and configuration reporting | Recover native and external work without replay, settle modifying descendants, retain role routes and requested/applied/observed settings, and clean up only owned helpers. | Planned | TASK-154 |
+| TASK-156 | Verify Squad mixed delivery and promote documentation | Observe named installed mixed delivery, verify available same-CLI and cross-CLI roles, native-only and existing-workflow preservation, failure/recovery and final reporting; promote implemented contracts. | Planned | TASK-155 |

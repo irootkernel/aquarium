@@ -37,6 +37,19 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 - Use the [operations runbooks](ops/README.md) for environment setup, deployment, recurring failures, recovery, and other operator-facing first aid.
 - Use the [roadmap](roadmap/README.md) for delivery identity and state, its linked [TODO and work dossiers](todo/README.md) for detailed planned scope and acceptance, and [deferred feedback](deferred-feedback/README.md) for smaller postponed findings rather than adding future behavior to current specifications.
 
+## Planned Epic collaboration
+
+The [Epic collaboration dossier](todo/TODO-EPIC-COLLABORATION.md) defines planned
+`epic-squad` delivery with native agents by default and role-specific Herdr
+profiles when supplied. Independent plan and result assessments combine Task/Epic
+Evaluators with the Coordinator's project and product review. Task plans receive
+detailed Task assessment and Epic direction/continuity/handoff assessment;
+the Coordinator uses concise conclusions to assign implementation. The
+[roadmap](roadmap/README.md#epic-027-add-native-epic-squad-collaboration) owns
+implementation order: the native foundation first, then Herdr and mixed execution
+in the same skill. Existing Handler/Validator behavior remains unchanged;
+`epic-squad` is not implemented yet.
+
 ## Adaptive Procedure work
 
 [Adaptive Procedure contracts](../plugins/aquarium/references/adaptive-procedures.md)
