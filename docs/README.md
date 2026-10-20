@@ -62,11 +62,13 @@ instructions. Task and Epic delivery now read sources for affected paths,
 maintain canonical documents and guides before review, and preserve the accepted
 candidate through commit. [Testing authority](../TESTING.md#directory-guidance-verification)
 now links cross-workflow path regressions and independent manual VM scenarios.
-Installed verification remains pending under the
-[dossier](todo/TODO-DIRECTORY-AGENT-GUIDANCE.md) and
-[roadmap](roadmap/README.md#epic-029-add-directory-agentsmd-documentation-indexes).
-These source changes do not adopt directory guides in this repository or update
-its installed managed guidance.
+The [workflow specification](specs/workflow-contracts.md#directory-agent-guidance)
+explains these boundaries, the [component map](architecture/components.md#directory-documentation-flow)
+traces their ownership, and [maintenance guidance](implementation-tips/changing-skills.md#maintain-directory-guidance)
+covers affected source and link changes. The
+[roadmap](roadmap/README.md#epic-029-add-directory-agentsmd-documentation-indexes)
+owns delivery status. These contracts do not adopt directory guides in this
+repository or update its installed managed guidance.
 
 ## Adaptive Procedure work
 

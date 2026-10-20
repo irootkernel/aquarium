@@ -38,26 +38,27 @@ source reads separately from evidence that the named harness natively loaded an
 instruction file. Source inspection and an agent's assertion alone cannot prove
 native loading; leave that claim unverified when the harness exposes no evidence.
 
-Each group passes only when every required observation and cleanup succeeds.
+Each group passes only when every required observation is complete and started
+operations are settled.
 An observed contract violation fails it. Missing authority, access, source or
 native observations leaves it incomplete. Record every row separately so a
 passing structural check cannot hide an unverified semantic obligation.
 
-| Original acceptance scenario | Group |
-| --- | --- |
-| Root setup boundary | DG-01 |
-| Root rules without adoption | DG-01 |
-| Partial coverage during delivery | DG-02 |
-| Existing canonical owners | DG-02 |
-| Greenfield growth | DG-02 |
-| Large brownfield adoption | DG-02 |
-| Missing or conflicting meaning | DG-03 |
-| Migration and repeat adoption | DG-04 |
-| Path and content safety | DG-03 |
-| Task and Epic candidate | DG-05 |
-| Review correction | DG-05 |
-| Fresh installed session | DG-05 |
-| Installed lifecycle | DG-05 |
+| Original acceptance scenario | Group | Required result |
+| --- | --- | --- |
+| Root setup boundary | DG-01 | Root documentation rules are updated without whole-repository guide generation or unrelated tool configuration. |
+| Root rules without adoption | DG-01 | Root guidance exists, but ordinary delivery creates no missing guide until explicit adoption; existing applicable instructions remain in force. |
+| Partial coverage during delivery | DG-02 | New features inside a declared area receive guides; a feature outside it produces a coverage report without implicit adoption or backfill. |
+| Existing canonical owners | DG-02 | Guides link the real owners, including legacy paths and code-adjacent contracts. |
+| Greenfield growth | DG-02 | Existing feature roots receive guides; a later feature gains its guide during authorized delivery. |
+| Large brownfield adoption | DG-02 | The selected implementation scope is analyzed, existing rules survive, and partial area work is not reported as complete coverage. |
+| Missing or conflicting meaning | DG-03 | The workflow exposes the exact gap or conflict and does not invent links, authority or successful coverage. |
+| Migration and repeat adoption | DG-04 | Approved path moves update affected references; unchanged repeat adoption produces no unnecessary diff. |
+| Path and content safety | DG-03 | Secret-bearing and unrelated runtime files remain untouched; unsafe write targets are rejected and unrelated dirty work is preserved. |
+| Task and Epic candidate | DG-05 | Affected canonical documents and guides enter review before commit; unaffected guides need no edit. |
+| Review correction | DG-05 | Changed guide content follows the existing affected-evidence and local-settlement rules; no unreviewed semantic update reaches commit. |
+| Fresh installed session | DG-05 | The named harness discovers applicable guidance and follows original canonical sources in the exact installed candidate. |
+| Installed lifecycle | DG-05 | The VM demonstrates adoption, maintenance, recovery and existing-workflow preservation without host candidate installation. |
 
 ## DG-01: Root rules without adoption
 
@@ -237,9 +238,11 @@ installed multi-step completion. Identify every unobserved harness and scenario.
 
 Settle every started mutating agent and native reader through supported operations.
 Preserve uncertain handles for reconciliation and intentionally retained baseline
-sessions. Keep owned fixture and evidence copies for inspection unless separately
-authorized cleanup selects them. Never purge unrelated state or mark unfinished
-work achieved to clean it up. Unresolved cleanup keeps the group incomplete.
+sessions and evidence still needed for inspection. Clean obsolete invocation-owned
+disposable material under the existing authorization. Never purge unrelated state
+or mark unfinished work achieved to clean it up. Unsettled mutating or native
+operations and missing mandatory evidence keep the result incomplete; retaining
+disposable files does not.
 
 The TASK-161 handoff records each original acceptance row, candidate/combination,
 fixture variant, actual steps, source reads, native-loading evidence, approvals,

@@ -203,6 +203,22 @@ recovery and existing-session preservation. These scenarios add no automatic
 driver, LLM evaluation or `make test-vm` operation. Keep their manual results
 separate from structural checks and release upgrade/startup acceptance.
 
+Use actual installed operations to assess source-grounded adoption, preservation
+of local instructions, new features inside and outside declared coverage,
+canonical-document and feature moves, repeat no-ops, and affected-source drift.
+Record actual affected manual observations, results and limits separately under
+the [evidence-residency contract](plugins/aquarium/references/evidence-residency.md),
+in proportion to the changed scope.
+Canonical documentation describes current behavior, boundaries and revalidation
+methods, rather than storing the execution matrix or native transcripts.
+
+An unavailable native-loading observation leaves that claim unverified; explicit
+source reads cannot replace it. A bounded two-area fixture does not establish
+large-repository scale or performance. Record unobserved partial-write recovery
+honestly rather than inducing an uncontrolled failure. A supported pre-session
+Podway opt-out exercises that handler path; standalone preservation of an existing
+Podway session supplies no fresh Podway-backed handler progression claim.
+
 ## Adaptive definition checks
 
 `tests/unit/test_adaptive_definitions_unit.py` exercises closed binding/fragment

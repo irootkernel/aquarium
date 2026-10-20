@@ -18,7 +18,11 @@ Epic delivery now read and maintain affected documents and guides through their
 existing review, validation and commit responsibilities. Cross-workflow path
 regressions and manual scenarios are prepared under
 [the testing authority](../../TESTING.md#directory-guidance-verification);
-installed verification remains pending. Installation, publication, provider
+installed Codex observations cover root setup, scoped adoption, migration and
+affected Task/Epic delivery in the dedicated UTM VM. Native automatic loading,
+unobserved partial-write recovery and production-scale behavior remain unverified.
+Structural checks and agent-run observations do not replace Master's functional
+verification or release acceptance. Installation, publication, provider
 operations and changes to other projects require authority beyond this dossier's
 requirements.
 

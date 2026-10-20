@@ -26,6 +26,27 @@ The skill entrypoints form four kinds of component:
 
 `task-commit` permits implicit workflow invocation. `herdr-review` may also be selected from an explicit natural-language request that names both the review target and reviewer. `dev-setup` may be selected from an explicit natural-language repository setup request, including Sorage Project registration or binding, and stays within the requested component scope. All other entrypoints require their skill name or an authorized parent-workflow handoff.
 
+## Directory documentation flow
+
+Canonical specifications and architecture remain the source of durable meaning.
+The shared [directory guidance contract](../../plugins/aquarium/references/directory-agent-guidance.md)
+connects those owners to applicable local instructions. The root documentation
+index records adoption scope; local guides carry relative source links and
+necessary local rules. Native instruction loading remains the harness's
+responsibility.
+
+The root guidance source in `dev-setup` owns discovery rules. `docs-setup` maps
+current implementation responsibilities to canonical documents, reconciles local
+instructions and applies approved coverage or migration. Task/Epic planning reads
+that mapping and its original sources; documentation phases maintain it with the
+behavior candidate. This uses existing documentation owners and workflow phases,
+without a feature graph or another project-state store.
+
+The documentation inspector and local-reference helper provide bounded structural
+checks. Semantic ownership, accurate coverage and preservation through installed
+workflows require separate assessment. Ordinary source reads and a passing link
+check provide no native-loading telemetry.
+
 ## External Tool Boundary
 
 Aquarium defines how an agent may inspect or invoke external tools; it does not absorb their implementation or state. Codex is the primary runtime. Podway owns Procedure execution state, Sanho owns protected Git mutation policy, Mulgae and Gaori own their review and test-run records, Sorage owns Project identity, document Handoffs, and Project Memos, Herdr owns its native pane and agent control, and upstream projects own their installed binaries and skill sources.

@@ -857,7 +857,11 @@ explicit coverage, preservation and migration. Task and Epic delivery now mainta
 affected canonical documents and guides before review and preserve the accepted
 composition through commit. Cross-workflow path regressions and manual VM
 scenarios are prepared under [the testing authority](../../TESTING.md#directory-guidance-verification).
-Installed verification remains pending. Existing projects remain usable before
+Installed Codex observations cover root setup, scoped adoption, migration and
+affected Task/Epic delivery in the dedicated UTM VM. Native automatic loading,
+unobserved partial-write recovery and production-scale behavior remain unverified.
+Structural checks and agent-run observations do not replace Master's functional
+verification or release acceptance. Existing projects remain usable before
 explicit adoption; a missing directory guide alone adds no workflow blocker.
 Source changes do not install the candidate, adopt guidance here or roll it out
 to other projects.
@@ -870,4 +874,4 @@ to other projects.
 | TASK-158 | Add directory guidance to documentation setup | Extend audit, bootstrap, adopt and migrate with source-grounded discovery, exact proposals, recorded coverage and preserved rules; include focused tests for this Task's executable changes. | Completed | TASK-157 |
 | TASK-159 | Maintain guidance during Task and Epic delivery | Read applicable guidance, update affected canonical documents and indexes before review, and preserve exact reviewed content through acceptance and commit. | Completed | TASK-158 |
 | TASK-160 | Add cross-workflow regressions and verification scenarios | Add integration regressions across adoption, migration and delivery; prepare testing-authority updates, manual scenarios and fixtures for installed verification. Earlier Tasks retain their own acceptance tests. | Completed | TASK-159 |
-| TASK-161 | Verify installed workflows and promote canonical documentation | Observe candidate-bound setup and delivery in the dedicated UTM VM, record actual verification limits and promote implemented outcomes before Epic closeout. | Planned | TASK-160 |
+| TASK-161 | Verify installed workflows and promote canonical documentation | Observe candidate-bound setup and delivery in the dedicated UTM VM, record actual verification limits and promote implemented outcomes before Epic closeout. | Completed | TASK-160 |

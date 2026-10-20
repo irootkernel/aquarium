@@ -92,6 +92,37 @@ For Herdr Review, `staged` means the current `HEAD`-to-index change reviewed thr
 
 `dev-setup-bundle` accepts one external `aquarium.dev-setup-bundle/v2` manifest, normalizes explicit target selection, confirms the resulting plan, delegates shared components once to `dev-setup-global`, and invokes single-repository setup in manifest order. Its `required_global_mcp` union includes only registrations inherited by ready targets; target-local Mulgae or Gaori registration does not require that tool's global MCP. The repository setup path compares requested scope with effective Codex registration, intended Sorage Project slug with native resolution, and Mulgae artist intent with effective roles. It does not discover repositories, persist bundle state, or grant configuration mutation from manifest values alone.
 
+## Directory agent guidance
+
+The [shared contract](../../plugins/aquarium/references/directory-agent-guidance.md)
+owns scoped links from directory instructions to canonical documents. Existing
+legacy and code-adjacent specifications retain their authority and paths. Guides
+identify local responsibilities, relevant sources and when to read them; they
+preserve native instruction formats, local exceptions and tool-managed blocks.
+The named harness determines instruction loading. Reading a file establishes its
+contents, while a loading claim needs an actual native observation.
+
+`dev-setup` maintains root discovery and affected-document rules without adopting
+directory guides. Initial `new-project` documentation also leaves adoption to
+`docs-setup`. An audit reports existing sources and gaps. Bootstrap, adoption and
+migration present complete source-grounded proposals before application, including
+guide mappings, affected references and preserved content.
+
+Approved coverage belongs in `docs/README.md` or its adopted equivalent. It names
+whole-repository coverage or exact implementation areas, completed coverage,
+remaining gaps and the next area for partial adoption. Later features within that
+coverage receive applicable guides with their canonical documentation. Without a
+declaration, delivery maintains existing guidance and does not generate missing
+guides. A missing guide alone adds no prerequisite. Resumption checks current
+sources against the declaration; matching coverage and guides produce a reasoned
+no-op.
+
+Task and Epic planning read applicable guides and original owners for affected
+paths. Documentation delivery updates canonical content and guide links before
+final prose passes and technical review. A feature move rebases affected links
+and preserves local instructions without expanding adoption. Commit preparation
+preserves the accepted composition and introduces no new semantic guidance.
+
 ## Release a Stable Version
 
 `release-handler` establishes the intended version, clean main candidate, previous release, publication state, and repository release policy. It reconciles every material delta with cumulative release notes before delegating one exact candidate to `release-qa`.

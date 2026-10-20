@@ -23,6 +23,41 @@ When adding or changing a handoff, define the producer, consumer, required field
 
 For cross-repository work, carry the exact repository and commit identity. A downstream statement that work exists is not proof until the owning repository and required independent validation confirm the exact candidate.
 
+## Maintain directory guidance
+
+Use the [shared contract](../../plugins/aquarium/references/directory-agent-guidance.md)
+and the target repository's documentation index to establish existing coverage.
+For routine delivery, read applicable native instructions and their original
+canonical sources from the affected paths. Maintain existing guides even when
+adoption is undeclared; create guides for new meaningful boundaries only within
+approved coverage. Keep useful local rules and managed blocks intact. A directory
+name or an absent guide does not justify setup or adoption expansion.
+
+For an explicit `docs-setup` operation, choose audit, bootstrap, adopt or migrate
+from the requested effect. Inspect ordinary implementation responsibilities and
+existing specifications, including valid legacy and code-adjacent owners. Separate
+ordinary authentication code from credential-bearing files and exclude secrets
+and unrelated ignored runtime material. Show exact guide mappings, coverage,
+source links and the complete proposed diff before applying it. Resume partial
+adoption from the existing declaration after checking current sources; preserve
+completed areas.
+
+When moving a canonical document, include every affected guide and index link in
+the migration mapping. An absent destination is valid when its existing source
+and approved destination content are known. Recheck affected sources, targets,
+ancestors and Git state before application; affected drift requires a fresh
+proposal. Apply the approved composition together. For a feature move, maintain
+its guides and canonical references within the delivery Task rather than using
+the move to expand coverage.
+
+Check relative links, canonical ownership, preserved exceptions and coverage
+meaning separately. The local-reference helper checks containment, symlinks and
+existence, not section anchors or semantic accuracy. If an application partially
+writes, stop with the actual changed and pending paths, retain its handle and
+reconcile the observed state before approving a changed recovery diff. A repeated
+operation whose declaration and guides already match current sources should leave
+a reasoned no-op.
+
 ## Verification
 
 Run `ruby tests/validate.rb` for package structure and local references. Run focused Python tests when executable helpers change. Keep these checks minimal: do not encode skill sentences, ordering, whitespace, or private source fragments as assertions.
