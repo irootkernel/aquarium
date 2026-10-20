@@ -15,6 +15,15 @@ Establish the project identity, users, problem, outcomes, exclusions, constraint
 
 Select `single-scope` when one implementation owner has one roadmap. Select `multi-scope` when independently delivered surfaces need separate roadmaps; ask only when ownership remains ambiguous. Produce a user-facing root README, maintainer-facing `docs/README.md`, a PRD, one initial roadmap per delivery scope, and every role index including operations. Apply the shared execution-SOT threshold to each initial epic and create its scope-local dossier only when required.
 
+Create this initial documentation set without declaring directory-guide adoption
+or creating directory `AGENTS.md` files. The
+[directory agent guidance contract](../../references/directory-agent-guidance.md)
+assigns later explicit adoption to `$aquarium:docs-setup`, which records approved
+coverage in the existing documentation index. If implementation does not yet
+exist, adoption declares scope without inventing directories or guides; later
+authorized feature delivery maintains guidance within that coverage. Root agent
+rules remain with `$aquarium:dev-setup`.
+
 The PRD owns product intent; each created dossier owns temporary implementation scope and acceptance until closeout. Use the shared default `EPIC-NNN` and per-roadmap `TASK-NNN` contract. Do not add a repository-local Aquarium state file or documentation validator.
 
 Include a testing-foundation work unit that establishes `aquarium-test-contract/v1` through a later explicit `$aquarium:test-setup` invocation. Read the shared [setup prerequisites](../test-setup/references/contract.md#setup-prerequisites) and make the work unit depend on the implementation that supplies them. If `EPIC-001` delivers a testable walking skeleton, place this work unit as its final task. Otherwise place it immediately after the earliest vertical slice that supplies the prerequisites and before broader feature expansion.

@@ -33,6 +33,14 @@ Use `legacy-adopt` when existing paths or identifiers are already authoritative 
 
 The root `docs/README.md` is the human-readable documentation index. It records the selected profile, delivery scopes, role-to-path ownership, canonical roadmap paths, roadmap identity contract, source-of-truth precedence, language, and repository-native documentation checks. It is documentation authority, not Aquarium state. Do not create `.aquarium`, a hidden selector, a generated mirror, or another project-state manifest.
 
+The [directory agent guidance contract](directory-agent-guidance.md) owns scoped
+canonical-document links, explicit adoption coverage and later maintenance.
+Record approved coverage in this existing documentation index. Root guidance
+belongs to `dev-setup`; directory adoption and documentation migration belong to
+`docs-setup`. Initial documentation creation by `new-project` does not adopt
+directory guides. Preserve actual code-adjacent and legacy authorities rather
+than copying their content into guides or forcing their relocation.
+
 ## Optional Work Dossiers
 
 An unadopted `TODO-*.md` file represents one future epic-sized idea and owns no roadmap identity or lifecycle state. A repository may retain it as a temporary execution dossier when a work-definition workflow adopts the epic, or may keep a smaller epic's execution requirements in the roadmap and canonical role owners. Dossier need, creation, consumption, and closeout belong to the shared [Epic Execution SOT](epic-execution-sot.md) contract, not to `docs-setup`.

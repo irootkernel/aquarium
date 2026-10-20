@@ -25,6 +25,7 @@ Use this order for both new and existing files. Reorganize the complete body to 
 ### 2. Reuse Verified Information
 
 - Inspect the requested code and its named authorities before changing anything. Resolve discoverable facts before asking Master.
+- Before changing a feature, read applicable directory AGENTS.md files and the canonical documents relevant to the change. Respect the selected harness's native instruction scope and precedence.
 - Reuse established facts instead of reading or searching for them again. Recheck only the affected information when relevant state changes, evidence conflicts, or missing context makes it unreliable.
 - State material assumptions and surface meaningful trade-offs. Ask when unresolved ambiguity would materially change the result, and push back on conflicts with repository authority, safety, or Master's goal.
 
@@ -34,6 +35,7 @@ Use this order for both new and existing files. Reorganize the complete body to 
 - Weigh correctness, performance, maintainability, and structural fit rather than diff size alone. If a broader design exceeds scope, complete a bounded step that satisfies current acceptance criteria.
 - Reuse established patterns. Avoid speculative features, abstractions, configurability, compatibility layers, and handling for states repository invariants make impossible. Simplify complexity that the required behavior does not justify.
 - Touch only what the outcome and its verification require. Preserve unrelated user work, match local style, and remove only artifacts made obsolete by this change.
+- Read directory-guide adoption coverage in the root documentation index. Maintain affected canonical documents and existing applicable guides, including guides outside that coverage. Within adopted coverage, add guides for new feature boundaries as part of the authorized work. Report uncovered areas without unrelated backfill; guide absence alone adds no workflow blocker. Finish affected documentation before candidate review.
 - Record only independent remaining work in the canonical `deferred-feedback` owner. If none exists, propose the entry and obtain approval before creating an owner. Promote epic-sized work to a TODO candidate or roadmap unit; never defer current correctness or acceptance work.
 
 ### 4. Carry Authorization Forward
@@ -82,7 +84,17 @@ Use this order for both new and existing files. Reorganize the complete body to 
 <only verified repository-specific constraints and exceptions>
 ```
 
-Every applied AGENTS.md must contain all four top-level sections and all three `Project Configuration` subsections. Keep `Commit Messages` inside `Project Configuration`; never promote it to a separate top-level section or omit it because no rule was discovered.
+Every applied root AGENTS.md must contain all four top-level sections and all three `Project Configuration` subsections. Keep `Commit Messages` inside `Project Configuration`; never promote it to a separate top-level section or omit it because no rule was discovered.
+
+This structure applies to root guidance. Under the
+[directory agent guidance contract](../../../references/directory-agent-guidance.md),
+directory files contain local responsibilities, useful canonical-source links
+and necessary local instructions. Do not copy the full root template or create
+competing Project Configuration, evidence-root, release or commit declarations.
+`docs-setup` owns explicit nested-guide adoption and migration. Root setup alone
+does not declare coverage or run repository-wide feature discovery. Preserve
+existing local exceptions, other instruction formats and tool-managed blocks;
+keep root CLAUDE migration and loading-blocker checks below unchanged.
 
 ## Build the Project Configuration From Evidence
 
@@ -111,7 +123,7 @@ Adapt names only when the installed skill namespace differs. Include only refere
 - Use `$aquarium:war-room` to diagnose one difficult bug and stop at a task, epic, incomplete-investigation proposal, or evidence-backed no-work outcome.
 - Use `$aquarium:dev-setup-global` to diagnose, install, or update supported user-global development tools, paired skills, services, and global MCP state. Requests to install or update only the Aquarium plugin belong to the host's plugin-management flow; do not load this skill or run global setup diagnostics for those requests.
 - Use `$aquarium:dev-setup` to diagnose or configure repository-local tooling and operating guidance, including explicitly requested Sorage Project setup.
-- Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure and roadmap IDs.
+- Use `$aquarium:docs-setup` to audit, establish, adopt, or migrate canonical documentation structure, roadmap IDs and explicitly selected directory guidance.
 - Use `$aquarium:test-setup` to audit or configure the common Make or Bun testing contract and evidence-backed legacy waivers.
 - Use `$aquarium:release-handler` for one stable release lifecycle and `$aquarium:release-qa` for its exact committed-candidate scenario verification.
 - Use `$use-dolgorae` for explicitly requested workspace, global Profile, review, External Specialist Engagement, and recovery operations. Keep execution and lifecycle rules in the paired skill.

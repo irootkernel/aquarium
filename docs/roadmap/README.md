@@ -59,6 +59,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | Completed |
 | EPIC-027 | Add native Epic Squad collaboration | Planned |
 | EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | Planned |
+| EPIC-029 | Add directory AGENTS.md documentation indexes | In Progress |
 
 ## EPIC-000: Independent Tasks
 
@@ -832,3 +833,36 @@ Do not add a second skill or owner.
 | TASK-154 | Extend Squad delivery and commit flow | Reuse Squad's existing owner, detailed Task/scoped Epic plan assessments, concise Coordinator intake, result/Writer/commit flow and Podway contracts for mixed roles; preserve native-only bindings and absence of additional technical review. | Planned | TASK-153 |
 | TASK-155 | Complete Squad mixed recovery and configuration reporting | Recover native and external work without replay, settle modifying descendants, retain role routes and requested/applied/observed settings, and clean up only owned helpers. | Planned | TASK-154 |
 | TASK-156 | Verify Squad mixed delivery and promote documentation | Observe named installed mixed delivery, verify available same-CLI and cross-CLI roles, native-only and existing-workflow preservation, failure/recovery and final reporting; promote implemented contracts. | Planned | TASK-155 |
+
+## EPIC-029: Add directory AGENTS.md documentation indexes
+
+**Status:** `In Progress`
+
+Connect implementation features to their canonical requirements, architecture,
+decisions and development guidance through scoped directory `AGENTS.md` files.
+Keep the root documentation-discovery and update rules with `dev-setup`.
+Make `docs-setup` own directory guidance structure, initial adoption and
+migration for both greenfield and brownfield projects. Delivery workflows
+maintain the affected guidance before candidate review and commit.
+
+Large existing repositories require an explicitly scoped documentation-adoption
+job. Ordinary development setup does not perform a repository-wide feature
+analysis. Preserve existing guidance and canonical paths, distinguish initial
+coverage from ongoing maintenance, and keep documentation checks separate from
+observed agent behavior.
+
+The shared directory-guidance contract and root/new-project source boundaries
+are defined. Documentation setup, delivery integration and installed verification
+remain pending. Existing projects remain usable before explicit adoption; a
+missing directory guide alone adds no workflow blocker. Source changes do not
+install the candidate, adopt guidance here or roll it out to other projects.
+
+**Detailed SOT:** [Directory agent guidance dossier](../todo/TODO-DIRECTORY-AGENT-GUIDANCE.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-157 | Define directory guidance ownership and lifecycle | Define scoped guidance, canonical links, root-versus-directory ownership, declared adoption coverage, maintenance and compatibility; verify any executable changes within this Task. | Completed | None |
+| TASK-158 | Add directory guidance to documentation setup | Extend audit, bootstrap, adopt and migrate with source-grounded discovery, exact proposals, recorded coverage and preserved rules; include focused tests for this Task's executable changes. | Planned | TASK-157 |
+| TASK-159 | Maintain guidance during Task and Epic delivery | Read applicable guidance, update affected canonical documents and indexes before review, and preserve exact reviewed content through acceptance and commit. | Planned | TASK-158 |
+| TASK-160 | Add cross-workflow regressions and verification scenarios | Add integration regressions across adoption, migration and delivery; prepare testing-authority updates, manual scenarios and fixtures for installed verification. Earlier Tasks retain their own acceptance tests. | Planned | TASK-159 |
+| TASK-161 | Verify installed workflows and promote canonical documentation | Observe candidate-bound setup and delivery in the dedicated UTM VM, record actual verification limits and promote implemented outcomes before Epic closeout. | Planned | TASK-160 |

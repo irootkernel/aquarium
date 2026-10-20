@@ -50,6 +50,19 @@ implementation order: the native foundation first, then Herdr and mixed executio
 in the same skill. Existing Handler/Validator behavior remains unchanged;
 `epic-squad` is not implemented yet.
 
+## Directory agent guidance
+
+The [shared contract](../plugins/aquarium/references/directory-agent-guidance.md)
+defines scoped canonical-document links, explicit adoption coverage, preservation
+and affected maintenance. `dev-setup` now includes basic discovery and maintenance
+rules in its root guidance source. `new-project` creates initial documentation
+without adopting directory guides. Directory adoption in `docs-setup`, delivery
+integration and installed verification remain pending under the
+[dossier](todo/TODO-DIRECTORY-AGENT-GUIDANCE.md) and
+[roadmap](roadmap/README.md#epic-029-add-directory-agentsmd-documentation-indexes).
+These source changes do not adopt directory guides in this repository or update
+its installed managed guidance.
+
 ## Adaptive Procedure work
 
 [Adaptive Procedure contracts](../plugins/aquarium/references/adaptive-procedures.md)

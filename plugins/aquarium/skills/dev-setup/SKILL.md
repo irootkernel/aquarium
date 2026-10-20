@@ -9,7 +9,7 @@ Read [commit-attribution.md](../../references/commit-attribution.md) for message
 
 Diagnose the repository first, propose only changes supported by repository evidence, and leave supported user-global development tool installation and updates to `$aquarium:dev-setup-global`. Route requests to install or update only the Aquarium plugin directly to the host's plugin-management flow without repository or global setup diagnosis.
 
-This skill owns root AGENTS.md guidance and migration of an existing root CLAUDE.md. A general setup always reviews the complete guidance against the standard structure and behavior, then proposes a full reorganization where needed. `$aquarium:docs-setup` owns documentation structure and roadmap identity.
+This skill owns root AGENTS.md guidance and migration of an existing root CLAUDE.md. A general setup always reviews the complete guidance against the standard structure and behavior, then proposes a full reorganization where needed. `$aquarium:docs-setup` owns documentation structure, roadmap identity and explicit directory-guidance adoption or migration under the [shared contract](../../references/directory-agent-guidance.md). Root setup adds basic discovery and maintenance rules without adopting coverage, analyzing every feature or generating nested guides. Keep selected nested-guide work with `docs-setup`.
 
 Read [podway-integration.md](../../references/podway-integration.md) only when Podway is selected by the request, repository guidance, or an Aquarium readiness requirement. Read the applicable sections of [the shared tool catalog](../../references/tool-catalog.md) for every repository component in scope. Read [agents-guidance.md](references/agents-guidance.md) whenever root operating guidance is in scope.
 
