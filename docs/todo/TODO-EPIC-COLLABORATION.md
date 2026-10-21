@@ -154,8 +154,9 @@ Task may proceed without activating another delivery goal.
 Keep the current CLI, model and session. Establish direction, assign meaningful
 work, coordinate results and control Writer transfers. Delegate substantial
 investigation, planning, implementation, verification and documentation.
-During implementation and result review, read important decisions, actual
-artifacts, agent findings and relevant verification output throughout delivery.
+Supervise execution through lifecycle state and reported exceptions. Read
+important decisions, actual artifacts, findings and relevant verification at
+the applicable plan, Milestone, result, exception and Writer-transfer boundaries.
 For routine plan progression, read the Task and Epic Evaluators' actual concise assessments and
 material exceptions; do not duplicate their plan reviews or routinely import
 full plans, detailed review exchanges or agent transcripts into this context.
@@ -575,6 +576,9 @@ pending operations and unresolved findings. A one-shot or replacement agent
 receives original sources, current candidate, prior findings and remaining
 authority. Restoring an earlier report is not a new assessment. Keep Task roles
 recoverable through commit verification without occupying idle slots unnecessarily.
+Free capacity through supported lifecycle controls after collecting the settled
+role's results and recovery context. A role with an active or blocked operation
+is not disposable; reconcile it before release or use sequential scheduling.
 
 ## Herdr configuration
 
@@ -651,6 +655,54 @@ already authorized work. Do not change host configuration or grant broader
 access to suppress prompts, and do not start another Writer while blocked
 modifying activity remains uncertain.
 
+## Supervision and progress
+
+Use supported native lifecycle observations, completion notifications and result
+channels for routine supervision. Avoid routine console tails and repeated
+transcript reads when those observations suffice. Choose bounded or yielding
+waits that return control in time to service other pending participants; retain
+the same operation handle across waits. Set observation intervals from the work's
+expected duration and the route's detection limits, without fixed line counts,
+retry quotas or an automatic cancellation deadline. Paired-tool operations keep
+their installed skill's waiting and recovery contract, without a competing
+observation loop.
+
+Keep known assignments, handles, pending requests and next owners recoverable
+through existing runtime records. For Herdr, retain the returned session and pane
+identity as well as the agent name so an exited agent's output remains locatable.
+An agent needing a Coordinator decision, another role's output or an unavailable
+capability returns an actionable request through a supported channel. If only a
+returned turn exposes the request, end that turn instead of sleeping or polling
+for the Coordinator. Preserve supported native messaging and role interactions;
+no new mailbox or heartbeat protocol is required.
+
+Inspect relevant output when state is blocked or unknown, submission or completion
+is uncertain, a wait expires without explained progress, an agent exits, or the
+route's documented detection limits require it. A harness-paused approval or
+question UI may prevent the agent from reporting its own blocker. Inspect enough
+of the current screen or unwrapped output to identify the complete request and
+follow the existing permission contract. A short recent excerpt may suffice for
+triage, but neither a fixed tail nor unchanged lifecycle state rules out a missed
+dialog. Do not let waiting on one participant hide another participant's request
+or completion.
+
+Meaningful progress is a checkable change tied to the assignment, such as a
+returned request, Milestone, check result or relevant artifact change. Console
+activity and heartbeats establish neither progress nor correctness. Read-only
+analysis may expose no mid-turn progress; assess it against expected duration
+and available diagnostics without treating silence alone as failure. Worktree
+inspection during another Writer's work must be non-mutating.
+
+Do not send terminal status prompts into an active or uncertain turn: they may
+queue another turn or change the current work. Use read-only observation unless
+the native contract supports an interaction that is safe for the active turn.
+Recover the existing operation before resubmission. After investigation, choose
+continued observation with a stated basis and next check, supported recovery
+within existing authority, or a report of the unresolved capability or authority
+gap. Revisit repeated unexplained overruns instead of treating uncertainty as
+progress. Native cancellation, interruption and recovery still follow the tool's
+contract and existing authority; elapsed time supplies no new grant.
+
 ## Writer, result and commit boundaries
 
 ### One active Writer
@@ -673,6 +725,10 @@ establish that modifying work has stopped. Revoke or end former writing access
 through supported controls as applicable before granting the next bounded
 assignment. The next Writer inspects the handoff and actual worktree. A report
 alone does not transfer authority; uncertain activity blocks transfer.
+Account for modifying background commands, descendants and pending writes in the
+handoff, and establish their settlement through supported observations before
+Writer transfer or candidate freeze. A settled parent turn, vanished pane,
+stable diff or absent Git lock alone does not establish that all writes stopped.
 
 Routine build outputs and separate temporary reports are permitted. Coordinate
 checks sharing mutable outputs. Freeze the candidate for completion reviews;
@@ -688,14 +744,21 @@ questions, completion markers or permission requests into the Coordinator's
 interactive prompt, input buffer, stdin or equivalent user channel, directly or
 through a relay, hook or another agent.
 
+At result intake, read the complete required report and match its assignment and
+plan revision or candidate to the current dispatch. Preserve negative findings,
+failed, omitted or inconclusive checks and gaps. A notification or old visible
+pass is not the current report. Read the report to its required extent without
+importing the preceding console history; concise plan assessments remain the
+normal Coordinator intake.
+
 Recover truncated or missing existing output through the supported interface
-first. When necessary, ask the producing agent to write its existing result to an
-assigned temporary file and read it completely. This is result recovery, not a
-new implementation or review pass. File deliverables explicitly assigned are
-also allowed. Use distinct locations per session/assignment outside the repository
-or in permitted ignored runtime storage. An agent unable to write report files
-in its native read-only mode uses its console or native result channel instead
-of receiving broad project write access.
+first. When necessary and the producer is ready for input, ask it to write its
+existing result to an assigned temporary file and read it completely. This is
+result recovery, not a new implementation or review pass. File deliverables
+explicitly assigned are also allowed. Use distinct locations per session/assignment
+outside the repository or in permitted ignored runtime storage. An agent unable
+to write report files in its native read-only mode uses its console or native
+result channel instead of receiving broad project write access.
 
 Reports identify assignment and status, actual changes or findings, files, checks
 and results, gaps and next actions. Evaluators also give scope, verdict and
@@ -900,6 +963,8 @@ what each Task must deliver and demonstrate; they do not record lifecycle state.
   changing existing handlers or the generic Evaluator's default permissions.
 - Define actual native readiness, inheritance, context, result and lifecycle
   discovery; distinguish unsupported features from missing private telemetry.
+- Define state-first supervision, actionable dependency requests and complete
+  current-result intake using the selected route's actual capabilities.
 - Define source-based plan/result criteria, scoped Epic approvals, independent
   authorship and the permission-enforcement disclosure.
 - Define detailed Task plan assessment, mandatory Epic plan assessment of
@@ -928,6 +993,8 @@ what each Task must deliver and demonstrate; they do not record lifecycle state.
   assessment to both plans and actual results.
 - Preserve actual results, context limits and configuration across sequential
   scheduling, direct helpers, descendants and one-shot replacements.
+- Implement supervision and progress handling without routine transcript reads,
+  unsafe active-turn status prompts or competing paired-tool observers.
 - Acceptance: the same candidate receives the required independent assessments;
   implementation waits for both plan passes on the current revision and the
   Coordinator's assignment, authors cannot review their work and
@@ -956,6 +1023,8 @@ what each Task must deliver and demonstrate; they do not record lifecycle state.
   disagreements, Task reopens and authorized correction/closeout handling.
 - Recover missing output, interrupted roles, changed candidates, hook changes
   and committed-but-not-finalized work without losing findings or replaying effects.
+- Resolve unexplained overruns and circular waits through current owners and
+  supported recovery, preserving settled Writer and candidate boundaries.
 - Distinguish closeout-only edits, rejected or stopped outcomes, implementation
   rework and Task reopens through the applicable native lifecycle.
 - Acceptance: integration cannot be inferred from Task passes, both Task
@@ -969,6 +1038,8 @@ what each Task must deliver and demonstrate; they do not record lifecycle state.
 - Cover Codex and Claude native scenarios with actual results where available;
   identify unverified harnesses and capability gaps rather than generalizing
   observations or imposing cross-harness proof as ordinary startup admission.
+- Compare supervision read volume and repetition against detection delay, missed
+  incidents and false recovery in the scenarios below.
 - Require actual installed end-to-end observation for at least one named supported
   native harness; unobserved harnesses do not acquire a passing result.
 - Complete Master's separate functional verification, keeping source checks,
@@ -1026,6 +1097,8 @@ what each Task must deliver and demonstrate; they do not record lifecycle state.
 - Recover native handles, uncertain external submissions and existing results
   before replay; settle modifying descendants across both routes and preserve
   replacement findings, route/profile selection and authority.
+- Preserve fair supervision, actionable dependency requests and complete report
+  intake across mixed routes, including partially detected blocked UIs.
 - Collect minimal public configuration for every participating role/descendant,
   including changes and closeout helpers, before exact owned-session cleanup.
 - Acceptance: pane loss is not proof of termination, uncertain writes block
@@ -1070,6 +1143,11 @@ actual routes.
 | Plan defect or material design change | Refresh affected plan assessments before implementation; both Evaluator passes apply to the same revision before Coordinator Writer assignment. | TASK-148 / TASK-154; both |
 | Task plan direction and continuity | Every plan receives detailed Task review and an Epic review of direction, verified prior-output use and downstream deliverable design, including plans with no material cross-Task change. | TASK-147, TASK-148 / TASK-154; both |
 | Role-scoped planning context | Actual concise assessments and source references reach the Coordinator; the Epic role retains consequential continuity decisions and the Task role retains detail. Concrete concerns allow targeted source inspection; final product review remains substantive. | TASK-147, TASK-148 / TASK-154; both |
+| Routine supervision and quiet work | State-first observation avoids repeated console reads; healthy quiet work is not restarted merely for silence, and repetitive output alone is not progress. Compare read count/volume with detection delay, missed incidents and false recovery. | TASK-147, TASK-148 / TASK-153, TASK-154; both |
+| Dependency and supervision starvation | Requests needing Coordinator action reach it without an in-turn circular wait; one pending participant does not hide a peer's blocked or completed state. Supported safe native interactions remain usable. | TASK-148, TASK-150 / TASK-153, TASK-155; both |
+| Uncertain progress or missed dialog | An overrun, hung tool or partially detected UI triggers enough inspection to choose continued observation, supported recovery or a reported gap without duplicate dispatch or an endless unexplained wait. | TASK-148, TASK-150 / TASK-153, TASK-155; both |
+| Active-turn input and stale report | No terminal status prompt queues unintended work; complete reports match the current assignment and revision even after stalled submission or an older visible pass. | TASK-148, TASK-150 / TASK-153, TASK-155; both |
+| Coordinator context recovery | Pending handles, requests, candidate and next owners survive recovery through existing runtime records without a new state store or transcript import. | TASK-148, TASK-150 / TASK-155; both |
 | New Task team | Each new Task starts distinct Executor and Task Evaluator instances with fresh conversations where supported, concise source-based handoffs and disclosed inheritance limits; same-Task roles remain recoverable through commit verification while the Epic Evaluator retains continuity. | TASK-147, TASK-148 / TASK-153, TASK-154; both |
 | Executor scope expansion | A plan or result adds an unsupported feature, abstraction or restriction; required behavior working does not prevent rework of the unjustified addition. | TASK-147, TASK-148 / TASK-154; both |
 | Reviewer scope expansion | An Evaluator or Coordinator proposes optional hardening, an unsupported prerequisite or disproportionate tests; the team excludes it from mandatory work despite reviewer agreement. | TASK-148 / TASK-154; both |
@@ -1083,7 +1161,7 @@ actual routes.
 | One-shot/replaced Task or Epic role | Original sources, candidate, findings and remaining authority survive; restored reports do not create fresh approval. | TASK-148 / TASK-155; both |
 | Different worktree or snapshot | Required reviews inspect the integrated acceptance candidate, including owned dirty/untracked content. | TASK-149 / TASK-154; both |
 | Native permission limit | Assignment-only read-only restrictions are disclosed; unsupported technical isolation is never claimed. | TASK-147 / TASK-153; both |
-| Uncertain Writer/background work | No next Writer begins until modifying activity is safely settled. | TASK-148 / TASK-155; both |
+| Uncertain Writer/background work | No Writer transfer or candidate freeze occurs until modifying activity, including descendants and background commands, is settled; a settled parent turn, vanished pane, stable diff or absent Git lock alone is insufficient. Recheck the exact candidate before admitting assessments. | TASK-148 / TASK-155; both |
 | Truncated output or uncertain submission | Existing output/operation is inspected first, without duplicate implementation or a disguised new review. | TASK-148 / TASK-155; both |
 | Hook change or pending finalization | Substantive post-review bytes get affected reassessment; an existing commit is not replayed. | TASK-150 / TASK-155; both |
 | Final integration without a new diff | Fresh independent integration and Coordinator review still occur; no empty commit is manufactured. | TASK-150 / TASK-154; both |
