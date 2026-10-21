@@ -1,12 +1,10 @@
-version: 4
+version: 5
 project:
   name: "root-kernel-dev-skills"
 providers:
   zcode:
     timeout: "60m"
   grok: {}
-execution:
-  workspace_access: "none"
 roles:
   logic: {enabled: true, primary_provider: "zcode"}
   security: {enabled: true, primary_provider: "zcode"}
