@@ -55,6 +55,17 @@ implementation order: the native foundation first, then Herdr and mixed executio
 in the same skill. Existing Handler/Validator behavior remains unchanged;
 `epic-squad` is not implemented yet.
 
+## Planned multi-host unification
+
+[EPIC-030](roadmap/README.md#epic-030-unify-aquarium-delivery-across-five-agent-hosts)
+plans one development and distribution repository for Codex, Claude Code, Grok,
+ZCode/GLM and AGY. The [temporary dossier](todo/TODO-MULTI-HOST-UNIFICATION.md)
+defines shared workflow instructions, host-specific invocation and packaging,
+initial five-host qualification and migration from separate editions. Current
+specifications describe implemented behavior; this plan establishes no installed
+support. Final closeout must replace this pointer with the
+accepted canonical outcomes before deleting the dossier.
+
 ## Directory agent guidance
 
 The [shared contract](../plugins/aquarium/references/directory-agent-guidance.md)

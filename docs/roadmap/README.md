@@ -60,6 +60,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-027 | Add native Epic Squad collaboration | Planned |
 | EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | Planned |
 | EPIC-029 | Add directory AGENTS.md documentation indexes | Completed |
+| EPIC-030 | Unify Aquarium delivery across five agent hosts | Planned |
 
 ## EPIC-000: Independent Tasks
 
@@ -883,3 +884,39 @@ to other projects.
 | TASK-159 | Maintain guidance during Task and Epic delivery | Read applicable guidance, update affected canonical documents and indexes before review, and preserve exact reviewed content through acceptance and commit. | Completed | TASK-158 |
 | TASK-160 | Add cross-workflow regressions and verification scenarios | Add integration regressions across adoption, migration and delivery; prepare testing-authority updates, manual scenarios and fixtures for installed verification. Earlier Tasks retain their own acceptance tests. | Completed | TASK-159 |
 | TASK-161 | Verify installed workflows and promote canonical documentation | Observe candidate-bound setup and delivery in the dedicated UTM VM, record actual verification limits and promote implemented outcomes before Epic closeout. | Completed | TASK-160 |
+
+## EPIC-030: Unify Aquarium delivery across five agent hosts
+
+**Status:** `Planned`
+
+Deliver Codex, Claude Code, Grok, ZCode/GLM and AGY packages from one Aquarium
+development and distribution repository. Share workflow meaning, role instructions,
+authority and evidence contracts; keep native invocation, configuration, agent
+lifecycle and package layout in host-specific implementations. Each generated
+package must be self-contained and reproducible without an installation-time
+generator or a separately maintained edition source repository.
+
+This is a breaking migration for existing edition users. Preserve existing Codex
+behavior, public workflow names, retained Procedure bytes and admitted sessions;
+verify those requirements against exact candidates. Initial qualification covers
+all five hosts in the dedicated UTM VM. Model agreement and source checks do not
+prove installed support or grant publication and legacy-repository archival.
+Existing EPIC-019, EPIC-027 and EPIC-028 keep their own scope and status; none is
+an automatic prerequisite. Each Task owns its focused verification before the
+integrated qualification Task. Final completion includes the authorized distribution
+cutover and Master's overall acceptance.
+
+**Detailed SOT:** [Multi-host unification dossier](../todo/TODO-MULTI-HOST-UNIFICATION.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-162 | Freeze host capabilities and migration acceptance | Record exact sources and native versions, capability and paired-tool availability, installation/authentication feasibility, edition differences and required migration evidence; expose blocking gaps. | Planned | None |
+| TASK-163 | Separate shared instructions from host invocation | Define host-neutral entrypoint, implicit-selection and delegation semantics; factor reusable role/phase instructions while preserving public names, native permissions, Procedure bytes and recovery. | Planned | TASK-162 |
+| TASK-164 | Build host packages and preserve Codex behavior | Allocate all five package identities and roots, implement deterministic self-contained packaging, preserve Codex behavior and extend version/full-light release contracts across outputs. | Planned | TASK-163 |
+| TASK-165 | Integrate Claude Code | Implement and verify native skill gates, delegation, agents, MCP, hooks and host-scoped discovery without imposing edition workarounds on shared workflows. | Planned | TASK-164 |
+| TASK-166 | Integrate Grok | Implement and verify native invocation, setup, hooks, agent lifecycle and scoped discovery, including Claude auto-discovery and name collisions. | Planned | TASK-164 |
+| TASK-167 | Integrate ZCode | Implement and verify native packaging, setup, discoverability and supported roles; apply the Herdr ZCode Executor policy only within its integration scope. | Planned | TASK-164 |
+| TASK-168 | Integrate AGY | Implement and verify version-grounded native plugin, staging, hooks, configuration, delegation and skill-limit behavior without assuming Claude parity. | Planned | TASK-164 |
+| TASK-169 | Qualify five-host installation and recovery | Observe all five exact candidate packages in the dedicated UTM VM, covering discovery, workflow progression, authority failures, coexistence, prior-edition upgrade, state preservation and recovery. | Planned | TASK-165, TASK-166, TASK-167, TASK-168 |
+| TASK-170 | Cut over single-repository distribution | Extend installed release acceptance, publish through the authorized release lifecycle and migrate legacy distribution to temporary mirrors or redirects followed by authorized archival or read-only retention. | Planned | TASK-169 |
+| TASK-171 | Promote canonical documentation and close the Epic | Promote accepted contracts and migration guidance, obtain Master's overall acceptance, replace temporary links and delete the dossier only within the approved last-consumer closeout. | Planned | TASK-170 |

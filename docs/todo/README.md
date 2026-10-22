@@ -25,6 +25,9 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
   `epic-squad` workflow, its native foundation and subsequent role-specific Herdr
   and mixed execution, assessments, configuration, authority and recovery for
   `EPIC-027` and `EPIC-028`.
+- [Multi-host unification dossier](TODO-MULTI-HOST-UNIFICATION.md) defines shared
+  instructions, host packages, five-host qualification and the single-repository
+  migration for `EPIC-030` and `TASK-162` through `TASK-171`.
 
 ## Unadopted TODO Candidates
 
