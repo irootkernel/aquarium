@@ -71,13 +71,7 @@ def client_frame(connection):
 
 @contextlib.contextmanager
 def server(mode="normal", *, response=None):
-    volume = Path("/Volumes/RootKernel")
-    base = (
-        volume / "tmp"
-        if os.path.ismount(volume) and os.access(volume, os.W_OK)
-        else Path(tempfile.gettempdir())
-    )
-    with tempfile.TemporaryDirectory(prefix="aqws-", dir=base) as directory:
+    with tempfile.TemporaryDirectory(prefix="aqws-", dir="/tmp") as directory:
         path = Path(directory) / "s"
         listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         listener.bind(str(path))
