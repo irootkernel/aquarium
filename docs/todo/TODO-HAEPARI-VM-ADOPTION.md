@@ -4,9 +4,9 @@
 
 The sole consumer is `EPIC-019`, with `TASK-086` through `TASK-090`. The [canonical roadmap](../roadmap/README.md) owns identity, ordering, dependencies and lifecycle. This dossier owns the pilot's detailed scope and acceptance. Checklists describe planned evidence, not completed implementation.
 
-Haepari [v0.1.0](https://github.com/irootkernel/haepari/releases/tag/v0.1.0) is published with release tag commit `800da97b7e2ca84a15d4ee5921702ec57bbc7d61`. Its release notes identify the validated archive build as `fc3b975f8a99cacb96aecc988d3adbc04dda7309`; the tag adds release metadata. It provides managed local/UTM Jobs and advisory named locks. Publication removes the old unreleased-product prerequisite; TASK-086 still must verify and accept the exact archive, paired skill, capabilities and backend evidence. This dossier records no Aquarium implementation, installation or functional verification result.
+Haepari [v0.1.0](https://github.com/irootkernel/haepari/releases/tag/v0.1.0) is published with release tag commit `800da97b7e2ca84a15d4ee5921702ec57bbc7d61`. Its release notes identify the validated archive build as `fc3b975f8a99cacb96aecc988d3adbc04dda7309`; the tag adds release metadata. It provides managed local/UTM Jobs and advisory named locks. Publication removes the old unreleased-product prerequisite; TASK-086 verified and accepted the exact archive, paired skill, capabilities and backend evidence, recorded in its checklist below. This dossier records no installation or later-task result.
 
-The current authorization covers planning documents only. This plan authorizes no implementation, producer edits, broker messages, installation, host cleanup, staging, commit or publication. Later execution uses the applicable workflow envelope and the host's installed release; candidate installation and installation-dependent checks run only in the dedicated UTM VM.
+Planning authorization covered documents only; execution follows the approved EPIC-019 workflow authorization and the host's installed release. It authorizes no producer edits, broker messages, host cleanup or publication; staging and local commits stay with the Coordinator under the repository commit gate; candidate installation and installation-dependent checks run only in the dedicated UTM VM.
 
 ## Goal and scope
 
@@ -15,6 +15,10 @@ Adopt published Haepari v0.1.0 as an Aquarium tool and qualify Aquarium's own ma
 Aquarium owns setup/catalog integration, fixed test profiles, Make/test adapters, installed-skill and migration scenarios, result transport and the qualified release-VM policy cutover. Public external leases and linked continuation remain excluded. Ordinary local tests retain their existing authority and dependencies. No second scheduler, compatibility registry, automatic publication or host candidate installation is introduced.
 
 Shared legacy source and runtime stay available for remaining consumers. TASK-090 may detach only Aquarium-owned enrollment under its exact authority; final common removal belongs to EPIC-033. Preserve completed EPIC-002 history, native use-* skills, production state and unrelated hooks.
+
+### Breaking-change record
+
+Decided during Epic planning under the repository's breaking-change rule. EPIC-019 is breaking for Aquarium's own release operation: after TASK-090's accepted cutover, the release VM gate requires the shared Haepari release controller, the registered `UTM` resource and `make test-vm-host`, so maintainers complete that one-time transition before the next release containing the cutover. The exact installed cutover candidate must pass the TASK-090 pilot in the dedicated UTM VM before any release containing it; the current manual VM path stays authoritative until that acceptance. The release is not breaking for plugin users: Haepari setup stays optional and separately approved, and existing installations need no update or migration.
 
 ## Implementation contracts
 
@@ -102,19 +106,21 @@ Retain request/spec/result records for pending or uncertain work. Stage required
 
 Implement and document:
 
-- [ ] Verify the published v0.1.0 archive against its official checksum, complete package inventory and release-matched skill, source and executable identities. Read declared managed, durable-observation, advisory-lock, recovery, artifact and retention capabilities; distinguish compiled support from actually qualified backend evidence.
-- [ ] Freeze the project submission/result contract and read current Aquarium test, setup, tool-catalog, evidence, release, and Sorage authorities.
-- [ ] Accept persistent-VM automatic/manual execution, native wait/reconnect and owned cleanup evidence plus advisory queue/replay/renew/release semantics. Exclude deferred external leases, linked continuation and VM reset. Actual Mulgae integration belongs to EPIC-032 TASK-092 and is not required to close EPIC-019.
-- [ ] Define fixed consumer profiles as immutable test inputs and identify durable specification/architecture/ADR owners; profiles add no global registry or account-wide policy exception.
+- [x] Verify the published v0.1.0 archive against its official checksum, complete package inventory and release-matched skill, source and executable identities. Read declared managed, durable-observation, advisory-lock, recovery, artifact and retention capabilities; distinguish compiled support from actually qualified backend evidence.
+- [x] Freeze the project submission/result contract and read current Aquarium test, setup, tool-catalog, evidence, release, and Sorage authorities.
+- [x] Accept persistent-VM automatic/manual execution, native wait/reconnect and owned cleanup evidence plus advisory queue/replay/renew/release semantics. Exclude deferred external leases, linked continuation and VM reset. Actual Mulgae integration belongs to EPIC-032 TASK-092 and is not required to close EPIC-019.
+- [x] Define fixed consumer profiles as immutable test inputs and identify durable specification/architecture/ADR owners; profiles add no global registry or account-wide policy exception.
 
 Do not:
 
-- [ ] Do not start consumer implementation on a design-only Haepari promise, assume a version implies capabilities, send producer requests, or install/update the host without its applicable authority.
+- [x] Do not start consumer implementation on a design-only Haepari promise, assume a version implies capabilities, send producer requests, or install/update the host without its applicable authority.
 
 Verify and complete:
 
-- [ ] Check valid/invalid managed and lock fixtures against the exact release, supported wait/reconnect and same-key replay. Verify stale grants cannot affect a successor and observation loss cannot create duplicate Jobs. Unobserved backend evidence stays a gap.
-- [ ] The handoff is sufficient without a circular dependency on Aquarium adoption; all missing prerequisite evidence keeps this task incomplete.
+- [x] Check valid/invalid managed and lock fixtures against the exact release, supported wait/reconnect and same-key replay. Verify stale grants cannot affect a successor and observation loss cannot create duplicate Jobs. Unobserved backend evidence stays a gap.
+- [x] The handoff is sufficient without a circular dependency on Aquarium adoption; all missing prerequisite evidence keeps this task incomplete.
+
+TASK-086 verification outcome (2026-10-23): the archive and sidecar digests match the official release (`6667cab3…a18`, `fb0a83ea…531`); the complete package inventory verifies against the packaged `SHA256SUMS`; the executable digest equals the archive binary and the producer qualification binding; the paired skill tree is byte-identical to the tagged source; and `version` reports the build basis `fc3b975f…` while the release tag `800da97…` adds metadata only. The frozen capability arrays are confirmed (compiled `local`, qualified empty). Managed Job and advisory-lock fixtures against the exact release binary in a disposable foreground controller verified native blocking wait and reconnect, caller timeout without cancellation, same-key replay with `CONFLICT` on changed input, observation loss without duplicate Jobs, lock queue/replay/renew/release with same-transaction successor grants, stale-grant isolation from a successor, and manual occupancy where an unobserved scenario prevents PASS while owned cleanup runs. The producer's digest-bound running-VM qualification was reconciled from its preserved records and accepted with its recorded limits; unobserved backend evidence on Aquarium's own registered VM remains a gap for TASK-088/090. The frozen consumer contract is reserved in the tool integrations specification and its consumer reference until those tasks ship it.
 
 ### TASK-087: Register Haepari and define fixed test profiles
 

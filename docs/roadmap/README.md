@@ -49,7 +49,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-016 | Add selectable workflow review routing | Completed |
 | EPIC-017 | Add Web Pro Review | Planned |
 | EPIC-018 | Correct Aquarium workflow and integration contracts | In Progress |
-| EPIC-019 | Adopt Haepari VM verification for Aquarium | Planned |
+| EPIC-019 | Adopt Haepari VM verification for Aquarium | In Progress |
 | EPIC-020 | Migrate Orca review to Herdr | Completed |
 | EPIC-021 | Adopt supervised agent orchestration | Completed |
 | EPIC-022 | Adopt Podway v0.2.14 | Completed |
@@ -481,7 +481,7 @@ claim that a sent request or an Aquarium-side correction fixes a producer.
 
 ## EPIC-019: Adopt Haepari VM verification for Aquarium
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Adopt published Haepari v0.1.0 CLI/skill setup and qualify Aquarium's own managed persistent-VM adapter. TASK-086 through TASK-090 cover exact artifact/backend acceptance, shared controller/resource identity, sealed input/profile/skill and migration contracts, one uninterrupted manual release Job, same-Job recovery and both consumer and native cleanup. External leases and VM power/reset remain excluded. Planning changes no runtime or installed acceptance.
 
@@ -493,7 +493,7 @@ The complete delivery order is EPIC-019 -> EPIC-031 -> EPIC-032 -> EPIC-033. Eac
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-086 | Accept Haepari and freeze the consumer contract | Verify the published artifact, complete paired skill, managed/lock capabilities, native schemas and actual backend evidence; freeze the consumer and authority boundaries without deferred external leases or VM reset. | Planned | Published Haepari v0.1.0 release available; exact-artifact and backend-evidence acceptance required |
+| TASK-086 | Accept Haepari and freeze the consumer contract | Verify the published artifact, complete paired skill, managed/lock capabilities, native schemas and actual backend evidence; freeze the consumer and authority boundaries without deferred external leases or VM reset. | Completed | Published Haepari v0.1.0 release available; exact-artifact and backend-evidence acceptance required |
 | TASK-087 | Register Haepari and define fixed test profiles | Add formal CLI/skill setup and native readiness, shared installation/resource selection, fixed combinations, whole-tree checks and starting/cleanup inventories without a shadow registry. | Planned | TASK-086 |
 | TASK-088 | Implement Aquarium's project-owned VM suites | Add a host wrapper over EPIC-024's guest scenarios, sealed inputs and same-Job recovery; stage evidence and finish consumer cleanup before manual completion or automatic workload exit within one release transaction. | Planned | TASK-087; EPIC-024 |
 | TASK-089 | Integrate skills, hands-on and the VM release gate | Connect managed occupancy and original candidate-bound results to the release VM path for the existing release workflow and the later EPIC-031 handoff, preserving offline QA, full/light rules and native authority. | Planned | TASK-088 |
