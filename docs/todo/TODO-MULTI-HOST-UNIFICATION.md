@@ -87,10 +87,15 @@ Any necessary managed-source change requires its authorized update and compatibl
 successor path. Candidate development must not edit installed managed copies.
 
 Keep the present ownership and behavior of `aquarium-dev` and `status`; this Epic
-does not automatically expand either to five hosts. EPIC-019 retirement and
+does not automatically expand either to five hosts. EPIC-033 retirement and
 EPIC-027/EPIC-028 collaboration retain their separate scope. ZCode's native roles
 follow verified capabilities; the global Herdr ZCode Executor-only rule applies
 when that integration is used, not as a product-wide ZCode restriction.
+
+If this Epic's installed checks use Aquarium's shared VM after the accepted
+Haepari cutover, follow the current canonical managed-occupancy contract at the
+outer host boundary. Guest entrypoints stay within that Job. This does not make
+EPIC-019 a whole-Epic prerequisite or transfer VM scheduling into this Epic.
 
 Exclude a generalized provider framework, new orchestrator, central Aquarium
 state, custom installer product, forced feature parity, universal quotas and

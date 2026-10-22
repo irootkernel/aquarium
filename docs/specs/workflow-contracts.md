@@ -127,6 +127,11 @@ preserves the accepted composition and introduces no new semantic guidance.
 
 `release-handler` establishes the intended version, clean main candidate, previous release, publication state, and repository release policy. It reconciles every material delta with cumulative release notes before delegating one exact candidate to `release-qa`.
 
+The current release contract uses fresh QA scenario Executors and Coordinator
+adjudication without a dedicated independent Evaluator for the whole release.
+Planned release-orchestration work is tracked in the
+[roadmap](../roadmap/README.md#epic-031-adopt-coordinator-evaluator-and-executor-roles-in-release-workflows).
+
 Full release mode runs the complete repository gate after metadata changes. Light mode requires explicit test confirmation for the clean exact candidate after changelog settlement and permits only release metadata changes. Every later candidate change, including a settlement or remediation commit, requires fresh confirmation or full mode before the next QA pass or metadata step.
 
 After QA, the handler normally verifies an unchanged candidate and unchanged entry text. A failed full gate may use bounded public-checkpoint suffixes for diagnosis, but each cycle settles at most one correction commit and release readiness still requires one uninterrupted final aggregate from the beginning. QA-affecting corrections require a new authorized full release QA; the sole reuse exception is one approved QA-neutral direct child whose direct-QA and release-basis SHAs remain distinct.

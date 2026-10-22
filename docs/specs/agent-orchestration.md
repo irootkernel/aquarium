@@ -2,16 +2,25 @@
 
 ## Ordinary native workflow contract
 
-Current handlers use a Coordinator, native Executors and an independent
-report-only Evaluator at meaningful phase boundaries. The
+Task, Epic, Validation, Design and War-room workflows use a Coordinator, native
+Executors and an independent report-only Evaluator at meaningful phase boundaries.
+The
 [ordinary v3 contract](../../plugins/aquarium/references/ordinary-agent-orchestration.md) defines
 their interfaces:
 `aquarium.assignment/v3`, `aquarium.executor-handoff/v3`,
 `aquarium.evaluator-assessment/v3` and `aquarium.orchestration-checkpoint/v3`.
 That owner defines roles, grouped assessments, minimal relevant evidence,
-recovery and the producer/consumer map. Handlers, role instructions, helpers and all five bundled Procedures use the
-ordinary contract. Source and structural results do not establish installed
-functionality; actual startup, rework and recovery remain separate verification.
+recovery and the producer/consumer map. The aligned handlers, role instructions,
+helpers and all five bundled Procedures use the ordinary contract. Source and
+structural results do not establish installed functionality; actual startup,
+rework and recovery remain separate verification.
+
+`release-handler` currently coordinates the release lifecycle and calls
+`release-qa`, whose fresh scenario Executors return evidence for its Coordinator
+to adjudicate. A dedicated independent Evaluator for the whole release is not
+part of the current release contract.
+Planned release-orchestration work is tracked in the
+[roadmap](../roadmap/README.md#epic-031-adopt-coordinator-evaluator-and-executor-roles-in-release-workflows).
 
 [EPIC-024](../roadmap/README.md#epic-024-restore-native-agent-workflows-and-add-manual-vm-release-acceptance)
 established the preceding ordinary v2 contract. Its original role names and

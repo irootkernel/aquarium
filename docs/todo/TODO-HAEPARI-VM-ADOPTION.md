@@ -1,58 +1,60 @@
-# Haepari VM Verification and Development-Channel Retirement
+# Haepari VM adoption for Aquarium
 
 ## Authority and implementation state
 
-Consumer epic: `EPIC-019`. The [canonical roadmap](../roadmap/README.md) alone owns task IDs, execution order, dependencies, and lifecycle status. This dossier owns the detailed scope and acceptance for `TASK-086` through `TASK-102`. Every checklist below is planned acceptance, not evidence of completed implementation.
+The sole consumer is `EPIC-019`, with `TASK-086` through `TASK-090`. The [canonical roadmap](../roadmap/README.md) owns identity, ordering, dependencies and lifecycle. This dossier owns the pilot's detailed scope and acceptance. Checklists describe planned evidence, not completed implementation.
 
-The external producer is Haepari, an independent Go CLI and resource-aware local daemon. Its v0.1.0 requirements, architecture, ADRs, contracts, roadmap, and request templates are supplied in the Haepari development package. That package is a design input; it does not satisfy the implemented-product dependency. `TASK-086` must accept the exact Haepari release and capability handoff before Aquarium implementation begins.
+Haepari [v0.1.0](https://github.com/irootkernel/haepari/releases/tag/v0.1.0) is published with release tag commit `800da97b7e2ca84a15d4ee5921702ec57bbc7d61`. Its release notes identify the validated archive build as `fc3b975f8a99cacb96aecc988d3adbc04dda7309`; the tag adds release metadata. It provides managed local/UTM Jobs and advisory named locks. Publication removes the old unreleased-product prerequisite; TASK-086 still must verify and accept the exact archive, paired skill, capabilities and backend evidence. This dossier records no Aquarium implementation, installation or functional verification result.
 
-This epic adopts project-owned VM tests, delegates external review-lease integration to Mulgae, and retires the old development channel in stages. Haepari design revision 2 supplies both managed and external execution contracts; the product target remains v0.1.0. This epic does not implement Haepari or edit producer repositories. No Sorage message has been sent by creating this plan. No host runtime, hook, service, skill, or development directory has been removed.
+The current authorization covers planning documents only. This plan authorizes no implementation, producer edits, broker messages, installation, host cleanup, staging, commit or publication. Later execution uses the applicable workflow envelope and the host's installed release; candidate installation and installation-dependent checks run only in the dedicated UTM VM.
 
-The [old development dossier](TODO-AQUARIUM-DEV.md) is retained as a migration reference. Its completed history remains valid; unfinished expansion is withdrawn in the roadmap. Its installed behavior continues to be owned by the existing [development contract](../../plugins/aquarium/references/development-contract.md) until the approved cutover changes that owner.
+## Goal and scope
 
-## Goal
+Adopt published Haepari v0.1.0 as an Aquarium tool and qualify Aquarium's own managed VM path. Haepari owns admission, execution, manual occupancy, collection and owned Job cleanup; Aquarium recipes own installation assertions, guest fixtures and consumer cleanup. Use one shared per-user controller and one capacity-one persistent UTM resource. Haepari never starts, stops, clones or resets the VM.
 
-Keep stable Aquarium and tools available on the host while candidate installation, installed-skill behavior, hands-on work, migration, and regression are verified in an exclusively allocated macOS VM. Every product owns its test scenarios. Haepari owns admission, waiting, managed VM lifecycle, evidence transport, reset, and resource recovery. Ordinary Mulgae reviews use a separate external resource: Haepari grants capacity, while Mulgae and its caller own native execution, retry, source retention and result composition. Both execution modes share Haepari's scheduler and global occupancy limit.
+Aquarium owns setup/catalog integration, fixed test profiles, Make/test adapters, installed-skill and migration scenarios, result transport and the qualified release-VM policy cutover. Public external leases and linked continuation remain excluded. Ordinary local tests retain their existing authority and dependencies. No second scheduler, compatibility registry, automatic publication or host candidate installation is introduced.
 
-Aquarium adopts the arrangement first, then coordinates the following producers through Sorage in this exact order:
+Shared legacy source and runtime stay available for remaining consumers. TASK-090 may detach only Aquarium-owned enrollment under its exact authority; final common removal belongs to EPIC-033. Preserve completed EPIC-002 history, native use-* skills, production state and unrelated hooks.
 
-`Podway -> Mulgae -> Gaori -> Sorage -> Sanho -> Dolgorae -> Gul -> Seongge -> Gaebokchi`.
+## Implementation contracts
 
-Each producer must return accepted implementation and verification evidence before the next producer is dispatched. After the final return, Aquarium reconciles the full environment, retires shared legacy infrastructure, and completes its own cold validation and documentation closeout.
+### Native authorities and tool setup
 
-## Scope and exclusions
+Use the release-matched [use-haepari skill](https://github.com/irootkernel/haepari/blob/v0.1.0/skill/use-haepari/SKILL.md), [managed resource contract](https://github.com/irootkernel/haepari/blob/v0.1.0/docs/contracts/resource-and-runner.md), [lock contract](https://github.com/irootkernel/haepari/blob/v0.1.0/docs/contracts/locks.md) and [Mulgae integration contract](https://github.com/irootkernel/haepari/blob/v0.1.0/docs/integrations/mulgae-review.md). Check declared capabilities and qualified backend evidence independently of the version string. Deferred external-lease commands and automatic VM reset are not acceptance prerequisites.
 
-Aquarium owns its Make targets, tests, guest installation recipes, profile definitions, skill integration, setup guidance, release-gate wiring, coordination requests, returned-evidence review, and final shared-channel retirement. The producers own their source, local roadmap IDs, installation units, migrations, tests, and product-specific legacy detachment.
+Accept the official archive through its published checksum and sidecar, packaged `SHA256SUMS` and recorded build identity: version stamp, `source_revision`, `source_modified`, executable digest and complete skill-tree digest. Do not require the binary's build revision to equal the release tag or rebuild it to make them match. The frozen v0.1.0 capability arrays report `compiled_backends: ["local"]` and `qualified_backends: []`. Accept running-VM qualification from the separate digest-bound producer profile, then qualify Aquarium's combination in TASK-090; setup must not require a nonempty `qualified_backends` array.
 
-Do not implement a central integration-test repository, another queue, a competing Podway scheduler, or a product compatibility registry inside Haepari. Do not add VM or paid-provider dependencies to the ordinary local `make test` gate without a separately adopted contract change. Do not automatically publish a release, change a model/provider account, or update host tools when a VM test passes.
+TASK-087 adds the CLI and complete same-release `use-haepari` tree to global setup, native installation/freshness inspection and the tool catalog. Preserve the upstream `skill/use-haepari/` source layout. Repository setup checks the selected controller/resource and the capabilities needed by the operation. Installation, service activation and resource registration retain their native authority boundaries; setup does not submit Jobs or reviews.
 
-Do not remove native `use-*` skills, external global skills, `dev-setup`, `dev-setup-global`, or generic development capabilities merely because their names contain `dev`. The obsolete feature is the `aquarium-dev` runtime, CLI/MCP registration, enrollment/hook/publication machinery, and producer-specific integration proved exclusive to that channel. The current channel does not have a paired `aquarium-dev` skill to delete indiscriminately.
-
-## Shared implementation contracts
+Participating projects on one macOS arm64 machine and OS user select the same installed controller through its native installation configuration, including `HAEPARI_HOME`, and the same capacity-one VM resource. Register the VM once by its native identity; do not create per-project controllers or duplicate resources for that VM. Machine-local VM/SSH settings stay in Haepari/operator configuration. Add no `.aquarium`, shadow registry or second scheduler. Ordinary local checks and read-only review inspection require no VM occupancy.
 
 ### Project-owned entrypoints and immutable input
 
 EPIC-024 owns Aquarium's manual guest-side `make test-vm` entrypoint and reusable `tests/vm/` scenarios without a Haepari dependency. TASK-088 and TASK-089 later reuse those outputs when adding Haepari host submission and result transport. They retain their roadmap lifecycle and producer dependencies; Haepari adoption does not block EPIC-024.
 
-For this later adoption, every project exposes a separate Haepari host wrapper with `SUITE=install|migration|regression|all MODE=auto|manual`, or a documented equivalent adapter. The wrapper freezes candidate and test bytes, submits once through the supported Haepari CLI, reports the Job reference, blocks on that same job, and returns a truthful result. It never controls UTM directly or falls back to installing a candidate on the host. The proposed suite/mode interface belongs to this later adoption, not EPIC-024's initial manual gate.
+Aquarium adds a separate `make test-vm-host` wrapper with `HAEPARI=<absolute-cli> RESOURCE=<registered-id> MODE=auto|manual RUN_DIR=<private-physical-path>`. Release hands-on verification uses manual mode; automatic suites use auto mode. Select only consumer-declared suites through `SUITE`, with `release-acceptance` naming the release transaction. Preserve the guest-side `make test-vm` entrypoint and its current request contract. Other producers may expose an equivalent adapter.
+
+Before assigning submission, the Coordinator allocates a private mode-0700 run directory and includes its path in the Executor assignment. Save the request key, exact spec, installation/resource identity and sealed candidate/test/profile/scenario bytes there before first submission. Agent-owned temporary runs use a unique physical directory under `/tmp`; retain it across pending or uncertain work. The wrapper reports the Job ID and blocks through native `wait`, without a status-polling loop. A timeout or uncertain reply reconnects to the same Job or replays the identical submission key and spec. It never generates a replacement key speculatively, controls VM power or installs the candidate on the host.
 
 The guest entrypoint stays distinct from host submission and reuses EPIC-024's `make test-vm` for Aquarium. Haepari-managed execution verifies guest/lease identity before installation and never recursively submits a job. Development snapshots may include selected dirty-worktree bytes; their content digest is the candidate identity. Release evidence must satisfy the existing exact committed/distributed candidate policy. Queue waiting must not cause later worktree changes to alter the admitted candidate.
 
-The all suite submits separate install and migration/regression jobs as required, using the same fixed candidate. Reset between independent jobs, but never reset between old-state creation and assertions inside one migration job. Retain all Job results and report skipped or unobserved required suites rather than returning aggregate success.
+Use the frozen v0.1.0 Job schema and its supported `development` evidence class. Consumer provenance binds committed source and release/archive identities; it does not require a new controller-enforced evidence class. Choose phase budgets and applicable resource ceilings before admission, including enough manual time for the cases, evidence staging and consumer cleanup. Reconnection never extends a deadline.
 
-### Managed VM execution and external review leases
+One release-acceptance Job holds the VM continuously from the first baseline observation through candidate installation, automatic/manual scenarios, evidence collection and owned cleanup. Do not release between an upgrade and its assertions, or between preparation and hands-on work. Independent suites may use separate Jobs only when each checks and establishes its own starting state. `SUITE=all` retains every Job result and reports skipped or unobserved required work; it never turns a partial run into aggregate PASS.
 
-After this adoption, UTM tests use Haepari-managed execution, including manual hands-on ownership. EPIC-024's earlier manual UTM gate remains independent of Haepari. Ordinary reviews use a separately configured `mulgae-review` external resource, not a managed Job wrapper. `auto/manual` is a test-mode distinction; `managed/external` names the execution owner. The same scheduler accounts for reserved, active and unresolved occupancy in both resource queues. One external review segment consumes one slot regardless of its native role/provider count.
+### Managed VM execution
 
-The external request must atomically grant or queue. Accepted admission is not a grant, and a grant is not native execution or user authorization. A single caller executor activates the grant and records a first-claim-only execution intent before each native CLI/MCP mutation. Replayed admission or begin cannot authorize a second native call. Use blocking wait/events, stable request/operation keys and protected owner material. No silent unqueued fallback is allowed when the selected queue path is unavailable.
+Adopted UTM verification uses native managed Jobs, including `awaiting_manual` occupancy and revision-bound manual completion. Return capacity through Haepari settlement after execution, required collection and owned cleanup. A wait timeout does not cancel or release a Job. Unknown execution follows native reconciliation and recovery; elapsed time or an empty process list cannot prove termination. EPIC-024's accepted historical manual results keep their original meaning.
 
-A logical workflow may span several native reviews and Haepari leases. Mulgae v0.1.25 has no source replay, failed-role rerun or new composition. Keep an active native invocation under its current lease without recursive acquisition. After terminal execution, return capacity before a user decision or long external delay and retain verified result references with `awaiting_user` or `deferred`. On explicit authority for a new current-source review, use a new FIFO request key and lease with the same opaque workflow reference and exact released-parent link. This is new execution, not recovery of the old source or queue position.
+### Delivery sequence and release ownership
 
-Haepari must fence stale releases and reject concurrent continuation branches. The caller also owns a minimal durable single-executor dispatch/recovery checkpoint; admission deduplication does not make non-idempotent native starts safe to repeat. Unknown starts, lost process-local invocation handles, observer timeouts and unconfirmed cancellation retain occupancy in reconciliation. Only supported native termination/no-start evidence permits return. Direct CLI/MCP callers outside the integration remain outside this advisory limit.
+The roadmap orders four complete Epics: EPIC-019 -> EPIC-031 -> EPIC-032 -> EPIC-033. EPIC-019 owns TASK-086 through TASK-090 and closes after the Aquarium pilot and canonical handoff. EPIC-031 then consumes the accepted adapter for release-role orchestration. EPIC-032 owns the nine producer returns, including Mulgae's native advisory integration. EPIC-033 owns whole-combination verification and shared legacy retirement. No later Epic resumes EPIC-019 or depends on this temporary dossier surviving its closeout.
 
-For six selected roles with five accepted and one failed, preserve the incomplete result and accepted reports as historical evidence. Provider-free publication reconciliation cannot supply the missing coverage. A later explicitly authorized review uses current source and the full selected arrangement under a fresh lease; do not combine its reports with the failed run or claim that retained recovery inventory authorizes replay. Keep coverage, publication, findings/CI and returned capacity separate. Haepari stores no role/result state and never substitutes providers.
+Adoption means acceptance of TASK-090's exact cutover candidate after its installed pilot passes. TASK-089 prepares the adapter; TASK-090 updates `AGENTS.md` Release Policy, `TESTING.md`, `tests/vm/README.md` and affected release-handler references to select `make test-vm-host` and native managed-Job semantics before that candidate's verification and acceptance. The pilot uses its explicit VM-test authority. The current release path remains authoritative until the cutover is accepted. EPIC-019 does not require EPIC-031's future roles or EPIC-032's future Mulgae release to pass its pilot. Any later installed-source change requires affected observations again. Host activation and publication retain their separate authority.
 
-TASK-092 delegates this implementation to the Mulgae project, including its owned `use-mulgae` skill and any minimal required native helper. Aquarium accepts the returned capability and updates only its own affected review integration references, without wrapping the producer with a second lease layer. Haepari's standalone fixture evidence does not prove native Mulgae behavior. Tests of the new integration inside a managed VM use an isolated Haepari instance/test resource, never the parent controller's already occupied VM or global slot. The Aquarium-first pilot does not depend on the not-yet-delivered Mulgae integration.
+After that cutover, Aquarium-owned installation-dependent checks targeting the same registered shared VM use the accepted managed adapter for occupancy, including development checks and any later EPIC-030 qualification. Acquire once at the outer host boundary; guest entrypoints and nested handler fixtures work inside the held Job without recursively acquiring its resource. Work targeting another environment follows its own authority. Native exclusion covers participating callers using the selected installation/resource; it does not police direct access that bypasses Haepari. Carry this occupancy requirement into the durable VM/testing guidance at TASK-090 closeout.
+
+The adapter returns original candidate-bound results, evidence completeness, consumer cleanup and native disposition separately. Its canonical handoff identifies the selected controller/resource, saved request/spec/Job, native wait/recovery and cleanup responsibility. EPIC-031 maps those facts into its existing v3 roles and assessments without another scheduler or report schema.
 
 ### Baselines, profiles, and release combinations
 
@@ -80,7 +82,7 @@ The immediate prior accepted version/profile is the default required path. Wider
 
 ### Manual, live, and release-QA boundaries
 
-Manual mode prepares the exact candidate environment and holds the same exclusive resource while Master verifies the project checklist. Preparation-ready is not a test pass. Bind the actual observer, scenarios, candidate/profile, observations, and omissions to the result, then collect and reset before resource return.
+Manual mode prepares the exact candidate environment and holds the same exclusive resource while the authorized fixture operator or Master performs the project checklist. Preparation-ready is not a test pass. While still `awaiting_manual`, perform the cases, stage their required evidence in the Job's declared output paths, then finish recipe cleanup and verify its inventory. Record cleanup and its evidence as required manual scenarios, preserving the staged case evidence. Only then submit `manual complete` with the actual observer, candidate/profile, observations and omissions. That command starts Haepari collection and owned cleanup; there is no later consumer-cleanup hook. Automatic workloads likewise finish recipe cleanup and stage its evidence before exiting. Missing human observations or failed/unobserved consumer cleanup prevent acceptance.
 
 Offline fixtures are default. Live service/model use requires the exact approved guest endpoints, test identities, and cost/time scope. Never copy host account files or use real Sorage/production data as fixtures. VM restoration does not reverse external writes or charges.
 
@@ -88,41 +90,11 @@ The current `release-qa` is an offline disposable-scenario contract and must not
 
 ### Results, cleanup, and failure
 
-Require Haepari's native distinction between workload outcome, required evidence completeness, cleanup/restoration, and final verdict. A successful workload with failed reset or missing required observations cannot pass. A connection loss does not prove termination; reattach the same Job/run and reconcile uncertain effects instead of starting another test.
+Keep Haepari's workload outcome, required-evidence completeness, owned cleanup and final verdict separate from consumer installation/restoration assertions. A successful command with missing required observations or failed consumer cleanup cannot establish acceptance. A wrapper wait timeout reports PENDING; an unavailable observation reports UNKNOWN without inventing a terminal verdict. Reattach the original Job after connection loss.
 
-Whole-environment reset must restore binaries, skill roots, plugin/configuration state, services, and guest data. Verify the restored inventory. If cleanup is unproven, Haepari quarantines the resource and blocks its next job. Raw runtime IDs, local paths, Sorage metadata, and provider logs remain local evidence unless a reviewed bounded promotion satisfies the existing evidence-residency contract.
+Haepari cleans its own processes and Job paths; it does not undo arbitrary guest installation changes. Each recipe declares its starting-state checks, owned installation/fixture cleanup and reusable postcondition, preserving meaningful baseline state until assertions finish. Verify the resulting inventory before claiming consumer cleanup. An independent successor checks its own starting state and cannot assume a pristine VM. Native uncertain execution or protected Job evidence follows Haepari quarantine/recovery; a consumer restoration failure remains explicit and uses supported maintenance/recovery before affected reuse. Do not claim automatic rollback or quarantine for effects Haepari cannot observe.
 
-## Sorage request and completion protocol
-
-Use the installed native `use-sorage` skill and observed output when this epic's execution envelope explicitly authorizes a broker operation. This plan alone does not authorize a send or discovery. Resolve the actual recipient identity rather than guessing a Project slug from a product name.
-
-A request carries a stable logical correlation key, the immutable request-document digest, exact Haepari and pilot/profile contracts, the producer-specific scope, expected return fields, and the permitted effect boundaries. Allocate the native Handoff once and preserve its real receipt/revision. If a send result is uncertain, reconcile native state before another send; do not manufacture application-level message IDs or edit broker storage.
-
-The producer allocates its own local task/epic IDs and may accept the request or ask for changes through the native review loop. Acceptance of the request means the request was accepted, not that implementation is complete. Aquarium's coordination task remains open while producer implementation or required evidence is pending.
-
-The producer sends a separate completion-report Handoff back to Aquarium after implementation and verification. It references the original logical request, native request/revision, and accepted scope. The producer does not edit Aquarium's sender-owned request or the managed Vault. Aquarium reads the current returned document, checks evidence, requests bounded corrections through native review/revision when needed, and explicitly accepts the completed response only when its criteria are met.
-
-Do not send the next project until this return is accepted. Blocked or unobserved producer work pauses the sequence; a receipt, acknowledgement, commit list, or prose claim is insufficient. No recurring inbox watcher, unrelated inbox scan, or automatic resend is part of the implementation. An authorized waiting operation uses native supported waiting semantics.
-
-### Required producer return
-
-The report must contain the resolved producer/repository and producer-owned work IDs; exact source/candidate/test identities; installation-unit and skill-tree provenance; Haepari executable/runner/capability identity; starting/target profile digests; per-suite Job references and actual observations; old-state migration and regression evidence; manual gaps; cleanup and restored inventory; product-specific legacy source changes; separately evidenced host detachment; released/unreleased status; and remaining limitations.
-
-The Mulgae return additionally identifies the external request/lease generations, operation/continuation references and native root/attempt/publication results without ownership secrets. Require same-invocation continuation, return-before-user-wait, explicitly authorized fresh-lease current-source review, preserved historical evidence and honest coverage, duplicate resume/start rejection and unknown-execution handling. VM-only success cannot complete TASK-092. Other producers do not acquire an external-review implementation obligation merely because this section exists.
-
-A missing prior release or native skill uses evidence-backed `not_applicable`. Do not invent a `use-gul`, `use-seongge`, or `use-gaebokchi` merely to satisfy a template. A candidate using an API beyond the frozen Haepari contract is a dependency change that must be resolved before acceptance.
-
-## Staged legacy retirement
-
-The roadmap withdraws unfinished expansion of `EPIC-002`, preserving all completed records. During the transition, stop adding new legacy enrollments, but do not remove a manager still required by existing producers. Preserve its recovery path until actual detachment is complete.
-
-Each producer inventories its current source and host references. Once its VM path passes, detach only the exact owned post-commit marker before removing the producer targets that marker invokes. Drain/stop and retire producer-owned development services through their native contract before deleting selected artifacts. Preserve foreign hook bytes, generic dev features, stable binaries and native skills. A changed source file is not proof that a live hook or service has been removed.
-
-Aquarium's pilot can detach its own legacy enrollment under the corresponding authority, while retaining the shared manager for remaining tools. Final shared retirement occurs only after every producer return shows successful migration and either completed host detachment or verified absence of an enrollment.
-
-Before deleting `~/.aquarium-dev/`, perform a fresh inventory of enrollments, queued requests, active workers, generation leases, development services, hooks, launchers, symlinks, shell PATH/config references, plugin MCP declarations, and status/setup consumers. Resolve in-flight users and the chosen evidence/backup policy. Shared launcher/runtime removal and the final directory deletion are explicit host effects, separate from repository source cleanup.
-
-Preserve `~/.aquarium/`, production tool state, active Codex homes, unrelated skills, Sorage's coordination database/Vault, and unrelated Git hooks. Reconcile `aquarium-status` legacy enrollment reporting without deleting its production ledger. Retain minimal compatibility only while a real consumer needs it; do not replace aquarium-dev with another permanent dual-runtime channel.
+Retain request/spec/result records for pending or uncertain work. Stage required evidence before removing consumer fixtures; native collection follows manual completion or automatic workload termination. Cancellation or deadline expiry preserves actual native outcomes and unfinished consumer cleanup, without claiming a clean guest or extending occupancy beyond native settlement. Raw runtime IDs, local paths, Sorage metadata and provider logs remain local evidence unless reviewed bounded promotion satisfies the existing evidence-residency contract.
 
 ## Task acceptance checklists
 
@@ -130,10 +102,10 @@ Preserve `~/.aquarium/`, production tool state, active Codex homes, unrelated sk
 
 Implement and document:
 
-- [ ] Verify Haepari's exact producer handoff, official release/artifact and full skill identities, supported platforms, runner compatibility, schemas, blocking wait, manual results, migration example and real UTM reset evidence. The default is an official release; an explicitly selected exact candidate needs the same artifact/capability evidence and must retain its candidate evidence class.
+- [ ] Verify the published v0.1.0 archive against its official checksum, complete package inventory and release-matched skill, source and executable identities. Read declared managed, durable-observation, advisory-lock, recovery, artifact and retention capabilities; distinguish compiled support from actually qualified backend evidence.
 - [ ] Freeze the project submission/result contract and read current Aquarium test, setup, tool-catalog, evidence, release, and Sorage authorities.
-- [ ] Require exact managed/external resource capabilities, atomic grant/queue, single-executor activation and first-claim dispatch, native-reference settlement, safe release and linked continuation. Accept Haepari's independent E01 through E20 fixture evidence without making actual Mulgae adoption a producer prerequisite.
-- [ ] Define the explicit test-profile exception to the no-shadow-global-registry policy and identify durable specification/architecture/ADR owners for later promotion.
+- [ ] Accept persistent-VM automatic/manual execution, native wait/reconnect and owned cleanup evidence plus advisory queue/replay/renew/release semantics. Exclude deferred external leases, linked continuation and VM reset. Actual Mulgae integration belongs to EPIC-032 TASK-092 and is not required to close EPIC-019.
+- [ ] Define fixed consumer profiles as immutable test inputs and identify durable specification/architecture/ADR owners; profiles add no global registry or account-wide policy exception.
 
 Do not:
 
@@ -141,15 +113,16 @@ Do not:
 
 Verify and complete:
 
-- [ ] Parse valid and invalid managed and external input/result fixtures and demonstrate supported wait/reconnect through the exact installed test release. Verify a stale lease cannot return a successor's capacity and an uncertain native start cannot be re-dispatched from a replay.
+- [ ] Check valid/invalid managed and lock fixtures against the exact release, supported wait/reconnect and same-key replay. Verify stale grants cannot affect a successor and observation loss cannot create duplicate Jobs. Unobserved backend evidence stays a gap.
 - [ ] The handoff is sufficient without a circular dependency on Aquarium adoption; all missing prerequisite evidence keeps this task incomplete.
 
-### TASK-087: Define fixed profiles and complete installation inventories
+### TASK-087: Register Haepari and define fixed test profiles
 
 Implement and document:
 
-- [ ] Add Aquarium-owned test-profile inputs, native component/skill pin mapping, exact host-runtime/client identity, candidate overrides, and before/candidate/restored inventory contracts.
-- [ ] Define product-absent install and prior-version migration starting profiles, next-release whole-combination selection, private machine-local baseline registration and supported upgrade edges.
+- [ ] Add Haepari CLI and complete same-release `use-haepari` registration, provenance/freshness checks and native setup routing to `dev-setup-global`, repository readiness, the tool catalog and affected status/bundle inventories where those enumerate supported components. Keep setup effects separately authorized and avoid requiring a live VM for ordinary local checks.
+- [ ] Define common installation/resource selection and operation-specific capability checks. Preserve native private service/resource/SSH configuration, whole-tree skill comparison and the distinction between binary, controller and backend readiness.
+- [ ] Add fixed candidate/test/profile inputs, native component/skill pins, candidate overrides and before/candidate/post-cleanup inventory contracts. Define product-absent and prior-version starting states and supported upgrade edges without a baseline-reset service.
 
 Do not:
 
@@ -157,7 +130,7 @@ Do not:
 
 Verify and complete:
 
-- [ ] Validate full-tree skill-only and independently pinned cases, duplicate locations, stale files, settings drift and profile digest changes.
+- [ ] Validate missing/incompatible CLI or capability, mismatched installation/resource, duplicate skill locations, full-tree differences, independently pinned cases, settings drift and profile changes. Setup must not submit workloads or replace native configuration with a shadow registry.
 - [ ] Profile definitions are reproducible test inputs and do not claim an actual VM was provisioned or a migration passed.
 
 ### TASK-088: Implement Aquarium's project-owned VM suites
@@ -166,7 +139,7 @@ Implement and document:
 
 - [ ] Add the separate Haepari host wrapper, reusing EPIC-024's guest entrypoint and scenarios, with an immutable package/test bundle and truthful per-suite result mapping.
 - [ ] Add actual candidate plugin installation, initial setup, previous-version synthetic state, upgrade, existing-behavior regression, restart and bounded migration failure/recovery scenarios.
-- [ ] Keep managed UTM/SSH/reset in Haepari and preserve the ordinary local test gate; do not impose Haepari on EPIC-024's manual execution.
+- [ ] Keep managed UTM/SSH transport and owned Job collection/cleanup in Haepari. Recipes own guest installation/fixture changes and starting-state checks. Preserve ordinary local tests and EPIC-024's accepted historical evidence.
 
 Do not:
 
@@ -174,7 +147,7 @@ Do not:
 
 Verify and complete:
 
-- [ ] Demonstrate install and migration as distinct jobs, queued-source immutability, missing-VM failure, guest identity rejection and result/cleanup failure propagation.
+- [ ] Demonstrate one uninterrupted release-acceptance Job, manual hold, evidence staging and verified consumer cleanup before manual completion, automatic cleanup before workload exit, independent-suite starting states, queued-source immutability, missing-VM blockers, guest identity rejection and truthful result/cleanup failure propagation. Reconnect with the saved run directory after observation loss without a replacement Job.
 - [ ] The actual plugin package, configuration and supported prior behavior are exercised; source-level tests alone do not complete this task.
 
 ### TASK-089: Integrate skills, hands-on and the VM release gate
@@ -182,8 +155,9 @@ Verify and complete:
 Implement and document:
 
 - [ ] Add complete skill/rules/configuration installation inspection and fresh native session discovery, representative workflow behavior and explicit manual observation records.
-- [ ] Extend EPIC-024's manual release step with Haepari-managed execution and candidate/profile-bound result transport, preserving its invocation authority, offline release-QA and publication authority.
+- [ ] Prepare the managed extension of EPIC-024's manual release step and candidate/profile-bound result transport for TASK-090's qualified policy cutover, preserving invocation authority, offline release-QA and publication authority.
 - [ ] Define full intended release-combination and existing-stable-to-candidate upgrade scenarios, plus final distribution identity checks.
+- [ ] Define controller/resource/Job identity, original observations and disposition responsibility for the existing release path. Promote that adapter contract before EPIC-019 closeout so EPIC-031 can consume it through existing assignments and handoffs; release-role implementation belongs to EPIC-031.
 
 Do not:
 
@@ -194,12 +168,13 @@ Verify and complete:
 - [ ] Observe required actual installed-session and hands-on cases, including duplicate or stale skill failure, and verify cleanup restores the original discovery/configuration state.
 - [ ] Missing human/live evidence remains incomplete and cannot be accepted through a successful Make exit alone.
 
-### TASK-090: Qualify the Aquarium pilot and freeze producer packets
+### TASK-090: Qualify the Aquarium pilot and prepare Epic closeout
 
 Implement and document:
 
-- [ ] Run the complete Aquarium-only pilot with fixed install/migration/regression/manual evidence, disconnect/cancel/reset failure, and a second clean job.
-- [ ] Package the accepted consumer contract, Haepari identity, profile examples, producer request template, completion template and per-project acceptance scope. The revised Mulgae packet must cover both managed VM adoption and external `use-mulgae` leases, terminal partial-failure handling, provider-free publication reconciliation, explicitly authorized new reviews and live-source consistency limits.
+- [ ] Run the Aquarium-only pilot with install/migration/regression/manual evidence, disconnect/cancel/collection/cleanup failures and a successor that verifies its own starting state. Use two disposable project callers against the same capacity-one VM resource and observe actual non-overlap and handoff.
+- [ ] Prepare the canonical release-policy cutover in this Task's candidate and verify that exact installed candidate under explicit pilot authority before accepting adoption. Update `AGENTS.md`, `TESTING.md`, the VM guide and affected release-handler references together; preserve EPIC-024's historical manual results. Do not leave this operational policy change until TASK-102 or accept the cutover from wrapper availability alone.
+- [ ] Promote the accepted setup, adapter, profile, skill/migration and recovery contracts with their actual verification limits. Supply the stable Haepari identity and reusable request/completion templates as canonical handoff inputs; EPIC-032 TASK-091 freezes producer packets after EPIC-031 closes.
 - [ ] Inspect Aquarium's own legacy enrollment and, after explicit approval, detach its owned hook and development use while retaining shared infrastructure required by later producers.
 
 Do not:
@@ -209,151 +184,14 @@ Do not:
 Verify and complete:
 
 - [ ] Host stable Aquarium/tools/skills remain usable; runtime changes are confined to approved Haepari/test/own-detachment state.
-- [ ] All pilot criteria are accepted, and one precise producer packet can start the ordered delegation without undocumented assumptions.
+- [ ] All pilot criteria and required manual observations are satisfied. Prepare independent whole-Epic validation, Master's overall acceptance, canonical outcomes and this dossier's deletion without waiting for producer returns or shared-channel retirement.
 
-### Common acceptance for TASK-091 through TASK-099
+## Epic acceptance, handoff and dossier deletion
 
-Each task is Aquarium-owned coordination work with a separately owned producer implementation. Its normal final commit records only accepted Aquarium-owned integration/documentation changes. Intermediate transport state stays in Sorage and permitted local evidence; do not manufacture a repository commit for every poll or message.
+- [ ] TASK-086 through TASK-090 meet their criteria, the exact installed pilot passes, required actual manual observations exist and the accepted policy cutover matches the tested candidate.
+- [ ] Independent whole-Epic validation covers setup, complete skill/profile identity, installed upgrade, shared-VM contention, manual occupancy, same-Job recovery and both native and consumer cleanup.
+- [ ] Promote setup/adapter/profile and skill/migration contracts to [tool integrations](../specs/tool-integrations.md), the tool catalog, workflow specifications/architecture and affected native references; promote verification and operating requirements to `TESTING.md`, `tests/vm/` and operations. Include an accepted component/profile inventory and actual limitations usable by later Epics without raw runtime reports.
+- [ ] EPIC-031 and EPIC-032 read EPIC-019's Canonical Outcomes and those durable owners. No producer return, Mulgae implementation, whole-combination pass or shared retirement is a completion criterion here.
+- [ ] Obtain Master's actual overall acceptance; replace only EPIC-019's Detailed SOT with valid Canonical Outcomes. Replace every temporary navigation pointer, remove this dossier's TODO entry and delete this exact dossier under the approved closeout envelope. No other Epic declares it as an execution SOT; do not retain or archive it for later work.
 
-- [ ] Read the current prerequisite acceptance and resolve the next exact recipient.
-- [ ] Send one authorized, versioned request with the common contract and product-specific criteria. Reconcile an uncertain send before retrying.
-- [ ] Obtain the producer's own work-ID mapping and a correlated completed implementation report, not merely a request acknowledgement.
-- [ ] Verify exact candidate/test/profile/binary/skill identities, installation, real old-state migration where applicable, regression, manual observations, failure recovery and resource reset.
-- [ ] Review actual obsolete source removal and separately evidenced native hook/service detachment or proven absence. Preserve shared infrastructure until TASK-101.
-- [ ] Return corrections through Sorage when acceptance is incomplete; do not edit producer source from Aquarium.
-- [ ] Accept the final returned Handoff using current native revision/row fences, promote only permitted bounded evidence, and only then allow the next task.
-
-### TASK-091: Delegate and accept Podway
-
-- [ ] Apply the common acceptance protocol to Podway.
-- [ ] Require matching CLI/daemon candidate identity, the independently declared full `use-podway` tree, workspace/configuration/history preservation, Procedure compatibility, restart/recovery and the native busy-work update policy.
-- [ ] Detach only legacy producer/controller/development-service interfaces proved exclusive to aquarium-dev. Preserve supported native runtime modes and generic features still used independently.
-- [ ] Verify migration does not drop workspace identity, historical records, logical retry state or active-work obligations. Accept only actual product evidence and restored VM state.
-
-### TASK-092: Delegate and accept Mulgae
-
-- [ ] Apply the common acceptance protocol to Mulgae after Podway acceptance. Send the revised two-part request through Sorage; the producer allocates its own implementation tasks and changes its own source/skill.
-- [ ] Require installed review execution/result retrieval, native provider/role configuration, existing review/configuration migration and complete `use-mulgae` verification across the actual CLI/MCP transport.
-- [ ] Require queue-backed ordinary review execution through external atomic request/wait, single-executor activation, first-claim native begin, terminal settlement and release. Preserve native transport and async completion semantics, not just start acknowledgement.
-- [ ] Require a minimal durable ownership/dispatch/recovery checkpoint, stable request keys, opaque operation references, current lease generations and protected owner material. Native mutation response loss remains a reconciliation problem even when Haepari admission is certain.
-- [ ] Verify the six-role partial-failure case: five accepted results remain unchanged in the historical run; pending invocation continuation keeps the same lease, and terminal failure grants no role rerun or compose execution.
-- [ ] Verify that failed recovery with confirmed native termination returns the lease before asking the user. An unrelated review must progress while the original logical review remains incomplete.
-- [ ] Verify one explicitly authorized fresh current-source review under a new FIFO request/lease linked to the released segment, covering the full selected arrangement. Reject concurrent resume branches, duplicate starts, stale return, mixed-run coverage and retired replay/compose requests; preserve native source identity and consistency limits.
-- [ ] Verify observer timeout, native cancellation, caller death, controller restart and lost invocation identity cannot free possibly active capacity. Distinguish returned capacity from publication, coverage, findings and CI outcomes.
-- [ ] Use synthetic targets and an isolated test Haepari instance/resource in the VM; never acquire the already occupied parent VM/global slot or transmit production repository data merely to satisfy a default test. Live native acceptance retains its separately approved scope.
-- [ ] Verify old-to-new installed `use-mulgae` discovery and behavior, whole-environment restoration and the documented advisory limitation of direct unqueued calls. VM-only or generic fixture-only evidence does not complete this task.
-- [ ] After accepting the producer return, align only Aquarium-owned affected review contracts/capability references with the exact native result. Do not implement the producer or add an outer lease wrapper around `use-mulgae`.
-- [ ] Verify old development references are removed without deleting the stable review runtime or host skill.
-
-### TASK-093: Delegate and accept Gaori
-
-- [ ] Apply the common acceptance protocol to Gaori after Mulgae acceptance.
-- [ ] Require configured command execution, native exit status, output/evidence handling, waiting/reconnection and existing configuration/history migration; verify both native Gaori skills where shipped.
-- [ ] Confirm Haepari status/cancel/cleanup works when the Gaori candidate fails. Gaori may wrap product checks but cannot own Haepari's resource lease or final recovery.
-- [ ] Verify obsolete development integration is retired while normal execution/status skills and stable host behavior remain intact.
-
-### TASK-094: Delegate and accept Sorage
-
-- [ ] Apply the common acceptance protocol to Sorage after Gaori acceptance, using the stable host broker for the real rollout exchange.
-- [ ] Require guest-only synthetic Project/Handoff/revision/Review Note/configuration/Vault migration, native recovery and full `use-sorage` installation evidence.
-- [ ] Keep VM test traffic separate from real coordination messages. Do not copy, reset, or migrate the host coordination database/Vault as a test fixture.
-- [ ] Accept a separately correlated completion report through stable Sorage; Sorage-under-test cannot be the only path for reporting its own failure.
-
-### TASK-095: Delegate and accept Sanho
-
-- [ ] Apply the common acceptance protocol to Sanho after Sorage acceptance.
-- [ ] Require current native commit/push policy and configuration/state migration using disposable repositories and local test remotes, plus complete `use-sanho` verification.
-- [ ] Preserve unrelated hook content and Git state, and prevent test pushes to real development remotes.
-- [ ] Confirm obsolete development services/hooks are safely detached under their own authority before legacy selected artifacts are removed.
-
-### TASK-096: Delegate and accept Dolgorae
-
-- [ ] Apply the common acceptance protocol to Dolgorae after Sanho acceptance.
-- [ ] Inspect the current product rather than guessing architecture; require its actual installed controller/broker/CLI contract, durable run/session/configuration migration, supported recovery and complete `use-dolgorae` identity.
-- [ ] Verify Haepari remains able to collect and reset when the Dolgorae candidate cannot supervise work.
-- [ ] Preserve stable host and provider account state while retiring only obsolete development-channel bindings.
-
-### TASK-097: Delegate and accept Gul
-
-- [ ] Apply the common acceptance protocol to Gul after Dolgorae acceptance.
-- [ ] Require installed application/web assets, test-only backend endpoints, the declared compatible Dolgorae version, configuration migration and representative GUI hands-on behavior.
-- [ ] Inventory actual shipped skills and mark absence not_applicable with source evidence; do not invent a skill requirement.
-- [ ] Confirm tests do not connect to the host production backend, and report exact legacy cleanup or verified absence.
-
-### TASK-098: Delegate and accept Seongge
-
-- [ ] Apply the common acceptance protocol to Seongge after Gul acceptance.
-- [ ] Require current skill-evaluation input/result/configuration behavior, supported backend identity, native package/skill inventory, prior-state migration and explicitly scoped live/manual cases.
-- [ ] Preserve meaningful offline fixtures and report missing live evidence rather than starting an unapproved provider campaign.
-- [ ] Remove legacy integration only where current source and host evidence show it exists; do not revive withdrawn EPIC-002 expansion.
-
-### TASK-099: Delegate and accept Gaebokchi
-
-- [ ] Apply the common acceptance protocol to Gaebokchi after Seongge acceptance.
-- [ ] Require provider/account selection, output and usage-query behavior, existing configuration migration and redaction using synthetic fixtures by default.
-- [ ] Live verification uses approved guest test accounts. Never copy host `~/.codex` or alternative account homes into bundles or the baseline.
-- [ ] Inventory any native skills and actual legacy references, provide evidence-backed not_applicable where appropriate, and return the final producer packet.
-
-### TASK-100: Reconcile the full combination and upgrade path
-
-Implement and document:
-
-- [ ] Reconcile all nine accepted returns with the same frozen Haepari contract and current Aquarium candidate, rejecting inconsistent identities, missing skill sources and stale profiles.
-- [ ] Build the complete intended installation combination and verify clean install plus previous accepted combination to target migration, including fresh-session skills, representative inter-tool behavior and reset.
-- [ ] Verify prescribed update ordering and busy-work handling without rerunning every producer's internal unit suite as a substitute for integration.
-- [ ] Exercise the accepted queue-backed Mulgae skill alongside managed VM ownership: independent resource queues, shared global occupancy, same-invocation continuation, slot return during user waiting, explicitly authorized fresh-lease current-source review, provider-free publication reconciliation and no duplicate resource wrapper. Use isolated fixture resources for guest tests and record actual native/installed-skill evidence separately.
-
-Do not:
-
-- [ ] Do not infer combined compatibility from individual passes, accept acknowledgements in place of returns, silently upgrade unrelated components or conflate candidate and release artifacts.
-
-Verify and complete:
-
-- [ ] Required per-product and whole-combination observations are complete; known findings and manual gaps are settled under the actual release policy.
-- [ ] Inventory shows every former producer detached or demonstrably not enrolled, making shared retirement safe to plan.
-
-### TASK-101: Retire shared legacy source and approved host state
-
-Implement and document:
-
-- [ ] Remove the obsolete manager/launcher/MCP declaration, development-channel setup/status consumers, producer-only helpers and obsolete tests only after confirming no remaining consumer needs them.
-- [ ] Reconcile `aquarium-status` and existing persisted metadata without deleting production ledger/history. Preserve ordinary setup skills and the new Haepari integration.
-- [ ] Reconcile the documentation inspector with the roadmap's permitted `Cancelled` epic lifecycle, using objective lifecycle tests. The planning inspection reported `epic_lifecycle_unverifiable` for EPIC-002. Do not label withdrawn work as completed to avoid the warning.
-- [ ] Prepare and execute the separately approved host detachment/removal plan: fresh references/processes/leases/services, exact owned markers, preservation decision, launcher/runtime and final `~/.aquarium-dev/` removal.
-- [ ] Promote actual new behavior into current specifications, architecture, ADRs, runbooks and relevant public documentation. Supersede prior ADRs only as the implemented boundary changes.
-
-Do not:
-
-- [ ] Do not use broad name-based process kills or recursive deletion before quiescence/ownership checks; do not delete stable skills, active account homes, Sorage data or unrelated hooks.
-
-Verify and complete:
-
-- [ ] Current non-historical source and live launch paths no longer depend on aquarium-dev. Historical release notes and completed task evidence remain intact.
-- [ ] A new host development operation uses stable releases and Haepari VM tests without missing-command errors, implicit reinstalls or modification of protected production state.
-
-### TASK-102: Cold-validate, promote documentation and close out
-
-Implement and document:
-
-- [ ] Perform a fresh end-to-end acceptance of project-owned tests, fixed profiles, skills, meaningful migration, ordered producer returns, final host state and Haepari recovery independence. Include managed/external capacity and accepted Mulgae partial-failure continuation, preserving incomplete native reviews as distinct from released leases.
-- [ ] Reconcile all remaining durable statements with their canonical owners and collect Master's actual overall acceptance and required hands-on results.
-- [ ] Settle this dossier and the retained legacy dossier according to all canonical consumer references and the explicit deletion envelope; replace Detailed SOT links with valid Canonical Outcomes only when appropriate.
-
-Do not:
-
-- [ ] Do not complete the epic from task status alone, manufacture observed results, change unrelated EPIC-018/EPIC-012 work, commit or publish outside the current authority, or delete a dossier still needed by another consumer.
-
-Verify and complete:
-
-- [ ] All producer return criteria, combined installed/migration checks, cleanup and non-regression requirements are met with exact evidence.
-- [ ] Documentation/link checks pass and all accepted runtime facts are accurately classified. Any required unresolved evidence keeps the epic incomplete.
-
-## Epic completion criteria
-
-- [ ] Haepari is independently implemented and its exact managed/external native handoff and independent fixture evidence are accepted.
-- [ ] Aquarium's own VM pilot is accepted before the first producer request.
-- [ ] Every producer in the requested order has an accepted implementation return, including applicable skill and migration evidence.
-- [ ] The complete intended installation combination passes its own installed and upgrade/regression checks, including the producer-owned external `use-mulgae` integration and partial-failure continuation contract.
-- [ ] Host stable development remains usable, and shared legacy state is retired only after all actual consumers are detached.
-- [ ] Required actual manual observations and final overall acceptance exist.
-- [ ] Durable documentation is promoted, temporary dossiers are settled under their ownership rules, and no planning item is misreported as implemented.
+Pilot acceptance, release publication and host activation remain separate states. Missing mandatory evidence keeps EPIC-019 incomplete; planned successor work does not.

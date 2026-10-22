@@ -1,6 +1,6 @@
 # Changing the Development Channel
 
-Podway references in this retained development-channel contract describe legacy daemon-era generations only. Direct Podway >=v0.2.14 has no supported enrollment here. Candidate development uses the host's installed release and disposable fixtures; EPIC-019 owns shared-channel retirement and any separately approved controller or host cleanup.
+Podway references in this retained development-channel contract describe legacy daemon-era generations only. Direct Podway >=v0.2.14 has no supported enrollment here. Candidate development uses the host's installed release and disposable fixtures; Planned EPIC-033 owns shared-channel retirement and any separately approved controller or host cleanup.
 
 Read the [development contract](../../plugins/aquarium/references/development-contract.md) before changing the manager or a producer. Keep repository production behind the two common Make targets; the manager must not infer project-specific build commands or artifact layouts.
 

@@ -10,8 +10,8 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 
 ## Adopted Roadmap Work Dossiers
 
-- [Aquarium development environment dossier](TODO-AQUARIUM-DEV.md) retains the historical `EPIC-002` scope and acceptance record while its unfinished expansion is withdrawn. `EPIC-019` retains it as a migration reference until shared-channel retirement and final dossier settlement; it does not authorize further legacy integration.
-- [Haepari VM adoption dossier](TODO-HAEPARI-VM-ADOPTION.md) defines Aquarium-first managed VM adoption, Haepari external-lease capability acceptance, Mulgae-owned `use-mulgae` partial-failure continuation, ordered Sorage delegation for nine producers, complete skill/migration verification and final legacy retirement for `EPIC-019` and `TASK-086` through `TASK-102`.
+- [Aquarium development environment dossier](TODO-AQUARIUM-DEV.md) preserves EPIC-002's completed history and withdrawn expansion. EPIC-033 is its sole active retirement consumer and settles its historical references before approved deletion; it authorizes no new legacy integration.
+- [Aquarium Haepari adoption dossier](TODO-HAEPARI-VM-ADOPTION.md) belongs only to EPIC-019 and TASK-086 through TASK-090. It defines published CLI/skill acceptance, setup, fixed profiles, managed VM execution, the installed pilot, policy cutover and canonical handoff. It is settled at EPIC-019 closeout.
 - [Astra skill modernization dossier](TODO-ASTRA-SKILLS.md) defines the scope and
   acceptance for `EPIC-012`, `TASK-043` through `TASK-046`, and the local producer
   source checks needed for integration.
@@ -28,6 +28,9 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 - [Multi-host unification dossier](TODO-MULTI-HOST-UNIFICATION.md) defines shared
   instructions, host packages, five-host qualification and the single-repository
   migration for `EPIC-030` and `TASK-162` through `TASK-171`.
+- [Release orchestration dossier](TODO-RELEASE-ORCHESTRATION.md) belongs only to EPIC-031 and TASK-172 through TASK-176. It consumes completed EPIC-019 outcomes for release roles, assessments and installed Job/result/cleanup handoffs, and is settled before EPIC-032 starts.
+- [Integrated-tool rollout dossier](TODO-HAEPARI-TOOL-ROLLOUT.md) belongs only to EPIC-032 and existing TASK-091 through TASK-099. It defines ordered producer implementation returns, released Mulgae advisory integration and a durable handoff to EPIC-033, then is settled at its own closeout.
+- [Combination qualification and retirement dossier](TODO-HAEPARI-COMBINATION-RETIREMENT.md) belongs only to EPIC-033 and existing TASK-100 through TASK-102. It consumes the completed earlier Epics' canonical outcomes, verifies the full environment, retires common legacy state under exact authority and settles its own and the historical legacy dossier's references and deletion.
 
 ## Unadopted TODO Candidates
 

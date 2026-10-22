@@ -4,7 +4,7 @@
 
 **Original roadmap epic:** `EPIC-002`
 
-The [canonical roadmap](../roadmap/README.md) withdraws the unfinished expansion of this development channel in favor of `EPIC-019`. Completed acceptance history is preserved. The [Haepari VM adoption dossier](TODO-HAEPARI-VM-ADOPTION.md) owns replacement work; this file remains a historical scope and migration reference for final retirement. It does not authorize new enrollment or producer integration. Cancellation of planned work does not remove installed hooks, services, workers, launchers, or runtime state.
+The [canonical roadmap](../roadmap/README.md) withdraws unfinished development-channel expansion in favor of the ordered EPIC-019 -> EPIC-031 -> EPIC-032 -> EPIC-033 replacement. Completed acceptance history is preserved. EPIC-033 is this dossier's sole active retirement consumer; its [qualification and retirement dossier](TODO-HAEPARI-COMBINATION-RETIREMENT.md) owns remaining shared retirement work. EPIC-033 must promote required history and replace EPIC-002's historical Detailed SOT and other remaining references before approved deletion of this file. This dossier authorizes no new enrollment or producer integration. Planned cancellation removes no installed hooks, services, workers, launchers or runtime state.
 
 The historical scope covers `TASK-005` through `TASK-015`, `TASK-024`, corrective `TASK-031`, `TASK-042`, and the withdrawal rationale for `TASK-041`. The canonical roadmap alone owns identity, ordering, dependencies, lifecycle vocabulary, and current status. Checklist marks below remain historical review evidence only.
 

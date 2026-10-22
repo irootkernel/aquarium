@@ -1,6 +1,6 @@
 # Development Channel Specification
 
-Podway references in this retained development-channel contract describe legacy daemon-era generations only. Direct Podway >=v0.2.14 has no supported enrollment here. Candidate development uses the host's installed release and disposable fixtures; EPIC-019 owns shared-channel retirement and any separately approved controller or host cleanup.
+Podway references in this retained development-channel contract describe legacy daemon-era generations only. Direct Podway >=v0.2.14 has no supported enrollment here. Candidate development uses the host's installed release and disposable fixtures; Planned EPIC-033 owns shared-channel retirement and any separately approved controller or host cleanup.
 
 The explicitly requested `aquarium-dev` MCP tools and CLI manage one canonical local-`main` checkout per supported project on Darwin arm64. Supported producers are Aquarium, Podway, Mulgae, Gaori, Sanho, and Dolgorae. Dolgorae remains unenrolled until its repository commits and registers an approved producer generation. Aquarium Subagent Review uses three base reviewers in the Coordinator's native harness plus a UI/UX specialist when applicable, without Dolgorae, while explicitly delegated Dolgorae operations continue to use the verified globally installed release binary.
 

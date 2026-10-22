@@ -66,6 +66,21 @@ specifications describe implemented behavior; this plan establishes no installed
 support. Final closeout must replace this pointer with the
 accepted canonical outcomes before deleting the dossier.
 
+## Planned Haepari adoption and release delivery
+
+The [roadmap](roadmap/README.md) orders four complete Epics so each can finish through `epic-handler` before the next starts:
+
+| Epic | Planned outcome and execution dossier |
+| --- | --- |
+| EPIC-019 | [Aquarium Haepari adoption](todo/TODO-HAEPARI-VM-ADOPTION.md): published v0.1.0 CLI/skill setup, fixed profiles, managed VM adapter and an exact installed pilot with policy cutover. |
+| EPIC-031 | [Release orchestration](todo/TODO-RELEASE-ORCHESTRATION.md): Coordinator, Executor and independent Evaluator roles consuming the completed adapter, with four release assessments and installed verification. |
+| EPIC-032 | [Integrated-tool rollout](todo/TODO-HAEPARI-TOOL-ROLLOUT.md): nine ordered producer returns, including Mulgae's released native advisory lock. |
+| EPIC-033 | [Combined qualification and retirement](todo/TODO-HAEPARI-COMBINATION-RETIREMENT.md): whole-combination installed/upgrade verification and safe shared legacy removal. |
+
+Haepari v0.1.0 is published; Aquarium adoption and these workflows remain planned. The current manual VM path stays authoritative until TASK-090 accepts the exact installed policy-cutover candidate. Haepari owns managed Job execution and files; recipes own guest installation/assertions and cleanup. The persistent VM is not reset. Release roles grant no additional execution or publication authority.
+
+Each Epic promotes its accepted durable contracts, obtains actual overall acceptance and settles its own dossier at closeout. Later Epics consume Canonical Outcomes instead of retaining earlier dossiers. EPIC-033 alone retains the historical legacy dossier until its reference and deletion obligations are resolved. Publication and host activation remain separate operations.
+
 ## Directory agent guidance
 
 The [shared contract](../plugins/aquarium/references/directory-agent-guidance.md)

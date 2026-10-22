@@ -49,7 +49,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-016 | Add selectable workflow review routing | Completed |
 | EPIC-017 | Add Web Pro Review | Planned |
 | EPIC-018 | Correct Aquarium workflow and integration contracts | In Progress |
-| EPIC-019 | Adopt Haepari VM verification and retire the development channel | Blocked |
+| EPIC-019 | Adopt Haepari VM verification for Aquarium | Planned |
 | EPIC-020 | Migrate Orca review to Herdr | Completed |
 | EPIC-021 | Adopt supervised agent orchestration | Completed |
 | EPIC-022 | Adopt Podway v0.2.14 | Completed |
@@ -61,6 +61,9 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | Planned |
 | EPIC-029 | Add directory AGENTS.md documentation indexes | Completed |
 | EPIC-030 | Unify Aquarium delivery across five agent hosts | Planned |
+| EPIC-031 | Adopt Coordinator, Evaluator and Executor roles in release workflows | Planned |
+| EPIC-032 | Adopt Haepari across integrated tools | Planned |
+| EPIC-033 | Qualify the combined environment and retire the development channel | Planned |
 
 ## EPIC-000: Independent Tasks
 
@@ -98,11 +101,11 @@ Podway owns its v0.2.6 implementation, release QA, distribution gate, and public
 
 **Status:** `Cancelled`
 
-The remaining development-channel expansion is withdrawn in favor of EPIC-019. Completed tasks retain their historical acceptance. Cancellation changes the delivery plan only; installed workers, hooks, services, launchers, and `~/.aquarium-dev/` remain until the staged retirement is implemented and its host effects are explicitly authorized.
+The remaining development-channel expansion is withdrawn in favor of the EPIC-019 -> EPIC-031 -> EPIC-032 -> EPIC-033 delivery chain. Completed tasks retain their historical acceptance. Cancellation changes the delivery plan only; installed workers, hooks, services, launchers, and `~/.aquarium-dev/` remain until the staged retirement is implemented and its host effects are explicitly authorized.
 
 The historical objective was to build the `aquarium-dev` development channel for exact local-main integration while keeping production tools and state separate.
 
-`TASK-031` completed the corrected Aquarium-owned runtime: all development state lives under `~/.aquarium-dev`, foreground producers are preferred through its `bin` directory with independent global fallback when absent, managed services require an exact active development generation without production fallback, and the launcher inherits the caller's environment. Dolgorae is an enrollable foreground producer with no missing-binary exception. Sanho is explicitly optional. `TASK-011` accepted Podway's exact clean local-`main` v0.2.8 handoff and verified its persistent `podwayd --dev` service, explicit workspace mode support, canonical enrollment, immutable publication, approved activation, stable command resolution, and production isolation. Master confirmed that Dolgorae development-channel setup is complete on 2026-09-08; it no longer blocks producer integration. Master confirmed that Gaori development-channel setup is complete on 2026-09-09; TASK-013 is complete. Sanho's clean local-`main` producer candidate, canonical enrollment, development resolution, and production isolation have also been verified; TASK-014 is complete. The uncompleted Mulgae and Seongge integrations and final channel validation are now withdrawn. Their replacement VM work belongs to TASK-092, TASK-098, and the final EPIC-019 qualification. The retained producer contracts describe the old installed channel until its actual retirement; they are not new Haepari acceptance requirements.
+`TASK-031` completed the corrected Aquarium-owned runtime: all development state lives under `~/.aquarium-dev`, foreground producers are preferred through its `bin` directory with independent global fallback when absent, managed services require an exact active development generation without production fallback, and the launcher inherits the caller's environment. Dolgorae is an enrollable foreground producer with no missing-binary exception. Sanho is explicitly optional. `TASK-011` accepted Podway's exact clean local-`main` v0.2.8 handoff and verified its persistent `podwayd --dev` service, explicit workspace mode support, canonical enrollment, immutable publication, approved activation, stable command resolution, and production isolation. Master confirmed that Dolgorae development-channel setup is complete on 2026-09-08; it no longer blocks producer integration. Master confirmed that Gaori development-channel setup is complete on 2026-09-09; TASK-013 is complete. Sanho's clean local-`main` producer candidate, canonical enrollment, development resolution, and production isolation have also been verified; TASK-014 is complete. The uncompleted Mulgae and Seongge integrations and final channel validation are now withdrawn. Their replacement VM work belongs to TASK-092 and TASK-098 in EPIC-032, followed by final EPIC-033 qualification and retirement. The retained producer contracts describe the old installed channel until its actual retirement; they are not new Haepari acceptance requirements.
 
 **Detailed SOT:** [`TODO-AQUARIUM-DEV.md`](../todo/TODO-AQUARIUM-DEV.md)
 
@@ -476,37 +479,25 @@ claim that a sent request or an Aquarium-side correction fixes a producer.
 | TASK-084 | Correct design and status workflows | Align quality-result decisions, design-document ownership, war-room notes, and status-forget recovery. | Completed | TASK-083 |
 | TASK-085 | Qualify Aquarium corrections and hand off integration | Verify the exact Aquarium-owned changes, report manual evidence separately, and pass producer-response gaps to TASK-046. | Completed | TASK-084 |
 
-## EPIC-019: Adopt Haepari VM verification and retire the development channel
+## EPIC-019: Adopt Haepari VM verification for Aquarium
 
-**Status:** `Blocked`
+**Status:** `Planned`
 
-Adopt Haepari's independent resource queue after its exact implemented release and capability handoff is available. Aquarium first implements its own project-owned VM installation, skill, hands-on, migration, and regression verification. It then delegates producer adoption through Sorage in the fixed order below, accepts each implementation return before dispatching the next, reconciles the complete installation combination, and retires the shared legacy channel only after every actual consumer is detached.
+Adopt published Haepari v0.1.0 CLI/skill setup and qualify Aquarium's own managed persistent-VM adapter. TASK-086 through TASK-090 cover exact artifact/backend acceptance, shared controller/resource identity, sealed input/profile/skill and migration contracts, one uninterrupted manual release Job, same-Job recovery and both consumer and native cleanup. External leases and VM power/reset remain excluded. Planning changes no runtime or installed acceptance.
 
-The external blocker is the verified Haepari v0.1.0 producer handoff, including managed UTM reset, independent local-resource evidence and design-revision-2 external lease/continuation capabilities with independent fixture evidence. Actual Mulgae integration is later producer work under TASK-092, not a circular prerequisite for Haepari or the Aquarium pilot. Design documents alone do not clear the blocker. Planning this epic sends no messages, changes no host runtime, and starts no implementation. The previous development-channel expansion is withdrawn under EPIC-002 while completed history and current installed recovery paths are preserved.
+This Epic ends with the exact installed Aquarium pilot, accepted release-VM policy cutover, promoted canonical contracts, independent validation, Master's overall acceptance and its own dossier settlement. TASK-089 prepares the adapter; TASK-090 updates release/testing/VM/reference owners before verifying the cutover candidate. Wrapper availability alone is not adoption. Preserve current policy until accepted cutover and preserve EPIC-002 history and shared legacy infrastructure still needed by other consumers. Host activation and publication retain separate authority.
 
-**Detailed SOT:** [`TODO-HAEPARI-VM-ADOPTION.md`](../todo/TODO-HAEPARI-VM-ADOPTION.md)
+The complete delivery order is EPIC-019 -> EPIC-031 -> EPIC-032 -> EPIC-033. Each Epic completes its own acceptance and documentation closeout before the next starts; Task IDs remain stable. EPIC-019 does not wait for release-role implementation, producer returns, Mulgae integration or common retirement. Promote reusable outcomes before deleting its sole-consumer dossier.
 
-The [legacy dossier](../todo/TODO-AQUARIUM-DEV.md) remains a retirement reference until final consumer-reference reconciliation and approved settlement. It does not own the new implementation plan.
+**Detailed SOT:** [Aquarium Haepari adoption dossier](../todo/TODO-HAEPARI-VM-ADOPTION.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-086 | Accept Haepari and freeze the consumer contract | Verify exact release, runner, skill, managed/external capabilities, first-claim execution and continuation fixtures plus real backend evidence; freeze consumer and authority boundaries. | Blocked | External verified Haepari v0.1.0 producer handoff |
-| TASK-087 | Define fixed profiles and complete installation inventories | Specify immutable binary/plugin/skill/configuration combinations, starting profiles, whole-tree checks and supported migration edges without a shadow global registry. | Planned | TASK-086 |
-| TASK-088 | Implement Aquarium's project-owned VM suites | Reuse EPIC-024's guest entrypoint and scenarios when adding Haepari host submission, fixed candidate transport, installation, migration and regression jobs. | Planned | TASK-087; EPIC-024 |
-| TASK-089 | Integrate skills, hands-on and the VM release gate | Extend EPIC-024's manual release acceptance with Haepari-managed execution, installed-session observations and result transport while preserving offline release QA. | Planned | TASK-088 |
-| TASK-090 | Qualify the Aquarium pilot and freeze producer packets | Accept the real pilot, freeze Sorage packets including Mulgae VM plus external lease/partial-recovery scope, and safely detach Aquarium's own legacy use while retaining shared consumers. | Planned | TASK-089 |
-| TASK-091 | Delegate and accept Podway | Send the authorized producer request, verify the returned implementation, skill/migration evidence and native legacy detachment; do not edit Podway source from Aquarium. | Planned | TASK-090; external Podway implementation return |
-| TASK-092 | Delegate and accept Mulgae | Through Sorage accept producer-owned VM/skill/migration tests and use-mulgae external leases, same-invocation continuation, release-before-user-wait and explicitly authorized fresh-lease current-source review; reconcile Aquarium references and legacy detachment. | Planned | TASK-091; external Mulgae implementation return |
-| TASK-093 | Delegate and accept Gaori | Request and accept Gaori-owned VM tests, both native skills, waiting/output and migration evidence, and legacy detachment through Sorage. | Planned | TASK-092; external Gaori implementation return |
-| TASK-094 | Delegate and accept Sorage | Request and accept guest-only broker/Vault/configuration migration and skill tests while stable host Sorage remains the rollout control plane. | Planned | TASK-093; external Sorage implementation return |
-| TASK-095 | Delegate and accept Sanho | Request and accept native commit/push/configuration tests using disposable remotes, full skill verification and safe legacy detachment. | Planned | TASK-094; external Sanho implementation return |
-| TASK-096 | Delegate and accept Dolgorae | Request and accept current native lifecycle/configuration migration, skill and failure-recovery tests while preserving independent Haepari supervision. | Planned | TASK-095; external Dolgorae implementation return |
-| TASK-097 | Delegate and accept Gul | Request and accept installed UI/backend compatibility, configuration migration, applicable skill inventory and representative hands-on evidence. | Planned | TASK-096; external Gul implementation return |
-| TASK-098 | Delegate and accept Seongge | Request and accept current skill-evaluation/package/backend tests, migration and explicitly scoped live/manual evidence without reviving legacy expansion. | Planned | TASK-097; external Seongge implementation return |
-| TASK-099 | Delegate and accept Gaebokchi | Request and accept provider/account/output and configuration migration tests with guest-only identities and evidence-backed skill/legacy applicability. | Planned | TASK-098; external Gaebokchi implementation return |
-| TASK-100 | Reconcile the full combination and upgrade path | Verify accepted identities, clean-install and prior-combination migration/regression, installed skills, managed/external occupancy and native Mulgae terminal-failure handling and fresh-review continuation without a second lease wrapper. | Planned | TASK-099 |
-| TASK-101 | Retire shared legacy source and approved host state | Remove obsolete common CLI/MCP/setup/status dependencies, preserve production history, and perform separately approved final host/root cleanup after all consumers detach. | Planned | TASK-100 |
-| TASK-102 | Cold-validate, promote documentation and close out | Verify final managed/external behavior and review-recovery acceptance, obtain actual overall/manual results, promote canonical outcomes and settle dossiers under their reference/deletion rules. | Planned | TASK-101 |
+| TASK-086 | Accept Haepari and freeze the consumer contract | Verify the published artifact, complete paired skill, managed/lock capabilities, native schemas and actual backend evidence; freeze the consumer and authority boundaries without deferred external leases or VM reset. | Planned | Published Haepari v0.1.0 release available; exact-artifact and backend-evidence acceptance required |
+| TASK-087 | Register Haepari and define fixed test profiles | Add formal CLI/skill setup and native readiness, shared installation/resource selection, fixed combinations, whole-tree checks and starting/cleanup inventories without a shadow registry. | Planned | TASK-086 |
+| TASK-088 | Implement Aquarium's project-owned VM suites | Add a host wrapper over EPIC-024's guest scenarios, sealed inputs and same-Job recovery; stage evidence and finish consumer cleanup before manual completion or automatic workload exit within one release transaction. | Planned | TASK-087; EPIC-024 |
+| TASK-089 | Integrate skills, hands-on and the VM release gate | Connect managed occupancy and original candidate-bound results to the release VM path for the existing release workflow and the later EPIC-031 handoff, preserving offline QA, full/light rules and native authority. | Planned | TASK-088 |
+| TASK-090 | Qualify the Aquarium pilot and prepare Epic closeout | Accept the exact installed policy-cutover candidate; promote adapter/profile/recovery outcomes, prepare whole-Epic acceptance and dossier settlement, and preserve remaining shared legacy consumers. | Planned | TASK-089 |
 
 ## EPIC-020: Migrate Orca review to Herdr
 
@@ -920,3 +911,85 @@ cutover and Master's overall acceptance.
 | TASK-169 | Qualify five-host installation and recovery | Observe all five exact candidate packages in the dedicated UTM VM, covering discovery, workflow progression, authority failures, coexistence, prior-edition upgrade, state preservation and recovery. | Planned | TASK-165, TASK-166, TASK-167, TASK-168 |
 | TASK-170 | Cut over single-repository distribution | Extend installed release acceptance, publish through the authorized release lifecycle and migrate legacy distribution to temporary mirrors or redirects followed by authorized archival or read-only retention. | Planned | TASK-169 |
 | TASK-171 | Promote canonical documentation and close the Epic | Promote accepted contracts and migration guidance, obtain Master's overall acceptance, replace temporary links and delete the dossier only within the approved last-consumer closeout. | Planned | TASK-170 |
+
+## EPIC-031: Adopt Coordinator, Evaluator and Executor roles in release workflows
+
+**Status:** `Planned`
+
+Extend ordinary v3 orchestration to `release-handler`. The Coordinator retains
+scope, actual approvals, commit and publication control; Executors deliver
+bounded preparation, edits, checks and corrections; an independent report-only
+Evaluator assesses original release requirements and current evidence at plan,
+QA readiness, publication readiness and publication completion boundaries.
+
+Preserve repository release policy, full/light distinctions, release-QA scenario
+agents and original verdicts, exact candidate bindings, gate convergence and
+publication recovery. Evaluator passage supplies no execution or publication
+authority. Publication readiness follows repository-defined gate/commit order and
+must hold before the first publication mutation. Treat the mandatory continuation
+contract change as breaking: finish active releases before updating, and run
+installation-dependent verification only in the dedicated UTM VM. Each
+implementation Task owns its focused checks. Integrated verification does not
+replace them or Master's overall acceptance.
+
+Begin after EPIC-019 completes its pilot and canonical adapter handoff, and build
+on completed EPIC-024 and EPIC-026 contracts. EPIC-030 retains ownership of
+multi-host packaging and distribution and is not a prerequisite.
+Between EPIC-030 and this Epic, whichever lands second reconciles the current output inventory, shared
+release contracts and verification scenarios without assuming new host support.
+This registration changes documentation only and establishes no implemented or
+installed release-role support.
+
+EPIC-019 supplies the completed Haepari setup, VM adapter and policy cutover through Canonical Outcomes. This Epic requires those inputs and verifies their integration with release roles using original Job/result/cleanup evidence and native queue/recovery; there is no pre-adoption manual qualification route within this Epic. EPIC-032 follows this Epic and separately owns producer rollout and Mulgae advisory integration. No second scheduler, report schema or review-lock wrapper is introduced. Assessment success, native outcome and resource return remain separate states.
+
+**Detailed SOT:** [Release orchestration dossier](../todo/TODO-RELEASE-ORCHESTRATION.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-172 | Define release orchestration and authority boundaries | Reuse ordinary v3 roles and four assessments; identify applicable VM path, resource, occupancy and cleanup ownership alongside gate order, evidence and preserved approvals. | Planned | EPIC-019; EPIC-024; EPIC-026 |
+| TASK-173 | Integrate release preparation and QA handoffs | Delegate bounded preparation and corrections, assess exact QA-ready candidates and any policy-due original VM evidence without changing QA verdicts or confirmation authority. | Planned | TASK-172 |
+| TASK-174 | Integrate release gates, publication and recovery assessments | Support both gate/commit orders and original result binding; reconcile an existing Haepari Job before Executor replacement or redispatch and preserve cleanup evidence, convergence and publication authority. | Planned | TASK-173 |
+| TASK-175 | Prepare integrated regressions and manual verification scenarios | Prepare native-role scenarios for both gate orders, bounded release-handler startup, and applicable VM queue/manual hold/cancel/reconnect/cleanup failures without duplicate dispatch. Earlier Tasks retain focused checks. | Planned | TASK-174 |
+| TASK-176 | Verify installed release orchestration and promote outcomes | Observe native role progression against the exact installed candidate and applicable VM path, retain original Job/result/cleanup facts when adopted, promote outcomes and settle the dossier after actual acceptance. | Planned | TASK-175 |
+
+## EPIC-032: Adopt Haepari across integrated tools
+
+**Status:** `Planned`
+
+Begin after completed EPIC-031, consuming the completed EPIC-019 adapter and release-role Canonical Outcomes. TASK-091 through TASK-099 keep their existing IDs and fixed producer order: Podway -> Mulgae -> Gaori -> Sorage -> Sanho -> Dolgorae -> Gul -> Seongge -> Gaebokchi. Each producer owns its implementation, local work IDs, skills, migration and native legacy detachment; Aquarium accepts a correlated real implementation return before dispatching the next.
+
+TASK-092 requires Mulgae's released native CLI/MCP advisory-lock implementation and complete skill, not merely a Haepari fixture or request acknowledgement. Preserve native authority, exact installed evidence, shared-VM identity, original Job recovery, advisory limits and host isolation. Shared legacy infrastructure remains until EPIC-033. This planning registration sends no messages or starts implementation.
+
+Close this Epic after independent validation of all nine returns, promotion of accepted per-product contracts/identity/profile/detachment inventories, Master's overall acceptance and its own dossier deletion. EPIC-033 consumes those durable outcomes and performs full-combination verification and common retirement; it does not retain this dossier or inherit unfinished producer criteria.
+
+**Detailed SOT:** [Integrated-tool rollout dossier](../todo/TODO-HAEPARI-TOOL-ROLLOUT.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-091 | Freeze producer packets and accept Podway | Freeze packets from completed EPIC-019/031 outcomes, send the authorized Podway request and accept its real implementation, skill/migration and native detachment evidence. | Planned | EPIC-031; TASK-090; external Podway implementation return |
+| TASK-092 | Delegate and accept Mulgae | Accept a released producer-owned CLI/MCP advisory-lock implementation with acquisition before live qualification, renewal, terminal release, borrower checks, native recovery and installed VM/skill/migration evidence; then adopt its released floor without an outer lock wrapper. | Planned | TASK-091; external Mulgae implementation and released CLI/skill return |
+| TASK-093 | Delegate and accept Gaori | Request and accept Gaori-owned VM tests, both native skills, waiting/output and migration evidence, and legacy detachment through Sorage. | Planned | TASK-092; external Gaori implementation return |
+| TASK-094 | Delegate and accept Sorage | Request and accept guest-only broker/Vault/configuration migration and skill tests while stable host Sorage remains the rollout control plane. | Planned | TASK-093; external Sorage implementation return |
+| TASK-095 | Delegate and accept Sanho | Request and accept native commit/push/configuration tests using disposable remotes, full skill verification and safe legacy detachment. | Planned | TASK-094; external Sanho implementation return |
+| TASK-096 | Delegate and accept Dolgorae | Request and accept current native lifecycle/configuration migration, skill and failure-recovery tests while preserving independent Haepari supervision. | Planned | TASK-095; external Dolgorae implementation return |
+| TASK-097 | Delegate and accept Gul | Request and accept installed UI/backend compatibility, configuration migration, applicable skill inventory and representative hands-on evidence. | Planned | TASK-096; external Gul implementation return |
+| TASK-098 | Delegate and accept Seongge | Request and accept current skill-evaluation/package/backend tests, migration and explicitly scoped live/manual evidence without reviving legacy expansion. | Planned | TASK-097; external Seongge implementation return |
+| TASK-099 | Delegate and accept Gaebokchi | Request and accept provider/account/output and configuration migration tests with guest-only identities and evidence-backed skill/legacy applicability. | Planned | TASK-098; external Gaebokchi implementation return |
+
+## EPIC-033: Qualify the combined environment and retire the development channel
+
+**Status:** `Planned`
+
+Begin after completed EPIC-032 and consume EPIC-019, EPIC-031 and EPIC-032 Canonical Outcomes. Existing TASK-100 through TASK-102 own exact whole-combination installed/upgrade verification, shared VM and released Mulgae lock behavior, original Job evidence consumed by release assessments, common legacy source cleanup and separately approved final host removal. Individual producer passes do not establish combined compatibility. TASK-100 owns bounded Aquarium corrections and producer correction requests through EPIC-032's promoted Sorage protocol, accepts corrected returns and re-verifies the exact combination. Preserve native outcomes, manual gaps, meaningful prior state and production/history boundaries.
+
+The retained legacy development dossier is this Epic's historical/migration reference. After required independent validation and Master's actual overall acceptance, promote durable outcomes, replace this Epic's Detailed SOT and resolve EPIC-002's historical dossier references without changing its Cancelled status or completed history. Delete only this Epic's dossier and the settled legacy dossier under their exact closeout envelope. Earlier Epic dossiers are already settled; no earlier Epic is reopened merely to finish this sequence.
+
+**Detailed SOT:** [Combination qualification and retirement dossier](../todo/TODO-HAEPARI-COMBINATION-RETIREMENT.md)
+
+The [legacy dossier](../todo/TODO-AQUARIUM-DEV.md) remains a retirement reference until this Epic's approved reference reconciliation and settlement.
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-100 | Reconcile the full combination and upgrade path | Verify the exact installed/upgrade combination, shared VM, native review lock, release assessment inputs and cleanup; own bounded integration corrections and accept corrected producer returns before re-verification. | Planned | EPIC-032; TASK-099 |
+| TASK-101 | Retire shared legacy source and approved host state | Remove obsolete common CLI/MCP/setup/status dependencies, preserve production history, and perform separately approved final host/root cleanup after all consumers detach. | Planned | TASK-100 |
+| TASK-102 | Cold-validate, promote documentation and close out | Verify managed VM and released Mulgae lock behavior, obtain actual overall/manual acceptance, promote durable setup/release/recovery contracts, replace temporary coordination links and settle dossiers at last-consumer closeout. | Planned | TASK-101 |
