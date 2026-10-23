@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.22 - Unreleased
 
+### Added
+
+- Add optional Haepari v0.1.0 setup, covering its verified CLI, complete `use-haepari` skill and readiness checks for the shared controller and VM resource; an existing managed status runtime is diagnosed `outdated` and needs its routine approval-based update before the next repository setup.
+
 ## v0.1.21 - 2026-10-21
 
 ### Added

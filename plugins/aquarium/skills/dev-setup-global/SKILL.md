@@ -29,7 +29,7 @@ Read the selected sections of [the shared tool catalog](../../references/tool-ca
 ## Diagnose Automatically
 
 1. On a direct invocation without a component list, select every supported global component. On a scoped continuation, select only the named components and their direct prerequisites.
-2. A direct invocation authorizes disclosed read-only official release, tag, and commit metadata lookup for selected components. Only the six paired-tool sources receive the catalog's complete-tree and commit-pinned raw-file freshness comparison; selected Lora or Deslop also includes official npm installer metadata. A scoped continuation selects only its named sources. Follow the catalog's exact lookup boundary; materialization, installation and execution remain separate actions.
+2. A direct invocation authorizes disclosed read-only official release, tag, and commit metadata lookup for selected components. Only the paired-tool sources receive the catalog's complete-tree and commit-pinned raw-file freshness comparison; selected Lora or Deslop also includes official npm installer metadata. A scoped continuation selects only its named sources. Follow the catalog's exact lookup boundary; materialization, installation and execution remain separate actions.
 3. Resolve this skill's directory and run `python3 <skill-directory>/scripts/inspect_global_tools.py` on a direct unscoped invocation. For a scoped continuation, add one `--component <name>` argument for each selected component in catalog order and run no unselected component probe.
 
    When Ouroboros is selected, also add `--verify-ouroboros-release`; pass any explicitly supplied extra homes with repeatable `--codex-home <path>`. Use the catalog's home discovery and per-home readiness contract.
@@ -45,15 +45,16 @@ If a freshness lookup, download, validation, or comparison fails, report `freshn
 
 ## Owned Components
 
-- Sanho, Dolgorae, Mulgae, Gaori, Sorage, and Podway user-global CLIs.
-- `use-sanho`, `use-dolgorae`, `use-mulgae`, `use-gaori`, `use-gaori-status`, `use-sorage`, and `use-podway` under `~/.agents/skills`.
+- Sanho, Dolgorae, Mulgae, Gaori, Sorage, Podway, and Haepari user-global CLIs.
+- `use-sanho`, `use-dolgorae`, `use-mulgae`, `use-gaori`, `use-gaori-status`, `use-sorage`, `use-podway`, and `use-haepari` under `~/.agents/skills`.
 - Mulgae and Gaori user-global MCP registrations.
 - Podway's single Direct CLI identity and Sorage's minimal user-global initialization.
 - Lora's `lore-commits` and `lore-query`, upstream Deslop, Humanizer, and im-not-ai's `humanize-korean` skill.
 - Ouroboros package version, Codex rules and skills, MCP runtime, effective global registration, and live exposure when safely observable.
 - The optional `aquarium-dev` CLI and MCP runtime bundled with Aquarium. Install and update it only on an explicit request; it is not part of production-binary readiness. Its MCP registration belongs to the plugin, not the global MCP table, and it has no paired skill.
 - The `aquarium-status` user-global reporter runtime bundled with Aquarium. Diagnose it by default. Install, update, or repair its private hash-pinned runtime and launcher only after a separate exact approval. It is setup-recording infrastructure, not a bundle manifest tool and not part of production-binary readiness.
-- Aquarium production-binary readiness requires supported global Podway, Mulgae, and Gaori executables and fails closed when any is missing. Dolgorae and Sanho remain optional and are excluded from this baseline.
+- Haepari's shared per-user release controller and capacity-one VM resource: the controller is selected only through its explicit `HAEPARI_HOME` root, its readiness is separate from CLI, paired-skill, and resource readiness, and registration or service installation stays with Haepari's native authority. Haepari is optional like Dolgorae and Sanho.
+- Aquarium production-binary readiness requires supported global Podway, Mulgae, and Gaori executables and fails closed when any is missing. Dolgorae, Sanho, and Haepari remain optional and are excluded from this baseline.
 
 Do not install provider CLIs, authenticate, read credentials, contact providers, transmit repository source, initialize repository workspaces, change project MCP, edit repository guidance, start tests or reviews, or invoke Ouroboros workflows.
 

@@ -1,6 +1,6 @@
 # Haepari Consumer Contract
 
-Reserved (unimplemented): this reference freezes how Aquarium consumes Haepari managed execution. TASK-087 adds setup registration and fixed profiles, TASK-088 the project-owned VM suites, TASK-089 the release-gate integration, and TASK-090 the accepted policy cutover. It restates no Haepari-owned contract; the release-matched sources at the [v0.1.0 tag](https://github.com/irootkernel/haepari/tree/v0.1.0) are authoritative, and the shared [tool catalog](tool-catalog.md) owns component support policy.
+Reserved: this reference freezes how Aquarium consumes Haepari managed execution. Setup registration and fixed test profiles are shipped: the shared [tool catalog](tool-catalog.md#haepari) owns installation and readiness policy, and the repository's fixed VM profiles hold the immutable test inputs; TASK-088 adds the project-owned VM suites, TASK-089 the release-gate integration, and TASK-090 the accepted policy cutover. It restates no Haepari-owned contract; the release-matched sources at the [v0.1.0 tag](https://github.com/irootkernel/haepari/tree/v0.1.0) are authoritative, and the shared [tool catalog](tool-catalog.md) owns component support policy.
 
 ## Scope
 

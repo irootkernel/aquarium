@@ -70,6 +70,7 @@ class InspectToolsTest(unittest.TestCase):
                 "HOME": str(self.home),
                 "CODEX_HOME": str(self.codex_home),
                 "PATH": f"{self.bin_directory}:/usr/bin:/bin",
+                "HAEPARI_HOME": "",
             }
         )
         self.git("init", "--quiet")
@@ -1274,7 +1275,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         self.assertEqual(completed.stderr, "")
         self.assertEqual(before, after)
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v23")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v24")
         self.assertEqual(
             payload["repository"]["worktree"],
             {"conflicted": 0, "staged": 0, "unstaged": 0, "untracked": 0},
@@ -1289,6 +1290,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                 "use-gaori-status",
                 "use-sorage",
                 "use-podway",
+                "use-haepari",
                 "lore-commits",
                 "lore-query",
                 "deslop",
@@ -3197,6 +3199,8 @@ else:
             require_mulgae_mcp=False,
             expected_mulgae_mcp=None,
             expected_gaori_mcp=None,
+            include_haepari=False,
+            haepari_resource=None,
         )
         self.assertEqual(json.loads(output.getvalue()), result)
 
@@ -3773,7 +3777,7 @@ else:
         self.assertEqual(inspection.returncode, 0, inspection.stderr)
         self.assertEqual(
             json.loads(inspection.stdout)["schema_version"],
-            "aquarium-dev-setup-inspection.v23",
+            "aquarium-dev-setup-inspection.v24",
         )
 
     def test_missing_pyyaml_degrades_only_podway_handler_checks(self) -> None:
@@ -8653,7 +8657,7 @@ else:
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(completed.stderr, "")
         payload = json.loads(completed.stdout)
-        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v23")
+        self.assertEqual(payload["schema_version"], "aquarium-dev-setup-inspection.v24")
         self.assertEqual(payload["error"]["code"], "invalid_arguments")
         self.assertTrue(payload["error"]["message"].strip())
 
@@ -8860,6 +8864,7 @@ else:
             "use-gaori",
             "use-sorage",
             "use-podway",
+            "use-haepari",
         ):
             directory = skill_root / name
             directory.mkdir(parents=True)
@@ -8879,6 +8884,7 @@ else:
                 str(self.repository),
                 NORMAL_PROBE_TIMEOUT_SECONDS,
                 include_podway=True,
+                include_haepari=True,
             )
 
         skill_inspector.assert_not_called()
@@ -8896,6 +8902,7 @@ else:
             ("gaori", "use-gaori"),
             ("sorage", "use-sorage"),
             ("podway", "use-podway"),
+            ("haepari", "use-haepari"),
         ):
             self.assertEqual(
                 payload["tools"][tool]["agent_skill"],
@@ -8909,6 +8916,601 @@ else:
             )
         ouroboros_inspector.assert_not_called()
         self.assertNotIn("ouroboros", payload["tools"])
+
+    def test_default_inspection_does_not_call_haepari_inspector(self) -> None:
+        with mock.patch("inspect_tools.inspect_haepari") as haepari_inspector:
+            payload = inspect_tools.inspect(
+                str(self.repository), NORMAL_PROBE_TIMEOUT_SECONDS
+            )
+        haepari_inspector.assert_not_called()
+        self.assertNotIn("haepari", payload["tools"])
+
+    def test_haepari_resource_requires_include_haepari(self) -> None:
+        completed = self.run_script(
+            "--repository",
+            str(self.repository),
+            "--haepari-resource",
+            "sample-vm",
+        )
+        self.assertEqual(completed.returncode, 2)
+        payload = json.loads(completed.stdout)
+        self.assertEqual(payload["error"]["code"], "invalid_arguments")
+
+    def install_fake_haepari(self, responses: dict[str, object]) -> None:
+        executable = self.bin_directory / "haepari"
+        executable.write_text(
+            "#!/usr/bin/env python3\n"
+            "import hashlib, json, os, sys\n"
+            'key = " ".join(sys.argv[1:])\n'
+            'responses = json.loads(os.environ.get("FAKE_HAEPARI_RESPONSES", "{}"))\n'
+            "response = responses.get(key)\n"
+            "if response is None:\n"
+            "    sys.stderr.write('unsupported command\\n')\n"
+            "    sys.exit(2)\n"
+            "if '__stdout__' in response:\n"
+            "    sys.stdout.write(response['__stdout__'])\n"
+            "    sys.exit(response.get('__exit__', 0))\n"
+            "payload = {k: v for k, v in response.items()"
+            " if k not in ('__exit__', '__stderr__', '__stdout__')}\n"
+            "if '__stderr__' in response:\n"
+            "    sys.stderr.write(response['__stderr__'])\n"
+            'self_digest = "sha256:" + hashlib.sha256('
+            'open(sys.argv[0], "rb").read()).hexdigest()\n'
+            'print(json.dumps(payload).replace("__SELF_DIGEST__", self_digest))\n'
+            "exit_code = response.get('__exit__', 0)\n"
+            "if exit_code:\n"
+            "    sys.exit(exit_code)\n",
+            encoding="utf-8",
+        )
+        executable.chmod(0o755)
+        self.environment["FAKE_HAEPARI_RESPONSES"] = json.dumps(responses)
+
+    def haepari_version_response(self) -> dict[str, object]:
+        return {
+            "schema": "haepari.envelope/v1",
+            "operation": "version",
+            "ok": True,
+            "data": {
+                "version": "0.1.0",
+                "go_version": "go1.27.1",
+                "platform": "darwin/arm64",
+                "source_revision": "fc3b975f" + "0" * 32,
+                "source_modified": False,
+                "executable_sha256": "__SELF_DIGEST__",
+            },
+        }
+
+    def haepari_capabilities_response(self) -> dict[str, object]:
+        return {
+            "schema": "haepari.envelope/v1",
+            "operation": "capabilities",
+            "ok": True,
+            "data": {
+                "compiled_backends": ["local"],
+                "qualified_backends": [],
+                "protocol_versions": ["managed-execution/v1"],
+                "capabilities": [
+                    "managed-execution/v1",
+                    "durable-observation/v1",
+                    "advisory-lock/v1",
+                    "managed-recovery/v1",
+                    "artifact-delivery/v1",
+                    "evidence-retention/v1",
+                ],
+            },
+        }
+
+    def haepari_projection_response(
+        self,
+        installation_id: str | None = "local-0011223344556677",
+        operation: str = "operator.projection",
+    ) -> dict[str, object]:
+        data: dict[str, object] = {
+            "schema": "haepari.operator-diagnostic/v1",
+            "view": "diagnostic",
+            "section": "queue",
+            "observed_at": "2026-10-23T00:00:00Z",
+            "any_unknown_occupancy": False,
+            "current_config": {
+                "status": "present",
+                "revision": 1,
+                "document_digest": "b" * 64,
+                "values_digest": "c" * 64,
+                "global_limit": 2,
+                "host_macos_guest_limit": 1,
+            },
+            "page": {"limit": 1, "more": False},
+            "resources": [],
+        }
+        if installation_id is not None:
+            data["installation_id"] = installation_id
+        return {
+            "schema": "haepari.envelope/v1",
+            "operation": operation,
+            "ok": True,
+            "data": data,
+        }
+
+    def haepari_resources_response(
+        self,
+        *,
+        operation: str = "resources.list",
+        more: object = False,
+        include_more_key: bool = True,
+        include_target: bool = True,
+    ) -> dict[str, object]:
+        resources: list[dict[str, object]] = []
+        if include_target:
+            resources.append(
+                {
+                    "resource_id": "sample-vm",
+                    "kind": "utm-macos",
+                    "configuration_digest": "a" * 64,
+                    "config_revision": 1,
+                    "availability_revision": 1,
+                    "availability": "available",
+                    "reason": "",
+                    "capacity": 1,
+                    "occupancy": 0,
+                    "lease_generation": 0,
+                    "idle_since": "2026-10-23T00:00:00Z",
+                }
+            )
+        data: dict[str, object] = {"resources": resources}
+        if include_more_key:
+            data["more"] = more
+        if more is True:
+            data["next_cursor"] = "sample-cursor"
+        return {
+            "schema": "haepari.envelope/v1",
+            "operation": operation,
+            "ok": True,
+            "data": data,
+        }
+
+    def haepari_doctor_response(
+        self,
+        *,
+        ready: bool,
+        gaps: list[dict[str, str]] | None = None,
+        installation_id: str | None = "local-0011223344556677",
+        resource_id: str = "sample-vm",
+        projected_resource_id: str | None = "sample-vm",
+        operation: str = "doctor",
+        exit_code: int = 0,
+    ) -> dict[str, object]:
+        data: dict[str, object] = {
+            "schema": "haepari.doctor/v1",
+            "resource_id": resource_id,
+            "resource": {
+                "resource_id": projected_resource_id,
+                "kind": "utm-macos",
+                "configuration_digest": "a" * 64,
+                "config_revision": 2,
+                "availability_revision": 1,
+                "availability": "available",
+                "reason": "",
+                "capacity": 1,
+                "occupancy": 0,
+                "lease_generation": 0,
+            },
+            "observed_at": "2026-10-23T00:00:00Z",
+            "ready": ready,
+            "gaps": gaps or [],
+        }
+        if installation_id is not None:
+            data["installation_id"] = installation_id
+        response: dict[str, object] = {
+            "schema": "haepari.envelope/v1",
+            "operation": operation,
+            "ok": True,
+            "data": data,
+        }
+        if exit_code:
+            response["__exit__"] = exit_code
+        return response
+
+    def run_haepari_inspection(
+        self,
+        responses: dict[str, object],
+        *,
+        controller_home: str = "",
+        haepari_resource: str | None = None,
+        symlinked: bool = False,
+        with_executable: bool = True,
+    ) -> dict[str, object]:
+        if with_executable or symlinked:
+            self.install_fake_haepari(responses)
+        else:
+            self.environment["FAKE_HAEPARI_RESPONSES"] = json.dumps(responses)
+        if symlinked:
+            target = self.bin_directory / "haepari.real"
+            target.write_text(
+                (self.bin_directory / "haepari").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            target.chmod(0o755)
+            (self.bin_directory / "haepari").unlink()
+            (self.bin_directory / "haepari").symlink_to(target)
+        environment = dict(self.environment)
+        environment["HAEPARI_HOME"] = controller_home
+        with (
+            mock.patch.dict(os.environ, environment, clear=True),
+            mock.patch.object(inspect_tools, "is_arm64_macho", return_value=True),
+        ):
+            payload = inspect_tools.inspect(
+                str(self.repository),
+                NORMAL_PROBE_TIMEOUT_SECONDS,
+                include_haepari=True,
+                haepari_resource=haepari_resource,
+            )
+        return payload["tools"]["haepari"]
+
+    def test_haepari_missing_cli_with_a_resource_reports_missing(self) -> None:
+        for controller_home, controller_status in (
+            (str(self.base / "haepari-home"), "executable_missing"),
+            ("", "home_unselected"),
+        ):
+            with self.subTest(controller_status=controller_status):
+                tool = self.run_haepari_inspection(
+                    self.haepari_base_responses(),
+                    controller_home=controller_home,
+                    haepari_resource="sample-vm",
+                    with_executable=False,
+                )
+                self.assertEqual(tool["status"], "missing")
+                self.assertEqual(tool["controller"]["status"], controller_status)
+                self.assertEqual(
+                    tool["resources"]["status"],
+                    "executable_missing"
+                    if controller_status == "executable_missing"
+                    else "controller_home_unselected",
+                )
+                resource = tool["resource"]
+                self.assertEqual(resource["status"], "executable_missing")
+                self.assertEqual(resource["probe"]["reason"], "executable_missing")
+                self.assertEqual(
+                    tool["probes"]["version"]["reason"], "executable_missing"
+                )
+
+    def haepari_base_responses(self) -> dict[str, object]:
+        return {
+            "version --json": self.haepari_version_response(),
+            "capabilities --json": self.haepari_capabilities_response(),
+        }
+
+    def test_include_haepari_reports_separate_readiness_dimensions(self) -> None:
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response()
+                ),
+                "resources list --json": self.haepari_resources_response(),
+                "doctor --resource sample-vm --json": self.haepari_doctor_response(
+                    ready=True
+                ),
+            },
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="sample-vm",
+        )
+        self.assertEqual(tool["status"], "installed")
+        self.assertEqual(tool["version"], "0.1.0")
+        self.assertTrue(tool["version_supported"])
+        self.assertTrue(tool["capabilities_compatible"])
+        self.assertEqual(
+            tool["backend_capabilities"],
+            {
+                "capabilities": [
+                    "managed-execution/v1",
+                    "durable-observation/v1",
+                    "advisory-lock/v1",
+                    "managed-recovery/v1",
+                    "artifact-delivery/v1",
+                    "evidence-retention/v1",
+                ],
+                "compiled_backends": ["local"],
+                "qualified_backends": [],
+                "protocol_versions": ["managed-execution/v1"],
+            },
+        )
+        self.assertEqual(tool["controller"]["status"], "reachable")
+        self.assertEqual(
+            tool["controller"]["installation_id"], "local-0011223344556677"
+        )
+        self.assertEqual(tool["resources"]["status"], "inventoried")
+        self.assertFalse(tool["resources"]["more"])
+        self.assertEqual(
+            tool["resources"]["resources"],
+            [
+                {
+                    "resource_id": "sample-vm",
+                    "kind": "utm-macos",
+                    "config_revision": 1,
+                }
+            ],
+        )
+        resource = tool["resource"]
+        self.assertEqual(resource["status"], "ready")
+        self.assertTrue(resource["ready"])
+        self.assertEqual(resource["gaps"], [])
+        self.assertEqual(resource["config_revision"], 2)
+        self.assertEqual(resource["installation_id"], "local-0011223344556677")
+        self.assertEqual(resource["probe"]["exit_code"], 0)
+
+    def test_haepari_doctor_projection_identity_mismatch_is_reported(self) -> None:
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response()
+                ),
+                "resources list --json": self.haepari_resources_response(),
+                "doctor --resource sample-vm --json": self.haepari_doctor_response(
+                    ready=True, installation_id="local-fedcba9876543210"
+                ),
+            },
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="sample-vm",
+        )
+        self.assertEqual(tool["resource"]["status"], "installation_id_mismatch")
+
+    def test_haepari_missing_installation_identity_is_unobserved(self) -> None:
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response()
+                ),
+                "resources list --json": self.haepari_resources_response(),
+                "doctor --resource sample-vm --json": self.haepari_doctor_response(
+                    ready=True, installation_id=None
+                ),
+            },
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="sample-vm",
+        )
+        self.assertEqual(tool["resource"]["status"], "installation_id_unobserved")
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response(installation_id=None)
+                ),
+                "resources list --json": self.haepari_resources_response(),
+                "doctor --resource sample-vm --json": self.haepari_doctor_response(
+                    ready=True
+                ),
+            },
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="sample-vm",
+        )
+        self.assertEqual(tool["controller"]["status"], "installation_id_unobserved")
+        self.assertEqual(tool["resource"]["status"], "installation_id_unobserved")
+
+    def test_haepari_doctor_for_another_resource_is_an_identity_mismatch(
+        self,
+    ) -> None:
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response()
+                ),
+                "resources list --json": self.haepari_resources_response(),
+                "doctor --resource sample-vm --json": self.haepari_doctor_response(
+                    ready=True,
+                    resource_id="other-vm",
+                    projected_resource_id="sample-vm",
+                ),
+            },
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="sample-vm",
+        )
+        self.assertEqual(tool["resource"]["status"], "resource_identity_mismatch")
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response()
+                ),
+                "resources list --json": self.haepari_resources_response(),
+                "doctor --resource sample-vm --json": self.haepari_doctor_response(
+                    ready=True,
+                    resource_id="sample-vm",
+                    projected_resource_id="other-vm",
+                ),
+            },
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="sample-vm",
+        )
+        self.assertEqual(tool["resource"]["status"], "resource_identity_mismatch")
+
+    def test_haepari_not_ready_doctor_reports_gap_codes(self) -> None:
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response()
+                ),
+                "resources list --json": self.haepari_resources_response(),
+                "doctor --resource sample-vm --json": self.haepari_doctor_response(
+                    ready=False,
+                    gaps=[
+                        {
+                            "code": "vm_not_started",
+                            "message": "selected VM is not running",
+                        }
+                    ],
+                    exit_code=2,
+                ),
+            },
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="sample-vm",
+        )
+        resource = tool["resource"]
+        self.assertEqual(resource["status"], "not_ready")
+        self.assertFalse(resource["ready"])
+        self.assertEqual(resource["gaps"], ["vm_not_started"])
+        self.assertEqual(resource["config_revision"], 2)
+        self.assertEqual(resource["probe"]["exit_code"], 2)
+        self.assertEqual(resource["probe"]["ok"], False)
+
+    def test_haepari_partial_inventory_does_not_claim_absence(self) -> None:
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response()
+                ),
+                "resources list --json": self.haepari_resources_response(
+                    more=True, include_target=False
+                ),
+            },
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="sample-vm",
+        )
+        self.assertEqual(tool["resources"]["status"], "partial")
+        self.assertTrue(tool["resources"]["more"])
+        self.assertEqual(tool["resources"]["resources"], [])
+        self.assertEqual(
+            tool["resource"]["status"], "resource_unknown_partial_inventory"
+        )
+
+    def test_haepari_unknown_resource_is_reported(self) -> None:
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response()
+                ),
+                "resources list --json": self.haepari_resources_response(),
+            },
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="other-vm",
+        )
+        self.assertEqual(tool["resource"]["status"], "resource_unknown")
+        self.assertEqual(tool["resource"]["probe"]["reason"], "resource_unknown")
+
+    def test_haepari_unavailable_inventory_is_not_a_registration_absence(
+        self,
+    ) -> None:
+        cases: dict[str, object] = {
+            "transport": {"__exit__": 6},
+            "wrong-operation": self.haepari_resources_response(operation="resources"),
+            "missing-more": self.haepari_resources_response(include_more_key=False),
+            "invalid-json": {"__stdout__": "not json"},
+        }
+        for name, resources_response in cases.items():
+            with self.subTest(name=name):
+                tool = self.run_haepari_inspection(
+                    {
+                        **self.haepari_base_responses(),
+                        "doctor --projection --section queue --limit 1 --json": (
+                            self.haepari_projection_response()
+                        ),
+                        "resources list --json": resources_response,
+                        "doctor --resource sample-vm --json": (
+                            self.haepari_doctor_response(ready=True)
+                        ),
+                    },
+                    controller_home=str(self.base / "haepari-home"),
+                    haepari_resource="sample-vm",
+                )
+                self.assertEqual(tool["resources"]["status"], "inventory_unavailable")
+                resource = tool["resource"]
+                self.assertEqual(resource["status"], "inventory_unavailable")
+                self.assertEqual(resource["probe"]["reason"], "inventory_unavailable")
+                self.assertIsNone(resource["ready"])
+
+    def test_haepari_resource_without_a_controller_reports_unavailable_inventory(
+        self,
+    ) -> None:
+        for controller_home, resources_status in (
+            ("", "controller_home_unselected"),
+            (str(self.base / "haepari-home"), "controller_unreachable"),
+        ):
+            with self.subTest(resources_status=resources_status):
+                responses = dict(self.haepari_base_responses())
+                if resources_status == "controller_unreachable":
+                    responses[
+                        "doctor --projection --section queue --limit 1 --json"
+                    ] = {"__exit__": 6}
+                tool = self.run_haepari_inspection(
+                    responses,
+                    controller_home=controller_home,
+                    haepari_resource="sample-vm",
+                )
+                self.assertEqual(tool["resources"]["status"], resources_status)
+                self.assertEqual(tool["resource"]["status"], "inventory_unavailable")
+                self.assertEqual(tool["resource"]["probe"]["reason"], resources_status)
+
+    def test_haepari_doctor_envelope_failure_is_unavailable(self) -> None:
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response()
+                ),
+                "resources list --json": self.haepari_resources_response(),
+                "doctor --resource sample-vm --json": {"__exit__": 6},
+            },
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="sample-vm",
+        )
+        self.assertEqual(tool["resource"]["status"], "doctor_unavailable")
+
+    def test_haepari_probes_reject_foreign_operations(self) -> None:
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response(operation="doctor.projection")
+                ),
+            },
+            controller_home=str(self.base / "haepari-home"),
+        )
+        self.assertEqual(tool["controller"]["status"], "controller_unreachable")
+        tool = self.run_haepari_inspection(
+            {
+                **self.haepari_base_responses(),
+                "doctor --projection --section queue --limit 1 --json": (
+                    self.haepari_projection_response()
+                ),
+                "resources list --json": self.haepari_resources_response(),
+                "doctor --resource sample-vm --json": self.haepari_doctor_response(
+                    ready=True, operation="doctor.report"
+                ),
+            },
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="sample-vm",
+        )
+        self.assertEqual(tool["resource"]["status"], "doctor_unavailable")
+
+    def test_haepari_rejected_executable_skips_dependent_probes(self) -> None:
+        tool = self.run_haepari_inspection(
+            self.haepari_base_responses(),
+            controller_home=str(self.base / "haepari-home"),
+            haepari_resource="sample-vm",
+            symlinked=True,
+        )
+        self.assertEqual(tool["status"], "degraded")
+        self.assertEqual(tool["probes"]["version"]["reason"], "executable_unsafe")
+        self.assertEqual(tool["controller"]["status"], "executable_unsafe")
+        self.assertEqual(tool["controller"]["probe"]["reason"], "executable_unsafe")
+        self.assertEqual(tool["resources"]["status"], "executable_unsafe")
+        self.assertEqual(tool["resource"]["status"], "executable_unsafe")
+        self.assertEqual(tool["resource"]["probe"]["reason"], "executable_unsafe")
+
+    def test_haepari_controller_gap_keeps_other_dimensions_visible(self) -> None:
+        tool = self.run_haepari_inspection(
+            self.haepari_base_responses(),
+            controller_home="",
+        )
+        self.assertEqual(tool["status"], "installed")
+        self.assertEqual(tool["controller"]["status"], "home_unselected")
+        self.assertEqual(tool["resources"]["status"], "controller_home_unselected")
+        self.assertNotIn("resource", tool)
 
     def test_ouroboros_supports_stable_versions_at_or_above_minimum(self) -> None:
         expected = {

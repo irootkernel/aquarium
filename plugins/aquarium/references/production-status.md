@@ -88,7 +88,7 @@ Attempt outcomes are `ready`, `partial`, `failed`, or `declined`. `skipped`, an
 abandoned run, Plan Mode, diagnosis-only work, and any non-terminal execution are
 not record requests. Scope is either `{kind: full}` or `{kind: scoped,
 components: [...]}`. A scoped component list is non-empty, sorted, unique, and
-closed to `sanho`, `dolgorae`, `mulgae`, `gaori`, `sorage`, `podway`,
+closed to `sanho`, `dolgorae`, `mulgae`, `gaori`, `sorage`, `podway`, `haepari`,
 `ouroboros`, `lora`, `deslop`, `humanizer`, `im-not-ai`, `aquarium-dev`, and
 `agents-guidance`.
 
@@ -468,10 +468,12 @@ null action. Launcher state is `unsafe` before all other launcher states, then
 `unknown`, `missing`, `managed_outdated`, and `managed_current`.
 
 The global inspector advances to
-`aquarium-dev-setup-global-inspection.v6`. Version 4 added the default-selected
+`aquarium-dev-setup-global-inspection.v7`. Version 4 added the default-selected
 and explicitly selectable `tools.aquarium-status` member whose value is the
 runtime inspection envelope above. Version 5 removes Dolgorae's dedicated
-release-verification fields and CLI option. Version 6 replaces Podway daemon diagnosis with Direct CLI identity and its normalized probe. The global skill consumes structured
+release-verification fields and CLI option. Version 6 replaces Podway daemon diagnosis with Direct CLI identity and its normalized probe. Version 7 adds the
+Haepari CLI, paired-skill, and controller-readiness member, keeping binary,
+skill, and controller verdicts separate. The global skill consumes structured
 component results and never infers runtime state from prose.
 
 ## Setup ownership and retry protocol

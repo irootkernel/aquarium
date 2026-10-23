@@ -40,7 +40,7 @@ AI 도구가 아무리 뛰어나도 하나씩 따로 쓰면 맥락, 승인, task
 - **권한은 사용자에게 있습니다.** 도구 설치, provider로의 source 전송, staging, commit, push, publication은 각각 따로 승인을 받습니다. 설계 문서와 setup 파일은 사용자가 승인한 exact diff로만 바뀝니다. 로컬 hook은 roadmap 저장소에서 직접 실행한 shell commit을 잡아 `task-commit` 경로로 안내합니다.
 - **작업은 멈추고, 재개하고, 인계할 수 있습니다.** `task-handler`와 `epic-handler`는 plan-only 실행, 다른 에이전트로의 명시적 plan handoff, 기존 session 재개를 지원합니다. Plan만으로는 runtime state가 생기지 않습니다.
 
-이 원본은 Codex를 기준으로 작성됩니다. 각 판은 이를 자기 host에 맞게 조정합니다. Aquarium은 서로 바꿔 쓸 수 있는 도구를 추상화하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Dolgorae, Herdr, Podway, Sanho, Mulgae, Gaori, Sorage, Ouroboros, Lora, Deslop, Humanizer, im-not-ai 사이의 계약은 Aquarium이 소유합니다. 각 계약은 도구를 언제 실행하고 무엇을 결정하게 할지, 그 출력을 다음 단계의 증거로 어떻게 쓸지를 정합니다.
+이 원본은 Codex를 기준으로 작성됩니다. 각 판은 이를 자기 host에 맞게 조정합니다. Aquarium은 서로 바꿔 쓸 수 있는 도구를 추상화하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Dolgorae, Herdr, Podway, Sanho, Mulgae, Gaori, Sorage, Haepari, Ouroboros, Lora, Deslop, Humanizer, im-not-ai 사이의 계약은 Aquarium이 소유합니다. 각 계약은 도구를 언제 실행하고 무엇을 결정하게 할지, 그 출력을 다음 단계의 증거로 어떻게 쓸지를 정합니다.
 
 ## 설치
 
@@ -91,6 +91,7 @@ runtime은 global setup이 진단하며 plugin update만으로 자동 교체되�
 - [Mulgae](https://github.com/irootkernel/mulgae) v0.1.25 이상은 완료된 task·epic과 명시적으로 요청한 standalone target을 여러 provider로 review합니다. Provider는 중립 reviewer home에서 실행되며 native read-only 제한에 따라 원본 workspace·index 또는 확정된 Git object를 읽습니다. Mulgae는 report와 선택된 evidence를 `.mulgae/`에 보관하지만 전체 소스 snapshot이나 replay archive는 만들지 않습니다. 호출자는 완료까지 workspace/index를 유지해야 하며, native source identity는 선택 메타데이터를 나타냅니다. Aquarium은 purpose와 Review Brief를 제공하고 native lifecycle state를 바꾸지 않은 채 finding의 타당성과 우선순위를 판단합니다. Config v5는 명시적인 이행이 필요하고, `.mulgaeignore`는 더 이상 파일을 제외하지 않습니다.
 - [Sorage](https://github.com/irootkernel/sorage)는 등록된 프로젝트 사이에서 로컬 문서 handoff를 중개합니다. Aquarium은 지원되는 Apple Silicon CLI와 paired `use-sorage` skill을 설치·진단하고, 별도 승인 후 로컬 초기화와 현재 Git 저장소 등록까지 수행할 수 있습니다. Inbox, outbox, review, revision, retention, deletion, Vault 작업은 paired skill이 맡습니다.
 - [Dolgorae](https://github.com/irootkernel/dolgorae)는 Profile이나 재사용 가능한 External Specialist Engagement처럼 명시적으로 요청한 native 작업에 쓰는 선택형 global 도구입니다. Aquarium은 v0.1.2 이상인 로컬 v0.1.x Apple Silicon 설치의 호환성을 진단하고, 해당 범위의 공식 stable release를 checksum으로 검증해 설치할 수 있습니다. Aquarium Subagent Review는 Codex subagent를 사용하며 Dolgorae를 탐색·설정·실행하지 않습니다.
+- [Haepari](https://github.com/irootkernel/haepari)는 Aquarium의 선택형 VM 검증 경로에서 쓰는 managed local/UTM macOS job과 advisory lock을 제공합니다. Aquarium은 checksum으로 검증한 v0.1.x Apple Silicon release와 같은 release의 전체 `use-haepari` skill을 설치·진단할 수 있고, 공유 per-user controller와 등록된 VM resource를 서로 다른 readiness 항목으로 확인합니다. 현재 release workflow는 EPIC-019 정책 전환이 받아들여지기 전까지 기존 수동 VM 경로를 유지합니다.
 - [Herdr Review](plugins/aquarium/skills/herdr-review/SKILL.md)는 별도로 설치된 upstream Herdr skill을 통해 현재 로컬 session에서 요청한 reviewer를 새로 실행합니다. Staged, HEAD, commit, range 대상을 지원하며 workspace와 dirty는 지원하지 않습니다. Reviewer는 live index 또는 확정된 Git object를 읽고 소스와 Git 상태를 보존하며, 목적에 맞는 전체 보고서를 반환합니다. 완료로 인정하려면 reviewer identity와 제출·활동의 연결을 확인해야 합니다. Idle이나 done 상태만으로 완료를 판단하지 않습니다. 출력 복구에는 같은 reviewer를 사용하며, 결과를 인정하고 evidence를 기록한 뒤 이 리뷰가 만든 pane만 닫을 수 있습니다. 외부 임시 경로나 Git이 무시하는 경로에 저장한 리뷰 출력은 검토를 돕는 자료입니다. Orca나 Dolgorae operation은 사용하지 않으며 immutable capture나 backend CI를 보장하지 않습니다. 실제 native 동작과 manual migration 검증은 정적 검사와 별도로 확인합니다.
 - [Sanho](https://github.com/irootkernel/sanho)는 Aquarium이 인계할 결과를 확정한 뒤, 프로젝트 문서를 canonical documentation repository와 동기화합니다.
 - [Lora](https://github.com/tmdgusya/lora)는 decision context를 Git trailer에 남기고, [Cursor Team Kit](https://github.com/cursor/plugins/tree/main/cursor-team-kit)은 task refinement에 쓰는 upstream `deslop` cleanup skill을 제공합니다.
@@ -105,7 +106,7 @@ runtime은 global setup이 진단하며 plugin update만으로 자동 교체되�
 
 - Workflow 호출은 해당 skill에 문서화된 효과만 허용합니다. 설치, 인증, source 전송, 테스트, staging, commit, push, publication, 파괴적인 lifecycle 작업은 각각 별도의 권한이 필요합니다.
 - `release-handler` 호출은 read-only release discovery와 orchestration만 허용합니다. Commit, push, tag, hosted Release, 파괴적 교체, release 후 다음 주기 commit은 각각 별도 승인이 필요합니다. 위임된 `release-qa`는 private repository metadata에 기존 ambient authentication을 사용할 수 있고 검증된 finding을 local에서 한 번 수정할 수 있지만 source를 upload하거나 credential을 처리하지 않습니다.
-- `dev-setup-global`을 명시적으로 호출하면 모든 지원 global component를 선택하며, scoped continuation은 지정된 component만 선택합니다. 공개한 official release·tag·commit metadata 조회가 허용됩니다. Dolgorae, Sanho, Mulgae, Gaori, Sorage, Podway는 commit으로 고정한 전체 paired-skill tree를 임시 저장소에서 비교합니다. Lora나 Deslop을 선택하면 고정할 installer의 official npm metadata도 조회합니다. 설치용 다운로드, 변경, provider 호출에는 각각 별도 권한이 필요합니다.
+- `dev-setup-global`을 명시적으로 호출하면 모든 지원 global component를 선택하며, scoped continuation은 지정된 component만 선택합니다. 공개한 official release·tag·commit metadata 조회가 허용됩니다. Dolgorae, Sanho, Mulgae, Gaori, Sorage, Podway, Haepari는 commit으로 고정한 전체 paired-skill tree를 임시 저장소에서 비교합니다. Lora나 Deslop을 선택하면 고정할 installer의 official npm metadata도 조회합니다. 설치용 다운로드, 변경, provider 호출에는 각각 별도 권한이 필요합니다.
 - Aquarium은 중앙 project-state 파일을 만들지 않습니다. 전체 data 및 authority contract는 [PRIVACY.md](PRIVACY.md)와 [TERMS.md](TERMS.md)에 있습니다.
 
 ## 참고 문서

@@ -1,0 +1,44 @@
+{
+  "schema": "aquarium.vm-inventory/v1",
+  "phase": "post_cleanup",
+  "profile_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+  "recipe_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+  "entries": [
+    {
+      "relative_path": "bin/haepari",
+      "executable": true,
+      "sha256": "e1a4c0a047f9d6b6e7048fdcfea961b7bafb3a3c627786619cff3796433d6b20",
+      "installation_scope": "user-global"
+    },
+    {
+      "relative_path": "skills/use-haepari/SKILL.md",
+      "executable": false,
+      "sha256": "00295fa08965a45e15b91b77b5e6e8188d3bb8241c1821651993df5a2e9da4c0",
+      "installation_scope": "shared-agents-skills"
+    },
+    {
+      "relative_path": "plugin/aquarium/.codex-plugin/plugin.json",
+      "executable": false,
+      "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "installation_scope": "codex-plugin-cache"
+    },
+    {
+      "relative_path": "plugin/aquarium/skills/task-handler/SKILL.md",
+      "executable": false,
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "installation_scope": "codex-plugin-cache"
+    },
+    {
+      "relative_path": "scripts/run-checks.sh",
+      "executable": false,
+      "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+      "installation_scope": "project-discovery"
+    },
+    {
+      "relative_path": "legacy/old-runner.txt",
+      "executable": false,
+      "sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+      "installation_scope": "guest-path"
+    }
+  ]
+}

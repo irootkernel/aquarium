@@ -55,6 +55,7 @@ PYTHON_FILES := \
 	tests/unit/test_adaptive_definitions_unit.py \
 	tests/vm/run_acceptance.py \
 	tests/vm/native_observation.py \
+	tests/vm/profiles/validate_profiles.py \
 	tests/unit/test_vm_acceptance_unit.py \
 	tests/vm/fixtures/greeting/greet.py \
 	tests/vm/fixtures/greeting/tests/unit/test_greet.py \
@@ -115,6 +116,7 @@ PYTHON_FILES := \
 	tests/test_aquarium_status_integration.py \
 	tests/test_normalize_manifest.py \
 	tests/test_task_commit_gate.py \
+	tests/test_vm_profiles.py \
 	tests/podway_runtime_qualification.py \
 	tests/verify_podway_compatibility.py \
 	tests/unit/test_inspect_docs_unit.py \
@@ -175,7 +177,7 @@ test-unit: test-requirements
 	$(PYTHON) -m pytest tests/unit
 
 test-int: test-requirements
-	$(PYTHON) -m pytest tests/test_aquarium_status_integration.py tests/test_inspect_docs.py tests/test_inspect_global_tools.py tests/test_inspect_testing.py
+	$(PYTHON) -m pytest tests/test_aquarium_status_integration.py tests/test_inspect_docs.py tests/test_inspect_global_tools.py tests/test_inspect_testing.py tests/test_vm_profiles.py
 	$(PYTHON) -m unittest tests/test_inspect_tools.py tests/test_task_commit_gate.py tests/test_normalize_manifest.py
 
 test-e2e: test-requirements

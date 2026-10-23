@@ -28,7 +28,7 @@ except ModuleNotFoundError as error:
         raise
     yaml = None  # type: ignore[assignment]
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v23"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v24"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
@@ -91,6 +91,15 @@ PODWAY_SKILL_FILES = (
     "references/recovery.md",
 )
 SORAGE_SKILL_FILES = ("SKILL.md",)
+HAEPARI_SKILL_FILES = ("SKILL.md",)
+HAEPARI_CAPABILITIES = (
+    "managed-execution/v1",
+    "durable-observation/v1",
+    "advisory-lock/v1",
+    "managed-recovery/v1",
+    "artifact-delivery/v1",
+    "evidence-retention/v1",
+)
 SORAGE_DOCTOR_CATALOG = (
     "home.permissions",
     "config.schema",
@@ -1107,6 +1116,13 @@ def supported_sorage_version(version: str | None) -> bool:
         return False
     match = re.fullmatch(rf"v?0\.1\.({CANONICAL_NUMERIC_COMPONENT})", version)
     return bool(match and int(match.group(1)) >= 2)
+
+
+def supported_haepari_version(version: str | None) -> bool:
+    if not version:
+        return False
+    match = re.fullmatch(rf"v?0\.1\.({CANONICAL_NUMERIC_COMPONENT})", version)
+    return bool(match and int(match.group(1)) >= 0)
 
 
 def supported_mulgae_go_version(version: str | None) -> bool:
@@ -2339,6 +2355,507 @@ def inspect_dolgorae(
         and valid_capabilities
         else "degraded"
     )
+    return tool
+
+
+def valid_haepari_envelope(
+    probe: dict[str, Any], raw_probe: dict[str, Any], operation: str
+) -> bool:
+    envelope = probe.get("result")
+    return bool(
+        probe["ok"]
+        and not raw_probe["stderr"]
+        and isinstance(envelope, dict)
+        and envelope.get("schema") == "haepari.envelope/v1"
+        and envelope.get("operation") == operation
+        and envelope.get("ok") is True
+        and isinstance(envelope.get("data"), dict)
+    )
+
+
+def haepari_capabilities_compatible(data: Any) -> bool:
+    if not isinstance(data, dict):
+        return False
+    capabilities = data.get("capabilities")
+    compiled = data.get("compiled_backends")
+    qualified = data.get("qualified_backends")
+    protocols = data.get("protocol_versions")
+    return bool(
+        isinstance(capabilities, list)
+        and set(HAEPARI_CAPABILITIES).issubset(capabilities)
+        and isinstance(compiled, list)
+        and "local" in compiled
+        and isinstance(qualified, list)
+        and isinstance(protocols, list)
+        and "managed-execution/v1" in protocols
+    )
+
+
+def inspect_haepari_cli(repository: Path, timeout_seconds: float) -> dict[str, Any]:
+    discovered = shutil.which("haepari")
+    tool = base_tool("haepari")
+    tool["version_supported"] = False
+    tool["platform"] = {
+        "system": platform.system(),
+        "machine": platform.machine(),
+        "supported": platform.system() == "Darwin"
+        and platform.machine() in {"arm64", "aarch64"},
+    }
+    tool["symlinked"] = bool(discovered and Path(discovered).is_symlink())
+    tool["regular_file"] = False
+    tool["safe_location"] = False
+    tool["arm64_macho"] = False
+    tool["executable_sha256"] = None
+    tool["reported_executable_sha256"] = None
+    tool["validated_executable"] = None
+    tool["file_identity"] = None
+    tool["identity_stable"] = False
+    tool["capabilities_compatible"] = False
+    if not discovered:
+        tool["probes"]["version"] = skipped_probe("executable_missing")
+        tool["probes"]["capabilities"] = skipped_probe("executable_missing")
+        return tool
+
+    executable = Path(discovered)
+    try:
+        executable_stat = executable.stat()
+        tool["regular_file"] = stat.S_ISREG(executable_stat.st_mode)
+        resolved_executable = executable.resolve()
+        home = Path.home().resolve()
+        tool["safe_location"] = bool(
+            executable.is_absolute()
+            and not resolved_executable.is_relative_to(home / ".aquarium")
+            and not resolved_executable.is_relative_to(home / ".aquarium-dev")
+        )
+        if (
+            not tool["symlinked"]
+            and tool["regular_file"]
+            and tool["safe_location"]
+            and os.access(executable, os.X_OK)
+        ):
+            digest = hashlib.sha256(executable.read_bytes()).hexdigest()
+            tool["executable_sha256"] = digest
+            tool["arm64_macho"] = is_arm64_macho(executable)
+            tool["file_identity"] = {
+                "device": executable_stat.st_dev,
+                "inode": executable_stat.st_ino,
+            }
+    except OSError:
+        pass
+
+    if (
+        tool["symlinked"]
+        or not tool["regular_file"]
+        or not tool["safe_location"]
+        or not os.access(executable, os.X_OK)
+    ):
+        tool["probes"]["version"] = skipped_probe("executable_unsafe")
+        tool["probes"]["capabilities"] = skipped_probe("executable_unsafe")
+        tool["status"] = "degraded"
+        return tool
+
+    resolved = str(executable.resolve())
+    tool["validated_executable"] = resolved
+    raw_version_probe = run_command(
+        [resolved, "version", "--json"], repository, timeout_seconds
+    )
+    version_probe = parse_json_probe(raw_version_probe)
+    normalized_version_result = normalized_probe(version_probe)
+    version_envelope = version_probe.get("result")
+    version_data = (
+        version_envelope.get("data") if isinstance(version_envelope, dict) else None
+    )
+    valid_version = bool(
+        valid_haepari_envelope(version_probe, raw_version_probe, "version")
+        and isinstance(version_data, dict)
+        and isinstance(version_data.get("version"), str)
+        and CANONICAL_SEMVER.fullmatch(version_data["version"])
+        and version_data.get("platform") == "darwin/arm64"
+        and isinstance(version_data.get("executable_sha256"), str)
+        and re.fullmatch(r"sha256:[0-9a-f]{64}", version_data["executable_sha256"])
+    )
+    if valid_version:
+        tool["version"] = normalized_version(version_data["version"])
+        tool["reported_executable_sha256"] = version_data["executable_sha256"]
+    else:
+        normalized_version_result["ok"] = False
+        if "error_code" not in normalized_version_result:
+            normalized_version_result["error_code"] = "unexpected_version_envelope"
+    tool["probes"]["version"] = normalized_version_result
+    tool["version_supported"] = supported_haepari_version(tool["version"])
+    executable_digest_matches = bool(
+        valid_version
+        and tool["executable_sha256"] is not None
+        and version_data["executable_sha256"] == "sha256:" + tool["executable_sha256"]
+    )
+    if valid_version and not executable_digest_matches:
+        normalized_version_result["ok"] = False
+        if "error_code" not in normalized_version_result:
+            normalized_version_result["error_code"] = "executable_digest_mismatch"
+
+    raw_capabilities_probe = run_command(
+        [resolved, "capabilities", "--json"], repository, timeout_seconds
+    )
+    capabilities_probe = parse_json_probe(raw_capabilities_probe)
+    normalized_capabilities = normalized_probe(capabilities_probe)
+    capabilities_envelope = capabilities_probe.get("result")
+    capabilities_data = (
+        capabilities_envelope.get("data")
+        if isinstance(capabilities_envelope, dict)
+        else None
+    )
+    valid_capabilities_envelope = valid_haepari_envelope(
+        capabilities_probe, raw_capabilities_probe, "capabilities"
+    )
+    valid_capabilities = bool(
+        tool["version"]
+        and valid_capabilities_envelope
+        and haepari_capabilities_compatible(capabilities_data)
+    )
+    if not valid_capabilities:
+        normalized_capabilities["ok"] = False
+        if "error_code" not in normalized_capabilities:
+            if not valid_capabilities_envelope:
+                normalized_capabilities["error_code"] = (
+                    "unexpected_capabilities_envelope"
+                )
+            elif not tool["version"]:
+                normalized_capabilities["error_code"] = "version_unknown"
+            else:
+                normalized_capabilities["error_code"] = "incompatible_capabilities"
+    tool["probes"]["capabilities"] = normalized_capabilities
+    tool["capabilities_compatible"] = valid_capabilities
+    if valid_capabilities_envelope and isinstance(capabilities_data, dict):
+        observed: dict[str, Any] = {}
+        for field in (
+            "capabilities",
+            "compiled_backends",
+            "qualified_backends",
+            "protocol_versions",
+        ):
+            value = capabilities_data.get(field)
+            if isinstance(value, list) and all(isinstance(item, str) for item in value):
+                observed[field] = value
+        if observed:
+            tool["backend_capabilities"] = observed
+    try:
+        final_stat = executable.stat()
+        initial_identity = tool["file_identity"]
+        tool["identity_stable"] = bool(
+            isinstance(initial_identity, dict)
+            and final_stat.st_dev == initial_identity["device"]
+            and final_stat.st_ino == initial_identity["inode"]
+            and hashlib.sha256(executable.read_bytes()).hexdigest()
+            == tool["executable_sha256"]
+        )
+    except OSError:
+        tool["identity_stable"] = False
+    tool["status"] = (
+        "installed"
+        if valid_version
+        and tool["version_supported"]
+        and tool["platform"]["supported"]
+        and tool["arm64_macho"]
+        and tool["identity_stable"]
+        and executable_digest_matches
+        and valid_capabilities
+        else "degraded"
+    )
+    return tool
+
+
+def haepari_selected_home() -> str | None:
+    selected = os.environ.get("HAEPARI_HOME")
+    return selected if isinstance(selected, str) and selected else None
+
+
+def haepari_controller_state(
+    cli_tool: dict[str, Any], repository: Path, timeout_seconds: float
+) -> dict[str, Any]:
+    selected_home = haepari_selected_home()
+    state: dict[str, Any] = {
+        "selected_home": selected_home,
+        "reachable": None,
+        "installation_id": None,
+        "status": "home_unselected",
+        "probe": None,
+    }
+    if not selected_home:
+        state["probe"] = skipped_probe("controller_home_unselected")
+        return state
+    if not cli_tool.get("installed"):
+        state["status"] = "executable_missing"
+        state["probe"] = skipped_probe("executable_missing")
+        return state
+    validated_executable = cli_tool.get("validated_executable")
+    if not isinstance(validated_executable, str) or not validated_executable:
+        state["status"] = "executable_unsafe"
+        state["probe"] = skipped_probe("executable_unsafe")
+        return state
+    raw_probe = run_command(
+        [
+            validated_executable,
+            "doctor",
+            "--projection",
+            "--section",
+            "queue",
+            "--limit",
+            "1",
+            "--json",
+        ],
+        repository,
+        timeout_seconds,
+    )
+    probe = parse_json_probe(raw_probe)
+    normalized = normalized_probe(probe)
+    envelope = probe.get("result")
+    data = envelope.get("data") if isinstance(envelope, dict) else None
+    valid = bool(
+        probe["ok"]
+        and not raw_probe["stderr"]
+        and isinstance(envelope, dict)
+        and envelope.get("schema") == "haepari.envelope/v1"
+        and envelope.get("operation") == "operator.projection"
+        and envelope.get("ok") is True
+        and isinstance(data, dict)
+        and data.get("schema") == "haepari.operator-diagnostic/v1"
+    )
+    installation_id = None
+    if (
+        valid
+        and isinstance(data.get("installation_id"), str)
+        and data["installation_id"]
+    ):
+        installation_id = data["installation_id"]
+    state["probe"] = normalized
+    if valid:
+        state["reachable"] = True
+        state["installation_id"] = installation_id
+        state["status"] = (
+            "reachable" if installation_id else "installation_id_unobserved"
+        )
+    else:
+        state["reachable"] = False
+        state["status"] = "controller_unreachable"
+    return state
+
+
+def haepari_resources_state(
+    validated_executable: str | None, repository: Path, timeout_seconds: float
+) -> dict[str, Any]:
+    state: dict[str, Any] = {
+        "status": "executable_unsafe",
+        "resources": None,
+        "more": None,
+        "probe": None,
+    }
+    if not isinstance(validated_executable, str) or not validated_executable:
+        state["probe"] = skipped_probe("executable_unsafe")
+        return state
+    probe = json_probe(
+        [validated_executable, "resources", "list", "--json"],
+        repository,
+        timeout_seconds,
+    )
+    normalized = normalized_probe(probe)
+    envelope = probe.get("result")
+    data = envelope.get("data") if isinstance(envelope, dict) else None
+    valid = bool(
+        probe["ok"]
+        and isinstance(envelope, dict)
+        and envelope.get("schema") == "haepari.envelope/v1"
+        and envelope.get("operation") == "resources.list"
+        and envelope.get("ok") is True
+        and isinstance(data, dict)
+        and isinstance(data.get("resources"), list)
+        and isinstance(data.get("more"), bool)
+    )
+    if not valid:
+        # A failed, malformed, or non-native inventory page is not evidence of
+        # an absent registration.
+        state["status"] = "inventory_unavailable"
+        state["probe"] = normalized
+        return state
+    resources = []
+    for entry in data["resources"]:
+        if isinstance(entry, dict) and isinstance(entry.get("resource_id"), str):
+            row = {"resource_id": entry["resource_id"]}
+            if isinstance(entry.get("kind"), str):
+                row["kind"] = entry["kind"]
+            config_revision = entry.get("config_revision")
+            if isinstance(config_revision, int) and not isinstance(
+                config_revision, bool
+            ):
+                row["config_revision"] = config_revision
+            resources.append(row)
+    more = data["more"]
+    state["resources"] = resources
+    state["more"] = more
+    state["status"] = "partial" if more is True else "inventoried"
+    state["probe"] = normalized
+    return state
+
+
+def haepari_resource_state(
+    validated_executable: str | None,
+    repository: Path,
+    timeout_seconds: float,
+    resource_id: str,
+    resources_state: dict[str, Any],
+    controller_installation_id: str | None,
+    cli_installed: bool,
+) -> dict[str, Any]:
+    state: dict[str, Any] = {
+        "id": resource_id,
+        "status": "executable_unsafe",
+        "ready": None,
+        "gaps": None,
+        "config_revision": None,
+        "installation_id": None,
+        "probe": None,
+    }
+    # Gate exactly as the controller gates itself: a CLI that is not installed
+    # and one that failed the safety checks are distinct, probe-free gaps.
+    if not cli_installed:
+        state["status"] = "executable_missing"
+        state["probe"] = skipped_probe("executable_missing")
+        return state
+    if not isinstance(validated_executable, str) or not validated_executable:
+        state["probe"] = skipped_probe("executable_unsafe")
+        return state
+    inventory_status = resources_state.get("status")
+    if inventory_status not in ("inventoried", "partial"):
+        # Without a valid inventory, absence cannot be established, so the
+        # doctor probe never runs.
+        state["status"] = "inventory_unavailable"
+        reason = inventory_status if isinstance(inventory_status, str) else "unknown"
+        state["probe"] = skipped_probe(reason)
+        return state
+    inventory = resources_state.get("resources")
+    known = bool(
+        isinstance(inventory, list)
+        and any(
+            isinstance(row, dict) and row.get("resource_id") == resource_id
+            for row in inventory
+        )
+    )
+    if not known:
+        state["status"] = (
+            "resource_unknown_partial_inventory"
+            if resources_state.get("more") is True
+            else "resource_unknown"
+        )
+        state["probe"] = skipped_probe(state["status"])
+        return state
+    raw_probe = run_command(
+        [validated_executable, "doctor", "--resource", resource_id, "--json"],
+        repository,
+        timeout_seconds,
+    )
+    probe = parse_json_probe(raw_probe)
+    normalized = normalized_probe(probe)
+    envelope = probe.get("result")
+    data = envelope.get("data") if isinstance(envelope, dict) else None
+    valid_envelope = bool(
+        isinstance(envelope, dict)
+        and envelope.get("schema") == "haepari.envelope/v1"
+        and envelope.get("operation") == "doctor"
+        and envelope.get("ok") is True
+        and isinstance(data, dict)
+        and data.get("schema") == "haepari.doctor/v1"
+    )
+    # A diagnostic gap makes `doctor --resource` exit 2 while still printing a
+    # valid envelope, so exit 0 and 2 both carry readiness.
+    acceptable_exit = bool(
+        not raw_probe["timed_out"]
+        and raw_probe["exit_code"] in (0, 2)
+        and not raw_probe["stderr"]
+    )
+    state["probe"] = normalized
+    if not (acceptable_exit and valid_envelope):
+        state["status"] = "doctor_unavailable"
+        return state
+    installation_id = None
+    if isinstance(data.get("installation_id"), str) and data["installation_id"]:
+        installation_id = data["installation_id"]
+    state["installation_id"] = installation_id
+    resource_projection = data.get("resource")
+    if (
+        isinstance(resource_projection, dict)
+        and isinstance(resource_projection.get("config_revision"), int)
+        and not isinstance(resource_projection["config_revision"], bool)
+    ):
+        state["config_revision"] = resource_projection["config_revision"]
+    if isinstance(data.get("ready"), bool):
+        state["ready"] = data["ready"]
+    gaps = data.get("gaps")
+    if isinstance(gaps, list):
+        state["gaps"] = [
+            gap["code"]
+            for gap in gaps
+            if isinstance(gap, dict) and isinstance(gap.get("code"), str)
+        ]
+    resource_identity = data.get("resource_id")
+    if isinstance(resource_projection, dict):
+        projected_identity = resource_projection.get("resource_id")
+    else:
+        projected_identity = None
+    if installation_id is None or controller_installation_id is None:
+        state["status"] = "installation_id_unobserved"
+    elif installation_id != controller_installation_id:
+        state["status"] = "installation_id_mismatch"
+    elif resource_identity != resource_id or projected_identity != resource_id:
+        state["status"] = "resource_identity_mismatch"
+    elif state["ready"] is True:
+        state["status"] = "ready"
+    else:
+        state["status"] = "not_ready"
+    return state
+
+
+def inspect_haepari(
+    repository: Path,
+    timeout_seconds: float,
+    *,
+    resource_id: str | None = None,
+    agent_skill: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    tool = inspect_haepari_cli(repository, timeout_seconds)
+    if agent_skill is not None:
+        tool["agent_skill"] = agent_skill
+    controller = haepari_controller_state(tool, repository, timeout_seconds)
+    tool["controller"] = controller
+    skipped_resources_status = {
+        "home_unselected": "controller_home_unselected",
+        "executable_missing": "executable_missing",
+        "executable_unsafe": "executable_unsafe",
+        "controller_unreachable": "controller_unreachable",
+    }.get(controller["status"])
+    if skipped_resources_status is not None:
+        tool["resources"] = {
+            "status": skipped_resources_status,
+            "resources": None,
+            "more": None,
+            "probe": skipped_probe(skipped_resources_status),
+        }
+    else:
+        tool["resources"] = haepari_resources_state(
+            tool.get("validated_executable"), repository, timeout_seconds
+        )
+    if resource_id is not None:
+        tool["resource"] = haepari_resource_state(
+            tool.get("validated_executable"),
+            repository,
+            timeout_seconds,
+            resource_id,
+            tool["resources"],
+            controller.get("installation_id"),
+            bool(tool.get("installed")),
+        )
+    # The validated path is internal coordination between the CLI inspection
+    # and the dependent probes; the public member exposes `executable` and the
+    # per-probe statuses instead.
+    tool.pop("validated_executable", None)
     return tool
 
 
@@ -5001,6 +5518,8 @@ def inspect(
     require_mulgae_mcp: bool = False,
     expected_mulgae_mcp: str | None = None,
     expected_gaori_mcp: str | None = None,
+    include_haepari: bool = False,
+    haepari_resource: str | None = None,
 ) -> dict[str, Any]:
     repository = resolve_repository(requested_path, timeout_seconds)
     trusted_global_skills = {
@@ -5017,6 +5536,7 @@ def inspect(
             "use-gaori-status": Path.home() / ".agents/skills/use-gaori-status",
             "use-sorage": Path.home() / ".agents/skills/use-sorage",
             "use-podway": Path.home() / ".agents/skills/use-podway",
+            "use-haepari": Path.home() / ".agents/skills/use-haepari",
             "lore-commits": Path.home() / ".agents/skills/lore-commits",
             "lore-query": Path.home() / ".agents/skills/lore-query",
             "deslop": Path.home() / ".agents/skills/deslop",
@@ -5055,6 +5575,13 @@ def inspect(
             repository,
             timeout_seconds,
             agent_skill=trusted_global_skills["use-podway"],
+        )
+    if include_haepari:
+        tools["haepari"] = inspect_haepari(
+            repository,
+            timeout_seconds,
+            resource_id=haepari_resource,
+            agent_skill=trusted_global_skills.get("use-haepari"),
         )
     requested_mcp = {
         name: assess_requested_mcp_scope(tools[name]["mcp_registration"], scope)
@@ -5098,6 +5625,15 @@ def parse_arguments() -> argparse.Namespace:
         "--include-podway",
         action="store_true",
         help="Include explicitly requested Podway readiness diagnostics",
+    )
+    parser.add_argument(
+        "--include-haepari",
+        action="store_true",
+        help="Include explicitly requested Haepari readiness diagnostics",
+    )
+    parser.add_argument(
+        "--haepari-resource",
+        help="One registered Haepari resource id narrowed onto --include-haepari",
     )
     parser.add_argument(
         "--require-mulgae-mcp",
@@ -5178,6 +5714,11 @@ def parse_arguments() -> argparse.Namespace:
             "invalid_arguments",
             "--sorage-upgrade-preflight-complete requires --include-sorage",
         )
+    if arguments.haepari_resource and not arguments.include_haepari:
+        raise InspectionError(
+            "invalid_arguments",
+            "--haepari-resource requires --include-haepari",
+        )
     if (
         not math.isfinite(arguments.timeout_seconds)
         or arguments.timeout_seconds <= 0
@@ -5228,6 +5769,8 @@ def main() -> int:
                 require_mulgae_mcp=arguments.require_mulgae_mcp,
                 expected_mulgae_mcp=arguments.expected_mulgae_mcp,
                 expected_gaori_mcp=arguments.expected_gaori_mcp,
+                include_haepari=arguments.include_haepari,
+                haepari_resource=arguments.haepari_resource,
             )
         )
         return 0

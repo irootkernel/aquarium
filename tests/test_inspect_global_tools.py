@@ -212,6 +212,7 @@ class TestInspectGlobalTools:
                 "HOME": str(self.home),
                 "CODEX_HOME": str(self.codex_home),
                 "PATH": f"{self.bin_directory}:/usr/bin:/bin",
+                "HAEPARI_HOME": "",
             }
         )
         subprocess.run(
@@ -270,14 +271,19 @@ class TestInspectGlobalTools:
     def test_global_inventory_has_only_user_global_scope(self) -> None:
         payload = self.run_inspector(GLOBAL_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v6"
+        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v7"
         assert payload["inspection_scope"] == "user_global"
         assert "repository" not in payload
-        for name in ("sanho", "mulgae", "gaori", "sorage", "podway"):
+        for name in ("sanho", "mulgae", "gaori", "sorage", "podway", "haepari"):
             assert "status" in payload["tools"][name]["cli"]
         assert payload["tools"]["sorage"]["cli"]["status"] == "missing"
         assert "status" in payload["tools"]["dolgorae"]
         assert "installation_prerequisites" in payload["tools"]["mulgae"]
+        assert payload["tools"]["haepari"]["cli"]["status"] == "missing"
+        assert payload["tools"]["haepari"]["controller"]["status"] == (
+            "home_unselected"
+        )
+        assert payload["tools"]["haepari"]["paired_skill"]["status"] == "missing"
         for name in ("lora", "deslop", "humanizer", "im-not-ai"):
             assert "status" in payload["tools"][name]
             assert "cli" not in payload["tools"][name]
@@ -290,6 +296,7 @@ class TestInspectGlobalTools:
             "gaori",
             "sorage",
             "podway",
+            "haepari",
             "lora",
             "deslop",
             "humanizer",
@@ -404,6 +411,19 @@ class TestInspectGlobalTools:
         inspector.MULGAE_SKILL_FILES = ()
         inspector.GAORI_SKILL_FILES = ()
         inspector.SORAGE_SKILL_FILES = ()
+        inspector.HAEPARI_SKILL_FILES = ()
+        inspector.inspect_haepari_cli.return_value = {
+            "status": "missing",
+            "installed": False,
+            "executable": None,
+            "probes": {},
+        }
+        inspector.haepari_controller_state.return_value = {
+            "selected_home": None,
+            "reachable": None,
+            "installation_id": None,
+            "status": "home_unselected",
+        }
         inspector.inspect_dolgorae.return_value = {
             "status": "missing",
             "installed": False,
@@ -465,6 +485,14 @@ class TestInspectGlobalTools:
         inspector.inspect_dolgorae.assert_called_once_with(
             Path(self.repository.anchor), 3.5
         )
+        inspector.inspect_haepari_cli.assert_called_once_with(
+            Path(self.repository.anchor), 3.5
+        )
+        inspector.haepari_controller_state.assert_called_once_with(
+            inspector.inspect_haepari_cli.return_value,
+            Path(self.repository.anchor),
+            3.5,
+        )
         assert len(inspect_versioned.mock_calls) == 3
         assert all(
             call.args[2] == Path(self.repository.anchor)
@@ -524,6 +552,8 @@ class TestInspectGlobalTools:
         inspector.inspect_agent_skill.assert_called_once_with("use-dolgorae", ())
         inspector.inspect_mulgae_installation_prerequisites.assert_not_called()
         inspector.inspect_ouroboros.assert_not_called()
+        inspector.inspect_haepari_cli.assert_not_called()
+        inspector.haepari_controller_state.assert_not_called()
 
     def test_non_sorage_version_probe_does_not_require_a_matching_name(self) -> None:
         inspector = mock.MagicMock()
@@ -842,7 +872,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(PROJECT_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v23"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v24"
         assert "deslop" not in payload["tools"]
         assert "ouroboros" not in payload["tools"]
         assert payload["trusted_global_skills"]["deslop"] == {
@@ -898,7 +928,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(isolated_script)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v23"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v24"
         assert "error" not in payload
 
     def test_global_inventory_runs_outside_a_git_worktree_without_repository(
@@ -1596,7 +1626,7 @@ def test_ouroboros_public_cli_accepts_extra_home_and_keeps_v3_shape(
     )
     assert completed.returncode == 0, completed.stdout
     payload = json.loads(completed.stdout)
-    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v6"
+    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v7"
     result = payload["tools"]["ouroboros"]
     assert {row["home"] for row in result["homes"]} == {
         str(current),
@@ -2250,3 +2280,450 @@ def test_global_podway_rejects_unusable_identity(
         assert result["probes"]["identity"]["ok"] is False
     else:
         assert result["identity"]["version"] == "v0.3.0"
+
+
+HAEPARI_CAPABILITY_SET = [
+    "managed-execution/v1",
+    "durable-observation/v1",
+    "advisory-lock/v1",
+    "managed-recovery/v1",
+    "artifact-delivery/v1",
+    "evidence-retention/v1",
+]
+
+FAKE_HAEPARI = (
+    "#!/usr/bin/env python3\n"
+    "import hashlib, json, os, sys\n"
+    'key = " ".join(sys.argv[1:])\n'
+    'log = os.environ.get("FAKE_HAEPARI_LOG")\n'
+    "if log:\n"
+    "    with open(log, 'a') as handle:\n"
+    "        handle.write(key + '\\n')\n"
+    'responses = json.loads(os.environ.get("FAKE_HAEPARI_RESPONSES", "{}"))\n'
+    "response = responses.get(key)\n"
+    "if response is None:\n"
+    "    sys.stderr.write('unsupported command\\n')\n"
+    "    sys.exit(2)\n"
+    "if '__stdout__' in response:\n"
+    "    sys.stdout.write(response['__stdout__'])\n"
+    "    sys.exit(response.get('__exit__', 0))\n"
+    "payload = {k: v for k, v in response.items()"
+    " if k not in ('__exit__', '__stderr__', '__stdout__')}\n"
+    "if '__stderr__' in response:\n"
+    "    sys.stderr.write(response['__stderr__'])\n"
+    'self_digest = "sha256:" + hashlib.sha256('
+    'open(sys.argv[0], "rb").read()).hexdigest()\n'
+    'print(json.dumps(payload).replace("__SELF_DIGEST__", self_digest))\n'
+    "exit_code = response.get('__exit__', 0)\n"
+    "if exit_code:\n"
+    "    sys.exit(exit_code)\n"
+)
+
+
+def haepari_version_response(
+    version: str, executable_sha256: str = "__SELF_DIGEST__"
+) -> dict[str, object]:
+    return {
+        "schema": "haepari.envelope/v1",
+        "operation": "version",
+        "ok": True,
+        "data": {
+            "version": version,
+            "go_version": "go1.27.1",
+            "platform": "darwin/arm64",
+            "source_revision": "fc3b975f" + "0" * 32,
+            "source_modified": False,
+            "executable_sha256": executable_sha256,
+        },
+    }
+
+
+def haepari_capabilities_response(
+    operation: str = "capabilities", **overrides: object
+) -> dict[str, object]:
+    data: dict[str, object] = {
+        "compiled_backends": ["local"],
+        "qualified_backends": [],
+        "protocol_versions": ["managed-execution/v1"],
+        "capabilities": list(HAEPARI_CAPABILITY_SET),
+    }
+    data.update(overrides)
+    return {
+        "schema": "haepari.envelope/v1",
+        "operation": operation,
+        "ok": True,
+        "data": data,
+    }
+
+
+def haepari_projection_response(
+    installation_id: str | None,
+    operation: str = "operator.projection",
+) -> dict[str, object]:
+    data: dict[str, object] = {
+        "schema": "haepari.operator-diagnostic/v1",
+        "view": "diagnostic",
+        "section": "queue",
+        "observed_at": "2026-10-23T00:00:00Z",
+        "any_unknown_occupancy": False,
+        "current_config": {
+            "status": "present",
+            "revision": 1,
+            "document_digest": "b" * 64,
+            "values_digest": "c" * 64,
+            "global_limit": 2,
+            "host_macos_guest_limit": 1,
+        },
+        "page": {"limit": 1, "more": False},
+        "resources": [],
+    }
+    if installation_id is not None:
+        data["installation_id"] = installation_id
+    return {
+        "schema": "haepari.envelope/v1",
+        "operation": operation,
+        "ok": True,
+        "data": data,
+    }
+
+
+def haepari_resources_response(more: bool = False) -> dict[str, object]:
+    page: dict[str, object] = {"resources": [], "more": more}
+    if more:
+        page["next_cursor"] = "sample-cursor"
+    return {
+        "schema": "haepari.envelope/v1",
+        "operation": "resources.list",
+        "ok": True,
+        "data": page,
+    }
+
+
+def run_haepari_component(
+    tmp_path: Path,
+    monkeypatch,
+    responses: dict[str, object],
+    *,
+    controller_home: str | None = None,
+    with_executable: bool = True,
+    symlinked: bool = False,
+) -> tuple[dict[str, object], Path]:
+    bin_directory = tmp_path / "bin"
+    home = tmp_path / "home"
+    codex_home = tmp_path / "codex"
+    for path in (bin_directory, home, codex_home):
+        path.mkdir(exist_ok=True)
+    log_path = tmp_path / "fake-haepari.log"
+    if with_executable:
+        executable = bin_directory / "haepari"
+        executable.write_text(FAKE_HAEPARI, encoding="utf-8")
+        executable.chmod(0o755)
+        if symlinked:
+            target = bin_directory / "haepari.real"
+            target.write_text(FAKE_HAEPARI, encoding="utf-8")
+            target.chmod(0o755)
+            executable.unlink()
+            executable.symlink_to(target)
+    inspector = inspect_global_tools.load_inspector()
+    monkeypatch.setattr(inspect_global_tools, "load_inspector", lambda: inspector)
+    monkeypatch.setattr(inspector, "is_arm64_macho", lambda path: True)
+    environment = {
+        "HOME": str(home),
+        "CODEX_HOME": str(codex_home),
+        "PATH": f"{bin_directory}:/usr/bin:/bin",
+        "FAKE_HAEPARI_RESPONSES": json.dumps(responses),
+        "FAKE_HAEPARI_LOG": str(log_path),
+    }
+    if controller_home is not None:
+        environment["HAEPARI_HOME"] = controller_home
+    with mock.patch.dict(os.environ, environment, clear=True):
+        payload = inspect_global_tools.inspect_global(
+            str(tmp_path), 1.0, components=("haepari",)
+        )
+    return payload["tools"]["haepari"], log_path
+
+
+def test_haepari_cli_missing_reports_missing_and_unselected_controller(
+    tmp_path, monkeypatch
+):
+    tool, _ = run_haepari_component(tmp_path, monkeypatch, {}, with_executable=False)
+    assert tool["cli"]["status"] == "missing"
+    assert tool["cli"]["version_probe"]["reason"] == "executable_missing"
+    assert tool["controller"]["status"] == "home_unselected"
+    assert tool["controller"]["selected_home"] is None
+    assert tool["paired_skill"]["status"] == "missing"
+
+
+def test_haepari_selected_home_without_an_executable_reports_missing(
+    tmp_path, monkeypatch
+):
+    tool, _ = run_haepari_component(
+        tmp_path,
+        monkeypatch,
+        {},
+        controller_home=str(tmp_path / "haepari-home"),
+        with_executable=False,
+    )
+    assert tool["controller"]["status"] == "executable_missing"
+    assert tool["controller"]["probe"]["reason"] == "executable_missing"
+
+
+@pytest.mark.parametrize(
+    ("version", "supported"),
+    [
+        ("0.1.0", True),
+        ("0.1.1", True),
+        ("0.0.9", False),
+        ("0.2.0", False),
+        ("0.1.0-rc1", False),
+    ],
+)
+def test_haepari_global_version_floor(tmp_path, monkeypatch, version, supported):
+    responses = {
+        "version --json": haepari_version_response(version),
+        "capabilities --json": haepari_capabilities_response(),
+    }
+    tool, _ = run_haepari_component(tmp_path, monkeypatch, responses)
+    assert tool["cli"]["version"] == version
+    assert tool["cli"]["version_supported"] is supported
+    assert tool["cli"]["status"] == ("installed" if supported else "degraded")
+    assert tool["arm64_macho"] is True
+    assert tool["executable_sha256"]
+    if supported:
+        assert tool["reported_executable_sha256"] == (
+            "sha256:" + tool["executable_sha256"]
+        )
+    assert tool["capabilities_compatible"] is True
+    assert tool["controller"]["status"] == "home_unselected"
+
+
+def test_haepari_executable_digest_mismatch_degrades(tmp_path, monkeypatch):
+    responses = {
+        "version --json": haepari_version_response(
+            "0.1.0", executable_sha256="sha256:" + "f" * 64
+        ),
+        "capabilities --json": haepari_capabilities_response(),
+    }
+    tool, _ = run_haepari_component(tmp_path, monkeypatch, responses)
+    assert tool["cli"]["status"] == "degraded"
+    assert tool["cli"]["version"] == "0.1.0"
+    assert tool["cli"]["version_probe"]["error_code"] == "executable_digest_mismatch"
+
+
+def test_haepari_capability_contract_mismatch_degrades_only_capabilities(
+    tmp_path, monkeypatch
+):
+    responses = {
+        "version --json": haepari_version_response("0.1.0"),
+        "capabilities --json": haepari_capabilities_response(
+            capabilities=HAEPARI_CAPABILITY_SET[:5]
+        ),
+    }
+    tool, _ = run_haepari_component(tmp_path, monkeypatch, responses)
+    assert tool["cli"]["status"] == "degraded"
+    assert tool["capabilities_compatible"] is False
+    assert (
+        tool["cli"]["capabilities_probe"]["error_code"] == "incompatible_capabilities"
+    )
+
+
+def test_haepari_wrong_compiled_backends_degrades(tmp_path, monkeypatch):
+    responses = {
+        "version --json": haepari_version_response("0.1.0"),
+        "capabilities --json": haepari_capabilities_response(
+            compiled_backends=["utm-macos"]
+        ),
+    }
+    tool, _ = run_haepari_component(tmp_path, monkeypatch, responses)
+    assert tool["capabilities_compatible"] is False
+    assert tool["cli"]["status"] == "degraded"
+
+
+def test_haepari_nonempty_qualified_backends_stay_acceptable(tmp_path, monkeypatch):
+    responses = {
+        "version --json": haepari_version_response("0.1.0"),
+        "capabilities --json": haepari_capabilities_response(
+            qualified_backends=["utm-macos"]
+        ),
+    }
+    tool, _ = run_haepari_component(tmp_path, monkeypatch, responses)
+    assert tool["cli"]["status"] == "installed"
+    assert tool["capabilities_compatible"] is True
+
+
+def test_haepari_backend_capabilities_report_observed_lists(tmp_path, monkeypatch):
+    responses = {
+        "version --json": haepari_version_response("0.1.0"),
+        "capabilities --json": haepari_capabilities_response(
+            qualified_backends=["utm-macos"]
+        ),
+    }
+    tool, _ = run_haepari_component(tmp_path, monkeypatch, responses)
+    assert tool["backend_capabilities"] == {
+        "capabilities": list(HAEPARI_CAPABILITY_SET),
+        "compiled_backends": ["local"],
+        "qualified_backends": ["utm-macos"],
+        "protocol_versions": ["managed-execution/v1"],
+    }
+
+
+def test_haepari_backend_capabilities_absent_without_a_valid_envelope(
+    tmp_path, monkeypatch
+):
+    responses = {
+        "version --json": haepari_version_response("0.1.0"),
+        "capabilities --json": haepari_capabilities_response(
+            operation="capability.report"
+        ),
+    }
+    tool, _ = run_haepari_component(tmp_path, monkeypatch, responses)
+    assert "backend_capabilities" not in tool
+    assert tool["capabilities_compatible"] is False
+
+
+def test_haepari_malformed_version_envelope_is_reported(tmp_path, monkeypatch):
+    responses = {
+        "version --json": {
+            "schema": "haepari.envelope/v1",
+            "operation": "version",
+            "ok": True,
+            "data": {
+                "version": "0.1.0",
+                "platform": "darwin/amd64",
+                "executable_sha256": "sha256:" + "e" * 64,
+            },
+        },
+        "capabilities --json": haepari_capabilities_response(),
+    }
+    tool, _ = run_haepari_component(tmp_path, monkeypatch, responses)
+    assert tool["cli"]["status"] == "degraded"
+    assert tool["cli"]["version"] is None
+    assert tool["cli"]["version_probe"]["error_code"] == "unexpected_version_envelope"
+    assert tool["cli"]["capabilities_probe"]["error_code"] == "version_unknown"
+
+
+def test_haepari_controller_reachable_via_projection_without_reading_resources(
+    tmp_path, monkeypatch
+):
+    controller_home = str(tmp_path / "haepari-home")
+    responses = {
+        "version --json": haepari_version_response("0.1.0"),
+        "capabilities --json": haepari_capabilities_response(),
+        "doctor --projection --section queue --limit 1 --json": (
+            haepari_projection_response("local-0011223344556677")
+        ),
+        "resources list --json": haepari_resources_response(),
+    }
+    tool, log_path = run_haepari_component(
+        tmp_path, monkeypatch, responses, controller_home=controller_home
+    )
+    controller = tool["controller"]
+    assert controller["status"] == "reachable"
+    assert controller["reachable"] is True
+    assert controller["installation_id"] == "local-0011223344556677"
+    assert controller["selected_home"] == controller_home
+    assert tool["cli"]["status"] == "installed"
+    invocations = log_path.read_text(encoding="utf-8").splitlines()
+    assert "doctor --projection --section queue --limit 1 --json" in invocations
+    assert not any(line.startswith("resources list") for line in invocations)
+
+
+def test_haepari_controller_projection_without_installation_id_is_unobserved(
+    tmp_path, monkeypatch
+):
+    controller_home = str(tmp_path / "haepari-home")
+    responses = {
+        "version --json": haepari_version_response("0.1.0"),
+        "capabilities --json": haepari_capabilities_response(),
+        "doctor --projection --section queue --limit 1 --json": (
+            haepari_projection_response(None)
+        ),
+    }
+    tool, _ = run_haepari_component(
+        tmp_path, monkeypatch, responses, controller_home=controller_home
+    )
+    controller = tool["controller"]
+    assert controller["reachable"] is True
+    assert controller["installation_id"] is None
+    assert controller["status"] == "installation_id_unobserved"
+
+
+def test_haepari_controller_unreachable_keeps_cli_verdicts(tmp_path, monkeypatch):
+    controller_home = str(tmp_path / "haepari-home")
+    responses = {
+        "version --json": haepari_version_response("0.1.0"),
+        "capabilities --json": haepari_capabilities_response(),
+        "doctor --projection --section queue --limit 1 --json": {"__exit__": 6},
+    }
+    tool, _ = run_haepari_component(
+        tmp_path, monkeypatch, responses, controller_home=controller_home
+    )
+    controller = tool["controller"]
+    assert controller["status"] == "controller_unreachable"
+    assert controller["reachable"] is False
+    assert controller["installation_id"] is None
+    assert tool["cli"]["status"] == "installed"
+
+
+def test_haepari_controller_rejects_a_foreign_projection_operation(
+    tmp_path, monkeypatch
+):
+    controller_home = str(tmp_path / "haepari-home")
+    responses = {
+        "version --json": haepari_version_response("0.1.0"),
+        "capabilities --json": haepari_capabilities_response(),
+        "doctor --projection --section queue --limit 1 --json": (
+            haepari_projection_response(
+                "local-0011223344556677", operation="doctor.projection"
+            )
+        ),
+    }
+    tool, _ = run_haepari_component(
+        tmp_path, monkeypatch, responses, controller_home=controller_home
+    )
+    assert tool["controller"]["status"] == "controller_unreachable"
+
+
+def test_haepari_rejected_executable_skips_the_controller_probe(tmp_path, monkeypatch):
+    controller_home = str(tmp_path / "haepari-home")
+    responses = {
+        "version --json": haepari_version_response("0.1.0"),
+        "capabilities --json": haepari_capabilities_response(),
+    }
+    tool, log_path = run_haepari_component(
+        tmp_path,
+        monkeypatch,
+        responses,
+        controller_home=controller_home,
+        symlinked=True,
+    )
+    assert tool["cli"]["status"] == "degraded"
+    assert tool["cli"]["version_probe"]["reason"] == "executable_unsafe"
+    assert tool["controller"]["status"] == "executable_unsafe"
+    assert tool["controller"]["probe"]["reason"] == "executable_unsafe"
+    assert log_path.exists() is False or log_path.read_text(encoding="utf-8") == ""
+
+
+def test_haepari_duplicate_skill_copies_degrade_only_the_paired_skill(
+    tmp_path, monkeypatch
+):
+    home = tmp_path / "home"
+    codex_home = tmp_path / "codex"
+    home.mkdir()
+    codex_home.mkdir()
+    for root in (
+        home / ".agents/skills/use-haepari",
+        codex_home / "skills/use-haepari",
+    ):
+        root.mkdir(parents=True)
+        root.joinpath("SKILL.md").write_text(
+            "---\nname: use-haepari\ndescription: test\n---\n", encoding="utf-8"
+        )
+    responses = {
+        "version --json": haepari_version_response("0.1.0"),
+        "capabilities --json": haepari_capabilities_response(),
+    }
+    tool, _ = run_haepari_component(tmp_path, monkeypatch, responses)
+    assert tool["cli"]["status"] == "installed"
+    assert tool["paired_skill"]["status"] == "degraded"
+    assert tool["paired_skill"]["duplicate"] is True

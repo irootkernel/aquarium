@@ -14,7 +14,7 @@ from typing import Any
 
 from inspect_ouroboros import InvalidCodexHome, inspect_ouroboros
 
-SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v6"
+SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v7"
 GLOBAL_COMPONENTS = (
     "sanho",
     "dolgorae",
@@ -26,6 +26,7 @@ GLOBAL_COMPONENTS = (
     "humanizer",
     "im-not-ai",
     "podway",
+    "haepari",
     "ouroboros",
     "aquarium-dev",
     "aquarium-status",
@@ -370,12 +371,17 @@ def inspect_global(
         )
     if "podway" in requested_components:
         raw_tools["podway"] = inspect_global_podway(inspector, root, timeout_seconds)
+    if "haepari" in requested_components:
+        raw_tools["haepari"] = inspector.inspect_haepari_cli(
+            neutral_cwd, timeout_seconds
+        )
     skill_specs = {
         "sanho": ("use-sanho", inspector.SANHO_SKILL_FILES),
         "dolgorae": ("use-dolgorae", inspector.DOLGORAE_SKILL_FILES),
         "mulgae": ("use-mulgae", inspector.MULGAE_SKILL_FILES),
         "gaori": ("use-gaori", inspector.GAORI_SKILL_FILES),
         "sorage": ("use-sorage", inspector.SORAGE_SKILL_FILES),
+        "haepari": ("use-haepari", inspector.HAEPARI_SKILL_FILES),
     }
     for name, (skill_name, files) in skill_specs.items():
         if name not in raw_tools:
@@ -386,6 +392,10 @@ def inspect_global(
     if "gaori" in raw_tools:
         raw_tools["gaori"]["status_skill"] = inspect_canonical_agent_skill(
             inspector, "use-gaori-status", inspector.GAORI_STATUS_SKILL_FILES
+        )
+    if "haepari" in raw_tools:
+        raw_tools["haepari"]["controller"] = inspector.haepari_controller_state(
+            raw_tools["haepari"], neutral_cwd, timeout_seconds
         )
     if "mulgae" in raw_tools:
         raw_tools["mulgae"]["installation_prerequisites"] = (
@@ -434,6 +444,23 @@ def inspect_global(
         if name == "podway":
             entry["identity"] = raw["identity"]
             entry["identity_probe"] = raw["probes"]["identity"]
+        if name == "haepari":
+            for key in (
+                "status",
+                "arm64_macho",
+                "capabilities_compatible",
+                "backend_capabilities",
+                "executable_sha256",
+                "reported_executable_sha256",
+                "file_identity",
+                "identity_stable",
+                "regular_file",
+                "safe_location",
+                "symlinked",
+            ):
+                if key in raw:
+                    entry[key] = raw[key]
+            entry["controller"] = raw["controller"]
         if name == "sorage":
             entry["initialization_status"] = raw.get("initialization_status")
             entry["initialization_probe"] = raw["probes"]["doctor"]

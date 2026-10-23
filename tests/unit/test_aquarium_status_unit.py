@@ -212,7 +212,7 @@ def test_record_validation_normalizes_project_and_closes_nested_shapes(
     contract = status_modules.contract
     value = _record(
         tmp_path,
-        scope={"kind": "scoped", "components": ["aquarium-dev", "sanho"]},
+        scope={"kind": "scoped", "components": ["aquarium-dev", "haepari", "sanho"]},
         components={"sanho": {"outcome": "ready", "version": _version()}},
     )
     value["project"] = "Cafe\N{COMBINING ACUTE ACCENT}"
@@ -222,7 +222,7 @@ def test_record_validation_normalizes_project_and_closes_nested_shapes(
     assert validated["project"] == "Caf\N{LATIN SMALL LETTER E WITH ACUTE}"
     assert validated["scope"] == {
         "kind": "scoped",
-        "components": ["aquarium-dev", "sanho"],
+        "components": ["aquarium-dev", "haepari", "sanho"],
     }
 
 

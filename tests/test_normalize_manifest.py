@@ -83,7 +83,7 @@ class NormalizeManifestTest(unittest.TestCase):
             f"""
             schema: aquarium.dev-setup-bundle/v2
             defaults:
-              tools: [dolgorae, mulgae, gaori, sorage, podway, ouroboros, lora, deslop, humanizer, im-not-ai]
+              tools: [dolgorae, mulgae, gaori, sorage, podway, haepari, ouroboros, lora, deslop, humanizer, im-not-ai]
               global_mcp: [mulgae, gaori]
               agents_guidance: skip
             targets:
@@ -131,6 +131,7 @@ class NormalizeManifestTest(unittest.TestCase):
                 "gaori",
                 "sorage",
                 "podway",
+                "haepari",
                 "ouroboros",
                 "lora",
                 "deslop",
@@ -215,6 +216,7 @@ class NormalizeManifestTest(unittest.TestCase):
             "non-list": ("    local_mcp: mulgae", "invalid_type"),
             "duplicate": ("    local_mcp: [mulgae, mulgae]", "duplicate_value"),
             "unknown-mcp": ("    local_mcp: [sorage]", "unsupported_value"),
+            "haepari-mcp": ("    local_mcp: [haepari]", "unsupported_value"),
             "non-bool": ("    mulgae_artist: yes-ish", "invalid_type"),
             "old-mcp-map": ("    mcp: {mulgae: local}", "unknown_key"),
         }

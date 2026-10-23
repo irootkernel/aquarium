@@ -313,6 +313,46 @@ Reuse these definitions across releases; results apply only to their recorded
 candidate and installed combination under the release policy. Future EPIC-019
 Haepari host submission reuses this guest entrypoint and scenario catalog.
 
+## Fixed profiles
+
+`tests/vm/profiles/` holds immutable fixed test profiles as
+`aquarium.vm-profile/v1` documents. A profile pins exact component identities
+inside the tool catalog's support policy: the Haepari release archive,
+executable and complete `use-haepari` tree digests with their provenance, the
+controller service plan identity, the Aquarium plugin version with provenance
+where it exists, and independently pinned native skills, plus effective
+non-sensitive configuration identities, explicitly absent components,
+abstract resource shape (`utm-macos`, capacity one), starting states, input
+bindings and cleanup expectations. Machine-local bindings (VM identity, SSH
+material, absolute homes, installation IDs, registered resource ids) never
+enter a profile; they live in the private run directory of the admitting run.
+The profile identity is the SHA-256 of the exact file bytes. A candidate
+override replaces a whole declared component unit; a skill-only override
+replaces the skill tree pin and retains every other pin. When candidate bytes
+change, later tasks derive a new fully resolved profile file with no
+placeholders and never edit an accepted one.
+
+`tests/vm/profiles/validate_profiles.py` validates profiles and
+`aquarium.vm-inventory/v1` documents offline, compares before, candidate
+and post-cleanup inventories over complete trees, and computes the
+`aquarium-skill-tree-sha256/v1` complete-tree digest; TASK-088 recipes call
+`tree_digest_from_directory` on an installed tree to derive the same value a
+profile pins. An inventory entry's identity is its installation scope together
+with its relative path: the same path may appear in two scopes, a duplicate is
+rejected only within one scope, and a comparison reports a file moved between
+scopes as missing from one scope and added to the other, with every difference
+named by scope and path. The two proposed profiles below record the observed
+host Codex version and a truthful absence for per-home Codex rules; TASK-088
+verifies the guest's observed Codex version against the profile before
+admission, and extending the profiles to the full release combination belongs
+to TASK-089. Recipes produce real inventories from TASK-088 on. Profiles are
+reproducible test inputs: they claim no provisioned VM and no passed migration.
+
+| Profile | Digest | Status |
+| --- | --- | --- |
+| `proposed-stable-haepari-0.1.0-aquarium-0.1.21.json` | `930de6cbf2ae1468133f04f7519d201bb6d08927e807f18f2670f73c1bf553c4` | proposed |
+| `proposed-candidate-haepari-0.1.0-aquarium-0.1.22.json` | `9d922eb4ee160dbdd5f966387b5754c0e5a5b54798cfba1195ee333ec05a25b4` | proposed |
+
 ## Directory guidance development verification
 
 [Directory guidance scenarios](directory-agent-guidance.md) define five manual

@@ -29,6 +29,7 @@ TOOLS = (
     "gaori",
     "sorage",
     "podway",
+    "haepari",
     "ouroboros",
     "lora",
     "deslop",

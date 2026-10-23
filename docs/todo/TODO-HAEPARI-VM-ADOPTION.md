@@ -18,7 +18,13 @@ Shared legacy source and runtime stay available for remaining consumers. TASK-09
 
 ### Breaking-change record
 
-Decided during Epic planning under the repository's breaking-change rule. EPIC-019 is breaking for Aquarium's own release operation: after TASK-090's accepted cutover, the release VM gate requires the shared Haepari release controller, the registered `UTM` resource and `make test-vm-host`, so maintainers complete that one-time transition before the next release containing the cutover. The exact installed cutover candidate must pass the TASK-090 pilot in the dedicated UTM VM before any release containing it; the current manual VM path stays authoritative until that acceptance. The release is not breaking for plugin users: Haepari setup stays optional and separately approved, and existing installations need no update or migration.
+Decided during Epic planning under the repository's breaking-change rule and extended at TASK-087, when setup registration made an otherwise valid earlier managed aquarium-status runtime `outdated`. EPIC-019 is breaking in two bounded ways.
+
+Aquarium's own release operation: after TASK-090's accepted cutover, the release VM gate requires the shared Haepari release controller, the registered `UTM` resource and `make test-vm-host`, so maintainers complete that one-time transition before the next release containing the cutover. The exact installed cutover candidate must pass the TASK-090 pilot in the dedicated UTM VM before any release containing it; the current manual VM path stays authoritative until that acceptance.
+
+Existing users of a managed aquarium-status runtime: the updated package diagnoses an otherwise valid earlier runtime `outdated`, and they complete its routine approval-based managed update before the next terminal `dev-setup` attempt. Missing, broken and unsafe installations keep their existing diagnostic precedence, and editing source updates no host runtime.
+
+Haepari setup itself stays optional and separately approved, and no data migration is needed. Before any release containing it, the TASK-088 upgrade scenario and the TASK-089 existing-stable-to-candidate scenario exercise that runtime update in the dedicated UTM VM.
 
 ## Implementation contracts
 
@@ -126,18 +132,24 @@ TASK-086 verification outcome (2026-10-23): the archive and sidecar digests matc
 
 Implement and document:
 
-- [ ] Add Haepari CLI and complete same-release `use-haepari` registration, provenance/freshness checks and native setup routing to `dev-setup-global`, repository readiness, the tool catalog and affected status/bundle inventories where those enumerate supported components. Keep setup effects separately authorized and avoid requiring a live VM for ordinary local checks.
-- [ ] Define common installation/resource selection and operation-specific capability checks. Preserve native private service/resource/SSH configuration, whole-tree skill comparison and the distinction between binary, controller and backend readiness.
-- [ ] Add fixed candidate/test/profile inputs, native component/skill pins, candidate overrides and before/candidate/post-cleanup inventory contracts. Define product-absent and prior-version starting states and supported upgrade edges without a baseline-reset service.
+- [x] Add Haepari CLI and complete same-release `use-haepari` registration, provenance/freshness checks and native setup routing to `dev-setup-global`, repository readiness, the tool catalog and affected status/bundle inventories where those enumerate supported components. Keep setup effects separately authorized and avoid requiring a live VM for ordinary local checks.
+- [x] Define common installation/resource selection and operation-specific capability checks. Preserve native private service/resource/SSH configuration, whole-tree skill comparison and the distinction between binary, controller and backend readiness.
+- [x] Add fixed candidate/test/profile inputs, native component/skill pins, candidate overrides and before/candidate/post-cleanup inventory contracts. Define product-absent and prior-version starting states and supported upgrade edges without a baseline-reset service.
 
 Do not:
 
-- [ ] Do not vendor upstream skills, commit credentials/local VM registrations, duplicate tool-catalog support authority, or resolve latest after admission.
+- [x] Do not vendor upstream skills, commit credentials/local VM registrations, duplicate tool-catalog support authority, or resolve latest after admission.
 
 Verify and complete:
 
-- [ ] Validate missing/incompatible CLI or capability, mismatched installation/resource, duplicate skill locations, full-tree differences, independently pinned cases, settings drift and profile changes. Setup must not submit workloads or replace native configuration with a shadow registry.
-- [ ] Profile definitions are reproducible test inputs and do not claim an actual VM was provisioned or a migration passed.
+- [x] Validate missing/incompatible CLI or capability, mismatched installation/resource, duplicate skill locations, full-tree differences, independently pinned cases, settings drift and profile changes. Setup must not submit workloads or replace native configuration with a shadow registry.
+- [x] Profile definitions are reproducible test inputs and do not claim an actual VM was provisioned or a migration passed.
+
+TASK-087 verification outcome (2026-10-23, repository candidate): the global inspector advances to `aquarium-dev-setup-global-inspection.v7` with a default `haepari` member covering the versioned CLI envelope (including its self-reported executable digest, compared against the inspected file), arm64 Mach-O and file-identity checks, the six frozen `/v1` capabilities with `compiled_backends` containing `local`, an unconstrained `qualified_backends`, and the observed backend capability lists, the canonical `use-haepari` paired skill, and a separate controller dimension that reads only the explicit `HAEPARI_HOME` root and the VM-free `doctor --projection --section queue --limit 1 --json` installation identity; an executable rejected by the safety checks is never invoked again. The repository inspector advances to `aquarium-dev-setup-inspection.v24` with `use-haepari` as a presence-only trusted skill and opt-in `--include-haepari`/`--haepari-resource` readiness whose resource doctor is the sole guest-reaching read-only probe: the inventory reads `resource_id` with kind and configuration revision, reports a truncated page as partial, and reports a failed, malformed, or non-native page as unavailable rather than an absence; the doctor accepts the valid exit-2 gap envelope, and `ready` requires the ready flag, matching projection and doctor installation identities, and doctor resource identities equal to the requested id, with `not_ready` plus gap codes, unobserved or mismatched installation identity, resource identity mismatch, or an unavailable inventory reported as distinct gaps. Bundle `TOOLS` and status `COMPONENTS` admit `haepari`; `MCP_TOOLS` and `RECORDABLE_COMPONENTS` are unchanged, and the managed status-runtime `outdated` ripple is disclosed above and in the open CHANGELOG entry.
+
+Fixed profiles live in `tests/vm/profiles/` as `aquarium.vm-profile/v1` documents with exact-byte digests, abstract resources, machine-local-field rejection, whole-unit and skill-only overrides, product-absent and prior-version starting states, the observed host Codex version with a recorded absence for per-home Codex rules, and `aquarium.vm-inventory/v1` before/candidate/post-cleanup comparison contracts, all validated offline; complete skill trees are pinned by the named `aquarium-skill-tree-sha256/v1` digest over sorted path, executable bit and content digest, computed for the accepted packaged `skill/use-haepari/` tree and reproducible by TASK-088 recipes from an installed tree.
+
+TASK-087 host-registration result (2026-10-23, under the plan's coordinated host step): the verified binary and complete skill tree are installed, the shared release controller service runs under its native release plan, and the capacity-one `utm-macos` resource is registered and doctor-ready with the projection and resource installation identities in agreement; both inspectors reproduce those identities against the real installation, and all evidence stays in the task's private run directory. Registering a `utm-macos` resource needs the operator's macOS Automation approval for the installed `haepari` executable to control UTM, and the first registration after an install or binary replacement can raise the system prompt and fail with `PREREQUISITE_UNAVAILABLE` before the operator approves; report the prerequisite gap and retry the same registration once after approval.
 
 ### TASK-088: Implement Aquarium's project-owned VM suites
 
