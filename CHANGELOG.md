@@ -7,6 +7,7 @@ This file records concise shipped outcomes and the planned next stable release.
 ### Added
 
 - Add optional Haepari v0.1.0 setup, covering its verified CLI, complete `use-haepari` skill and readiness checks for the shared controller and VM resource; an existing managed status runtime is diagnosed `outdated` and needs its routine approval-based update before the next repository setup.
+- Add the project-owned Haepari VM suites through `make test-vm-host`, submitting the sealed bundle's consumer-declared suites as managed Jobs over the installed release controller with truthful per-suite verdict, consumer-cleanup and export-receipt reporting.
 
 ## v0.1.21 - 2026-10-21
 

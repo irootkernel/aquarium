@@ -48,6 +48,7 @@ COMPONENT_KEYS = frozenset(
         "executable_sha256",
         "tree_sha256",
         "skill_tree",
+        "sealed_artifact",
         "provenance",
         "controller_service",
         "pin",
@@ -61,6 +62,7 @@ COMPONENT_OPTIONAL_KEYS = frozenset(
         "executable_sha256",
         "tree_sha256",
         "skill_tree",
+        "sealed_artifact",
         "provenance",
         "controller_service",
         "pin",
@@ -70,6 +72,7 @@ COMPONENT_OPTIONAL_KEYS = frozenset(
 SKILL_TREE_KEYS = frozenset(
     {"name", "installation_scope", "sha256", "digest_algorithm"}
 )
+SEALED_ARTIFACT_KEYS = frozenset({"tree_sha256", "development_version"})
 PROVENANCE_KEYS = frozenset(
     {"release_tag", "tag_commit", "build_revision", "archive_sha256"}
 )
@@ -149,6 +152,10 @@ SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 SHA256_PREFIXED_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 GIT_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 RELEASE_TAG_RE = re.compile(r"^v[0-9][0-9A-Za-z.-]*$")
+DEVELOPMENT_VERSION_RE = re.compile(
+    r"^v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+    r"-dev\.[0-9a-f]{12}$"
+)
 SERVICE_INSTANCE_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,47}$")
 
 
@@ -335,6 +342,25 @@ def _validate_component(component: Any, index: int, errors: list[str]) -> None:
                 )
         else:
             errors.append(f"{skill_label} must be an object")
+        identity_axes += 1
+    if "sealed_artifact" in component:
+        sealed = component["sealed_artifact"]
+        sealed_label = f"{label}.sealed_artifact"
+        if isinstance(sealed, dict):
+            _exact_keys(sealed, SEALED_ARTIFACT_KEYS, sealed_label, errors)
+            _require_sha256(
+                sealed.get("tree_sha256"), f"{sealed_label}.tree_sha256", errors
+            )
+            development_version = sealed.get("development_version")
+            if not isinstance(
+                development_version, str
+            ) or not DEVELOPMENT_VERSION_RE.fullmatch(development_version):
+                errors.append(
+                    f"{sealed_label}.development_version must bind a committed "
+                    "development build"
+                )
+        else:
+            errors.append(f"{sealed_label} must be an object")
         identity_axes += 1
     if "provenance" in component:
         provenance = component["provenance"]
@@ -776,6 +802,7 @@ def skill_only_override_errors(
         "archive_sha256",
         "executable_sha256",
         "tree_sha256",
+        "sealed_artifact",
         "provenance",
         "controller_service",
         "pin",

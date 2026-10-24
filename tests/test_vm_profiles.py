@@ -561,5 +561,191 @@ class ValidatorCliTest(unittest.TestCase):
             self.assertTrue(report["documents"][0]["errors"])
 
 
+class DerivedSealedArtifactProfileTest(unittest.TestCase):
+    DERIVED_STABLE = (
+        PROFILES_ROOT
+        / "proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0.json"
+    )
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.validator = load_validator()
+
+    def sealed_plugin_component(self) -> Any:
+        return {
+            "name": "aquarium-plugin",
+            "role": "guest",
+            "installation_scope": "codex-plugin-cache",
+            "version": "0.1.21-dev.63bbcf7e4db8",
+            "sealed_artifact": {
+                "tree_sha256": "a" * 64,
+                "development_version": "v0.1.21-dev.63bbcf7e4db8",
+            },
+        }
+
+    def test_derived_stable_profile_is_valid_and_pins_aligned_codex(self) -> None:
+        document = load_json(self.DERIVED_STABLE)
+        self.assertEqual(self.validator.validate_profile(document), [])
+        codex = next(
+            component
+            for component in document["components"]
+            if component["name"] == "codex"
+        )
+        self.assertEqual(codex["version"], "0.164.0")
+        self.assertNotEqual(
+            document["profile_id"], load_json(STABLE_PROFILE)["profile_id"]
+        )
+
+    def test_sealed_artifact_is_an_optional_closed_identity_axis(self) -> None:
+        document = load_json(self.DERIVED_STABLE)
+        document["components"] = [
+            self.sealed_plugin_component()
+            if component.get("name") == "aquarium-plugin"
+            else component
+            for component in document["components"]
+        ]
+        self.assertEqual(self.validator.validate_profile(document), [])
+        for mutation in (
+            {"tree_sha256": "A" * 64},
+            {"tree_sha256": "short"},
+            {"tree_sha256": "a" * 64, "development_version": "0.1.21"},
+            {"tree_sha256": "a" * 64, "development_version": "v0.1.21", "extra": 1},
+        ):
+            broken = json.loads(json.dumps(document))
+            for component in broken["components"]:
+                if component.get("name") == "aquarium-plugin":
+                    component["sealed_artifact"] = mutation
+            self.assertTrue(self.validator.validate_profile(broken), mutation)
+
+    def test_skill_only_override_retains_the_sealed_artifact_binding(self) -> None:
+        base = load_json(self.DERIVED_STABLE)
+        for component in base["components"]:
+            if component.get("name") == "haepari":
+                component["sealed_artifact"] = {
+                    "tree_sha256": "d" * 64,
+                    "development_version": "v0.1.21-dev.63bbcf7e4db8",
+                }
+        override = json.loads(json.dumps(base))
+        override["profile_id"] = "override-with-skill-tree"
+        for component in override["components"]:
+            if component.get("name") == "haepari":
+                component["skill_tree"] = {
+                    **component["skill_tree"],
+                    "sha256": "b" * 64,
+                }
+        self.assertEqual(self.validator.validate_profile(override), [])
+        self.assertEqual(
+            self.validator.skill_only_override_errors(base, override, "haepari"), []
+        )
+        dropped = json.loads(json.dumps(override))
+        for component in dropped["components"]:
+            if component.get("name") == "haepari":
+                del component["sealed_artifact"]
+        self.assertTrue(
+            self.validator.skill_only_override_errors(base, dropped, "haepari")
+        )
+
+    def test_candidate_profile_generator_binds_sealed_bytes(self) -> None:
+        spec = importlib.util.spec_from_file_location(
+            "vm_host_bundle_profiles", REPOSITORY / "tests/vm/host_bundle.py"
+        )
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        stable = load_json(self.DERIVED_STABLE)
+        generated = module.derive_candidate_profile(
+            stable, "c" * 64, "v0.1.21-dev.63bbcf7e4db8"
+        )
+        self.assertEqual(self.validator.validate_profile(generated), [])
+        plugin = next(
+            component
+            for component in generated["components"]
+            if component["name"] == "aquarium-plugin"
+        )
+        self.assertEqual(plugin["sealed_artifact"]["tree_sha256"], "c" * 64)
+        self.assertNotIn("provenance", plugin)
+
+    def test_derived_candidate_upgrades_from_the_stable_plugin_release(self) -> None:
+        spec = importlib.util.spec_from_file_location(
+            "vm_host_bundle_edge", REPOSITORY / "tests/vm/host_bundle.py"
+        )
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        stable = load_json(self.DERIVED_STABLE)
+        generated = module.derive_candidate_profile(
+            stable, "c" * 64, "v0.1.21-dev.63bbcf7e4db8"
+        )
+        stable_plugin = next(
+            component
+            for component in stable["components"]
+            if component["name"] == "aquarium-plugin"
+        )
+        prior = next(
+            state
+            for state in generated["starting_states"]
+            if state["kind"] == "prior_version"
+        )
+        self.assertEqual(prior["aquarium"], stable_plugin["version"])
+        self.assertEqual(self.validator.validate_profile(generated), [])
+
+
+class CommittedCandidateProfileTest(unittest.TestCase):
+    """The committed candidate profile is the sealed copy's bytes."""
+
+    COMMITTED_CANDIDATE = (
+        PROFILES_ROOT
+        / "proposed-candidate-haepari-0.1.0-aquarium-0.1.21-dev-b7c227e301a9.json"
+    )
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.validator = load_validator()
+
+    def test_committed_candidate_profile_is_valid(self) -> None:
+        document = load_json(self.COMMITTED_CANDIDATE)
+        self.assertEqual(self.validator.validate_profile(document), [])
+
+    def test_committed_candidate_pins_the_tested_artifact(self) -> None:
+        document = load_json(self.COMMITTED_CANDIDATE)
+        plugin = next(
+            component
+            for component in document["components"]
+            if component.get("sealed_artifact")
+        )
+        self.assertEqual(
+            plugin["sealed_artifact"]["development_version"],
+            "v0.1.21-dev.b7c227e301a9",
+        )
+        self.assertNotIn("provenance", plugin)
+
+    def test_committed_candidate_equals_fresh_derivation_bytes(self) -> None:
+        # The committed candidate must be byte-for-byte what a fresh bundle
+        # derivation from the committed stable profile seals, so a stale
+        # file (for example an old upgrade edge) fails here.
+        spec = importlib.util.spec_from_file_location(
+            "vm_host_bundle_committed", REPOSITORY / "tests/vm/host_bundle.py"
+        )
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        committed = load_json(self.COMMITTED_CANDIDATE)
+        plugin = next(
+            component
+            for component in committed["components"]
+            if component.get("sealed_artifact")
+        )
+        derived = module.derive_candidate_profile(
+            load_json(DerivedSealedArtifactProfileTest.DERIVED_STABLE),
+            plugin["sealed_artifact"]["tree_sha256"],
+            plugin["sealed_artifact"]["development_version"],
+        )
+        expected = json.dumps(derived, indent=2, ensure_ascii=False) + "\n"
+        self.assertEqual(self.COMMITTED_CANDIDATE.read_text(), expected)
+
+
 if __name__ == "__main__":
     unittest.main()

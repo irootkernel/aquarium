@@ -1,6 +1,6 @@
 # Haepari Consumer Contract
 
-Reserved: this reference freezes how Aquarium consumes Haepari managed execution. Setup registration and fixed test profiles are shipped: the shared [tool catalog](tool-catalog.md#haepari) owns installation and readiness policy, and the repository's fixed VM profiles hold the immutable test inputs; TASK-088 adds the project-owned VM suites, TASK-089 the release-gate integration, and TASK-090 the accepted policy cutover. It restates no Haepari-owned contract; the release-matched sources at the [v0.1.0 tag](https://github.com/irootkernel/haepari/tree/v0.1.0) are authoritative, and the shared [tool catalog](tool-catalog.md) owns component support policy.
+TASK-088 ships the project-owned VM suites: the host wrapper (`make test-vm-host`, documented with its sealed inputs, suites and invocation boundary in the repository's `tests/vm/README.md` host-submitted managed VM suites section) implements this contract's submission, observation, collection-ordering and budget rules over the committed EPIC-024 guest scenarios, with sealed inputs, fixed and derived profiles, and recipes that own guest installation, inventories and consumer cleanup. Setup registration and fixed test profiles are shipped: the shared [tool catalog](tool-catalog.md#haepari) owns installation and readiness policy, and the repository's fixed VM profiles hold the immutable test inputs. TASK-089 adds the release-gate integration, the release-acceptance Job with its runbook and approval evidence; TASK-090 the accepted policy cutover. This reference restates no Haepari-owned contract; the release-matched sources at the [v0.1.0 tag](https://github.com/irootkernel/haepari/tree/v0.1.0) are authoritative, and the shared [tool catalog](tool-catalog.md) owns component support policy.
 
 ## Scope
 
@@ -20,7 +20,7 @@ Stage case evidence; finish consumer cleanup and stage its verified inventory; t
 
 ## Release transaction
 
-One release-acceptance Job holds the VM continuously from the first baseline observation through candidate installation, scenarios, evidence collection, and owned cleanup. Independent suites may use separate Jobs only when each checks and establishes its own starting state. `SUITE=all` retains every Job result and reports skipped or unobserved work; it never aggregates partial runs into PASS.
+One release-acceptance Job holds the VM continuously from the first baseline observation through candidate installation, scenarios, evidence collection, and owned cleanup. TASK-089 implements that Job; TASK-088's `manual-hold` suite carries the manual-path demonstrations, including same-`RUN_DIR`/same-Job reconnect with receipt-verified export reuse. Independent suites may use separate Jobs only when each checks and establishes its own starting state. `SUITE=all` retains every Job result and reports skipped or unobserved work; it never aggregates partial runs into PASS.
 
 ## Profiles and budgets
 

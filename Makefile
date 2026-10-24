@@ -56,6 +56,15 @@ PYTHON_FILES := \
 	tests/vm/run_acceptance.py \
 	tests/vm/native_observation.py \
 	tests/vm/profiles/validate_profiles.py \
+	tests/vm/host_wrapper.py \
+	tests/vm/host_bundle.py \
+	tests/vm/recipes/guest_main.py \
+	tests/vm/recipes/recipe_lib.py \
+	tests/vm/recipes/tree_digest.py \
+	tests/unit/test_vm_guest_simulation_unit.py \
+	tests/unit/test_vm_host_wrapper_unit.py \
+	tests/unit/test_vm_host_bundle_unit.py \
+	tests/unit/test_vm_recipes_unit.py \
 	tests/unit/test_vm_acceptance_unit.py \
 	tests/vm/fixtures/greeting/greet.py \
 	tests/vm/fixtures/greeting/tests/unit/test_greet.py \
@@ -144,7 +153,7 @@ PYTHON_FILES := \
 	tests/e2e/test_aquarium_status_cli.py \
 	tests/e2e/test_release_qa_confirmation_cli.py
 
-.PHONY: test test-requirements test-prepare test-unit test-int test-e2e test-podway-compat test-vm
+.PHONY: test test-requirements test-prepare test-unit test-int test-e2e test-podway-compat test-vm test-vm-host
 .PHONY: aquarium-dev-describe aquarium-dev-build
 
 aquarium-dev-describe:
@@ -188,3 +197,8 @@ test-podway-compat: test-requirements
 
 test-vm:
 	$(PYTHON) -B tests/vm/run_acceptance.py run
+
+test-vm-host:
+	HAEPARI="$(HAEPARI)" AQUARIUM_VM_RESOURCE="$(RESOURCE)" AQUARIUM_VM_MODE="$(MODE)" \
+	AQUARIUM_VM_SUITE="$(SUITE)" AQUARIUM_VM_RUN_DIR="$(RUN_DIR)" \
+	AQUARIUM_VM_GUEST_CONTEXT="$(GUEST_CONTEXT)" $(PYTHON) -B tests/vm/host_wrapper.py

@@ -1,0 +1,57 @@
+{
+  "files": [
+    {
+      "path": "str",
+      "sha256": "str",
+      "size_bytes": "int"
+    }
+  ],
+  "job_id": "str",
+  "result": {
+    "artifacts": [
+      {
+        "path": "str",
+        "sha256": "str",
+        "size_bytes": "int"
+      }
+    ],
+    "cleanup_outcome": "str",
+    "evidence_completeness": "str",
+    "final_verdict": "str",
+    "job_id": "str",
+    "job_state": "str",
+    "lease_generation": "int",
+    "logs": [
+      {
+        "path": "str",
+        "sha256": "str",
+        "size_bytes": "int"
+      }
+    ],
+    "native_exit_code": "int",
+    "resource_availability": "str",
+    "resource_id": "str",
+    "resource_revision": "int",
+    "schema": "str",
+    "timings": {
+      "adapter_steps": [
+        {
+          "duration_millis": "int",
+          "step": "str"
+        }
+      ],
+      "admitted_at": "str",
+      "phases": [
+        {
+          "ended_at": "str",
+          "phase": "str",
+          "started_at": "str"
+        }
+      ],
+      "reserved_at": "str"
+    },
+    "workload_outcome": "str"
+  },
+  "schema": "str",
+  "supplementary": []
+}

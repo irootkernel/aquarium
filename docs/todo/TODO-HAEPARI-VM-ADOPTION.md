@@ -155,18 +155,20 @@ TASK-087 host-registration result (2026-10-23, under the plan's coordinated host
 
 Implement and document:
 
-- [ ] Add the separate Haepari host wrapper, reusing EPIC-024's guest entrypoint and scenarios, with an immutable package/test bundle and truthful per-suite result mapping.
-- [ ] Add actual candidate plugin installation, initial setup, previous-version synthetic state, upgrade, existing-behavior regression, restart and bounded migration failure/recovery scenarios.
-- [ ] Keep managed UTM/SSH transport and owned Job collection/cleanup in Haepari. Recipes own guest installation/fixture changes and starting-state checks. Preserve ordinary local tests and EPIC-024's accepted historical evidence.
+- [x] Add the separate Haepari host wrapper, reusing EPIC-024's guest entrypoint and scenarios, with an immutable package/test bundle and truthful per-suite result mapping.
+- [x] Add actual candidate plugin installation, initial setup, previous-version synthetic state, upgrade, existing-behavior regression, restart and bounded migration failure/recovery scenarios.
+- [x] Keep managed UTM/SSH transport and owned Job collection/cleanup in Haepari. Recipes own guest installation/fixture changes and starting-state checks. Preserve ordinary local tests and EPIC-024's accepted historical evidence.
 
 Do not:
 
-- [ ] Do not install the candidate on the host, recursively enqueue from the guest, fabricate prior state with the new version, or erase migration state before assertions.
+- [x] Do not install the candidate on the host, recursively enqueue from the guest, fabricate prior state with the new version, or erase migration state before assertions.
 
 Verify and complete:
 
-- [ ] Demonstrate one uninterrupted release-acceptance Job, manual hold, evidence staging and verified consumer cleanup before manual completion, automatic cleanup before workload exit, independent-suite starting states, queued-source immutability, missing-VM blockers, guest identity rejection and truthful result/cleanup failure propagation. Reconnect with the saved run directory after observation loss without a replacement Job.
-- [ ] The actual plugin package, configuration and supported prior behavior are exercised; source-level tests alone do not complete this task.
+- [x] Demonstrate manual hold, evidence staging and verified consumer cleanup before manual completion, automatic cleanup before workload exit, independent-suite starting states, queued-source immutability, missing-VM blockers, guest identity rejection and truthful result/cleanup failure propagation. Reconnect with the saved run directory after observation loss without a replacement Job.
+- [x] The actual plugin package, configuration and supported prior behavior are exercised; source-level tests alone do not complete this task.
+
+TASK-088 verification outcome (2026-10-25): the whole live sequence was re-run on the final harness after the result review tightened the manual hold and the recipes' error boundary, and it proved each declared demonstration. The baseline suite installed the prior stable through the harness marketplace and proved preservation of unrelated guest state; its one-time normalization of a recorded foreign registration is the disclosed record from an earlier run. The install suite installed the candidate plugin, verified native registration, cache identity and skill discovery, and removed its own product state with verified consumer cleanup. The upgrade suite carried prior synthetic state through update with the existing-behavior oracle, fixture gate and restart checks. The migration suite demonstrated a bounded interrupted update with nonduplicating recovery and an explicit safe failure on an unsafe launcher. The guard probe recorded its designed failure with a declared leftover and failed consumer cleanup, and no pass. The manual hold verified the declared prior-stable plugin, native registration and status runtime before any mutation, recorded the successor repair of the guard probe's leftover, and found the same three scopes unchanged at consumer cleanup; it ran that cleanup with the genuinely persisted operator context before manual completion, reported a truthful incomplete disposition, and its kill-and-reconnect kept the same Job and reused the export only after its receipt verified. The queued run-through suite proved admission immutability, idempotent same-key replay, native conflict on a mutated survivor, and a pass on the admitted bytes; the queued probes kept their probe classification and both replay observations in order, and the cancel record keeps the full native disposition. With the VM stopped by Master, a probe admitted despite the doctor's running-VM gap stayed queued under Haepari's native VM-not-started blocker, and the same Job passed after the restart. Live-found corrections became part of the final harness or wrapper: symlink-aware guest-state inventories and the real export layout, the manual operator context persisted through setup, git-visible harness sealing, the inspect receipt nesting in the cancel path, and the probe's doctor-gap record. Earlier runs on two superseded harness trees are preserved and disclosed as records of the same demonstrations, including the one-time normalization record; one tree differed by ignored local tool state, and the other predates the result-review corrections. They never stand in for final-harness evidence. TASK-088's approved scope amendment moved the one uninterrupted release-acceptance Job, including the carried startup smokes VM-TASK-START-01 and VM-EPIC-START-01, to TASK-089; TASK-089 and TASK-090 re-verify the release candidate.
 
 ### TASK-089: Integrate skills, hands-on and the VM release gate
 
@@ -183,6 +185,7 @@ Do not:
 
 Verify and complete:
 
+- [ ] Demonstrate one uninterrupted release-acceptance Job through the managed manual path, including the carried startup smokes VM-TASK-START-01 and VM-EPIC-START-01, with evidence staging and verified consumer cleanup before manual completion.
 - [ ] Observe required actual installed-session and hands-on cases, including duplicate or stale skill failure, and verify cleanup restores the original discovery/configuration state.
 - [ ] Missing human/live evidence remains incomplete and cannot be accepted through a successful Make exit alone.
 

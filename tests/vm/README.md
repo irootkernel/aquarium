@@ -341,17 +341,180 @@ profile pins. An inventory entry's identity is its installation scope together
 with its relative path: the same path may appear in two scopes, a duplicate is
 rejected only within one scope, and a comparison reports a file moved between
 scopes as missing from one scope and added to the other, with every difference
-named by scope and path. The two proposed profiles below record the observed
-host Codex version and a truthful absence for per-home Codex rules; TASK-088
-verifies the guest's observed Codex version against the profile before
-admission, and extending the profiles to the full release combination belongs
-to TASK-089. Recipes produce real inventories from TASK-088 on. Profiles are
-reproducible test inputs: they claim no provisioned VM and no passed migration.
+named by scope and path. Guest-state inventories and the Codex component
+digest walk the real guest layout with the symlink-aware inventory walk: a
+regular file becomes an entry as usual, while a symlink becomes an entry with
+`executable` `false` and a `sha256` over `aquarium-symlink/v1`, one NUL byte
+and the link target (`os.readlink`), so a retargeted link or a file↔symlink
+swap changes the entry. The walk itself may resolve a symlinked scope root;
+below the root it never follows a link and never descends into a linked
+directory, and a special file (FIFO, socket or device) in scope fails the
+suite instead of being inventoried. Sealed-tree digests stay strict and still
+refuse symlinks and special files. The `codex-plugin-cache` scope covers
+`.codex/plugins/cache`, every marketplace's cache; Codex-internal state
+beside it under `.codex/plugins/` (for example `.plugin-appserver` or
+`.remote-plugin-install-staging`) belongs to the Codex component and stays
+out of scope, and the narrow runtime allowance stays
+`.codex/plugins/cache/root-kernel/`. The two proposed profiles below record
+the observed host Codex version and a truthful absence for per-home Codex
+rules; TASK-088 verifies the guest's observed Codex version against the
+profile before admission, and extending the profiles to the full release
+combination belongs to TASK-089. Recipes produce real inventories from
+TASK-088 on. Profiles are reproducible test inputs: they claim no
+provisioned VM and no passed migration.
 
 | Profile | Digest | Status |
 | --- | --- | --- |
-| `proposed-stable-haepari-0.1.0-aquarium-0.1.21.json` | `930de6cbf2ae1468133f04f7519d201bb6d08927e807f18f2670f73c1bf553c4` | proposed |
-| `proposed-candidate-haepari-0.1.0-aquarium-0.1.22.json` | `9d922eb4ee160dbdd5f966387b5754c0e5a5b54798cfba1195ee333ec05a25b4` | proposed |
+| `proposed-stable-haepari-0.1.0-aquarium-0.1.21.json` | `930de6cbf2ae1468133f04f7519d201bb6d08927e807f18f2670f73c1bf553c4` | superseded |
+| `proposed-candidate-haepari-0.1.0-aquarium-0.1.22.json` | `9d922eb4ee160dbdd5f966387b5754c0e5a5b54798cfba1195ee333ec05a25b4` | superseded |
+| `proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0.json` | `f128ff2c42c27b30d3265c17a3985de0850c1ab8457b23a2d9464647ccd7628b` | proposed |
+| `proposed-candidate-haepari-0.1.0-aquarium-0.1.21-dev-b7c227e301a9.json` | `14618806de8ea6c0eb445a6098132f48b262e159f08747fa91fc287c2eff8edf` | proposed |
+
+The two TASK-087 profiles are superseded because the host Codex release moved
+to 0.164.0 after they were written and the candidate version axis is now bound
+by sealed artifact bytes instead of the unreleased `0.1.22` number; their
+bytes stay unchanged as immutable history. The derived stable profile pins the
+aligned Codex version. The candidate profile is generated at bundle-build time
+from the sealed candidate artifact through `host_bundle.py`, binds the
+artifact tree digest and observed `0.1.21-dev.b7c227e301a9` development
+version in the component's closed `sealed_artifact` field, and is committed
+with bytes equal to the sealed copy at Task closeout; a fresh bundle built
+from the repository seals both committed files byte for byte.
+
+## Host-submitted managed VM suites
+
+TASK-088 adds the separate host wrapper `make test-vm-host HAEPARI=<absolute
+CLI> RESOURCE=<registered id> MODE=auto|manual RUN_DIR=<private physical
+0700 path> SUITE=<suite|all> GUEST_CONTEXT=<private guest-context json>` over
+the installed Haepari release controller. It is invoked only through explicit
+VM-test authority, never from ordinary `make test` or automatic Task/Epic
+checks, and the guest-side `make test-vm` gate above keeps its own contract
+unchanged. The wrapper refuses to run inside a managed guest context, never
+performs a VM power operation, and never installs a candidate on the host.
+
+The wrapper persists every request key and exact spec in `RUN_DIR/run.json`
+before the first submission, submits each consumer-declared suite once as a
+`haepari.job/v2` Job, observes through native blocking `wait` and the blocking
+event path to `awaiting_manual`, and reconnects an existing Job from the saved
+run directory without creating a replacement Job. Terminal verdicts map to
+wrapper exits 0/1/3/4 with the native verdict cross-checked; a caller wait
+timeout reports PENDING with exit 5 and never cancels the Job; transport or
+storage uncertainty reports UNKNOWN while preserving the native exit; exit 2
+is classified by envelope code (`RESULT_UNAVAILABLE`, `CONFLICT`,
+`INVALID_REQUEST`) and kept distinct from exit-6 uncertainty. Each suite
+result reports the native `workload_outcome`, `evidence_completeness`,
+`cleanup_outcome` and the recipe's `consumer_cleanup` separately; missing
+observations or failed consumer cleanup never produce PASS, and `SUITE=all`
+retains every Job result and reports skipped suites without aggregating
+partial runs. Suite phases are budgeted inside the registered resource-v2
+ceilings, each queue budget satisfies the queue-deadline rule for
+capacity-one resources that Haepari v0.1.0 documents in
+`docs/contracts/configuration.md` ("Queue deadlines for capacity-one
+resources"): `queue_seconds >= (jobs ahead + 1) * 26100` (checked against
+the live queue before each fresh submission), and reconnection never
+extends a deadline. The 26100 s multiplier is the resource's maximum Job
+duration under its registered ceilings: the manual path's prepare 1800 +
+manual 21600 + collect 900 + cleanup 1800, which is longer than the
+automatic path with its 7200 s run ceiling.
+Known behavior: a wrapper terminated by a signal stops observing only. A
+native `haepari wait` or `events --follow` child it started may continue
+until its own timeout or the Job's end; those children are read-only, change
+no state, and reconnect never depends on them.
+
+The live TASK-088 results were produced against the tested artifact from
+`b7c227e`, development version `0.1.21-dev.b7c227e301a9`, with harness tree
+`b27a75c2a5b96addfcfecb19304fef7ad8578c8eebc5f3ab6243f10246a398ab`. The final
+Task commit differs from that tested artifact only in documentation bytes,
+for example `plugins/aquarium/references/haepari-integration.md`, and an
+artifact built from the final commit carries that commit's own development
+version stamp; the results never describe the final commit as the
+tested installed artifact, and TASK-089/090 re-verify the release candidate.
+Earlier runs on two superseded harness trees are preserved and disclosed as
+records of the same demonstrations. The admit-despite-gap probe's record of
+the doctor gap was added after its single live run, whose gap was observed
+with doctor before submission and whose blocker Haepari recorded natively.
+
+`GUEST_CONTEXT` is mandatory for a live submission and carries only
+machine-local values that never enter tracked files: the expected guest UUID,
+guest home and `PATH`, the F10 interpreter path (Python 3.14 managed by uv),
+the driver interpreter chosen at the J-0 gate, and the guest Codex, Podway
+and marketplace paths. A tracked example shape is
+`{"schema": "aquarium.vm-guest-context/v1", "expected_guest_uuid": "<uuid>",
+"guest_home": "<absolute>", "guest_path": "<absolute PATH>",
+"guest_python": "<absolute>", "guest_codex": "<absolute>",
+"guest_podway": "<absolute>", "guest_marketplace_name": "<name>"}`.
+
+The declared suites are `baseline`, `install`, `upgrade` (which carries the
+existing-behavior oracle, fixture gate and restart checks inside its
+post-upgrade assertions), `migration-failure`, `manual-hold` (a minimal
+offline hold carrying the manual-path demonstrations, including the
+kill-and-reconnect reconnect proof), and the labelled probes
+`guard-failure-probe`, `immutability-probe` and `vm-blocked-probe`; the
+immutability probes must queue behind a Job that holds the resource long
+enough to perform the mutation and replay steps, and the demonstrated live
+choreography queued them behind `manual-hold`'s `awaiting_manual` hold,
+because `migration-failure` finishes in under a minute. TASK-089 implements
+the one-release-acceptance-Job transaction; TASK-088's approved scope
+amendment S5 moved it there with the startup smokes. The recipe comments,
+the manual-hold scenario and the tests use live-sequence labels for these
+suites: J-BASE is `baseline`, J-A `install`, J-B `upgrade`, J-M
+`migration-failure`, J-F `guard-failure-probe`, J-H `manual-hold`, J-Q
+`immutability-probe` and J-V `vm-blocked-probe`; J-RA is TASK-089's
+release-acceptance Job. The sealed bundle carries the candidate artifact and its build
+manifest from a clean committed checkout, the prior v0.1.21 artifact from its
+tag, the full-history candidate Git bundle, the harness recipes as a labelled
+development snapshot, the profile files and the hash-locked fixture
+requirements resolved before admission. The guest entrypoint `tests/vm/recipes/guest_entry.sh` refuses to
+run without the managed runner's Job/lease context, and every recipe runs the
+committed candidate's guest identity guard before any guest mutation,
+captures real `aquarium.vm-inventory/v1` inventories over
+`(installation_scope, relative_path)`, stages its declared outputs, and
+finishes recipe-owned consumer cleanup with a verified post-cleanup inventory
+before workload exit or `manual complete`. The `manual-hold` suite carries
+every manual-path demonstration TASK-088 owns: the hold itself, evidence
+staging, verified consumer cleanup before `manual complete`, one
+deliberately `unobserved` scenario yielding native INCOMPLETE, and the
+kill-and-reconnect demonstration — reconnecting the same `RUN_DIR` to the
+same Job ID for a terminal verdict with receipt-verified export reuse. A
+verified export consumes Haepari v0.1.0's real layout: Job-relative outputs
+live under `artifacts/<path>` inside the export directory, the manifest's
+`files[]` lists exactly `artifacts/…`, `output.log` and `recovery-…` entries
+with matching digests, and the consumed suite result is
+`artifacts/results/<suite>/result.json`.
+
+The manual-hold operator run: when the Job reaches `awaiting_manual`, take
+the workspace root from the `manual_preparation_stopped` event's
+`workspace`. Enter `<workspace>/harness` and invoke
+`tests/vm/recipes/guest_entry.sh --suite manual-hold --phase
+consumer-cleanup` there with the saved spec's `workload.environment`, plus
+`HAEPARI_PARENT_CONTEXT` read from `../operator-parent-context.json`
+relative to `harness` (that is, `<workspace>/operator-parent-context.json`;
+mode 0600, written by the suite's setup, removed with the Job root, never
+a declared output). Stage the evidence, then run `manual complete`. Never
+print the context value in logs or reports.
+
+Deliberate probes are labelled invocation paths, never production behavior:
+`AQUARIUM_VM_PROBE=changed-survivor-replay` admits a Job, mutates a sealed
+bundle copy and replays the same key to record the native `CONFLICT` while
+the production reconnect guard stays intact; `identical-replay` records the
+idempotent same-key admission; `admit-despite-gap` submits the VM-blocked
+probe although `doctor --resource` reports the expected VM-not-started gap,
+records doctor's gaps, or its error, in the run record, and refuses when
+doctor reports neither.
+`AQUARIUM_VM_CANCEL=1` cancels the admitted Job of an existing run through
+the native revision-fenced cancel. On a first-ever resource the queue
+projection may report `unknown_occupied_execution` because no
+`managed_vm_observations` row exists yet; it is expected first-use state, not
+an occupancy blocker, and preflight uses `doctor --resource`, not the queue
+projection.
+
+Host wrapper, bundle sealing, recipes and offline tests are covered by unit
+tests built from real envelope shapes; they exercise guards, record-before-
+submit ordering, reconnect, exit classification, queue sizing, probe paths
+and inventory identity without a controller, VM, network or LLM. Live
+results apply only to their recorded candidate, bundle and installed
+combination, and remain separate from the release-QA contract and the
+EPIC-024 historical manual results.
 
 ## Directory guidance development verification
 

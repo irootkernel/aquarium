@@ -179,6 +179,32 @@ Preparation cannot pass the acceptance gate. Operator decisions
 resume actual native handles without automatic replay. Public observations and
 meaningful application artifacts are required; success sentences are insufficient.
 
+## Host-submitted managed VM suites
+
+TASK-088 adds the separate `make test-vm-host HAEPARI=<absolute CLI>
+RESOURCE=<registered id> MODE=auto|manual RUN_DIR=<private 0700 physical
+path> SUITE=<suite|all> GUEST_CONTEXT=<private json>` wrapper over the
+installed Haepari release controller. Invoke it only under explicit VM-test
+authority; ordinary `make test`, automatic Task/Epic checks and the offline
+release-QA contract never run it, and the guest-side `make test-vm` gate
+keeps its own contract unchanged. The wrapper seals an immutable bundle
+(candidate artifact from a clean committed checkout, prior-release artifact,
+candidate Git history, harness recipes as a labelled development snapshot,
+profiles and hash-locked fixture requirements), persists every request key
+and exact spec before the first submission, then submits each
+consumer-declared suite (baseline, install, upgrade with folded regression
+assertions, migration-failure, minimal manual-hold carrying the manual-path
+and reconnect demonstrations, and labelled probes) once as a
+`haepari.job/v2` Job. It maps native verdicts truthfully per suite while
+keeping workload outcome, evidence completeness, native cleanup, consumer
+cleanup and manual observations separate. Offline unit tests cover the
+wrapper, bundle sealing, recipes and queue/probe classification using fakes
+built from real envelope shapes; they require no controller, VM, network or
+LLM, and the helper tests do not verify installed behavior. Live suite
+results bind to their recorded candidate, sealed bundle and installed
+combination, stay outside the release-QA invocation, and are documented in
+[the VM guide](tests/vm/README.md#host-submitted-managed-vm-suites).
+
 ## Directory guidance verification
 
 `tests/unit/test_setup_package_contracts.py` adds filesystem integration cases for
