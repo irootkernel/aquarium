@@ -194,7 +194,10 @@ profiles and hash-locked fixture requirements), persists every request key
 and exact spec before the first submission, then submits each
 consumer-declared suite (baseline, install, upgrade with folded regression
 assertions, migration-failure, minimal manual-hold carrying the manual-path
-and reconnect demonstrations, and labelled probes) once as a
+and reconnect demonstrations, release-acceptance carrying TASK-089's one
+uninterrupted managed release transaction with the startup smokes,
+installed-skill identity, the approval-based runtime update and fixed-name
+evidence archives, and labelled probes) once as a
 `haepari.job/v2` Job. It maps native verdicts truthfully per suite while
 keeping workload outcome, evidence completeness, native cleanup, consumer
 cleanup and manual observations separate. Offline unit tests cover the

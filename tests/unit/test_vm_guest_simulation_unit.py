@@ -6,16 +6,18 @@ import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import unittest
 from pathlib import Path
+from typing import ClassVar
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 RECIPES_ROOT = REPOSITORY / "tests/vm/recipes"
 STABLE_PROFILE = (
     REPOSITORY
     / "tests/vm/profiles"
-    / "proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0.json"
+    / "proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14.json"
 )
 LAUNCHER = REPOSITORY / "tests/unit/vm_guest_simulation_launcher.py"
 FIXTURES = REPOSITORY / "tests/unit/fixtures/vm_simulation"
@@ -60,6 +62,21 @@ def digest(root: Path) -> str:
     return payload.hexdigest()
 
 
+def skill_tree_digest_of(root: Path) -> str:
+    """`aquarium-skill-tree-sha256/v1` over a stub skills tree, computed the
+    same way the profile validator computes it."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "sim_profile_validator",
+        REPOSITORY / "tests/vm/profiles/validate_profiles.py",
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.tree_digest_from_directory(root)
+
+
 class SequenceSimulationTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -90,6 +107,13 @@ class SequenceSimulationTest(unittest.TestCase):
         shutil.copyfile(
             REPOSITORY / "tests/vm/native_observation.py",
             stub / "tests/vm/native_observation.py",
+        )
+        # The cloned checkout must carry the profile validator the skill
+        # identity phase imports by exact file path.
+        (stub / "tests/vm/profiles").mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(
+            REPOSITORY / "tests/vm/profiles/validate_profiles.py",
+            stub / "tests/vm/profiles/validate_profiles.py",
         )
         for argv in (
             ["init", "-q"],
@@ -123,7 +147,22 @@ class SequenceSimulationTest(unittest.TestCase):
             (status / "requirements.txt").write_text("")
             assets = plugin / "assets/podway/procedures"
             assets.mkdir(parents=True)
-            (assets / "aquarium-task-v2.yaml").write_text("procedure: stub\n")
+            for procedure in (
+                "task",
+                "goal",
+                "validation",
+                "design",
+                "war-room",
+            ):
+                (assets / f"aquarium-{procedure}-v2.yaml").write_text(
+                    f"procedure: {procedure} stub\n"
+                )
+            # The skills trees are byte-identical between prior and candidate
+            # so the profile pins can be rebound per stub tree.
+            for skill in ("dev-setup", "task-handler", "epic-handler"):
+                tree = plugin / "skills" / skill
+                tree.mkdir(parents=True)
+                (tree / "SKILL.md").write_text(f"# aquarium:{skill}\n")
             return target
 
         cls.prior = plugin_tree(cls.work / "prior", "0.1.21")
@@ -135,6 +174,9 @@ class SequenceSimulationTest(unittest.TestCase):
         shutil.copytree(cls.candidate / "plugins", stub / "plugins")
         stub_plugin = stub / "plugins/aquarium/.codex-plugin/plugin.json"
         stub_plugin.write_text(json.dumps({"version": "0.1.21"}, indent=2) + "\n")
+        (stub / "Makefile").write_text(
+            "test-vm:\n\tpython3 -B tests/vm/run_acceptance.py run\n"
+        )
         for argv in (["add", "."], ["commit", "-qm", "plugin payload"]):
             subprocess.run(["git", "-C", str(stub), *argv], check=True)
         cls.git_sha = subprocess.run(
@@ -150,13 +192,36 @@ class SequenceSimulationTest(unittest.TestCase):
         final_plugin.write_text(
             json.dumps({"version": f"0.1.21-dev.{cls.git_sha[:12]}"}, indent=2) + "\n"
         )
-        cls._seed_persistent_home()
+        cls.checkout_bundle = cls.work / "checkout.bundle"
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(stub),
+                "bundle",
+                "create",
+                str(cls.checkout_bundle),
+                "--all",
+            ],
+            check=True,
+            capture_output=True,
+        )
 
-    @classmethod
-    def _seed_persistent_home(cls):
-        home = cls.home
+    def setUp(self):
+        self.test_work = Path(
+            tempfile.mkdtemp(prefix="test-", dir=str(self.work))
+        ).resolve()
+        self.addCleanup(shutil.rmtree, self.test_work, True)
+        self.home = self.test_work / "home"
+        self.codex_state = self.test_work / "codex-state.json"
+        self.podway_state = self.test_work / "podway-state.json"
+        self._released_threads = {}
+        self._seed_persistent_home()
+
+    def _seed_persistent_home(self):
+        home = self.home
         home.mkdir(parents=True, exist_ok=True)
-        foreign_root = cls.work / "foreign-marketplace-root"
+        foreign_root = self.test_work / "foreign-marketplace-root"
         plugin = foreign_root / "plugins/aquarium/.codex-plugin"
         plugin.mkdir(parents=True, exist_ok=True)
         (plugin / "plugin.json").write_text(
@@ -194,7 +259,7 @@ class SequenceSimulationTest(unittest.TestCase):
                 "authPolicy": "ON_INSTALL",
             }
         ]
-        cls.codex_state.write_text(
+        self.codex_state.write_text(
             json.dumps({"marketplaces": registrations, "installed": installed})
         )
         cache = home / ".codex/plugins/cache"
@@ -229,10 +294,26 @@ class SequenceSimulationTest(unittest.TestCase):
         appserver = home / ".codex/plugins/.plugin-appserver/codex-cli"
         appserver.mkdir(parents=True, exist_ok=True)
         (appserver / "state.json").write_text("{}\n")
-        for name in ("deslop", "use-gaori", "use-podway"):
+        for name in ("deslop", "use-gaori"):
             skill = home / ".agents/skills" / name
             skill.mkdir(parents=True, exist_ok=True)
             (skill / "SKILL.md").write_text(f"# {name}\n")
+        # The guest use-podway tree is pinned by content in the profile;
+        # copy the installed host tree so the observed digest matches.
+        host_use_podway = Path.home() / ".agents/skills/use-podway"
+        assert host_use_podway.is_dir(), "host use-podway tree missing"
+        shutil.copytree(host_use_podway, home / ".agents/skills/use-podway")
+        # Per-home skills shaped like the guest: system skills plus foreign
+        # trees, all inventoried by the codex-home-skills scope, and per-home
+        # rules preserved as starting state with content identity.
+        for name in (".system", "imagegen", "humanize-korean", "ouroboros-orca"):
+            skill = home / ".codex/skills" / name
+            skill.mkdir(parents=True, exist_ok=True)
+            (skill / "SKILL.md").write_text(f"# {name}\n")
+        rules = home / ".codex/rules"
+        rules.mkdir(parents=True, exist_ok=True)
+        (rules / "ouroboros.md").write_text("# ouroboros rules\n")
+        self.podway_state.write_text("{}")
         runtime = home / ".aquarium/status-runtime"
         versions = runtime / "versions"
         versions.mkdir(parents=True, exist_ok=True)
@@ -272,7 +353,7 @@ class SequenceSimulationTest(unittest.TestCase):
         launcher.chmod(0o755)
 
     def job_root(self, name: str) -> Path:
-        job = self.work / f"job-{name}"
+        job = self.test_work / f"job-{name}"
         if job.exists():
             shutil.rmtree(job)
         harness = job / "harness/tests/vm/recipes"
@@ -284,29 +365,42 @@ class SequenceSimulationTest(unittest.TestCase):
                 shutil.copyfile(source, target)
         shutil.copytree(self.prior, job / "prior-artifact")
         shutil.copytree(self.candidate, job / "artifact")
-        subprocess.run(
-            [
-                "git",
-                "-C",
-                str(self.work / "stub-repo"),
-                "bundle",
-                "create",
-                str(job / "checkout.bundle"),
-                "--all",
-            ],
-            check=True,
-            capture_output=True,
-        )
+        shutil.copyfile(self.checkout_bundle, job / "checkout.bundle")
         profiles = job / "profile"
         profiles.mkdir()
-        shutil.copyfile(STABLE_PROFILE, profiles / "stable.json")
+        stable = json.loads(STABLE_PROFILE.read_text())
+        # Rebind the plugin skill pin to the stub trees exactly as the host
+        # derivation binds it to the sealed artifact's own skills.
+        prior_digest = skill_tree_digest_of(self.prior / "plugins/aquarium/skills")
+        candidate_digest = skill_tree_digest_of(
+            self.candidate / "plugins/aquarium/skills"
+        )
+        candidate_profile = {
+            **json.loads(json.dumps(stable)),
+            "profile_id": f"sim-candidate-{self.git_sha[:12]}",
+        }
+        # Test-only setup: the simulated bundle's profiles carry the fake
+        # Podway executable's digest instead of the real installation pin,
+        # so production code reads its profile pin unchanged.
+        fake_podway_digest = (
+            "sha256:"
+            + hashlib.sha256((FIXTURES / "fake_podway.py").read_bytes()).hexdigest()
+        )
+        for document, pin, version in (
+            (stable, prior_digest, "0.1.21"),
+            (candidate_profile, candidate_digest, f"0.1.21-dev.{self.git_sha[:12]}"),
+        ):
+            for component in document["components"]:
+                if component.get("name") == "aquarium-plugin":
+                    component["skill_tree"]["sha256"] = pin
+                    component["version"] = version
+                if component.get("name") == "podway":
+                    component["executable_sha256"] = fake_podway_digest
+        (profiles / "stable.json").write_text(
+            json.dumps(stable, indent=2, ensure_ascii=False) + "\n"
+        )
         (profiles / "candidate.json").write_text(
-            json.dumps(
-                {
-                    **json.loads(STABLE_PROFILE.read_text()),
-                    "profile_id": f"sim-candidate-{self.git_sha[:12]}",
-                }
-            )
+            json.dumps(candidate_profile, indent=2, ensure_ascii=False) + "\n"
         )
         lock = job / "requirements/fixture-requirements.lock"
         lock.parent.mkdir(parents=True, exist_ok=True)
@@ -324,6 +418,27 @@ class SequenceSimulationTest(unittest.TestCase):
             )
             + "\n"
         )
+        # Every operator phase runs through guest_entry.sh with only the
+        # documented environment. The wrapper keeps the simulation's guest
+        # premise: guest_main invocations go through the launcher (platform
+        # identity + in-process driver guard), everything else through the
+        # fake guest python.
+        wrapper = job / "bin/guest-python"
+        wrapper.parent.mkdir(parents=True, exist_ok=True)
+        wrapper.write_text(
+            "#!/bin/sh\n"
+            'case "$2" in\n'
+            "*guest_main.py)\n"
+            "    shift 2\n"
+            f"    exec {json.dumps(sys.executable)} -B {json.dumps(str(LAUNCHER))} "
+            f"{json.dumps(str(self.identity))} {json.dumps(str(job / 'harness'))} "
+            '"$@";;\n'
+            "*)\n"
+            f"    exec {json.dumps(sys.executable)} -B "
+            f'{json.dumps(str(FIXTURES / "fake_python.py"))} "$@";;\n'
+            "esac\n"
+        )
+        wrapper.chmod(0o755)
         (job / "harness/inputs.json").write_text(
             json.dumps(
                 {
@@ -358,10 +473,11 @@ class SequenceSimulationTest(unittest.TestCase):
             "AQUARIUM_GUEST_PYTHON": str(FIXTURES / "fake_python.py"),
             "AQUARIUM_DRIVER_PYTHON": sys.executable,
             "AQUARIUM_GUEST_CODEX": str(FIXTURES / "fake_codex.py"),
-            "AQUARIUM_GUEST_PODWAY": "/usr/bin/true",
+            "AQUARIUM_GUEST_PODWAY": str(FIXTURES / "fake_podway.py"),
             "AQUARIUM_EXPECTED_GUEST_UUID": SIMULATED_UUID,
             "AQUARIUM_MARKETPLACE_NAME": "root-kernel",
             "FAKE_CODEX_STATE": str(self.codex_state),
+            "FAKE_PODWAY_STATE": str(self.podway_state),
             "FAKE_PYTHON_REAL": sys.executable,
             "FAKE_PYTHON_BINDING": str(FIXTURES / "fake_python.py"),
         }
@@ -1017,6 +1133,7 @@ class SequenceSimulationTest(unittest.TestCase):
                 evil.unlink()
 
     def test_c8_f2_manual_hold_failed_postcondition_not_pass(self):
+        self._c10_establish_prior_for_hold("reply-window-hold")
         job = self.job_root("f2-hold")
         self.run_suite(job, "manual-hold", "--phase", "smoke")
         # Recreate the declared leftover after the repair so the cleanup
@@ -1214,6 +1331,1738 @@ class SequenceSimulationTest(unittest.TestCase):
             self.assertEqual(list(results.rglob("*")), [], "identity rejection wrote")
         payload = json.loads(result.stdout)
         self.assertEqual(payload["writes"], "none")
+
+    # ------------------------------------------------------------------
+    # TASK-089 release-acceptance (J-RA)
+
+    _released_threads: ClassVar[dict[str, str]] = {}
+
+    def _jra_run(self, job: Path, phase: str, fixture: str | None = None, **env):
+        """Every J-RA phase runs the documented entry point with only the
+        documented environment: the saved spec's workload.environment plus
+        the managed context. The entry point derives the Job identity; the
+        test never injects AQUARIUM_VM_JOB_ID or the lease generation."""
+        extra = ["--phase", phase]
+        if fixture:
+            extra += ["--fixture", fixture]
+        environment = self.base_env()
+        environment["AQUARIUM_GUEST_PYTHON"] = str(job / "bin/guest-python")
+        environment.update({key: str(value) for key, value in env.items()})
+        environment["HAEPARI_PARENT_CONTEXT"] = json.dumps(
+            [
+                {
+                    "job_id": f"sim-jra-{job.name}",
+                    "lease_generation": 1,
+                    "nonce": "ab" * 32,
+                }
+            ]
+        )
+        result = subprocess.run(
+            [
+                "/bin/sh",
+                str(job / "harness/tests/vm/recipes/guest_entry.sh"),
+                "--suite",
+                "release-acceptance",
+                *extra,
+            ],
+            cwd=job / "harness",
+            env=environment,
+            capture_output=True,
+            text=True,
+            timeout=900,
+            check=False,
+        )
+        SEQUENCE_LOG.append(
+            {
+                "suite": "release-acceptance",
+                "extra": list(extra),
+                "exit": result.returncode,
+                "stdout": result.stdout[-2000:],
+                "stderr": result.stderr[-500:],
+            }
+        )
+        return result.returncode
+
+    def _released_setup(self, job: Path, fixture: str) -> None:
+        run_root = job / "acceptance-run"
+        environment = self.base_env()
+        prompt = (
+            f"Invoke the normally discovered installed $aquarium:dev-setup for "
+            f"{run_root / fixture}, scoped only to Podway managed configuration "
+            "and sources. Use the current installed source and normal concrete "
+            "proposal/approval boundary. The authorized fixture operator is "
+            "coordinator-fixture-operator; existing scope authority is "
+            "epic-019-vm-test-authority. Preserve custom sources, original "
+            "admitted sessions, Git work and reports. Settle native agents and "
+            "return the actual result. Do not commit or publish."
+        )
+        result = subprocess.run(
+            [
+                environment["AQUARIUM_GUEST_CODEX"],
+                "exec",
+                "--json",
+                "--add-dir",
+                str(run_root),
+                "-C",
+                str(run_root / fixture),
+                "--output-last-message",
+                str(run_root / f"released-{fixture}.last"),
+                "-",
+            ],
+            input=prompt,
+            capture_output=True,
+            text=True,
+            env=environment,
+            timeout=300,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        (run_root / f"released-{fixture}.jsonl").write_text(result.stdout)
+        thread = None
+        for line in result.stdout.splitlines():
+            event = json.loads(line)
+            if event.get("type") == "thread.started":
+                thread = event["thread_id"]
+        self.assertIsNotNone(thread, result.stdout)
+        self._released_threads[fixture] = thread
+
+    def _preservation_prerequisites(self, job: Path) -> None:
+        run_root = job / "acceptance-run"
+        environment = self.base_env()
+        check = subprocess.run(
+            [
+                environment["AQUARIUM_GUEST_PODWAY"],
+                "--json",
+                "procedure",
+                "check",
+                "--warnings-as-errors",
+                ".podway/procedures/aquarium-task-v2.yaml",
+            ],
+            cwd=run_root / "preservation",
+            capture_output=True,
+            text=True,
+            env=environment,
+            timeout=120,
+            check=False,
+        )
+        self.assertEqual(check.returncode, 0, check.stderr)
+        (run_root / "podway-procedure-check.json").write_text(check.stdout)
+        start = subprocess.run(
+            [
+                environment["AQUARIUM_GUEST_PODWAY"],
+                "--worktree",
+                str(run_root / "preservation"),
+                "start",
+                "--preset",
+                "sw-dev-v2",
+                "--task",
+                "admitted baseline session",
+                "--idempotency-key",
+                "aquarium-vm-release-acceptance",
+            ],
+            capture_output=True,
+            text=True,
+            env=environment,
+            timeout=120,
+            check=False,
+        )
+        self.assertEqual(start.returncode, 0, start.stderr)
+        observe = subprocess.run(
+            [
+                environment["AQUARIUM_GUEST_PODWAY"],
+                "--worktree",
+                str(run_root / "preservation"),
+                "--json",
+                "observe",
+            ],
+            capture_output=True,
+            text=True,
+            env=environment,
+            timeout=120,
+            check=False,
+        )
+        self.assertEqual(observe.returncode, 0, observe.stderr)
+        (run_root / "podway-observe.json").write_text(observe.stdout)
+
+    def _reset_fake_guest_for_jra(self) -> None:
+        """Fresh fake-guest state for each J-RA test.
+
+        The shared persistent home made J-RA tests order-dependent: an
+        earlier test's own dev-stamped generation changed the next test's
+        abort preimage. Each J-RA test now starts from a freshly seeded
+        home, Codex state and Podway state, so any subset passes in any
+        order.
+        """
+        shutil.rmtree(self.home, ignore_errors=True)
+        self._seed_persistent_home()
+        state = {
+            "marketplaces": [],
+            "installed": [],
+            "sessions": {},
+        }
+        self.codex_state.write_text(json.dumps(state))
+        self.podway_state.write_text("{}")
+        # Reset the recorded fake-thread handles per test.
+        self._released_threads.clear()
+
+    def _reset_marketplaces_for_jra(self) -> None:
+        """Deterministic J-RA starting state over the persistent home.
+
+        Earlier fault tests can leave the candidate marketplace unowned or
+        registered; a fresh Job must not depend on their residue, so the
+        harness marketplaces, the root-kernel registration and its cache
+        rows are cleared before the prefix re-establishes prior stable.
+        """
+        marketplaces = self.home / ".aquarium-vm-marketplaces"
+        for kind in ("artifact", "prior-artifact"):
+            directory = marketplaces / kind
+            if directory.exists() or directory.is_symlink():
+                shutil.rmtree(directory, ignore_errors=True)
+            sidecar = marketplaces / f"{kind}.owner.json"
+            if sidecar.exists() or sidecar.is_symlink():
+                sidecar.unlink()
+        state = json.loads(self.codex_state.read_text())
+        state["marketplaces"] = [
+            row for row in state["marketplaces"] if row["name"] != "root-kernel"
+        ]
+        state["installed"] = [
+            row for row in state["installed"] if row["marketplaceName"] != "root-kernel"
+        ]
+        self.codex_state.write_text(json.dumps(state))
+        cache = self.home / ".codex/plugins/cache/root-kernel"
+        if cache.exists():
+            shutil.rmtree(cache)
+
+    def _run_jra_through_managed_updates(self, job: Path) -> Path:
+        """The operator prefix every J-RA run shares, up to step g."""
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-prefix")
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        for fixture in ("task", "epic", "preservation"):
+            self._released_setup(job, fixture)
+            self.assertEqual(
+                self._jra_run(
+                    job,
+                    "record-setup",
+                    fixture,
+                    AQUARIUM_VM_THREAD=self._released_threads[fixture],
+                ),
+                0,
+                SEQUENCE_LOG[-1],
+            )
+        self._preservation_prerequisites(job)
+        capture_exit = self._jra_run(job, "capture")
+        capture_path = job / "results/release-acceptance/capture.json"
+        self.assertEqual(
+            capture_exit,
+            0,
+            capture_path.read_text() if capture_path.is_file() else SEQUENCE_LOG[-1],
+        )
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "skill-identity"), 0, SEQUENCE_LOG[-1])
+        request_before_runtime = (job / "acceptance/request.json").read_bytes()
+        self.assertEqual(self._jra_run(job, "runtime-update"), 0, SEQUENCE_LOG[-1])
+        reply = job / "runtime-reply.txt"
+        reply.write_text("Approve the proposed runtime update.\n")
+        reply_exit = self._jra_run(
+            job, "runtime-reply", AQUARIUM_VM_REPLY_FILE=str(reply)
+        )
+        runtime_path = job / "results/release-acceptance/runtime-update.json"
+        self.assertEqual(
+            reply_exit,
+            0,
+            runtime_path.read_text() if runtime_path.is_file() else SEQUENCE_LOG[-1],
+        )
+        self.assertEqual(
+            (job / "acceptance/request.json").read_bytes(), request_before_runtime
+        )
+        for fixture in ("task", "epic", "preservation"):
+            self.assertEqual(
+                self._jra_run(job, "managed-updates", fixture),
+                0,
+                SEQUENCE_LOG[-1],
+            )
+            record = json.loads(
+                (
+                    job
+                    / "results/release-acceptance"
+                    / f"managed-update-{fixture}.json"
+                ).read_text()
+            )
+            self.assertEqual(record["exit"], 0)
+            self.assertEqual(record["driver_outcome"], "managed-update-observed")
+        return job / "results/release-acceptance"
+
+    def test_jra_offline_sequence_through_the_smoke_boundary(self):
+        job = self.job_root("jra-sequence")
+        results = self._run_jra_through_managed_updates(job)
+        run_root = job / "acceptance-run"
+        prepare = json.loads((results / "machine-prepare.json").read_text())
+        self.assertEqual(prepare["codex_identity"]["version"], "codex-cli 0.164.0")
+        self.assertEqual(prepare["codex_identity"]["login_status"]["mode"], "chatgpt")
+        self.assertIn("ChatGPT", prepare["codex_identity"]["login_status"]["line"])
+        self.assertEqual(prepare["abort_normalization"]["runtime_generations"], [])
+        request = json.loads((job / "acceptance/request.json").read_text())
+        self.assertEqual(
+            request["baseline_combination"],
+            {"aquarium": "0.1.21", "codex": "0.164.0", "podway": "v0.2.14"},
+        )
+        prior_identity = json.loads((results / "skill-identity.json").read_text())
+        self.assertTrue(
+            prior_identity["skill_trees"]["installed-plugin-skills"]["match"]
+        )
+        self.assertTrue(prior_identity["comparisons"]["all_passed"])
+        rules = next(
+            scope
+            for scope in prior_identity["scopes"]
+            if scope["root"] == "~/.codex/rules"
+        )
+        self.assertEqual(rules["scope"], "codex-rules")
+        self.assertIsNotNone(rules["entries"])
+        self.assertTrue(
+            all("sha256" in entry for entry in rules["entries"]), rules["entries"]
+        )
+        inventory = json.loads((results / "inventory-prior-baseline.json").read_text())
+        scopes = {entry["installation_scope"] for entry in inventory["entries"]}
+        self.assertIn("codex-home-skills", scopes)
+        self.assertEqual(json.loads((results / "capture.json").read_text())["exit"], 0)
+        self.assertTrue((run_root / "baseline.json").is_file())
+        identity = json.loads((results / "skill-identity.json").read_text())
+        self.assertEqual(identity["stage"], "candidate")
+        self.assertTrue(identity["skill_trees"]["installed-plugin-skills"]["match"])
+        self.assertTrue(identity["comparisons"]["all_passed"])
+        self.assertEqual(identity["duplicates"], [])
+        self.assertIsNotNone(identity["prior_stage"])
+        runtime = json.loads((results / "runtime-update.json").read_text())
+        network_override = "sandbox_workspace_write.network_access=true"
+        self.assertNotIn(network_override, request["codex_args"])
+        for case in (
+            "runtime-update",
+            "task-setup",
+            "epic-setup",
+            "preservation-setup",
+        ):
+            receipts = sorted(
+                (run_root / "operations" / case).glob("*.invocation.json")
+            )
+            self.assertTrue(receipts, case)
+            if case == "runtime-update":
+                self.assertEqual(len(receipts), 2)
+            for path in receipts:
+                argv = json.loads(path.read_text())["argv"]
+                self.assertEqual(
+                    argv.count(network_override), int(case == "runtime-update"), path
+                )
+                if case == "runtime-update":
+                    self.assertEqual(argv[argv.index(network_override) - 1], "-c")
+        self.assertIs(runtime["approval_completed"], True, runtime)
+        self.assertEqual(runtime["workflow_exit"], 0)
+        self.assertIs(runtime["recipe_ran_installer"], False, runtime)
+        self.assertEqual(runtime["dev_stamped_outside_windows"], [])
+        self.assertTrue(runtime["generations_created_in_reply_window"])
+        self.assertTrue(runtime["same_thread"])
+        # The append-only reply history keeps the initial evidence.
+        self.assertTrue(runtime["versions_before_initial"])
+        self.assertEqual(len(runtime["replies"]), 1)
+        self.assertEqual(
+            runtime["replies"][0]["versions_after_reply"],
+            sorted(
+                set(runtime["versions_before_initial"])
+                | set(runtime["generations_created_in_reply_window"])
+            ),
+        )
+        # The smoke gate runs as a subprocess without the launcher's guest
+        # patch, so it stops at the driver's own precise guest boundary: the
+        # gate refuses the physical host before writing result.json, and the
+        # phase records that exact diagnostic as the unobserved boundary.
+        smoke_exit = self._jra_run(job, "startup-smokes")
+        smoke_path = results / "startup-smokes.json"
+        self.assertEqual(
+            smoke_exit,
+            2,
+            smoke_path.read_text() if smoke_path.is_file() else SEQUENCE_LOG[-1],
+        )
+        smokes = json.loads(smoke_path.read_text())
+        self.assertEqual(smokes["outcome"], "unobserved")
+        self.assertIn("physical-host execution is rejected", smokes["tail"])
+        self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
+        stale = json.loads((results / "stale-skill.json").read_text())
+        self.assertEqual(stale["observation"]["outcome"], "duplication")
+        self.assertTrue(stale["observation"]["planted_rows"])
+        self.assertTrue(stale["restoration"]["verified"])
+        self.assertFalse((self.home / ".codex/skills/task-handler").exists())
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
+        staged = json.loads((results / "stage-evidence.json").read_text())
+        self.assertIs(staged["ok"], False)
+        joined = "\n".join(staged["problems"])
+        self.assertIn("result.json", joined)
+        self.assertEqual(self._jra_run(job, "consumer-cleanup"), 1, SEQUENCE_LOG[-1])
+        document = self.result_of(job, "release-acceptance")
+        self.assertEqual(document["outcome"], "fail")
+        self.assertEqual(document["consumer_cleanup"], "unverified")
+        self.assertIn("startup-smokes.json", document["problem"])
+        self.assertEqual(self._jra_run(job, "complete-template"), 0, SEQUENCE_LOG[-1])
+        template = json.loads((results / "manual-complete-template.json").read_text())
+        statuses = {row["id"]: row["status"] for row in template["scenarios"]}
+        for passed in (
+            "released-baseline",
+            "runtime-approval",
+            "skill-identity",
+            "stale-skill-failure",
+            "stale-skill-restoration",
+        ):
+            self.assertEqual(statuses[passed], "pass", statuses)
+        for unobserved in (
+            "candidate-upgrade",
+            "task-startup",
+            "epic-startup",
+            "evidence-staging",
+            "consumer-cleanup",
+        ):
+            self.assertEqual(statuses[unobserved], "unobserved", statuses)
+
+    def _seed_upgrade_observation(self, run_root: Path) -> None:
+        # run_gate retains verify_managed_update's setup capture bindings.
+        setup = {}
+        for fixture in ("task", "epic", "preservation"):
+            window = max(
+                (run_root / "operations" / f"{fixture}-setup").glob(
+                    "*.setup-after.json"
+                )
+            )
+            setup[fixture] = {"setup": json.loads(window.read_text())["setup"]}
+        (run_root / "upgrade-observation.json").write_text(
+            json.dumps({"setup": setup}) + "\n"
+        )
+
+    def _seed_startup_case(self, run_root: Path, case: str) -> None:
+        """Real-shape smoke artifacts following the driver's writers.
+
+        The case directory holds startup-evidence.json plus the child
+        assignment and report files it references; the native observation
+        and checks use the driver's own names; the operation window holds
+        the invocation receipts.
+        """
+        name = case.removesuffix("-startup")
+        case_dir = run_root / case
+        case_dir.mkdir(parents=True, exist_ok=True)
+        greet = run_root / name / "greet.py"
+        greet_sha = hashlib.sha256(greet.read_bytes()).hexdigest()
+        criteria = {
+            "uppercase-default": "--uppercase prints HELLO, WORLD! plus a newline.",
+            "uppercase-name": "--uppercase Ada prints HELLO, ADA! plus a newline.",
+            "existing-behavior": "Default and named greetings keep their bytes.",
+        }
+        paths = {}
+        for role in ("executor", "evaluator"):
+            path = case_dir / f"{role}-assignment.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "schema": "aquarium.assignment/v3",
+                        "role": role,
+                        "work": {"repository": str(run_root / name)},
+                        "success_criteria": criteria,
+                    },
+                    indent=2,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            paths[f"{role}_assignment"] = path
+        handoff = case_dir / "executor-result.json"
+        handoff.write_text(
+            json.dumps(
+                {
+                    "schema": "aquarium.executor-handoff/v3",
+                    "changed_artifacts": [{"path": "greet.py", "sha256": greet_sha}],
+                    "results": [{"check": "greeting oracle", "exit": 0}],
+                    "target": {"greet_sha256": greet_sha},
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        assessment = case_dir / "evaluator-assessment.json"
+        assessment.write_text(
+            json.dumps(
+                {
+                    "schema": "aquarium.evaluator-assessment/v3",
+                    "criteria": [
+                        {
+                            "id": key,
+                            "source": "greeting fixture oracle",
+                            "evidence": f"oracle row for {key}",
+                            "state": "met",
+                        }
+                        for key in criteria
+                    ],
+                    "checkpoint_result": "pass",
+                    "target": {"greet_sha256": greet_sha},
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        (case_dir / "startup-evidence.json").write_text(
+            json.dumps(
+                {
+                    "executor_agent": f"thread-{name}-executor",
+                    "evaluator_agent": f"thread-{name}-evaluator",
+                    "executor_assignment": str(paths["executor_assignment"]),
+                    "evaluator_assignment": str(paths["evaluator_assignment"]),
+                    "executor_result": str(handoff),
+                    "evaluator_assessment": str(assessment),
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        (run_root / f"{name}-native-observation.json").write_text(
+            json.dumps(
+                {
+                    "schema": "aquarium.vm-native-observation/v1",
+                    "root": {
+                        "metadata": {"id": f"thread-{name}-root", "cwd": str(run_root)},
+                        "items": [],
+                        "turns": [{"id": "turn-0", "status": "completed"}],
+                    },
+                    "descendants": [],
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        (run_root / f"{name}-checks.json").write_text(
+            json.dumps(
+                {
+                    "exit": 0,
+                    "stdout": "ok\n",
+                    "stderr": "",
+                    "oracle": [{"arguments": [], "exit": 0}],
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        window = run_root / "operations" / case
+        window.mkdir(parents=True, exist_ok=True)
+        (window / "000.input").write_text(f"invoke the {name} smoke\n")
+        (window / "000.jsonl").write_text(
+            json.dumps({"type": "thread.started", "thread_id": f"thread-{name}"})
+            + "\n",
+            encoding="utf-8",
+        )
+        (window / "000.stderr").write_text("", encoding="utf-8")
+        (window / "000.last").write_text(f"{name} smoke complete\n", encoding="utf-8")
+        (window / "000.invocation.json").write_text(
+            json.dumps(
+                {
+                    "argv": ["codex", "exec", "--json"],
+                    "exit": 0,
+                    "input_sha256": "sha256:" + "a" * 64,
+                    "thread_id": f"thread-{name}",
+                    "handle_source": "cli-event",
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    def test_jra_completion_after_seeded_smokes(self):
+        job = self.job_root("jra-completion")
+        results = self._run_jra_through_managed_updates(job)
+        run_root = job / "acceptance-run"
+        cases = [
+            {"id": "VM-UPGRADE-01", "outcome": "pass"},
+            {"id": "VM-TASK-START-01", "outcome": "pass"},
+            {"id": "VM-EPIC-START-01", "outcome": "pass"},
+        ]
+        (results / "startup-smokes.json").write_text(
+            json.dumps(
+                {
+                    "exit": 0,
+                    "outcome": "pass",
+                    "interpreter": "/usr/bin/python3",
+                    "cases": cases,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        (run_root / "result.json").write_text(
+            json.dumps(
+                {
+                    "schema": "aquarium.vm-acceptance-result/v1",
+                    "outcome": "pass",
+                    "cases": cases,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        self._seed_upgrade_observation(run_root)
+        for case in ("task-startup", "epic-startup"):
+            self._seed_startup_case(run_root, case)
+        self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
+        staged = json.loads((results / "stage-evidence.json").read_text())
+        self.assertIs(staged["ok"], True)
+        self.assertEqual(len(staged["archives"]), 9)
+        for row in staged["archives"]:
+            self.assertTrue((results / f"evidence/{row['case']}.tar").is_file(), row)
+            manifest = json.loads(
+                (results / f"evidence/{row['case']}.manifest.json").read_text()
+            )
+            for record in manifest["members"]:
+                self.assertTrue(record["sha256"])
+                self.assertGreaterEqual(record["size"], 0)
+        versions = self.home / ".aquarium/status-runtime/versions"
+        dev_generations = [
+            entry.name
+            for entry in versions.iterdir()
+            if entry.is_dir()
+            and (entry / "runtime.json").is_file()
+            and json.loads((entry / "runtime.json").read_text()).get("plugin_version")
+            == f"v0.1.21-dev.{self.git_sha[:12]}"
+        ]
+        self.assertEqual(self._jra_run(job, "consumer-cleanup"), 0, SEQUENCE_LOG[-1])
+        # Every per-capture inventory file survives the phase processes,
+        # and the aggregate carries all six captures.
+        for capture in (
+            "prior-baseline",
+            "post-install",
+            "stale-pre",
+            "stale-post",
+            "cleanup-before",
+            "post-cleanup",
+        ):
+            self.assertTrue((results / f"inventory-{capture}.json").is_file(), capture)
+        aggregate = json.loads((results / "inventories.json").read_text())
+        self.assertEqual(
+            sorted(aggregate["inventories"]),
+            [
+                "cleanup-before",
+                "post-cleanup",
+                "post-install",
+                "prior-baseline",
+                "stale-post",
+                "stale-pre",
+            ],
+        )
+        document = self.result_of(job, "release-acceptance")
+        self.assertEqual(document["outcome"], "pass")
+        self.assertEqual(document["consumer_cleanup"], "verified")
+        cleanup = json.loads((results / "consumer-cleanup.json").read_text())
+        self.assertEqual(cleanup["violations"], [])
+        self.assertEqual(
+            sorted(
+                cleanup["runtime_end_state"][
+                    "runtime_update_created_generations_removed"
+                ]
+            ),
+            sorted(dev_generations),
+        )
+        for name in cleanup["runtime_end_state"][
+            "runtime_update_created_generations_removed"
+        ]:
+            self.assertFalse((versions / name).exists())
+        self.assertEqual(self._jra_run(job, "complete-template"), 0, SEQUENCE_LOG[-1])
+        template = json.loads((results / "manual-complete-template.json").read_text())
+        self.assertEqual({row["status"] for row in template["scenarios"]}, {"pass"})
+        self.assertEqual(len(template["scenarios"]), 10)
+
+    def test_shadowing_outcome_is_observed(self):
+        job = self.job_root("jra-shadow")
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-shadow-prefix")
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(
+            self._jra_run(job, "stale-skill", FAKE_CODEX_SHADOW="1"),
+            0,
+            SEQUENCE_LOG[-1],
+        )
+        stale = json.loads(
+            (job / "results/release-acceptance/stale-skill.json").read_text()
+        )
+        self.assertEqual(stale["observation"]["outcome"], "shadowing")
+        self.assertTrue(stale["observation"]["shadowed_rows"])
+        self.assertTrue(stale["restoration"]["verified"])
+        self.assertFalse((self.home / ".codex/skills/task-handler").exists())
+
+    def _jra_stale_drift(self, name: str, flag: str) -> None:
+        job = self.job_root(name)
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold(f"{name}-prefix")
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        drifted = self.home / ".codex/skills/ouroboros-orca/SKILL.md"
+        original = drifted.read_bytes()
+        mode = drifted.stat().st_mode
+        try:
+            self.assertEqual(
+                self._jra_run(job, "stale-skill", **{flag: "1"}),
+                2,
+                SEQUENCE_LOG[-1],
+            )
+        finally:
+            drifted.write_bytes(original)
+            drifted.chmod(mode & 0o7777)
+        stale = json.loads(
+            (job / "results/release-acceptance/stale-skill.json").read_text()
+        )
+        self.assertTrue(
+            any(
+                "changed outside declared end state" in problem
+                for problem in stale["restoration"]["problems"]
+            ),
+            stale["restoration"]["problems"],
+        )
+        self.assertIs(stale["restoration"]["verified"], False)
+
+    def test_content_drift_at_the_same_path_fails_restoration(self):
+        # The planted tree is removed; a native read changed an existing
+        # skill file's bytes at the same path, which a path-set comparison
+        # would miss.
+        self._jra_stale_drift("jra-drift", "FAKE_CODEX_DRIFT_SKILLS")
+
+    def test_executable_bit_drift_fails_restoration(self):
+        self._jra_stale_drift("jra-chmod", "FAKE_CODEX_CHMOD_SKILLS")
+
+    def test_stale_passing_result_cannot_satisfy_a_failing_gate(self):
+        job = self.job_root("jra-stale-result")
+        results = self._run_jra_through_managed_updates(job)
+        run_root = job / "acceptance-run"
+        cases = [
+            {"id": "VM-UPGRADE-01", "outcome": "pass"},
+            {"id": "VM-TASK-START-01", "outcome": "pass"},
+            {"id": "VM-EPIC-START-01", "outcome": "pass"},
+        ]
+        (run_root / "result.json").write_text(
+            json.dumps(
+                {
+                    "schema": "aquarium.vm-acceptance-result/v1",
+                    "outcome": "pass",
+                    "cases": cases,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        # The gate subprocess still refuses the physical host; the stale
+        # pass moves aside and cannot satisfy this invocation.
+        self.assertEqual(self._jra_run(job, "startup-smokes"), 2, SEQUENCE_LOG[-1])
+        smokes = json.loads((results / "startup-smokes.json").read_text())
+        self.assertNotEqual(smokes["outcome"], "pass")
+        self.assertNotEqual(smokes["exit"], 0)
+        self.assertTrue((run_root / "result.stale.json").is_file())
+        self.assertFalse((run_root / "result.json").exists())
+
+    def test_case_row_without_outcome_stays_unobserved(self):
+        job = self.job_root("jra-no-outcome")
+        results = self._run_jra_through_managed_updates(job)
+        run_root = job / "acceptance-run"
+        self._seed_startup_case(run_root, "task-startup")
+        self._seed_startup_case(run_root, "epic-startup")
+        (run_root / "result.json").write_text("{}\n")
+        self._seed_upgrade_observation(run_root)
+        # A row without an explicit outcome never becomes a pass.
+        (results / "startup-smokes.json").write_text(
+            json.dumps(
+                {
+                    "exit": 0,
+                    "outcome": "pass",
+                    "cases": [
+                        {"id": "VM-UPGRADE-01", "outcome": "pass"},
+                        {"id": "VM-TASK-START-01"},
+                    ],
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "complete-template"), 0, SEQUENCE_LOG[-1])
+        template = json.loads((results / "manual-complete-template.json").read_text())
+        statuses = {row["id"]: row["status"] for row in template["scenarios"]}
+        self.assertEqual(statuses["task-startup"], "unobserved")
+        self.assertEqual(statuses["epic-startup"], "unobserved")
+        self.assertEqual(statuses["candidate-upgrade"], "pass")
+
+    def test_step_g_sequence_merges_attempts_without_cycles(self):
+        # The documented step g sequence for a fixture whose setup asks for
+        # a decision: managed-updates, reply, managed-updates again. The
+        # declared record stays valid JSON, holds the settled outcome at the
+        # top level, and keeps each earlier attempt.
+        job = self.job_root("jra-attempt-history")
+        results = self._run_jra_through_managed_updates(job)
+        record_path = results / "managed-update-task.json"
+        # Replay step g for the task fixture with the decision boundary
+        # armed, starting from a fresh record so the sequence performs all
+        # three writes itself.
+        record_path.unlink()
+        # Reset the task setup windows so the sequence dispatches a fresh
+        # setup that asks for the decision.
+        shutil.rmtree(job / "acceptance-run/operations/task-setup")
+        flag = str(job / "acceptance-run/task")
+        exit_one = self._jra_run(
+            job, "managed-updates", "task", FAKE_CODEX_SETUP_DECISION=flag
+        )
+        self.assertEqual(exit_one, 2, SEQUENCE_LOG[-1])
+        reply = job / "task-reply.txt"
+        reply.write_text("Approve the proposed managed update.\n")
+        exit_reply = self._jra_run(
+            job,
+            "reply",
+            AQUARIUM_VM_CASE="task-setup",
+            AQUARIUM_VM_REPLY_FILE=str(reply),
+            FAKE_CODEX_SETUP_DECISION=flag,
+        )
+        self.assertEqual(exit_reply, 0, SEQUENCE_LOG[-1])
+        exit_settled = self._jra_run(
+            job, "managed-updates", "task", FAKE_CODEX_SETUP_DECISION=flag
+        )
+        self.assertEqual(exit_settled, 0, SEQUENCE_LOG[-1])
+        document = json.loads(record_path.read_text())
+        self.assertEqual(document["exit"], 0)
+        self.assertEqual(document["driver_outcome"], "managed-update-observed")
+        self.assertGreaterEqual(len(document["attempts"]), 2)
+        for attempt in document["attempts"]:
+            self.assertNotIn("attempts", attempt)
+        # The whole suite result still round-trips: no cycle anywhere.
+        json.loads(record_path.read_text())
+
+    def test_unreadable_selection_after_reply_fails_structurally(self):
+        job = self.job_root("jra-unreadable-selection")
+        results = job / "results/release-acceptance"
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-unreadable-selection-prefix")
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "runtime-update"), 0, SEQUENCE_LOG[-1])
+        current = self.home / ".aquarium/status-runtime/current"
+        original = current.read_bytes()
+        current.write_bytes(b"versions/\xffgeneration\n")
+        reply = job / "runtime-reply.txt"
+        reply.write_text("Approve the proposed runtime update.\n")
+        try:
+            self.assertEqual(
+                self._jra_run(
+                    job,
+                    "runtime-reply",
+                    AQUARIUM_VM_REPLY_FILE=str(reply),
+                    FAKE_CODEX_RUNTIME_NO_INSTALL="1",
+                ),
+                2,
+                SEQUENCE_LOG[-1],
+            )
+        finally:
+            current.write_bytes(original)
+        runtime = json.loads((results / "runtime-update.json").read_text())
+        self.assertIs(runtime["approval_completed"], False)
+        self.assertIn("unreadable", runtime["problem"])
+        # The initial-invocation evidence survives the structured failure.
+        self.assertTrue(runtime["initial_thread"])
+        self.assertTrue(runtime["versions_before_initial"])
+        # The attempted reply enters the append-only history with its
+        # snapshots, input binding and known effects.
+        self.assertEqual(len(runtime["replies"]), 1)
+        attempted = runtime["replies"][0]
+        self.assertIs(attempted["approval_completed"], False)
+        self.assertIn("unreadable", attempted["problem"])
+        self.assertTrue(attempted["versions_before_reply"])
+        self.assertTrue(attempted["versions_after_reply"])
+        self.assertEqual(
+            attempted["reply_sha256"],
+            __import__("hashlib").sha256(reply.read_bytes()).hexdigest(),
+        )
+        self.assertEqual(
+            attempted["generations_created_in_reply_window"],
+            runtime["generations_created_in_reply_window"],
+        )
+
+    def test_machine_prepare_normalizes_a_selected_dev_generation(self):
+        # The abort checkpoint leaves the approved-update generation
+        # selected; the successor's machine-prepare restores the prior
+        # selection first and removes it under its preimage.
+        first = self.job_root("jra-selected-generation-first")
+        self._run_jra_through_managed_updates(first)
+        successor = self.job_root("jra-selected-generation-second")
+        self.assertEqual(
+            self._jra_run(successor, "machine-prepare"), 0, SEQUENCE_LOG[-1]
+        )
+        prepare = json.loads(
+            (successor / "results/release-acceptance/machine-prepare.json").read_text()
+        )
+        # The abort preimage is a declared output and is always written.
+        declared = successor / "results/release-acceptance/abort-normalization.json"
+        self.assertTrue(declared.is_file())
+        normalization = prepare["abort_normalization"]
+        self.assertTrue(normalization["runtime_generations"])
+        self.assertTrue(normalization["runtime_generations"][0]["selected_at_preimage"])
+        self.assertTrue(normalization["runtime_generations_removed"])
+        self.assertTrue(normalization["residue_disposition_verified"])
+        self.assertEqual(normalization["dev_stamped_generations_remaining"], [])
+        for name in normalization["runtime_generations_removed"]:
+            self.assertFalse(
+                (self.home / ".aquarium/status-runtime/versions" / name).exists()
+            )
+
+    def test_gate_shim_row_without_outcome_keeps_phase_failing(self):
+        job = self.job_root("jra-missing-outcome")
+        results = self._run_jra_through_managed_updates(job)
+        # A make shim on the Job PATH exits 0 and writes a result whose
+        # task row lacks an outcome.
+        shim_dir = job / "bin-shim"
+        shim_dir.mkdir()
+        shim = shim_dir / "make"
+        shim.write_text(
+            "#!/bin/sh\n"
+            'if [ "$1" != "test-vm" ]; then exec /usr/bin/make "$@"; fi\n'
+            "python3 - <<'PY'\n"
+            "import json, os\n"
+            "request = json.load(open(os.environ['AQUARIUM_VM_REQUEST']))\n"
+            "run_root = request['run_root']\n"
+            "document = {\n"
+            "    'schema': 'aquarium.vm-acceptance-result/v1',\n"
+            "    'outcome': 'pass',\n"
+            "    'cases': [\n"
+            "        {'id': 'VM-UPGRADE-01', 'outcome': 'pass'},\n"
+            "        {'id': 'VM-TASK-START-01'},\n"
+            "        {'id': 'VM-EPIC-START-01', 'outcome': 'pass'},\n"
+            "    ],\n"
+            "}\n"
+            "open(os.path.join(run_root, 'result.json'), 'w').write(\n"
+            "    json.dumps(document, indent=2) + '\\n')\n"
+            "PY\n"
+            "exit 0\n"
+        )
+        shim.chmod(0o755)
+        environment = self.base_env()
+        environment["AQUARIUM_GUEST_PYTHON"] = str(job / "bin/guest-python")
+        environment["HAEPARI_PARENT_CONTEXT"] = json.dumps(
+            [
+                {
+                    "job_id": "sim-jra-missing-outcome",
+                    "lease_generation": 1,
+                    "nonce": "ab" * 32,
+                }
+            ]
+        )
+        environment["PATH"] = f"{shim_dir}:" + environment["PATH"]
+        result = subprocess.run(
+            [
+                "/bin/sh",
+                str(job / "harness/tests/vm/recipes/guest_entry.sh"),
+                "--suite",
+                "release-acceptance",
+                "--phase",
+                "startup-smokes",
+            ],
+            cwd=job / "harness",
+            env=environment,
+            capture_output=True,
+            text=True,
+            timeout=900,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        smokes = json.loads((results / "startup-smokes.json").read_text())
+        self.assertEqual(smokes["outcome"], "unobserved")
+        self.assertIn("VM-TASK-START-01", smokes["unobserved_cases"])
+        rows = {case["id"]: case["outcome"] for case in smokes["cases"]}
+        self.assertEqual(rows["VM-TASK-START-01"], "unobserved")
+
+    def test_runtime_update_rerun_refuses_and_preserves_history(self):
+        job = self.job_root("jra-runtime-create-once")
+        results = self._run_jra_through_managed_updates(job)
+        runtime_path = results / "runtime-update.json"
+        before = json.loads(runtime_path.read_text())
+        self.assertEqual(self._jra_run(job, "runtime-update"), 2, SEQUENCE_LOG[-1])
+        after = json.loads(runtime_path.read_text())
+        self.assertEqual(after, before)
+        self.assertTrue(after["replies"])
+
+    def test_partial_run_stages_every_case_with_recorded_gaps(self):
+        job = self.job_root("jra-partial-evidence")
+        results = self._run_jra_through_managed_updates(job)
+        # No smoke artifacts exist: the run stops after managed updates.
+        self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
+        staged = json.loads((results / "stage-evidence.json").read_text())
+        self.assertIs(staged["ok"], False)
+        self.assertEqual(len(staged["archives"]), 9)
+        for row in staged["archives"]:
+            self.assertTrue((results / f"evidence/{row['case']}.tar").is_file(), row)
+        startup = json.loads(
+            (results / "evidence/task-startup.manifest.json").read_text()
+        )
+        self.assertTrue(startup["missing_required"])
+        self.assertTrue(
+            any("operation window" in name for name in startup["missing_required"])
+        )
+        # Existing originals still travel: the setup window is archived.
+        setup = json.loads((results / "evidence/task-setup.manifest.json").read_text())
+        self.assertEqual(setup["missing_required"], [])
+        self.assertTrue(setup["members"])
+
+    def _completed_job_for_cleanup(self, name: str):
+        job = self.job_root(name)
+        results = self._run_jra_through_managed_updates(job)
+        run_root = job / "acceptance-run"
+        self._seed_startup_case(run_root, "task-startup")
+        self._seed_startup_case(run_root, "epic-startup")
+        cases = [
+            {"id": "VM-UPGRADE-01", "outcome": "pass"},
+            {"id": "VM-TASK-START-01", "outcome": "pass"},
+            {"id": "VM-EPIC-START-01", "outcome": "pass"},
+        ]
+        (results / "startup-smokes.json").write_text(
+            json.dumps({"exit": 0, "outcome": "pass", "cases": cases}, indent=2) + "\n"
+        )
+        (run_root / "result.json").write_text(
+            json.dumps(
+                {
+                    "schema": "aquarium.vm-acceptance-result/v1",
+                    "outcome": "pass",
+                    "cases": cases,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        self._seed_upgrade_observation(run_root)
+        self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
+        return job, results
+
+    def test_setup_observations_and_window_originals_survive_staging(self):
+        job, results = self._completed_job_for_cleanup("setup-transport")
+        run_root = job / "acceptance-run"
+        captures = sorted((run_root / "setup-observations").rglob("*.json"))
+        expected = {
+            (phase, fixture)
+            for phase in ("baseline", "update")
+            for fixture in ("task", "epic", "preservation")
+        }
+        self.assertTrue(
+            expected
+            <= {tuple(path.relative_to(run_root).parts[1:3]) for path in captures}
+        )
+        archived = {}
+        for archive in (results / "evidence").glob("*.tar"):
+            with tarfile.open(archive) as handle:
+                for member in handle.getmembers():
+                    if member.name.startswith("setup-observations/"):
+                        archived[member.name] = handle.extractfile(member).read()
+        for capture in captures:
+            payload = archived[capture.relative_to(run_root).as_posix()]
+            self.assertEqual(payload, capture.read_bytes())
+            self.assertEqual(hashlib.sha256(payload).hexdigest(), capture.stem)
+        capture = captures[-1]
+        original = capture.read_bytes()
+        capture.unlink()
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
+        staged = json.loads((results / "stage-evidence.json").read_text())
+        self.assertIs(staged["ok"], False)
+        self.assertEqual(len(staged["archives"]), 9)
+        self.assertEqual(self._jra_run(job, "consumer-cleanup"), 1, SEQUENCE_LOG[-1])
+        self.assertEqual(
+            self.result_of(job, "release-acceptance")["consumer_cleanup"], "unverified"
+        )
+        capture.write_bytes(b"changed original")
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
+        capture.write_bytes(original)
+        receipt = max((run_root / "operations/task-setup").glob("*.invocation.json"))
+        prefix = receipt.name.removesuffix(".invocation.json")
+        for suffix in ("jsonl", "stderr", "setup-before.json", "setup-after.json"):
+            with self.subTest(original=suffix):
+                path = receipt.with_name(f"{prefix}.{suffix}")
+                content = path.read_bytes()
+                path.unlink()
+                try:
+                    self.assertEqual(
+                        self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1]
+                    )
+                    manifest = json.loads(
+                        (results / "evidence/task-setup.manifest.json").read_text()
+                    )
+                    self.assertIn(
+                        path.relative_to(run_root).as_posix(),
+                        manifest["missing_required"],
+                    )
+                finally:
+                    path.write_bytes(content)
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "consumer-cleanup"), 0, SEQUENCE_LOG[-1])
+
+    def test_interrupted_operation_windows_keep_originals_and_block_cleanup(self):
+        job, results = self._completed_job_for_cleanup("interrupted-windows")
+        run_root = job / "acceptance-run"
+        for case in ("task-setup", "runtime-update", "task-startup"):
+            with self.subTest(case=case):
+                directory = run_root / "operations" / case
+                receipt = max(directory.glob("*.invocation.json"))
+                original = receipt.read_bytes()
+                prefix = receipt.name.removesuffix(".invocation.json")
+                companions = {
+                    path.relative_to(run_root).as_posix(): path.read_bytes()
+                    for path in directory.glob(f"{prefix}.*")
+                    if path != receipt
+                }
+                receipt.unlink()
+                try:
+                    self.assertEqual(
+                        self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1]
+                    )
+                    manifest = json.loads(
+                        (results / f"evidence/{case}.manifest.json").read_text()
+                    )
+                    self.assertIn(
+                        receipt.relative_to(run_root).as_posix(),
+                        manifest["missing_required"],
+                    )
+                    with tarfile.open(results / f"evidence/{case}.tar") as archive:
+                        for name, payload in companions.items():
+                            self.assertEqual(archive.extractfile(name).read(), payload)
+                    self.assertEqual(
+                        self._jra_run(job, "consumer-cleanup"), 1, SEQUENCE_LOG[-1]
+                    )
+                finally:
+                    receipt.write_bytes(original)
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "consumer-cleanup"), 0, SEQUENCE_LOG[-1])
+
+    def test_failed_skill_identity_blocks_cleanup(self):
+        job, results = self._completed_job_for_cleanup("jra-cleanup-gate-skill")
+        document = json.loads((results / "skill-identity.json").read_text())
+        document["comparisons"]["all_passed"] = False
+        (results / "skill-identity.json").write_text(
+            json.dumps(document, indent=2) + "\n"
+        )
+        self.assertEqual(self._jra_run(job, "consumer-cleanup"), 1, SEQUENCE_LOG[-1])
+        result = self.result_of(job, "release-acceptance")
+        self.assertEqual(result["outcome"], "fail")
+        self.assertEqual(result["consumer_cleanup"], "unverified")
+        self.assertIn("skill-identity.json", result["problem"])
+
+    def test_failed_managed_update_blocks_cleanup(self):
+        job, results = self._completed_job_for_cleanup("jra-cleanup-gate-managed")
+        document = json.loads((results / "managed-update-task.json").read_text())
+        document["exit"] = 2
+        document.pop("driver_outcome", None)
+        (results / "managed-update-task.json").write_text(
+            json.dumps(document, indent=2) + "\n"
+        )
+        self.assertEqual(self._jra_run(job, "consumer-cleanup"), 1, SEQUENCE_LOG[-1])
+        result = self.result_of(job, "release-acceptance")
+        self.assertEqual(result["outcome"], "fail")
+        self.assertEqual(result["consumer_cleanup"], "unverified")
+        self.assertIn("managed-update-task.json", result["problem"])
+
+    def _config_with_features(self, home) -> None:
+        config = home / ".codex/config.toml"
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text(
+            'notify = ["noop"]\n\n'
+            "[features]\n"
+            "shell = true\n\n"
+            '[plugins."aquarium@root-kernel"]\n'
+            "enabled = true\n",
+            encoding="utf-8",
+        )
+
+    def test_rule_content_drift_fails_restoration(self):
+        job = self.job_root("jra-settings-drift-rule")
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-settings-drift-rule-prefix")
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        rules = self.home / ".codex/rules/ouroboros.md"
+        original = rules.read_bytes()
+        # The drift happens during the native read, like the skills drift.
+        self.assertEqual(
+            self._jra_run(job, "stale-skill", FAKE_CODEX_DRIFT_RULES="1"),
+            2,
+            SEQUENCE_LOG[-1],
+        )
+        rules.write_bytes(original)
+        stale = json.loads(
+            (job / "results/release-acceptance/stale-skill.json").read_text()
+        )
+        self.assertIs(stale["restoration"]["verified"], False)
+        self.assertTrue(
+            any(
+                "rule content identities changed" in problem
+                for problem in stale["restoration"]["problems"]
+            ),
+            stale["restoration"]["problems"],
+        )
+
+    def test_plugin_enabled_flip_fails_restoration(self):
+        job = self.job_root("jra-settings-drift-config")
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-settings-drift-config-prefix")
+        self._config_with_features(self.home)
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        config = self.home / ".codex/config.toml"
+        original = config.read_bytes()
+        self.assertEqual(
+            self._jra_run(job, "stale-skill", FAKE_CODEX_FLIP_PLUGIN="1"),
+            2,
+            SEQUENCE_LOG[-1],
+        )
+        config.write_bytes(original)
+        stale = json.loads(
+            (job / "results/release-acceptance/stale-skill.json").read_text()
+        )
+        self.assertIs(stale["restoration"]["verified"], False)
+        self.assertTrue(
+            any(
+                "effective configuration 'enabled_plugins' changed" in problem
+                for problem in stale["restoration"]["problems"]
+            ),
+            stale["restoration"]["problems"],
+        )
+
+    def test_no_setup_windows_stages_every_later_case(self):
+        job = self.job_root("jra-no-setup-windows")
+        results = self._run_jra_through_managed_updates(job)
+        run_root = job / "acceptance-run"
+        # Simulate an abort before any setup window existed: remove all
+        # setup operations but keep the later originals.
+        for case in ("task-setup", "epic-setup", "preservation-setup"):
+            shutil.rmtree(run_root / "operations" / case)
+        self._seed_startup_case(run_root, "task-startup")
+        self._seed_startup_case(run_root, "epic-startup")
+        self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
+        staged = json.loads((results / "stage-evidence.json").read_text())
+        self.assertIs(staged["ok"], False)
+        by_case = {row["case"]: row for row in staged["archives"]}
+        self.assertEqual(len(staged["archives"]), 9)
+        # The later cases still stage with their originals.
+        for case in ("runtime-update", "task-startup", "epic-startup", "stale-skill"):
+            self.assertIn(case, by_case)
+            self.assertTrue((results / f"evidence/{case}.tar").is_file(), case)
+        self.assertGreater(by_case["task-startup"]["members"], 0)
+        self.assertGreater(by_case["stale-skill"]["members"], 0)
+        # The runtime-update case keeps its own existing window; the setup
+        # cases that lost theirs stage empty archives with named gaps.
+        self.assertGreater(by_case["runtime-update"]["members"], 0)
+        # Each setup case names its missing window class.
+        for case in ("task-setup", "epic-setup", "preservation-setup"):
+            manifest = json.loads(
+                (results / f"evidence/{case}.manifest.json").read_text()
+            )
+            self.assertIn(
+                f"operations/{case}/ operation window",
+                manifest["missing_required"],
+            )
+
+    def test_malformed_startup_evidence_still_archives_originals(self):
+        job = self.job_root("jra-malformed-originals")
+        results = self._run_jra_through_managed_updates(job)
+        run_root = job / "acceptance-run"
+        self._seed_startup_case(run_root, "task-startup")
+        self._seed_startup_case(run_root, "epic-startup")
+        (run_root / "task-startup/startup-evidence.json").write_text("{not json")
+        (run_root / "result.json").write_text("{}\n")
+        self._seed_upgrade_observation(run_root)
+        (results / "startup-smokes.json").write_text(
+            json.dumps({"exit": 0, "outcome": "pass", "cases": []}, indent=2) + "\n"
+        )
+        self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
+        staged = json.loads((results / "stage-evidence.json").read_text())
+        self.assertIs(staged["ok"], False)
+        joined = "\n".join(staged["problems"])
+        self.assertIn("cannot be validated", joined)
+        manifest = json.loads(
+            (results / "evidence/task-startup.manifest.json").read_text()
+        )
+        member_names = [record["path"] for record in manifest["members"]]
+        # The native observation, checks and window still travel.
+        self.assertIn("task-native-observation.json", member_names)
+        self.assertIn("task-checks.json", member_names)
+        self.assertIn("operations/task-startup/000.invocation.json", member_names)
+
+    def test_malformed_startup_evidence_fails_staging(self):
+        job = self.job_root("jra-malformed-evidence-malformed")
+        results = self._run_jra_through_managed_updates(job)
+        run_root = job / "acceptance-run"
+        self._seed_startup_case(run_root, "task-startup")
+        self._seed_startup_case(run_root, "epic-startup")
+        evidence = run_root / "task-startup/startup-evidence.json"
+        for child in (
+            "executor-assignment.json",
+            "evaluator-assignment.json",
+            "executor-result.json",
+            "evaluator-assessment.json",
+        ):
+            (run_root / "task-startup" / child).unlink()
+        (run_root / "result.json").write_text("{}\n")
+        self._seed_upgrade_observation(run_root)
+        (results / "startup-smokes.json").write_text(
+            json.dumps({"exit": 0, "outcome": "pass", "cases": []}, indent=2) + "\n"
+        )
+        self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
+        for label, raw in (
+            ("malformed", "{not json"),
+            ("array", "[]"),
+            ("null", "null"),
+        ):
+            with self.subTest(evidence=label):
+                evidence.write_text(raw)
+                self.assertEqual(
+                    self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1]
+                )
+                staged = json.loads((results / "stage-evidence.json").read_text())
+                self.assertIs(staged["ok"], False)
+                joined = "\n".join(staged["problems"])
+                self.assertIn("cannot be validated", joined)
+
+    def test_staging_fails_for_each_missing_required_record(self):
+        # Negative coverage on real-shape artifacts: a missing native
+        # observation, a missing child report and a missing operation
+        # window each fail staging with the named record.
+        job = self.job_root("jra-missing-original")
+        results = self._run_jra_through_managed_updates(job)
+        run_root = job / "acceptance-run"
+        for case in ("task-startup", "epic-startup"):
+            self._seed_startup_case(run_root, case)
+        (run_root / "result.json").write_text(
+            json.dumps(
+                {
+                    "schema": "aquarium.vm-acceptance-result/v1",
+                    "outcome": "pass",
+                    "cases": [
+                        {"id": "VM-UPGRADE-01", "outcome": "pass"},
+                        {"id": "VM-TASK-START-01", "outcome": "pass"},
+                        {"id": "VM-EPIC-START-01", "outcome": "pass"},
+                    ],
+                }
+            )
+            + "\n"
+        )
+        self._seed_upgrade_observation(run_root)
+        (results / "startup-smokes.json").write_text(
+            json.dumps({"exit": 0, "outcome": "pass", "cases": []}, indent=2) + "\n"
+        )
+        self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
+        removals = (
+            ("task-native-observation.json", run_root, "task-native-observation.json"),
+            (
+                "evaluator-assessment.json",
+                run_root / "task-startup",
+                "evaluator-assessment.json",
+            ),
+            (
+                "000.invocation.json",
+                run_root / "operations/task-startup",
+                "operations/task-startup/000.invocation.json",
+            ),
+        )
+        for relative, root, needle in removals:
+            with self.subTest(missing=relative):
+                target = root / relative
+                original = target.read_bytes()
+                target.unlink()
+                try:
+                    self.assertEqual(
+                        self._jra_run(job, "stage-evidence"),
+                        2,
+                        SEQUENCE_LOG[-1],
+                    )
+                    staged = json.loads((results / "stage-evidence.json").read_text())
+                    self.assertIs(staged["ok"], False)
+                    joined = "\n".join(staged["problems"])
+                    self.assertIn(needle, joined)
+                    manifest = json.loads(
+                        (results / "evidence/task-startup.manifest.json").read_text()
+                    )
+                    self.assertTrue(
+                        any(needle in name for name in manifest["missing_required"]),
+                        manifest["missing_required"],
+                    )
+                finally:
+                    target.write_bytes(original)
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
+
+    def test_generation_created_before_the_reply_fails_approval(self):
+        # A generation created before the reply cannot establish approval.
+        job = self.job_root("jra-reply-window")
+        results = job / "results/release-acceptance"
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-reply-window-prefix")
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "runtime-update"), 0, SEQUENCE_LOG[-1])
+        # Install the candidate runtime BEFORE the reply, as a self-updating
+        # or pre-approved installation would.
+        source = job / "artifact/plugins/aquarium/tools/aquarium-status"
+        environment = self.base_env()
+        install = subprocess.run(
+            [
+                environment["AQUARIUM_GUEST_PYTHON"],
+                "-B",
+                str(source / "install.py"),
+                "install",
+                "--source",
+                str(source),
+                "--approve-install",
+                "--approve-launcher",
+            ],
+            capture_output=True,
+            text=True,
+            env=environment,
+            timeout=300,
+            check=False,
+        )
+        self.assertEqual(install.returncode, 0, install.stderr)
+        reply = job / "runtime-reply.txt"
+        reply.write_text("Approve the proposed runtime update.\n")
+        self.assertEqual(
+            self._jra_run(job, "runtime-reply", AQUARIUM_VM_REPLY_FILE=str(reply)),
+            2,
+            SEQUENCE_LOG[-1],
+        )
+        runtime = json.loads((results / "runtime-update.json").read_text())
+        self.assertIs(runtime["approval_completed"], False)
+        self.assertEqual(runtime["generations_created_in_reply_window"], [])
+        self.assertEqual(runtime["reply_exit"], 0)
+        self.assertTrue(runtime["same_thread"])
+
+    def test_runtime_record_without_workflow_exit_fails_cleanup(self):
+        # A missing workflow exit must prevent cleanup from claiming success.
+        job = self.job_root("jra-workflow-exit")
+        results = self._run_jra_through_managed_updates(job)
+        document = json.loads((results / "runtime-update.json").read_text())
+        del document["workflow_exit"]
+        (results / "runtime-update.json").write_text(
+            json.dumps(document, indent=2) + "\n"
+        )
+        self.assertEqual(self._jra_run(job, "consumer-cleanup"), 1, SEQUENCE_LOG[-1])
+        result = self.result_of(job, "release-acceptance")
+        self.assertIn("runtime-update.json", result["problem"])
+
+    def test_ignored_scope_outcome_is_a_reported_gap(self):
+        job = self.job_root("jra-ignored")
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-ignored-prefix")
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(
+            self._jra_run(job, "stale-skill", FAKE_CODEX_IGNORE_SCOPE="1"),
+            2,
+            SEQUENCE_LOG[-1],
+        )
+        stale = json.loads(
+            (job / "results/release-acceptance/stale-skill.json").read_text()
+        )
+        self.assertEqual(stale["observation"]["outcome"], "ignored-scope")
+        self.assertIn("reported gap", stale["observation"]["decision"])
+        # The planted tree is still removed and restoration verified; the
+        # outcome itself, never a pass, keeps the scenario unobserved.
+        self.assertTrue(stale["restoration"]["verified"])
+        self.assertFalse((self.home / ".codex/skills/task-handler").exists())
+
+    def test_stage_evidence_enforces_aggregate_bound_and_removes_stale_archive(self):
+        job, results = self._completed_job_for_cleanup("jra-archive-bounds-bounds")
+        run_root = job / "acceptance-run"
+        # Initial stage-evidence in _completed_job_for_cleanup published all 9
+        # archives with archive_present=True.
+        for case in ("task-setup", "epic-startup", "stale-skill"):
+            self.assertTrue((results / f"evidence/{case}.tar").is_file())
+            manifest = json.loads(
+                (results / f"evidence/{case}.manifest.json").read_text()
+            )
+            self.assertIs(manifest["archive_present"], True)
+        # Pass 1 (aggregate bound): write 30 MiB payloads (each under the
+        # 32 MiB per-archive bound) into all 9 cases (9 * 30 MiB = 270 MiB >
+        # 256 MiB total bound) so the first 8 archives fit (240 MiB) and the
+        # 9th archive (stale-skill) exceeds the 256 MiB aggregate bound before
+        # exposure and unlinks its pre-existing .tar.
+        thirty_mib = b"x" * (30 * 1024 * 1024)
+        for target_rel in (
+            "released-task.last",
+            "upgrade-observation.json",
+            "operations/task-setup/000.stderr",
+            "operations/epic-setup/000.stderr",
+            "operations/preservation-setup/000.stderr",
+            "operations/runtime-update/000.stderr",
+            "operations/task-startup/000.stderr",
+            "operations/epic-startup/000.stderr",
+            "stale-skill-originals/extra.bin",
+        ):
+            target_file = run_root / target_rel
+            target_file.parent.mkdir(parents=True, exist_ok=True)
+            target_file.write_bytes(thirty_mib)
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
+        staged = json.loads((results / "stage-evidence.json").read_text())
+        self.assertIs(staged["ok"], False)
+        self.assertLessEqual(staged["total_size"], 256 * 1024 * 1024)
+        self.assertTrue((results / "evidence/task-setup.tar").is_file())
+        self.assertTrue((results / "evidence/epic-startup.tar").is_file())
+        self.assertFalse((results / "evidence/stale-skill.tar").exists())
+        stale_manifest = json.loads(
+            (results / "evidence/stale-skill.manifest.json").read_text()
+        )
+        self.assertIs(stale_manifest["archive_present"], False)
+        self.assertIsNone(stale_manifest["sha256"])
+        self.assertEqual(stale_manifest["members"], [])
+        self.assertTrue(
+            any("total bound" in item for item in stale_manifest["missing_required"]),
+            stale_manifest["missing_required"],
+        )
+        self.assertTrue(
+            any("total bound" in item for item in stale_manifest["gaps"]),
+            stale_manifest["gaps"],
+        )
+        # Pass 2 (per-archive bound): write 33 MiB (> 32 MiB per-archive bound)
+        # into epic-startup and rerun stage-evidence; epic-startup.tar from
+        # Pass 1 is unlinked and its manifest rewritten with archive_present=False.
+        (run_root / "operations/epic-startup/000.stderr").write_bytes(
+            b"y" * (33 * 1024 * 1024)
+        )
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
+        self.assertFalse((results / "evidence/epic-startup.tar").exists())
+        epic_manifest = json.loads(
+            (results / "evidence/epic-startup.manifest.json").read_text()
+        )
+        self.assertIs(epic_manifest["archive_present"], False)
+        self.assertIsNone(epic_manifest["sha256"])
+        self.assertEqual(epic_manifest["members"], [])
+        self.assertTrue(
+            any(
+                "exceeds the 33554432-byte bound" in item
+                for item in epic_manifest["missing_required"]
+            ),
+            epic_manifest["missing_required"],
+        )
+        self.assertTrue(
+            any(
+                "exceeds the 33554432-byte bound" in item
+                for item in epic_manifest["gaps"]
+            ),
+            epic_manifest["gaps"],
+        )
+
+    def test_stale_skill_accepts_reordered_plugin_tables_and_fails_corrupt_toml(
+        self,
+    ):
+        job = self.job_root("jra-config-normalization-config")
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-config-normalization-config-prefix")
+        config = self.home / ".codex/config.toml"
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text(
+            'notify = ["noop"]\n\n'
+            "[features]\n"
+            "shell = true\n\n"
+            '[plugins."aquarium@root-kernel"]\n'
+            "enabled = true\n\n"
+            '[plugins."formatter@openai-bundled"]\n'
+            "enabled = false\n",
+            encoding="utf-8",
+        )
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(
+            self._jra_run(
+                job, "stale-skill", FAKE_CODEX_REORDER_PLUGINS_AND_COMMENT="1"
+            ),
+            0,
+            SEQUENCE_LOG[-1],
+        )
+        stale = json.loads(
+            (job / "results/release-acceptance/stale-skill.json").read_text()
+        )
+        self.assertIs(stale["restoration"]["verified"], True, stale["restoration"])
+        # Corrupt TOML during native read fails restoration explicitly.
+        self.assertEqual(
+            self._jra_run(job, "stale-skill", FAKE_CODEX_CORRUPT_CONFIG="1"),
+            2,
+            SEQUENCE_LOG[-1],
+        )
+        corrupt = json.loads(
+            (job / "results/release-acceptance/stale-skill.json").read_text()
+        )
+        self.assertIs(corrupt["restoration"]["verified"], False)
+        self.assertTrue(
+            any(
+                "config.toml failed to parse" in problem
+                for problem in corrupt["restoration"]["problems"]
+            ),
+            corrupt["restoration"]["problems"],
+        )
+
+    def test_failed_runtime_reply_records_attempt_and_blocks_cleanup(self):
+        job = self.job_root("jra-failed-reply-reply")
+        results = self._run_jra_through_managed_updates(job)
+        run_root = job / "acceptance-run"
+        for case in ("task-startup", "epic-startup"):
+            self._seed_startup_case(run_root, case)
+        cases = [
+            {"id": "VM-UPGRADE-01", "outcome": "pass"},
+            {"id": "VM-TASK-START-01", "outcome": "pass"},
+            {"id": "VM-EPIC-START-01", "outcome": "pass"},
+        ]
+        (results / "startup-smokes.json").write_text(
+            json.dumps({"exit": 0, "outcome": "pass", "cases": cases}, indent=2) + "\n"
+        )
+        (run_root / "result.json").write_text(
+            json.dumps(
+                {
+                    "schema": "aquarium.vm-acceptance-result/v1",
+                    "outcome": "pass",
+                    "cases": cases,
+                },
+                indent=2,
+            )
+            + "\n"
+        )
+        self._seed_upgrade_observation(run_root)
+        # Remove the generation created in the first passing reply so the
+        # second (failing) reply creates a fresh generation in its own window
+        # before exiting nonzero.
+        first_runtime = json.loads((results / "runtime-update.json").read_text())
+        self.assertIs(first_runtime["approval_completed"], True)
+        for gen in first_runtime["generations_created_in_reply_window"]:
+            shutil.rmtree(
+                self.home / ".aquarium/status-runtime/versions" / gen,
+                ignore_errors=True,
+            )
+        (self.home / ".aquarium/status-runtime/current").write_text(
+            f"versions/{'a' * 64}-py3.14\n"
+        )
+        reply = job / "runtime-reply-fail.txt"
+        reply.write_text("Approve the proposed runtime update again.\n")
+        self.assertEqual(
+            self._jra_run(
+                job,
+                "runtime-reply",
+                AQUARIUM_VM_REPLY_FILE=str(reply),
+                FAKE_CODEX_FAIL_RUNTIME_REPLY="1",
+            ),
+            2,
+            SEQUENCE_LOG[-1],
+        )
+        updated = json.loads((results / "runtime-update.json").read_text())
+        self.assertIs(updated["approval_completed"], False)
+        self.assertNotEqual(updated["workflow_exit"], 0)
+        self.assertEqual(len(updated["replies"]), 2)
+        failed_attempt = updated["replies"][1]
+        self.assertIs(failed_attempt["approval_completed"], False)
+        self.assertNotEqual(failed_attempt["reply_exit"], 0)
+        self.assertTrue(failed_attempt["generations_created_in_reply_window"])
+        ledger = json.loads((results / "run-ledger.json").read_text())
+        for gen in failed_attempt["generations_created_in_reply_window"]:
+            self.assertIn(gen, ledger["generations"])
+        self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "consumer-cleanup"), 1, SEQUENCE_LOG[-1])
+        result = self.result_of(job, "release-acceptance")
+        self.assertEqual(result["outcome"], "fail")
+        self.assertEqual(result["consumer_cleanup"], "unverified")
+        self.assertIn("runtime-update.json", result["problem"])
+
+    def test_runtime_update_rerun_refuses_before_reply_and_on_malformed_record(self):
+        job = self.job_root("jra-initial-record-guard")
+        results = job / "results/release-acceptance"
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-initial-record-prefix")
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "runtime-update"), 0, SEQUENCE_LOG[-1])
+        runtime_path = results / "runtime-update.json"
+        pre_reply_bytes = runtime_path.read_bytes()
+        pre_reply_doc = json.loads(pre_reply_bytes.decode("utf-8"))
+        self.assertEqual(pre_reply_doc["replies"], [])
+        # Rerun before any reply is refused and preserves exact bytes.
+        self.assertEqual(self._jra_run(job, "runtime-update"), 2, SEQUENCE_LOG[-1])
+        self.assertEqual(runtime_path.read_bytes(), pre_reply_bytes)
+        # Malformed or non-dict records are also refused without overwriting.
+        reply = job / "runtime-reply.txt"
+        reply.write_text("Approve the proposed runtime update.\n")
+        for label, payload in (("malformed", b"{not-json"), ("list", b"[]\n")):
+            with self.subTest(record=label):
+                runtime_path.write_bytes(payload)
+                self.assertEqual(
+                    self._jra_run(job, "runtime-update"), 2, SEQUENCE_LOG[-1]
+                )
+                self.assertEqual(runtime_path.read_bytes(), payload)
+                self.assertEqual(
+                    self._jra_run(
+                        job, "runtime-reply", AQUARIUM_VM_REPLY_FILE=str(reply)
+                    ),
+                    1,
+                    SEQUENCE_LOG[-1],
+                )
+                self.assertEqual(runtime_path.read_bytes(), payload)
+
+    def test_stale_result_travels_in_upgrade_archive_when_present(self):
+        job, results = self._completed_job_for_cleanup("jra-stale-result-stale-result")
+        run_root = job / "acceptance-run"
+        (run_root / "result.stale.json").write_text('{"stale": true}\n')
+        self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
+        manifest = json.loads((results / "evidence/upgrade.manifest.json").read_text())
+        member_paths = [row["path"] for row in manifest["members"]]
+        self.assertIn("result.stale.json", member_paths)
+        self.assertEqual(manifest["missing_required"], [])
+
+    def test_stale_skill_records_non_root_kernel_cache_observations_and_fails_root_kernel_drift(
+        self,
+    ):
+        job = self.job_root("jra-cache-observation-cache")
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-cache-observation-prefix")
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(
+            self._jra_run(job, "stale-skill", FAKE_CODEX_DRIFT_BUNDLED_CACHE="1"),
+            0,
+            SEQUENCE_LOG[-1],
+        )
+        stale = json.loads(
+            (job / "results/release-acceptance/stale-skill.json").read_text()
+        )
+        self.assertIs(stale["restoration"]["verified"], True)
+        self.assertEqual(stale["restoration"]["problems"], [])
+        self.assertTrue(
+            any(
+                ".codex/plugins/cache/openai-bundled/plugin.txt" in item
+                for item in stale["restoration"]["codex_owned_cache_observations"]
+            ),
+            stale["restoration"]["codex_owned_cache_observations"],
+        )
+        # Drift under .codex/plugins/cache/root-kernel/ still fails restoration.
+        self.assertEqual(
+            self._jra_run(job, "stale-skill", FAKE_CODEX_DRIFT_ROOT_KERNEL_CACHE="1"),
+            2,
+            SEQUENCE_LOG[-1],
+        )
+        rk_stale = json.loads(
+            (job / "results/release-acceptance/stale-skill.json").read_text()
+        )
+        self.assertIs(rk_stale["restoration"]["verified"], False)
+        self.assertTrue(
+            any(
+                "codex-plugin-cache" in problem
+                for problem in rk_stale["restoration"]["problems"]
+            ),
+            rk_stale["restoration"]["problems"],
+        )
 
 
 class FailClosedPathRootsTest(unittest.TestCase):

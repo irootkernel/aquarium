@@ -88,6 +88,9 @@ class HostBundleTest(unittest.TestCase):
         (cls.harness / "tracked.md").write_text("tracked harness input\n")
         (cls.harness / "scenarios/probe.md").write_text("scenario\n")
         (cls.harness / "scenarios/manual-hold.md").write_text("hold scenario\n")
+        (cls.harness / "scenarios/release-acceptance.md").write_text(
+            "release-acceptance runbook\n"
+        )
         subprocess.run(["git", "-C", str(cls.repository), "add", "."], check=True)
         subprocess.run(
             ["git", "-C", str(cls.repository), "commit", "-qm", "fixture"],
@@ -117,6 +120,7 @@ class HostBundleTest(unittest.TestCase):
             (".agents/plugins/marketplace.json", '{"name": "synthetic-market"}\n'),
             ("plugins/aquarium/.codex-plugin/plugin.json", "{}\n"),
             ("plugins/aquarium/tools/aquarium-status/install.py", "# candidate\n"),
+            ("plugins/aquarium/skills/dev-setup/SKILL.md", "# dev-setup\n"),
         ):
             target = cls.artifact / relative
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -202,9 +206,20 @@ class HostBundleTest(unittest.TestCase):
         run_dir, record = self.build()
         candidate = json.loads((run_dir / "bundle/profile/candidate.json").read_text())
         sha12 = self.git_sha[:12]
+        stable = json.loads(
+            (PROFILES_ROOT / self.module.STABLE_PROFILE_NAME).read_text()
+        )
         self.assertEqual(
             candidate["profile_id"],
-            f"proposed-candidate-haepari-0.1.0-aquarium-0.1.21-dev-{sha12}",
+            (
+                "proposed-candidate-haepari-0.1.0-aquarium-0.1.21-"
+                f"codex-0.164.0-podway-0.2.14-dev-{sha12}"
+            ),
+        )
+        self.assertTrue(
+            candidate["profile_id"].startswith(
+                candidate["profile_id"].split("-dev-")[0]
+            ),
         )
         plugin = next(
             component
@@ -220,8 +235,108 @@ class HostBundleTest(unittest.TestCase):
             plugin["sealed_artifact"]["tree_sha256"],
             record["installation_binding"]["artifact_tree_sha256"],
         )
+        # The candidate's own skill-tree pin comes from the sealed artifact's
+        # skills tree, never the stable profile's pin.
+        self.assertEqual(
+            plugin["skill_tree"]["sha256"],
+            self.module.skill_tree_digest_from_directory(
+                run_dir / "bundle/artifact/plugins/aquarium/skills"
+            ),
+        )
+        self.assertNotEqual(
+            plugin["skill_tree"]["sha256"],
+            next(
+                component
+                for component in stable["components"]
+                if component["name"] == "aquarium-plugin"
+            )["skill_tree"]["sha256"],
+        )
+        # Unchanged dependency pins stay verbatim; the plugin component
+        # changes only its version, provenance (dropped), sealed artifact
+        # (added) and skill pin.
+        stable_by_name = {
+            component["name"]: component for component in stable["components"]
+        }
+        for component in candidate["components"]:
+            if component["name"] == "aquarium-plugin":
+                self.assertEqual(
+                    set(component),
+                    (set(stable_by_name["aquarium-plugin"]) - {"provenance"})
+                    | {"sealed_artifact"},
+                )
+                continue
+            self.assertEqual(component, stable_by_name[component["name"]])
         validator = load_validator()
         self.assertEqual(validator.validate_profile(candidate), [])
+
+    def test_abort_preimage_is_a_declared_output(self):
+        run_dir, _record = self.build(suite="release-acceptance", mode="manual")
+        spec = json.loads((run_dir / "spec-0.json").read_text())
+        self.assertIn(
+            "results/release-acceptance/abort-normalization.json",
+            spec["workload"]["required_outputs"],
+        )
+
+    def test_sealing_is_deterministic_across_builds(self):
+        # Two seals of the same committed inputs produce byte-identical
+        # profile files, so a committed copy equals every fresh seal.
+        first_dir, _first = self.build()
+        second_dir, _second = self.build()
+        for name in ("profile/stable.json", "profile/candidate.json"):
+            self.assertEqual(
+                (first_dir / "bundle" / name).read_bytes(),
+                (second_dir / "bundle" / name).read_bytes(),
+                name,
+            )
+
+    def test_release_acceptance_spec_declares_the_fixed_contract(self):
+        run_dir, _record = self.build(suite="release-acceptance", mode="manual")
+        spec = json.loads((run_dir / "spec-0.json").read_text())
+        self.assertEqual(spec["mode"], "manual")
+        self.assertEqual(spec["workload"]["argv"][-1], "machine-prepare")
+        self.assertEqual(spec["deadlines"]["run_seconds"], 0)
+        self.assertEqual(spec["deadlines"]["manual_seconds"], 21600)
+        self.assertEqual(spec["deadlines"]["prepare_seconds"], 1800)
+        self.assertEqual(
+            spec["manual"]["required_scenarios"],
+            [
+                "released-baseline",
+                "candidate-upgrade",
+                "runtime-approval",
+                "skill-identity",
+                "task-startup",
+                "epic-startup",
+                "stale-skill-failure",
+                "stale-skill-restoration",
+                "evidence-staging",
+                "consumer-cleanup",
+            ],
+        )
+        self.assertEqual(
+            spec["manual"]["scenario_document"].split("/")[-1],
+            "release-acceptance.md",
+        )
+        outputs = spec["workload"]["required_outputs"]
+        for output in outputs:
+            self.assertTrue(output.startswith("results/release-acceptance/"), output)
+        for case in (
+            "baseline",
+            "upgrade",
+            "task-setup",
+            "epic-setup",
+            "preservation-setup",
+            "runtime-update",
+            "task-startup",
+            "epic-startup",
+            "stale-skill",
+        ):
+            self.assertIn(f"results/release-acceptance/evidence/{case}.tar", outputs)
+            self.assertIn(
+                f"results/release-acceptance/evidence/{case}.manifest.json", outputs
+            )
+        self.assertTrue(
+            spec["environment"]["profile_id"].startswith("proposed-candidate-")
+        )
 
     def test_inventory_digest_is_deterministic(self):
         _first_dir, first = self.build()
@@ -252,12 +367,14 @@ class HostBundleTest(unittest.TestCase):
         # ignore rule — must be refused: sealing may never follow a
         # symlinked ancestor.
         original_ignore = (self.harness / ".gitignore").read_bytes()
-        original_probe = (self.harness / "scenarios/probe.md").read_bytes()
-        original_hold = (self.harness / "scenarios/manual-hold.md").read_bytes()
+        originals = {
+            path.name: path.read_bytes()
+            for path in sorted((self.harness / "scenarios").iterdir())
+        }
         external = self.work / "external-scenarios"
         external.mkdir()
-        (external / "probe.md").write_bytes(original_probe)
-        (external / "manual-hold.md").write_bytes(original_hold)
+        for name, payload in originals.items():
+            (external / name).write_bytes(payload)
         shutil.rmtree(self.harness / "scenarios")
         (self.harness / "scenarios").symlink_to(external)
         (self.harness / ".gitignore").write_text(
@@ -271,8 +388,8 @@ class HostBundleTest(unittest.TestCase):
             (self.harness / "scenarios").unlink()
             scenarios = self.harness / "scenarios"
             scenarios.mkdir()
-            (scenarios / "probe.md").write_bytes(original_probe)
-            (scenarios / "manual-hold.md").write_bytes(original_hold)
+            for name, payload in originals.items():
+                (scenarios / name).write_bytes(payload)
             (self.harness / ".gitignore").write_bytes(original_ignore)
 
     def test_c30_git_visibility_governs_harness_sealing(self):

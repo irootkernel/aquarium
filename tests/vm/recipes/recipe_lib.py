@@ -9,6 +9,7 @@ bounded by this run's ownership ledger.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 import platform
@@ -17,6 +18,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tarfile
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -35,6 +37,8 @@ LEDGER_SCHEMA = "aquarium.vm-run-ledger/v1"
 RUNTIME_ERROR_SCHEMA = "aquarium-status-runtime-error/v1"
 OWNERSHIP_MARKER = "AQUARIUM-VM-OWNED"
 OUTCOME_EXITS = {"pass": 0, "fail": 1, "incomplete": 2}
+EVIDENCE_ARCHIVE_SCHEMA = "aquarium.vm-evidence-archive/v1"
+SKILL_TREE_DIGEST_ALGORITHM = "aquarium-skill-tree-sha256/v1"
 
 
 class RecipeError(RuntimeError):
@@ -473,7 +477,9 @@ def assert_runtime_identity(
     if python_sha256 and receipt.get("python_executable_sha256") != (
         python_sha256.removeprefix("sha256:")
     ):
-        violations.append("runtime interpreter identity differs from the F10 binding")
+        violations.append(
+            "runtime interpreter identity differs from the pinned guest interpreter"
+        )
     return violations
 
 
@@ -992,6 +998,109 @@ def write_document(path: Path, document: dict[str, Any]) -> Path:
     return path
 
 
+_PROFILE_VALIDATOR: dict[str, Any] = {}
+
+
+def load_profile_validator(checkout: Path) -> Any:
+    """Load the candidate checkout's profile validator by exact file path.
+
+    The validator is stdlib-only and carries the one implementation of
+    `aquarium-skill-tree-sha256/v1`; loading it from the sealed candidate
+    history keeps a single digest implementation across host and guest.
+    """
+    path = checkout / "tests/vm/profiles/validate_profiles.py"
+    if not path.is_file():
+        raise RecipeError(
+            "the candidate checkout lacks the profile validator", "incomplete"
+        )
+    module = _PROFILE_VALIDATOR.get(str(path))
+    if module is None:
+        spec = importlib.util.spec_from_file_location(
+            "aquarium_vm_profile_validator", path
+        )
+        if spec is None or spec.loader is None:
+            raise RecipeError("the profile validator cannot be loaded", "incomplete")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        _PROFILE_VALIDATOR[str(path)] = module
+    return module
+
+
+def skill_tree_digest(checkout: Path, tree: Path) -> str:
+    """`aquarium-skill-tree-sha256/v1` over one installed skill tree."""
+    validator = load_profile_validator(checkout)
+    try:
+        return validator.tree_digest_from_directory(tree)
+    except ValueError as error:
+        raise RecipeError(f"skill tree is unsafe: {error}", "incomplete") from error
+
+
+def stage_evidence_archive(
+    archive: Path, source_root: Path, members: list[str], required: list[str]
+) -> dict[str, Any]:
+    """Write one fixed-name evidence archive and its content manifest.
+
+    A `.partial` archive returns its manifest to the caller for publication
+    after the final archive name is installed. Every member is a file under
+    `source_root`; `required` names records the
+    case cannot pass staging without. Members that exist are always
+    archived, so a partial run still transports its originals; each missing
+    required record is reported in the manifest, and the caller keeps
+    `ok: false` while any gap remains. The tar is deterministic (sorted
+    members, zeroed ownership and timestamps) so the manifest digests can be
+    reproduced from any copy of the originals.
+    """
+    present = sorted(
+        relative
+        for relative in set(members)
+        if (source_root / relative).is_file()
+        and not (source_root / relative).is_symlink()
+    )
+    missing = sorted(set(required) - set(present))
+    records: list[dict[str, Any]] = []
+    for relative in present:
+        source = source_root / relative
+        records.append(
+            {
+                "path": relative,
+                "size": source.stat().st_size,
+                "sha256": sha256_file(source),
+            }
+        )
+    # An empty case is still staged: its archive is empty and its manifest
+    # lists its missing required classes, so the loop never stops early and
+    # a case with only gaps still travels as a declared output.
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(archive, "w") as handle:
+        for record in records:
+            source = source_root / record["path"]
+            info = tarfile.TarInfo(record["path"])
+            info.size = record["size"]
+            info.mtime = 0
+            info.uid = 0
+            info.gid = 0
+            info.uname = ""
+            info.gname = ""
+            info.mode = 0o755 if source.stat().st_mode & 0o111 else 0o644
+            with source.open("rb") as stream:
+                handle.addfile(info, stream)
+    document = {
+        "schema": EVIDENCE_ARCHIVE_SCHEMA,
+        "archive": archive.name.removesuffix(".partial"),
+        "archive_present": True,
+        "sha256": sha256_file(archive),
+        "algorithm": "sha256",
+        "members": records,
+        "required": sorted(set(required)),
+        "missing_required": missing,
+    }
+    manifest_name = document["archive"].replace(".tar", ".manifest.json")
+    if not archive.name.endswith(".partial"):
+        write_document(archive.with_name(manifest_name), document)
+    return document
+
+
 def results_directory(suite: str) -> Path:
     return job_root() / "results" / suite
 
@@ -1023,13 +1132,19 @@ def finish(
         "candidate": (inputs or load_inputs())["candidate"],
         **documents,
     }
-    write_document(
-        results_directory(suite) / "inventories.json",
-        {
+    aggregate_path = results_directory(suite) / "inventories.json"
+    aggregate = read_json_safe(aggregate_path)
+    if not isinstance(aggregate, dict) or not isinstance(
+        aggregate.get("inventories"), dict
+    ):
+        aggregate = {
             "schema": "aquarium.vm-suite-inventories/v1",
-            "inventories": RECORDED_INVENTORIES.get(suite, {}),
-        },
-    )
+            "inventories": {},
+        }
+    # Phase-mode snapshots merge over any capture-mode aggregate an earlier
+    # phase process wrote, so cross-process captures survive this finish.
+    aggregate["inventories"].update(RECORDED_INVENTORIES.get(suite, {}))
+    write_document(aggregate_path, aggregate)
     write_document(results_directory(suite) / "result.json", result)
     print(json.dumps(result, ensure_ascii=False))
     return OUTCOME_EXITS[outcome]

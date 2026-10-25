@@ -729,10 +729,11 @@ class HostWrapperTest(unittest.TestCase):
         )
         result = self.invoke_wrapper(run_dir, state, AQUARIUM_VM_SUITE="all")
         self.assertEqual(result.returncode, 1)
-        self.assertEqual(result.stdout.count('"kind": "skipped"'), 7)
+        # Nine declared suites: the first FAIL skips the remaining eight.
+        self.assertEqual(result.stdout.count('"kind": "skipped"'), 8)
         record = json.loads((run_dir / "run.json").read_text())
-        self.assertEqual(len(record["declared_suites"]), 8)
-        self.assertNotIn("release-acceptance", record["declared_suites"])
+        self.assertEqual(len(record["declared_suites"]), 9)
+        self.assertIn("release-acceptance", record["declared_suites"])
         self.assertNotIn("regression", record["declared_suites"])
 
     def test_changed_survivor_probe_conflicts_and_stays_pending(self):

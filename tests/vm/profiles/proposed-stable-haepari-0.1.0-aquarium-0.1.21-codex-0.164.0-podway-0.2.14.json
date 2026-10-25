@@ -1,0 +1,134 @@
+{
+  "schema": "aquarium.vm-profile/v1",
+  "profile_id": "proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14",
+  "profile_revision": 1,
+  "owner": "aquarium",
+  "platform": "darwin/arm64",
+  "components": [
+    {
+      "name": "haepari",
+      "role": "host",
+      "installation_scope": "user-global",
+      "version": "0.1.0",
+      "archive_sha256": "6667cab322f326eb390b8cab89fd292e22d7436312434e7facd66213fe1a8a18",
+      "executable_sha256": "sha256:e1a4c0a047f9d6b6e7048fdcfea961b7bafb3a3c627786619cff3796433d6b20",
+      "skill_tree": {
+        "name": "use-haepari",
+        "installation_scope": "shared-agents-skills",
+        "sha256": "21ec3671639b8699fbd6e1f0ed2697c435793ee0fcf56e73a65fbea51cbe3ebf",
+        "digest_algorithm": "aquarium-skill-tree-sha256/v1"
+      },
+      "provenance": {
+        "release_tag": "v0.1.0",
+        "tag_commit": "800da97b7e2ca84a15d4ee5921702ec57bbc7d61",
+        "build_revision": "fc3b975f8a99cacb96aecc988d3adbc04dda7309",
+        "archive_sha256": "6667cab322f326eb390b8cab89fd292e22d7436312434e7facd66213fe1a8a18"
+      },
+      "controller_service": {
+        "binary_sha256": "sha256:e1a4c0a047f9d6b6e7048fdcfea961b7bafb3a3c627786619cff3796433d6b20",
+        "plan": {
+          "schema": "haepari.release-service-plan/v1",
+          "instance": "release",
+          "global_limit": 2,
+          "host_macos_guest_limit": 1
+        }
+      },
+      "capabilities": {
+        "capabilities": [
+          "managed-execution/v1",
+          "durable-observation/v1",
+          "advisory-lock/v1",
+          "managed-recovery/v1",
+          "artifact-delivery/v1",
+          "evidence-retention/v1"
+        ],
+        "compiled_backends": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "aquarium-plugin",
+      "role": "guest",
+      "installation_scope": "codex-plugin-cache",
+      "version": "0.1.21",
+      "skill_tree": {
+        "name": "aquarium",
+        "installation_scope": "codex-plugin-cache",
+        "sha256": "9e0256b7284a1ed6d92a1c96911890fc6d44d6f6b0a2388145713da14996dcb1",
+        "digest_algorithm": "aquarium-skill-tree-sha256/v1"
+      },
+      "provenance": {
+        "release_tag": "v0.1.21",
+        "tag_commit": "822061685552d8846f28ef31ec607027118b472c"
+      }
+    },
+    {
+      "name": "use-podway",
+      "role": "guest",
+      "installation_scope": "shared-agents-skills",
+      "pin": {
+        "commit": "fa29dba929777b020377bc9803cb0a3954d219b1"
+      },
+      "skill_tree": {
+        "name": "use-podway",
+        "installation_scope": "shared-agents-skills",
+        "sha256": "25e79d40154f9129ec8313c2b06e1c34890f8bdc3954efad547f832486c5f35e",
+        "digest_algorithm": "aquarium-skill-tree-sha256/v1"
+      }
+    },
+    {
+      "name": "codex",
+      "role": "guest",
+      "installation_scope": "guest-path",
+      "version": "0.164.0"
+    },
+    {
+      "name": "podway",
+      "role": "guest",
+      "installation_scope": "guest-path",
+      "version": "v0.2.14",
+      "executable_sha256": "sha256:f48adfed9aa04c3fc8c0936c9da172136d8dd8d750eb79c62d876c31bc7677bb"
+    },
+    {
+      "name": "guest-python",
+      "role": "guest",
+      "installation_scope": "guest-path",
+      "version": "3.14.8"
+    }
+  ],
+  "absent_components": [
+    {
+      "name": "haepari-mcp",
+      "reason": "Haepari has no MCP registration surface"
+    },
+    {
+      "name": "codex-rules",
+      "reason": "The combination installs no per-home Codex rules; existing guest rules are starting state captured by the guest inventories"
+    }
+  ],
+  "effective_configuration": {
+    "controller_selection": "explicit_haepari_home",
+    "service_limits": {
+      "global_limit": 2,
+      "host_macos_guest_limit": 1
+    }
+  },
+  "resource": {
+    "kind": "utm-macos",
+    "capacity": 1
+  },
+  "starting_states": [
+    {
+      "kind": "product_absent"
+    },
+    {
+      "kind": "prior_version",
+      "aquarium": "0.1.20"
+    }
+  ],
+  "cleanup_expectations": {
+    "post_cleanup_inventory": "required"
+  },
+  "evidence_class": "development"
+}

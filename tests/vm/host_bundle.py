@@ -26,7 +26,9 @@ sys.dont_write_bytecode = True
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 PROFILES_ROOT = REPOSITORY / "tests/vm/profiles"
-STABLE_PROFILE_NAME = "proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0.json"
+STABLE_PROFILE_NAME = (
+    "proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14.json"
+)
 HARNESS_ROOT = REPOSITORY / "tests/vm/recipes"
 SUITES_PATH = REPOSITORY / "tests/vm/host_suites.json"
 INPUTS_SCHEMA = "aquarium.vm-host-inputs/v1"
@@ -206,8 +208,24 @@ def _load_tree_digest() -> Any:
     return module
 
 
+def _load_profile_validator() -> Any:
+    """The single implementation of `aquarium-skill-tree-sha256/v1`."""
+    spec = importlib.util.spec_from_file_location(
+        "aquarium_vm_profile_validator_bundle",
+        REPOSITORY / "tests/vm/profiles/validate_profiles.py",
+    )
+    if spec is None or spec.loader is None:
+        raise BundleError("the profile validator is unavailable")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 _TREE_DIGEST = _load_tree_digest()
 tree_sha256 = _TREE_DIGEST.tree_sha256
+_PROFILE_VALIDATOR = _load_profile_validator()
+skill_tree_digest_from_directory = _PROFILE_VALIDATOR.tree_digest_from_directory
 
 
 def load_guest_context(path: Path) -> dict[str, str]:
@@ -425,12 +443,27 @@ def build_candidate_artifact(
 
 
 def derive_candidate_profile(
-    stable: dict[str, Any], tree_digest: str, development_version: str
+    stable: dict[str, Any],
+    tree_digest: str,
+    development_version: str,
+    candidate_skill_tree_digest: str,
 ) -> dict[str, Any]:
+    """Derive the candidate profile from the stable bytes and sealed inputs.
+
+    Every overridden Aquarium identity comes from the sealed candidate unit:
+    the version, provenance, sealed artifact and the plugin's own skill-tree
+    pin computed from the sealed artifact's skills tree. Unchanged
+    dependency pins stay verbatim, and the candidate id derives from the
+    stable id rather than a hard-coded prefix.
+    """
+    stable_id = stable.get("profile_id")
+    stable_prefix = "proposed-stable-"
+    if not isinstance(stable_id, str) or not stable_id.startswith(stable_prefix):
+        raise BundleError("the stable profile id does not follow the stable prefix")
     sha12 = development_version.rsplit(".", 1)[-1]
     profile = json.loads(json.dumps(stable))
     profile["profile_id"] = (
-        f"proposed-candidate-haepari-0.1.0-aquarium-0.1.21-dev-{sha12}"
+        f"proposed-candidate-{stable_id[len(stable_prefix) :]}-dev-{sha12}"
     )
     stable_plugin_version = None
     for component in stable.get("components", []):
@@ -440,14 +473,25 @@ def derive_candidate_profile(
             and isinstance(component.get("version"), str)
         ):
             stable_plugin_version = component["version"]
+    plugin_seen = False
     for component in profile.get("components", []):
         if isinstance(component, dict) and component.get("name") == "aquarium-plugin":
+            plugin_seen = True
             component["version"] = development_version.removeprefix("v")
             component.pop("provenance", None)
             component["sealed_artifact"] = {
                 "tree_sha256": tree_digest,
                 "development_version": development_version,
             }
+            skill_tree = component.get("skill_tree")
+            if not isinstance(skill_tree, dict):
+                raise BundleError(
+                    "the stable plugin component carries no skill-tree pin to "
+                    "rebind to the candidate's own skills"
+                )
+            skill_tree["sha256"] = candidate_skill_tree_digest
+    if not plugin_seen:
+        raise BundleError("the stable profile has no aquarium-plugin component")
     # The candidate upgrades from the stable profile's own plugin release,
     # not from the earlier release the stable profile upgrades from.
     for state in profile.get("starting_states", []):
@@ -570,8 +614,11 @@ def build_bundle(
     )
     development_version = manifest["development_version"]
     candidate_digest = tree_sha256(bundle / "artifact", artifact_files)
+    candidate_skill_digest = skill_tree_digest_from_directory(
+        bundle / "artifact/plugins/aquarium/skills"
+    )
     candidate_profile = derive_candidate_profile(
-        stable_profile, candidate_digest, development_version
+        stable_profile, candidate_digest, development_version, candidate_skill_digest
     )
     (bundle / "profile/candidate.json").write_text(
         json.dumps(candidate_profile, indent=2, ensure_ascii=False) + "\n",

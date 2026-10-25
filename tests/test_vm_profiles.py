@@ -653,9 +653,9 @@ class DerivedSealedArtifactProfileTest(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
         spec.loader.exec_module(module)
-        stable = load_json(self.DERIVED_STABLE)
+        stable = load_json(FullCombinationProfilePairTest.STABLE)
         generated = module.derive_candidate_profile(
-            stable, "c" * 64, "v0.1.21-dev.63bbcf7e4db8"
+            stable, "c" * 64, "v0.1.21-dev.63bbcf7e4db8", "d" * 64
         )
         self.assertEqual(self.validator.validate_profile(generated), [])
         plugin = next(
@@ -665,6 +665,8 @@ class DerivedSealedArtifactProfileTest(unittest.TestCase):
         )
         self.assertEqual(plugin["sealed_artifact"]["tree_sha256"], "c" * 64)
         self.assertNotIn("provenance", plugin)
+        # The skill pin is the candidate's own tree, never the stable pin.
+        self.assertEqual(plugin["skill_tree"]["sha256"], "d" * 64)
 
     def test_derived_candidate_upgrades_from_the_stable_plugin_release(self) -> None:
         spec = importlib.util.spec_from_file_location(
@@ -674,9 +676,9 @@ class DerivedSealedArtifactProfileTest(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
         spec.loader.exec_module(module)
-        stable = load_json(self.DERIVED_STABLE)
+        stable = load_json(FullCombinationProfilePairTest.STABLE)
         generated = module.derive_candidate_profile(
-            stable, "c" * 64, "v0.1.21-dev.63bbcf7e4db8"
+            stable, "c" * 64, "v0.1.21-dev.63bbcf7e4db8", "d" * 64
         )
         stable_plugin = next(
             component
@@ -691,13 +693,27 @@ class DerivedSealedArtifactProfileTest(unittest.TestCase):
         self.assertEqual(prior["aquarium"], stable_plugin["version"])
         self.assertEqual(self.validator.validate_profile(generated), [])
 
+    def test_a_stable_without_a_skill_pin_refuses_derivation(self) -> None:
+        spec = importlib.util.spec_from_file_location(
+            "vm_host_bundle_nopin", REPOSITORY / "tests/vm/host_bundle.py"
+        )
+        assert spec is not None and spec.loader is not None
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        spec.loader.exec_module(module)
+        stable = load_json(self.DERIVED_STABLE)
+        with self.assertRaises(module.BundleError):
+            module.derive_candidate_profile(
+                stable, "c" * 64, "v0.1.21-dev.63bbcf7e4db8", "d" * 64
+            )
+
 
 class CommittedCandidateProfileTest(unittest.TestCase):
     """The committed candidate profile is the sealed copy's bytes."""
 
     COMMITTED_CANDIDATE = (
-        PROFILES_ROOT
-        / "proposed-candidate-haepari-0.1.0-aquarium-0.1.21-dev-b7c227e301a9.json"
+        PROFILES_ROOT / "proposed-candidate-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0"
+        "-podway-0.2.14-dev-db132845624c.json"
     )
 
     @classmethod
@@ -717,7 +733,7 @@ class CommittedCandidateProfileTest(unittest.TestCase):
         )
         self.assertEqual(
             plugin["sealed_artifact"]["development_version"],
-            "v0.1.21-dev.b7c227e301a9",
+            "v0.1.21-dev.db132845624c",
         )
         self.assertNotIn("provenance", plugin)
 
@@ -739,12 +755,115 @@ class CommittedCandidateProfileTest(unittest.TestCase):
             if component.get("sealed_artifact")
         )
         derived = module.derive_candidate_profile(
-            load_json(DerivedSealedArtifactProfileTest.DERIVED_STABLE),
+            load_json(FullCombinationProfilePairTest.STABLE),
             plugin["sealed_artifact"]["tree_sha256"],
             plugin["sealed_artifact"]["development_version"],
+            plugin["skill_tree"]["sha256"],
         )
         expected = json.dumps(derived, indent=2, ensure_ascii=False) + "\n"
         self.assertEqual(self.COMMITTED_CANDIDATE.read_text(), expected)
+
+
+class FullCombinationProfilePairTest(unittest.TestCase):
+    """TASK-089's full-combination stable and candidate pair."""
+
+    STABLE = (
+        PROFILES_ROOT / "proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0"
+        "-podway-0.2.14.json"
+    )
+    CANDIDATE = (
+        PROFILES_ROOT / "proposed-candidate-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0"
+        "-podway-0.2.14-dev-db132845624c.json"
+    )
+    TESTED_SHA12 = "db132845624c"
+
+    @classmethod
+    def setUpClass(cls):
+        cls.validator = load_validator()
+
+    def component(self, document, name):
+        return next(
+            component
+            for component in document["components"]
+            if component["name"] == name
+        )
+
+    def test_both_files_validate_offline(self):
+        for path in (self.STABLE, self.CANDIDATE):
+            self.assertEqual(self.validator.validate_profile(load_json(path)), [])
+
+    def test_stable_pins_the_complete_intended_combination(self):
+        stable = load_json(self.STABLE)
+        versions = {
+            component["name"]: component.get("version")
+            for component in stable["components"]
+            if component.get("version") is not None
+        }
+        self.assertEqual(
+            versions,
+            {
+                "haepari": "0.1.0",
+                "aquarium-plugin": "0.1.21",
+                "codex": "0.164.0",
+                "podway": "v0.2.14",
+                "guest-python": "3.14.8",
+            },
+        )
+        self.assertIsNotNone(self.component(stable, "use-podway").get("pin"))
+        self.assertEqual(
+            self.component(stable, "podway")["executable_sha256"],
+            "sha256:f48adfed9aa04c3fc8c0936c9da172136d8dd8d750eb79c62d876c31bc7677bb",
+        )
+        skill_tree = self.component(stable, "aquarium-plugin")["skill_tree"]
+        self.assertEqual(
+            skill_tree["digest_algorithm"], "aquarium-skill-tree-sha256/v1"
+        )
+        self.assertEqual(skill_tree["installation_scope"], "codex-plugin-cache")
+
+    def test_candidate_id_derives_from_the_stable_id_and_binds_the_tested_sha(self):
+        stable = load_json(self.STABLE)
+        candidate = load_json(self.CANDIDATE)
+        self.assertEqual(
+            candidate["profile_id"],
+            "proposed-candidate-"
+            + stable["profile_id"].removeprefix("proposed-stable-")
+            + f"-dev-{self.TESTED_SHA12}",
+        )
+        plugin = self.component(candidate, "aquarium-plugin")
+        self.assertEqual(plugin["version"], f"0.1.21-dev.{self.TESTED_SHA12}")
+        self.assertEqual(
+            plugin["sealed_artifact"]["development_version"],
+            f"v0.1.21-dev.{self.TESTED_SHA12}",
+        )
+        # The candidate skill pin is its own tree, never the stable pin.
+        self.assertNotEqual(
+            plugin["skill_tree"]["sha256"],
+            self.component(stable, "aquarium-plugin")["skill_tree"]["sha256"],
+        )
+        self.assertEqual(
+            plugin["skill_tree"]["sha256"],
+            "e3c96ffef369010dc5407deba3f3cc2774e7a7907832b12d79a698fda92ddfa1",
+        )
+        prior = [
+            state
+            for state in candidate["starting_states"]
+            if state["kind"] == "prior_version"
+        ]
+        self.assertEqual(prior, [{"kind": "prior_version", "aquarium": "0.1.21"}])
+
+    def test_cli_accepts_every_committed_profile(self):
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                str(VALIDATOR_PATH),
+                *sorted(str(path) for path in PROFILES_ROOT.glob("proposed-*.json")),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
 
 
 if __name__ == "__main__":

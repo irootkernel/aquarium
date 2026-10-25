@@ -106,6 +106,15 @@ Haepari cleans its own processes and Job paths; it does not undo arbitrary guest
 
 Retain request/spec/result records for pending or uncertain work. Stage required evidence before removing consumer fixtures; native collection follows manual completion or automatic workload termination. Cancellation or deadline expiry preserves actual native outcomes and unfinished consumer cleanup, without claiming a clean guest or extending occupancy beyond native settlement. Raw runtime IDs, local paths, Sorage metadata and provider logs remain local evidence unless reviewed bounded promotion satisfies the existing evidence-residency contract.
 
+### Verification profile
+
+- **Environment and completion layers**: run checks with the repository `.venv` and installed host tools meeting `TESTING.md` minima (including process-local `PATH` selecting Ruby 3.3+, `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1`, empty `PYTEST_ADDOPTS`, `PYTHONDONTWRITEBYTECODE=1`) across `make test-prepare`, `make test-unit`, `make test-int`, and `make test-e2e`. Keep going across every Make layer on one fixed candidate snapshot; if `make test-int` fails under `pytest`, execute its `unittest` selection separately, and if `make test-prepare` fails, complete the remaining non-mutating checks and retain every status.
+- **Delta gate**: always run `.venv/bin/ruff format --check --no-cache`, `.venv/bin/ruff check --no-cache`, `.venv/bin/python -m json.tool plugins/aquarium/.codex-plugin/plugin.json >/dev/null`, `ruby -c tests/validate.rb`, `ruby tests/validate.rb`, `.venv/bin/python -B plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py --repository .`, and `git --no-pager diff --check`, plus all unit and simulation selections covering every cumulative changed behavior and its consumers.
+- **Opt-in campaigns and exclusions**: `release-acceptance` (`TASK-089`) and the installed cutover pilot and final harness reruns (`TASK-090`) are load-sensitive opt-in campaigns; `make test` and automatic checks do not invoke VM or Podway distribution compatibility campaigns implicitly.
+- **Candidate identity and shared resources**: verify against a frozen source snapshot (immutable `HEAD`, staged and unstaged diff SHA-256, and untracked path/content SHA-256 manifest) with pre- and post-run identity checks or an isolated normal-mode copy without mutating fixture permissions. Isolate local fake homes, ports, and output directories (running `tests/unit/test_vm_guest_simulation_unit.py` in a single `pytest` process per ordering sweep), and serialize live guest execution against the single capacity-one dedicated UTM guest.
+- **High-risk paths**: guest lifecycle and restoration branches in `tests/vm/recipes/guest_main.py` (`abort_preimage`, `finish_abort_normalization`, `runtime-update`/`runtime-reply`, `stale-skill`, `consumer-cleanup`) and `tests/vm/recipes/recipe_lib.py`; evidence archive staging in `recipe_lib.py` (`stage_evidence_archive`) and `guest_main.py` (`stage-evidence`); admission and verdict mapping in `tests/vm/host_wrapper.py`; bundle and profile validation in `tests/vm/host_bundle.py` and `tests/vm/profiles/validate_profiles.py`; and setup/status identity consumers in `dev-setup*/scripts/inspect_*.py` and `aquarium-status/status_contract.py`.
+- **Known limits**: local unit and simulation suites do not verify installed skill behavior in a live guest, missing live observations remain incomplete, and `inspect_docs.py --repository .` currently reports an existing `EPIC-002` `Cancelled` status-vocabulary diagnostic tracked under `TASK-101`.
+
 ## Task acceptance checklists
 
 ### TASK-086: Accept Haepari and freeze the consumer contract
@@ -174,20 +183,26 @@ TASK-088 verification outcome (2026-10-25): the whole live sequence was re-run o
 
 Implement and document:
 
-- [ ] Add complete skill/rules/configuration installation inspection and fresh native session discovery, representative workflow behavior and explicit manual observation records.
-- [ ] Prepare the managed extension of EPIC-024's manual release step and candidate/profile-bound result transport for TASK-090's qualified policy cutover, preserving invocation authority, offline release-QA and publication authority.
-- [ ] Define full intended release-combination and existing-stable-to-candidate upgrade scenarios, plus final distribution identity checks.
-- [ ] Define controller/resource/Job identity, original observations and disposition responsibility for the existing release path. Promote that adapter contract before EPIC-019 closeout so EPIC-031 can consume it through existing assignments and handoffs; release-role implementation belongs to EPIC-031.
+- [x] Add complete skill/rules/configuration installation inspection and fresh native session discovery, representative workflow behavior and explicit manual observation records.
+- [x] Prepare the managed extension of EPIC-024's manual release step and candidate/profile-bound result transport for TASK-090's qualified policy cutover, preserving invocation authority, offline release-QA and publication authority.
+- [x] Define full intended release-combination and existing-stable-to-candidate upgrade scenarios, plus final distribution identity checks.
+- [x] Define controller/resource/Job identity, original observations and disposition responsibility for the existing release path. Promote that adapter contract before EPIC-019 closeout so EPIC-031 can consume it through existing assignments and handoffs; release-role implementation belongs to EPIC-031.
 
 Do not:
 
-- [ ] Do not substitute file hashes or pasted instructions for installed-skill behavior, auto-grade Master, contact providers by default, or broaden the existing release-qa invocation implicitly.
+- [x] Do not substitute file hashes or pasted instructions for installed-skill behavior, auto-grade Master, contact providers by default, or broaden the existing release-qa invocation implicitly.
 
 Verify and complete:
 
-- [ ] Demonstrate one uninterrupted release-acceptance Job through the managed manual path, including the carried startup smokes VM-TASK-START-01 and VM-EPIC-START-01, with evidence staging and verified consumer cleanup before manual completion.
-- [ ] Observe required actual installed-session and hands-on cases, including duplicate or stale skill failure, and verify cleanup restores the original discovery/configuration state.
-- [ ] Missing human/live evidence remains incomplete and cannot be accepted through a successful Make exit alone.
+- [x] Demonstrate one uninterrupted release-acceptance Job through the managed manual path, including the carried startup smokes VM-TASK-START-01 and VM-EPIC-START-01, with evidence staging and verified consumer cleanup before manual completion.
+- [x] Observe required actual installed-session and hands-on cases, including duplicate or stale skill failure, and verify cleanup restores the original discovery/configuration state.
+- [x] Missing human/live evidence remains incomplete and cannot be accepted through a successful Make exit alone.
+
+TASK-089 live verification outcome (2026-10-26): one uninterrupted managed manual Job passed all ten scenarios. The installed artifact came from the committed consumer baseline; the sealed harness included this Task's uncommitted recipe changes. The live sealed candidate profile equals the proposed repository profile byte for byte. Machine preparation verified the guest's ChatGPT login before the first model turn and retained the installation's default model. Released setup, installed skill identity, the normally approved runtime update and all three managed updates passed. The Task and Epic startup smokes used actual native Executor work and independent Evaluator returns, then reached their intended partial semantic boundaries with the remaining global criteria retained. The stale skill appeared as a duplicate; removal restored all five inventoried scopes and the normalized configuration. All 44 exported files and every member of the nine evidence archives passed digest verification. Consumer restoration preceded manual completion, and the final native result reported complete evidence and verified cleanup. The observer was the authorized agent fixture operator.
+
+Earlier attempts retain their original evidence and dispositions. One earlier Job reached native PASS but did not establish the required pre-model login identity. The subsequent local completion gate was interrupted when review found that gap, so neither qualifies this Task. The corrected recipe recognizes the installed CLI's login message on either output stream and refuses an unsuccessful or unverified login before model work; the entire live sequence then passed again. Earlier corrections also cover evidence collection, native permissions and runbook commands. A diagnostic runtime reply belongs to an earlier attempt; the qualifying Job used the reusable per-invocation network permission only for the approved runtime update. A supported-toolchain rerun of the starting HEAD passed, but the original pre-implementation receipt remains unavailable.
+
+These observations establish startup and same-Job continuation within the declared partial smoke scope. Full fixture Task/Epic completion and Master's overall Epic acceptance remain pending. TASK-090 still owns the exact installed policy-cutover pilot and final-harness reruns; the current release policy remains authoritative until that cutover is accepted.
 
 ### TASK-090: Qualify the Aquarium pilot and prepare Epic closeout
 

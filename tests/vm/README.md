@@ -355,31 +355,54 @@ refuse symlinks and special files. The `codex-plugin-cache` scope covers
 beside it under `.codex/plugins/` (for example `.plugin-appserver` or
 `.remote-plugin-install-staging`) belongs to the Codex component and stays
 out of scope, and the narrow runtime allowance stays
-`.codex/plugins/cache/root-kernel/`. The two proposed profiles below record
-the observed host Codex version and a truthful absence for per-home Codex
-rules; TASK-088 verifies the guest's observed Codex version against the
-profile before admission, and extending the profiles to the full release
-combination belongs to TASK-089. Recipes produce real inventories from
-TASK-088 on. Profiles are reproducible test inputs: they claim no
-provisioned VM and no passed migration.
+`.codex/plugins/cache/root-kernel/`. During `stale-skill` only, native
+`skills/list` updates under non-`root-kernel` marketplace caches
+(`.codex/plugins/cache/<mkt>/...` where `<mkt>` is not `root-kernel`) are
+recorded as `codex_owned_cache_observations` rather than restoration failures,
+while `.codex/skills`, `.agents/skills`, `user-global` (including normalized
+`config.toml`), `.codex/plugins/cache/root-kernel/`, and later
+`consumer-cleanup` and successor starting-state checks remain strict. TASK-089
+adds the `codex-home-skills` scope (`.codex/skills`) so the active per-home
+skills a native client can load are inventoried beside the other scopes. The two full-combination
+profiles below record the observed host Codex version, Podway (version and
+executable digest) and the uv-managed Python 3.14.8 interpreter, and
+existing guest per-home Codex rules are preserved starting state that
+the combination adds nothing to. Recipes produce real inventories from TASK-088 on; the
+release-acceptance transaction verifies the guest's observed versions
+against the profile-derived baseline combination inside the Job at capture.
+Profiles are reproducible test inputs: they claim no provisioned VM and no
+passed migration.
 
 | Profile | Digest | Status |
 | --- | --- | --- |
 | `proposed-stable-haepari-0.1.0-aquarium-0.1.21.json` | `930de6cbf2ae1468133f04f7519d201bb6d08927e807f18f2670f73c1bf553c4` | superseded |
 | `proposed-candidate-haepari-0.1.0-aquarium-0.1.22.json` | `9d922eb4ee160dbdd5f966387b5754c0e5a5b54798cfba1195ee333ec05a25b4` | superseded |
-| `proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0.json` | `f128ff2c42c27b30d3265c17a3985de0850c1ab8457b23a2d9464647ccd7628b` | proposed |
-| `proposed-candidate-haepari-0.1.0-aquarium-0.1.21-dev-b7c227e301a9.json` | `14618806de8ea6c0eb445a6098132f48b262e159f08747fa91fc287c2eff8edf` | proposed |
+| `proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0.json` | `f128ff2c42c27b30d3265c17a3985de0850c1ab8457b23a2d9464647ccd7628b` | superseded |
+| `proposed-candidate-haepari-0.1.0-aquarium-0.1.21-dev-b7c227e301a9.json` | `14618806de8ea6c0eb445a6098132f48b262e159f08747fa91fc287c2eff8edf` | superseded |
+| `proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14.json` | `04df16201e8cff0f89d50082d162dcab00049da42aa9c1c5960e7f9a4e3e8b31` | proposed |
+| `proposed-candidate-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14-dev-db132845624c.json` | `c207740e0ac7be677d628fc84803e55fbf173c16a7ac94953cf2c1a42a5f2fca` | proposed |
 
 The two TASK-087 profiles are superseded because the host Codex release moved
 to 0.164.0 after they were written and the candidate version axis is now bound
-by sealed artifact bytes instead of the unreleased `0.1.22` number; their
-bytes stay unchanged as immutable history. The derived stable profile pins the
-aligned Codex version. The candidate profile is generated at bundle-build time
-from the sealed candidate artifact through `host_bundle.py`, binds the
-artifact tree digest and observed `0.1.21-dev.b7c227e301a9` development
-version in the component's closed `sealed_artifact` field, and is committed
-with bytes equal to the sealed copy at Task closeout; a fresh bundle built
-from the repository seals both committed files byte for byte.
+by sealed artifact bytes instead of the unreleased `0.1.22` number; the
+TASK-088 pair is superseded because TASK-089 extended the stable profile to
+the complete intended combination. Their bytes stay unchanged as immutable
+history. The TASK-089 stable profile pins the full combination (Haepari and
+`use-haepari`, Codex 0.164.0, the Aquarium plugin 0.1.21 with its
+`aquarium-skill-tree-sha256/v1` pin computed from the v0.1.21 tag artifact,
+`use-podway` with its measured skill-tree digest, Podway `v0.2.14` with its
+observed executable digest, and the uv-managed Python 3.14.8
+interpreter), and the release-acceptance request derives its
+`baseline_combination` from the profile in the driver's reported shapes (Podway `v`-prefixed). The candidate
+profile is generated at bundle-build time from the sealed candidate artifact
+through `host_bundle.py`: the plugin's own skill-tree pin is recomputed from
+the sealed artifact's skills tree, unchanged dependency pins stay verbatim,
+the `prior_version` edge is the stable plugin release, and the profile id
+derives from the stable id. It is committed with bytes equal to the sealed
+copy at Task closeout; a fresh bundle built from the explicit tested SHA
+`db13284` seals both files byte for byte. Committing the pair commits bytes
+already fixed at sealing. Promoting fixed bytes is not permission to
+alter pins afterward.
 
 ## Host-submitted managed VM suites
 
@@ -429,6 +452,14 @@ for example `plugins/aquarium/references/haepari-integration.md`, and an
 artifact built from the final commit carries that commit's own development
 version stamp; the results never describe the final commit as the
 tested installed artifact, and TASK-089/090 re-verify the release candidate.
+TASK-088's suites remain historical evidence on harness `b27a75c2…`:
+TASK-089's changes to the shared snapshot scope, helpers and derivation are additive, no
+recorded suite's control flow changes, and every changed path is exercised by
+J-RA itself; TASK-090's pilot re-runs install/migration/regression/manual
+evidence live on the final harness. TASK-089 seals its candidate artifact from
+the committed `db13284` (development version `0.1.21-dev.db132845624c`) with
+the harness again a labelled development snapshot, and the committed
+candidate profile equals that seal's bytes.
 Earlier runs on two superseded harness trees are preserved and disclosed as
 records of the same demonstrations. The admit-despite-gap probe's record of
 the doctor gap was added after its single live run, whose gap was observed
@@ -436,7 +467,7 @@ with doctor before submission and whose blocker Haepari recorded natively.
 
 `GUEST_CONTEXT` is mandatory for a live submission and carries only
 machine-local values that never enter tracked files: the expected guest UUID,
-guest home and `PATH`, the F10 interpreter path (Python 3.14 managed by uv),
+guest home and `PATH`, the uv-managed Python 3.14 interpreter path,
 the driver interpreter chosen at the J-0 gate, and the guest Codex, Podway
 and marketplace paths. A tracked example shape is
 `{"schema": "aquarium.vm-guest-context/v1", "expected_guest_uuid": "<uuid>",
@@ -448,19 +479,18 @@ The declared suites are `baseline`, `install`, `upgrade` (which carries the
 existing-behavior oracle, fixture gate and restart checks inside its
 post-upgrade assertions), `migration-failure`, `manual-hold` (a minimal
 offline hold carrying the manual-path demonstrations, including the
-kill-and-reconnect reconnect proof), and the labelled probes
+kill-and-reconnect reconnect proof), `release-acceptance` (TASK-089's one
+uninterrupted release-acceptance Job) and the labelled probes
 `guard-failure-probe`, `immutability-probe` and `vm-blocked-probe`; the
 immutability probes must queue behind a Job that holds the resource long
 enough to perform the mutation and replay steps, and the demonstrated live
 choreography queued them behind `manual-hold`'s `awaiting_manual` hold,
-because `migration-failure` finishes in under a minute. TASK-089 implements
-the one-release-acceptance-Job transaction; TASK-088's approved scope
-amendment S5 moved it there with the startup smokes. The recipe comments,
+because `migration-failure` finishes in under a minute. The recipe comments,
 the manual-hold scenario and the tests use live-sequence labels for these
 suites: J-BASE is `baseline`, J-A `install`, J-B `upgrade`, J-M
 `migration-failure`, J-F `guard-failure-probe`, J-H `manual-hold`, J-Q
-`immutability-probe` and J-V `vm-blocked-probe`; J-RA is TASK-089's
-release-acceptance Job. The sealed bundle carries the candidate artifact and its build
+`immutability-probe` and J-V `vm-blocked-probe`; J-RA is
+`release-acceptance`. The sealed bundle carries the candidate artifact and its build
 manifest from a clean committed checkout, the prior v0.1.21 artifact from its
 tag, the full-history candidate Git bundle, the harness recipes as a labelled
 development snapshot, the profile files and the hash-locked fixture
@@ -492,6 +522,51 @@ relative to `harness` (that is, `<workspace>/operator-parent-context.json`;
 mode 0600, written by the suite's setup, removed with the Job root, never
 a declared output). Stage the evidence, then run `manual complete`. Never
 print the context value in logs or reports.
+
+The `release-acceptance` suite (J-RA) is the one uninterrupted
+release-acceptance transaction: its `machine-prepare` phase runs inside
+`prepare_seconds` (sealed-input verification, declared abort-residue
+normalization with a preimage persisted before any effect, prior-stable
+establishment, fixture seeding, locked dependencies, the non-secret guest
+Codex identity and the prior-stage skill identity over content identities),
+and every later phase is an operator step over the same held resource
+invoked through `guest_entry.sh` with the saved environment and context, in
+the order the [runbook](recipes/scenarios/release-acceptance.md) gives:
+released setups, preservation prerequisites, baseline capture, candidate
+install, skill identity over the five inventoried scopes, the
+approval-based status-runtime update through the named `dev-setup-global`
+continuation before any candidate repository setup, then managed updates,
+the EPIC-024 startup smokes (VM-UPGRADE-01, VM-TASK-START-01 and
+VM-EPIC-START-01 through `make test-vm`, bound to the current invocation),
+the stale-skill failure and restoration scenario, evidence staging,
+consumer cleanup and the manual completion. Evidence transport is fixed
+before admission: one deterministic tar per case under
+`results/release-acceptance/evidence/` with a content manifest whose
+required record classes follow the producers' writers (the startup cases
+archive the case directory with its referenced child reports, the native
+observation and checks under the driver's own names). Baseline and setup
+archives also carry native setup observations, including recovery captures,
+with their recorded digest bindings checked. Every driver window requires
+its input, JSONL and stderr originals; setup windows require before/after
+records as well. Every case is attempted, existing originals travel in the
+declared outputs, and each manifest names its missing required records.
+`ok` stays false while a gap remains. A retry invalidates the earlier
+success and withdraws its previous declared archives and working files
+before rebuilding. Source originals and unrelated outputs remain in place.
+Publication stays within the 32 MiB per-archive and 256 MiB aggregate bounds,
+including interrupted retries; the controller pin is confirmed in preflight.
+The suite's per-capture inventory files
+(`inventory-prior-baseline`, `inventory-post-install`, `inventory-stale-pre`,
+`inventory-stale-post`, `inventory-cleanup-before`, `inventory-post-cleanup`)
+are declared outputs, and `inventories.json` aggregates every capture across
+the phase processes. The suite's `manual.required_scenarios` are the ten
+scenario ids of the completion record; missing observations stay
+`unobserved` and prevent PASS. The queue budget is selected from the live
+queue position before sealing (26100/52200/78300 for zero/one/two Jobs
+ahead) and never silently clamped. Offline, the simulation drives every
+fakeable phase for real and stops the smoke gate at its precise live-only
+guest boundary; live results apply only to their recorded candidate, bundle
+and installed combination.
 
 Deliberate probes are labelled invocation paths, never production behavior:
 `AQUARIUM_VM_PROBE=changed-survivor-replay` admits a Job, mutates a sealed

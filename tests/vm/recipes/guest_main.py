@@ -12,10 +12,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shutil
 import sys
 from pathlib import Path
 from typing import Any
+
+import tomllib
 
 sys.dont_write_bytecode = True
 
@@ -82,6 +85,9 @@ class Context:
         # `.codex/plugins/cache` only: Codex-internal state beside it (for
         # example `.plugin-appserver` or `.remote-plugin-install-staging`)
         # belongs to the Codex component and stays out of the inventory.
+        # The codex-home-skills scope covers the active per-home skills the
+        # native client can load, so a planted or shadowing copy there is
+        # visible to every snapshot and comparison.
         return [
             (
                 "user-global",
@@ -99,11 +105,28 @@ class Context:
                 self.home / ".agents/skills",
                 ".agents/skills",
             ),
+            (
+                "codex-home-skills",
+                self.home / ".codex/skills",
+                ".codex/skills",
+            ),
         ]
 
     def snapshot(
-        self, suite: str, phase: str, profile: str = "candidate"
+        self,
+        suite: str,
+        phase: str,
+        profile: str = "candidate",
+        capture: str | None = None,
     ) -> list[dict[str, Any]]:
+        """Capture the scoped inventories under a fixed file name.
+
+        Without `capture` the file is `inventory-<phase>.json` keyed by the
+        semantic phase (the TASK-088 suites' contract). With `capture`, the
+        J-RA suites write `inventory-<capture>.json` and merge that capture
+        into the suite's aggregate `inventories.json` by read-modify-write,
+        so captures taken by separate phase processes all survive.
+        """
         from tree_digest import TreeDigestError, inventory_entries
 
         entries: list[dict[str, Any]] = []
@@ -126,14 +149,31 @@ class Context:
                     "sha256": lib.sha256_file(launcher),
                 }
             )
+        name = capture if capture is not None else phase
         document = lib.write_inventory(
-            lib.results_directory(suite) / f"inventory-{phase}.json",
+            lib.results_directory(suite) / f"inventory-{name}.json",
             phase,
             entries,
             self.profile_digest(profile),
             lib.sha256_file(Path(__file__)),
         )
-        lib.record_inventory(suite, phase, document)
+        if capture is None:
+            lib.record_inventory(suite, phase, document)
+        else:
+            aggregate_path = lib.results_directory(suite) / "inventories.json"
+            aggregate = lib.read_json_safe(aggregate_path)
+            if not isinstance(aggregate, dict) or not isinstance(
+                aggregate.get("inventories"), dict
+            ):
+                aggregate = {
+                    "schema": "aquarium.vm-suite-inventories/v1",
+                    "inventories": {},
+                }
+            aggregate["inventories"][capture] = document
+            aggregate_path.write_text(
+                json.dumps(aggregate, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
         return document["entries"]
 
     def established_plugin_version(self) -> str | None:
@@ -1006,6 +1046,2126 @@ def run_vm_blocked_probe(context: Context) -> int:
     )
 
 
+STALE_SKILL_NAME = "task-handler"
+EVIDENCE_CASES = (
+    "baseline",
+    "upgrade",
+    "task-setup",
+    "epic-setup",
+    "preservation-setup",
+    "runtime-update",
+    "task-startup",
+    "epic-startup",
+    "stale-skill",
+)
+ARCHIVE_BYTES_BOUND = 32 * 1024 * 1024
+ARCHIVE_TOTAL_BYTES_BOUND = 256 * 1024 * 1024
+
+
+def baseline_combination_from_profile(stable: dict[str, Any]) -> dict[str, str]:
+    """Driver-reported shapes: bare aquarium/codex, `v`-prefixed Podway."""
+
+    def component_version(name: str) -> str:
+        for component in stable.get("components", []):
+            if isinstance(component, dict) and component.get("name") == name:
+                version = component.get("version")
+                if isinstance(version, str):
+                    return version
+        raise lib.RecipeError(
+            f"the stable profile does not pin the {name} version", "incomplete"
+        )
+
+    podway_version = component_version("podway")
+    return {
+        "aquarium": component_version("aquarium-plugin"),
+        "codex": component_version("codex"),
+        "podway": podway_version
+        if podway_version.startswith("v")
+        else "v" + podway_version,
+    }
+
+
+def podway_identity_record(context: Context) -> dict[str, Any]:
+    """Observed Podway identity against the stable profile's pins.
+
+    The digest comparison happens before any Podway-dependent step; a
+    same-version executable with different bytes refuses with no mutation.
+    """
+    stable = context.profile("stable")
+    pinned = None
+    for component in stable.get("components", []):
+        if isinstance(component, dict) and component.get("name") == "podway":
+            pinned = component.get("executable_sha256")
+    executable = Path(lib.context_value("AQUARIUM_GUEST_PODWAY"))
+    observed = "sha256:" + lib.sha256_file(executable)
+    if pinned != observed:
+        raise lib.RecipeError(
+            "the guest Podway executable digest differs from the stable "
+            f"profile pin ({observed} != {pinned}); the unverified executable "
+            "is never executed",
+            "incomplete",
+        )
+    # Only a digest-matching executable is executed.
+    version_output = lib.run([str(executable), "version", "--json"], timeout=120)
+    try:
+        reported = json.loads(version_output.stdout)
+    except ValueError:
+        reported = {"raw": version_output.stdout.strip()[:200]}
+    return {
+        "executable": str(executable),
+        "executable_sha256": observed,
+        "profile_pin": pinned,
+        "match": True,
+        "version_json": reported,
+    }
+
+
+def codex_identity_record(context: Context) -> dict[str, Any]:
+    """Non-secret Codex identity, recorded before any model turn."""
+    version = lib.run([context.codex, "--version"]).stdout.strip()
+    login = lib.run([context.codex, "login", "status"], timeout=120)
+    login_lines = [
+        line.strip()
+        for stream in (login.stdout, login.stderr)
+        for line in stream.splitlines()
+    ]
+    if login.returncode != 0 or "Logged in using ChatGPT" not in login_lines:
+        raise lib.RecipeError(
+            "the guest Codex ChatGPT login cannot be verified", "incomplete"
+        )
+    config_model = "installation-default"
+    config = context.home / ".codex/config.toml"
+    if config.is_file():
+        try:
+            parsed = tomllib.loads(config.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError):
+            parsed = {}
+        if isinstance(parsed.get("model"), str) and parsed["model"]:
+            config_model = parsed["model"]
+    return {
+        "version": version,
+        "login_status": {
+            "exit": login.returncode,
+            "mode": "chatgpt",
+            "line": "Logged in using ChatGPT",
+        },
+        "model": config_model,
+    }
+
+
+def preservation_fixture(context: Context) -> dict[str, Any]:
+    """The driver's baseline expects a preservation repository with a
+    customized managed source, meaningful Git work and a report."""
+    destination = context.root / "acceptance-run/preservation"
+    fixture = lib.seed_fixture(context.checkout, destination)
+    procedures = destination / ".podway/procedures"
+    procedures.mkdir(parents=True, exist_ok=True)
+    custom = procedures / "aquarium-task-v2.yaml"
+    shutil.copyfile(
+        context.root
+        / f"{PRIOR_KIND}/plugins/aquarium/assets/podway/procedures/aquarium-task-v2.yaml",
+        custom,
+    )
+    custom.write_text(custom.read_text() + "# preserved customization\n")
+    (destination / "HISTORICAL-REPORT.md").write_text(
+        "Historical synthetic report from the prior release.\n"
+    )
+    status = lib.run(
+        ["git", "-C", str(destination), "status", "--porcelain"], timeout=120
+    )
+    return {
+        "fixture": fixture,
+        "custom_source": str(custom),
+        "custom_sha256": lib.sha256_file(custom),
+        "uncommitted": bool(status.stdout.strip()),
+    }
+
+
+def _scope_entries(root: Path, scope: str, base: str) -> list[dict[str, Any]] | None:
+    """Content identities (path, sha256, executable bit, symlink target) of
+    one scope root; None when the root is absent."""
+    from tree_digest import TreeDigestError, inventory_entries
+
+    if not root.exists():
+        return None
+    try:
+        return inventory_entries(root, scope, base)
+    except TreeDigestError as error:
+        raise lib.RecipeError(
+            f"unsafe inventoried scope ({scope}): {error}", "incomplete"
+        ) from error
+
+
+SECRET_SETTING_RE = re.compile(
+    r"token|key|secret|password|auth|credential", re.IGNORECASE
+)
+
+
+def _normalize_toml_value(value: Any, prefix: str, redacted: list[str]) -> Any:
+    """Recursively normalize a parsed TOML value while redacting secret keys."""
+    if isinstance(value, dict):
+        result: dict[str, Any] = {}
+        for key, item in sorted(value.items()):
+            path = f"{prefix}.{key}" if prefix else key
+            if SECRET_SETTING_RE.search(key):
+                redacted.append(path)
+                continue
+            result[key] = _normalize_toml_value(item, path, redacted)
+        return result
+    if isinstance(value, list):
+        return [_normalize_toml_value(item, prefix, redacted) for item in value]
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    return str(value)
+
+
+def _collect_secret_keys(value: Any, prefix: str, redacted: list[str]) -> None:
+    """Record secret key paths inside tables excluded from normalized settings."""
+    if isinstance(value, dict):
+        for key, item in sorted(value.items()):
+            path = f"{prefix}.{key}" if prefix else key
+            if SECRET_SETTING_RE.search(key):
+                redacted.append(path)
+                continue
+            _collect_secret_keys(item, path, redacted)
+    elif isinstance(value, list):
+        for item in value:
+            _collect_secret_keys(item, prefix, redacted)
+
+
+def _is_skill_setting_key(key: str) -> bool:
+    lowered = key.lower()
+    return (
+        lowered in {"skill", "skills"}
+        or lowered.startswith("skill_")
+        or lowered.endswith(("_skill", "_skills"))
+    )
+
+
+def effective_configuration_record(context: Context) -> dict[str, Any]:
+    """Effective Codex configuration with secret values redacted.
+
+    The whole config file is read to compute its digest and parsed with
+    `tomllib`; a setting whose name matches a secret pattern is recorded
+    only as redacted-by-name, and auth files outside the config are never
+    opened. Settings are normalized by exact table identity (`plugins.<id>`,
+    `features`, explicit skill tables/keys, and top-level non-secret
+    settings), with an explicit note when features or skill settings are
+    absent and `parse_error` recorded when `config.toml` cannot be parsed.
+    """
+    config = context.home / ".codex/config.toml"
+    document: dict[str, Any] = {
+        "provenance": "~/.codex/config.toml (secret values redacted by name)",
+        "marketplaces": {
+            name: source
+            for name, source in sorted(
+                lib.marketplace_registrations(context.codex).items()
+            )
+        },
+        "installed_plugin": lib.installed_aquarium(context.codex, context.marketplace),
+        "enabled_plugins": {},
+        "settings": {},
+        "features": {},
+        "skill_settings": {},
+        "redacted_key_names": [],
+    }
+    if not config.is_file():
+        document["provenance"] += "; config.toml absent"
+        document["features_note"] = "no config file"
+        document["skill_settings_note"] = "no config file"
+        return document
+    document["config_sha256"] = lib.sha256_file(config)
+    try:
+        parsed = tomllib.loads(config.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
+        document["parse_error"] = str(error)
+        return document
+    redacted: list[str] = []
+    plugins_table = parsed.get("plugins")
+    if isinstance(plugins_table, dict):
+        for plugin_id, plugin_entry in sorted(plugins_table.items()):
+            prefix = f'plugins."{plugin_id}"'
+            if isinstance(plugin_entry, dict):
+                normalized_entry = _normalize_toml_value(plugin_entry, prefix, redacted)
+                document["enabled_plugins"][plugin_id] = normalized_entry.get("enabled")
+            elif SECRET_SETTING_RE.search(plugin_id):
+                redacted.append(prefix)
+            else:
+                document["enabled_plugins"][plugin_id] = _normalize_toml_value(
+                    plugin_entry, prefix, redacted
+                )
+    if "features" in parsed and isinstance(parsed.get("features"), dict):
+        document["features"] = _normalize_toml_value(
+            parsed["features"], "features", redacted
+        )
+    else:
+        document["features_note"] = "no [features] table in the config"
+    for key, value in sorted(parsed.items()):
+        if key in {"plugins", "features"}:
+            continue
+        if _is_skill_setting_key(key):
+            if SECRET_SETTING_RE.search(key):
+                redacted.append(key)
+            else:
+                document["skill_settings"][key] = _normalize_toml_value(
+                    value, key, redacted
+                )
+            continue
+        if isinstance(value, dict):
+            _collect_secret_keys(value, key, redacted)
+            continue
+        if SECRET_SETTING_RE.search(key):
+            redacted.append(key)
+            continue
+        document["settings"][key] = _normalize_toml_value(value, key, redacted)
+    document["redacted_key_names"] = sorted(redacted)
+    if not document["skill_settings"]:
+        document["skill_settings_note"] = "no key or table names skills"
+    return document
+
+
+def _declared_skill_name(directory: Path) -> str | None:
+    """A skill's declared name from its SKILL.md front matter, falling back
+    to the directory name; None when the entry is not a skill directory."""
+    if not directory.is_dir():
+        return None
+    front = directory / "SKILL.md"
+    if front.is_file():
+        try:
+            lines = front.read_text(encoding="utf-8").splitlines()
+        except (OSError, ValueError):
+            lines = []
+        if lines and lines[0].strip() == "---":
+            for line in lines[1:]:
+                if line.strip() == "---":
+                    break
+                match = re.match(r"name:\s*(.+)", line)
+                if match:
+                    return match[1].strip().strip("\"'")
+    return directory.name
+
+
+def skill_identity_document(context: Context, stage: str) -> dict[str, Any]:
+    """Whole-tree skill identity across the native scopes the dossier names.
+
+    Each applicable scope is inspected separately with provenance and
+    content identities; the installed plugin's own skill tree is compared
+    against the profile pin of `stage`, the pinned shared skill trees are
+    compared with their profile pins where a content pin exists, duplicate
+    and shadowing copies are detected by skill name across every loadable
+    scope, and `comparisons.all_passed` binds the scenario predicate to
+    every recorded comparison.
+    """
+    profile_name = "stable" if stage == "prior" else "candidate"
+    profile = context.profile(profile_name)
+    plugin_pin = None
+    pinned_skills: dict[str, dict[str, Any]] = {}
+    for component in profile.get("components", []):
+        if not isinstance(component, dict):
+            continue
+        if component.get("name") == "aquarium-plugin":
+            tree = component.get("skill_tree")
+            if isinstance(tree, dict):
+                plugin_pin = tree.get("sha256")
+            continue
+        skill_tree = component.get("skill_tree")
+        # Only guest-role content pins belong to the guest predicate; the
+        # host use-haepari pin stays with the host inspection.
+        if (
+            isinstance(skill_tree, dict)
+            and component.get("role") == "guest"
+            and isinstance(skill_tree.get("sha256"), str)
+        ):
+            pinned_skills[skill_tree.get("name", "")] = {
+                "pin": skill_tree["sha256"],
+                "component": component.get("name"),
+                "scope": skill_tree.get("installation_scope"),
+            }
+    installed_root: Path | None = None
+    plugin_cache = (
+        context.home
+        / ".codex/plugins/cache"
+        / context.marketplace
+        / "aquarium"
+        / (context.established_plugin_version() or "")
+    )
+    if plugin_cache.is_dir():
+        installed_root = plugin_cache / "skills"
+    scopes: list[dict[str, Any]] = []
+    for scope, root, base in (
+        ("shared-agents-skills", context.home / ".agents/skills", ".agents/skills"),
+        ("codex-home-skills", context.home / ".codex/skills", ".codex/skills"),
+        ("codex-rules", context.home / ".codex/rules", ".codex/rules"),
+    ):
+        entries = _scope_entries(root, scope, base)
+        scopes.append(
+            {
+                "scope": scope,
+                "root": f"~/{base}",
+                "entries": entries,
+                "applicability": (
+                    "absent" if entries is None else f"{len(entries)} content entries"
+                ),
+                "provenance": "guest starting state",
+            }
+        )
+    plugin_assets: dict[str, Any] = {"scope": "plugin-assets", "applicability": "n/a"}
+    if plugin_cache.is_dir() and (plugin_cache / "assets").is_dir():
+        try:
+            plugin_assets["digest"] = lib.inventory_tree_sha256_from_directory(
+                plugin_cache / "assets"
+            )
+            plugin_assets["applicability"] = "installed plugin assets"
+        except lib.TreeDigestError as error:
+            plugin_assets["problem"] = str(error)
+    scopes.append(plugin_assets)
+    discovery_roots = []
+    for label, repository in (
+        ("candidate-checkout", context.checkout),
+        ("task-fixture", context.root / "acceptance-run/task"),
+        ("epic-fixture", context.root / "acceptance-run/epic"),
+        ("preservation-fixture", context.root / "acceptance-run/preservation"),
+    ):
+        if not repository.is_dir():
+            continue
+        roots = []
+        for name in (".agents", ".codex", "AGENTS.md"):
+            path = repository / name
+            if not path.exists():
+                continue
+            if path.is_file():
+                roots.append(
+                    {
+                        "path": name,
+                        "sha256": lib.sha256_file(path),
+                        "executable": bool(path.stat().st_mode & 0o111),
+                    }
+                )
+            else:
+                roots.append(
+                    {
+                        "path": name,
+                        "entries": _scope_entries(
+                            path, "project-discovery", f"{label}/{name}"
+                        ),
+                    }
+                )
+        discovery_roots.append({"root": label, "content": roots})
+    scopes.append(
+        {
+            "scope": "project-discovery",
+            "roots": discovery_roots,
+            "applicability": "candidate checkout and acceptance fixtures",
+        }
+    )
+    trees: dict[str, Any] = {}
+    plugin_problems: list[str] = []
+    if installed_root is not None and installed_root.is_dir():
+        digest = lib.skill_tree_digest(context.checkout, installed_root)
+        trees["installed-plugin-skills"] = {
+            "algorithm": lib.SKILL_TREE_DIGEST_ALGORITHM,
+            "sha256": digest,
+            "profile_pin": plugin_pin,
+            "found": True,
+            "match": plugin_pin == digest,
+            "root": str(installed_root),
+        }
+        if plugin_pin != digest:
+            plugin_problems.append(
+                "installed-plugin-skills: observed tree differs from the pin"
+            )
+    else:
+        trees["installed-plugin-skills"] = {
+            "algorithm": lib.SKILL_TREE_DIGEST_ALGORITHM,
+            "profile_pin": plugin_pin,
+            "found": False,
+            "match": False,
+        }
+        plugin_problems.append("installed-plugin-skills: tree not found")
+    pinned_problems: list[str] = []
+    for name, pinned in sorted(pinned_skills.items()):
+        tree = context.home / ".agents/skills" / name
+        if not tree.is_dir():
+            trees[name] = {
+                "algorithm": lib.SKILL_TREE_DIGEST_ALGORITHM,
+                "root": str(tree),
+                "profile_pin": pinned["pin"],
+                "found": False,
+                "match": False,
+            }
+            pinned_problems.append(f"{name}: pinned tree not found")
+            continue
+        digest = lib.skill_tree_digest(context.checkout, tree)
+        match = pinned["pin"] == digest
+        trees[name] = {
+            "algorithm": lib.SKILL_TREE_DIGEST_ALGORITHM,
+            "sha256": digest,
+            "root": str(tree),
+            "profile_pin": pinned["pin"],
+            "found": True,
+            "match": match,
+        }
+        if not match:
+            pinned_problems.append(f"{name}: observed tree differs from the pin")
+    # Duplicate and shadowing detection by skill name across every loadable
+    # scope: the installed plugin's skills, the active per-home skills, the
+    # shared agents skills and the loadable project scopes. A skill's
+    # declared name comes from its SKILL.md front matter, falling back to
+    # the directory name only when no name is declared.
+    loadable: dict[str, set[str]] = {}
+    if installed_root is not None and installed_root.is_dir():
+        loadable["installed-plugin-skills"] = {
+            "aquarium:" + (name or entry.name)
+            for entry in installed_root.iterdir()
+            if entry.is_dir()
+            for name in (_declared_skill_name(entry),)
+        }
+    for label, root in (
+        ("codex-home-skills", context.home / ".codex/skills"),
+        ("shared-agents-skills", context.home / ".agents/skills"),
+        ("project-discovery:candidate-checkout", context.checkout / ".agents/skills"),
+        (
+            "project-discovery:task-fixture",
+            context.root / "acceptance-run/task/.agents/skills",
+        ),
+        (
+            "project-discovery:epic-fixture",
+            context.root / "acceptance-run/epic/.agents/skills",
+        ),
+        (
+            "project-discovery:preservation-fixture",
+            context.root / "acceptance-run/preservation/.agents/skills",
+        ),
+    ):
+        if root.is_dir():
+            loadable[label] = {
+                name
+                for name in (_declared_skill_name(entry) for entry in root.iterdir())
+                if name is not None
+            }
+    duplicates: list[str] = []
+    plugin_names = {
+        name.removeprefix("aquarium:"): name
+        for name in loadable.get("installed-plugin-skills", set())
+    }
+    seen: dict[str, list[str]] = {}
+    for scope, names in loadable.items():
+        for name in names:
+            seen.setdefault(name, []).append(scope)
+    for name, scopes_of in sorted(seen.items()):
+        if len(scopes_of) > 1:
+            duplicates.append(f"{name}: loadable in {', '.join(sorted(scopes_of))}")
+        elif name in plugin_names and "installed-plugin-skills" not in scopes_of:
+            duplicates.append(
+                f"{name}: un-namespaced copy in {scopes_of[0]} shadows "
+                f"{plugin_names[name]}"
+            )
+    required = ["installed-plugin-skills", *sorted(pinned_skills)]
+    problems = plugin_problems + pinned_problems
+    comparisons = {
+        name: trees[name].get("match") is True for name in required if name in trees
+    }
+    return {
+        "schema": "aquarium.vm-skill-identity/v1",
+        "stage": stage,
+        "scopes": scopes,
+        "skill_trees": trees,
+        "duplicates": duplicates,
+        "comparisons": {
+            "checked": sorted(comparisons),
+            "required": sorted(required),
+            "problems": problems,
+            "all_passed": (
+                sorted(comparisons) == sorted(required)
+                and all(comparisons.values())
+                and not duplicates
+            ),
+        },
+        "effective_configuration": effective_configuration_record(context),
+    }
+
+
+def acceptance_request(context: Context) -> Path:
+    request_path = context.root / "acceptance/request.json"
+    if request_path.is_file():
+        return request_path
+    stable = context.profile("stable")
+    request = {
+        "schema": "aquarium.vm-acceptance-request/v1",
+        "expected_guest_uuid": lib.context_value("AQUARIUM_EXPECTED_GUEST_UUID"),
+        "run_root": str(context.root / "acceptance-run"),
+        "released_plugin_root": str(
+            context.home
+            / ".codex/plugins/cache"
+            / context.marketplace
+            / "aquarium"
+            / context.inputs["prior"]["version"]
+        ),
+        "released_marketplace_root": str(context.marketplace_path(PRIOR_KIND)),
+        "tools": {
+            "codex": context.codex,
+            "podway": lib.context_value("AQUARIUM_GUEST_PODWAY"),
+            "python": context.python,
+        },
+        "codex_args": [
+            "--sandbox",
+            "workspace-write",
+            "--add-dir",
+            str(context.home / ".aquarium"),
+            "--add-dir",
+            str(context.home / ".local/bin"),
+        ],
+        "baseline_combination": baseline_combination_from_profile(stable),
+        "authority": {
+            "kind": "explicit-vm-test",
+            "reference": "epic-019-vm-test-authority",
+            "observer": "coordinator-fixture-operator",
+        },
+        "baseline_setup": {},
+    }
+    lib.write_document(request_path, request)
+    return request_path
+
+
+def _receipt_plugin_version(receipt: dict[str, Any]) -> str:
+    """Return a string `plugin_version` from a generation receipt, or `""`."""
+    value = receipt.get("plugin_version") if isinstance(receipt, dict) else None
+    return value if isinstance(value, str) else ""
+
+
+def abort_preimage(context: Context) -> dict[str, Any]:
+    """Build and persist the abort-residue preimage before any effect.
+
+    The successor refuses without mutation when a declared residue exists
+    outside the normalization's scope, or when the current runtime
+    selection is unreadable (an uncertain selection can never prove a
+    generation unselected). The bounded preimage is durably written before
+    `ensure_prior_stable` or any deletion runs, so a mid-loop failure still
+    hands over the original receipts.
+    """
+    planted = context.home / ".codex/skills" / STALE_SKILL_NAME
+    if planted.exists() or planted.is_symlink():
+        raise lib.RecipeError(
+            f"stale-skill residue exists outside the Job root: {planted}; "
+            "it is preserved and the successor refuses to start",
+            "incomplete",
+        )
+    leftover = context.home / PROBE_LEFTOVER
+    if leftover.exists() or leftover.is_symlink():
+        raise lib.RecipeError(
+            f"probe leftover exists outside the Job root: {leftover}; "
+            "it is preserved and the successor refuses to start",
+            "incomplete",
+        )
+    current, _receipt = lib.read_current_generation(context.home)
+    versions = context.home / ".aquarium/status-runtime/versions"
+    generations = []
+    for name, receipt in sorted(lib.generation_receipts(context.home).items()):
+        if _receipt_plugin_version(receipt) != context.dev_version:
+            continue
+        receipt_path = versions / name / "runtime.json"
+        generations.append(
+            {
+                "generation": name,
+                "selected_at_preimage": name == current,
+                "receipt_sha256": lib.sha256_file(receipt_path)
+                if receipt_path.is_file()
+                else None,
+                "receipt": receipt,
+            }
+        )
+    foreign_preserved = []
+    for name, receipt in sorted(lib.generation_receipts(context.home).items()):
+        plugin_version = _receipt_plugin_version(receipt)
+        if "-dev." not in plugin_version:
+            continue
+        if plugin_version == context.dev_version:
+            continue
+        receipt_path = versions / name / "runtime.json"
+        foreign_preserved.append(
+            {
+                "generation": name,
+                "plugin_version": plugin_version,
+                "receipt_sha256": lib.sha256_file(receipt_path)
+                if receipt_path.is_file()
+                else None,
+            }
+        )
+    record = {
+        "runtime_selection_at_preimage": current,
+        "runtime_generations": generations,
+        "foreign_dev_generations_preserved": foreign_preserved,
+        "marketplace_registration_before": lib.marketplace_registrations(
+            context.codex
+        ).get(context.marketplace),
+    }
+    # Durable before any effect: a crash in the removal loop still leaves
+    # the original receipts for the abort settlement. The preparation log
+    # also carries the record.
+    print(json.dumps(record, ensure_ascii=False))
+    lib.write_document(
+        lib.results_directory("release-acceptance") / "abort-normalization.json",
+        record,
+    )
+    return record
+
+
+def finish_abort_normalization(
+    context: Context, record: dict[str, Any]
+) -> dict[str, Any]:
+    """Remove the dev-stamped generations after prior selection is restored.
+
+    `ensure_prior_stable` has re-selected the prior generation, so an
+    approved-update generation that was selected at the abort is now unselected and is
+    removed with the persisted preimage as evidence. The marketplace
+    predecessor swap and the final residue disposition are recorded in the
+    same abort record.
+    """
+    current, current_receipt = lib.read_current_generation(context.home)
+    versions = context.home / ".aquarium/status-runtime/versions"
+    removed = []
+    already_absent = []
+    for entry in record["runtime_generations"]:
+        name = entry["generation"]
+        if name == current:
+            continue
+        if versions.joinpath(name).exists():
+            shutil.rmtree(versions / name)
+            removed.append(name)
+        else:
+            already_absent.append(name)
+    remaining = [
+        name
+        for name, receipt in lib.generation_receipts(context.home).items()
+        if _receipt_plugin_version(receipt) == context.dev_version
+    ]
+    record["runtime_generations_removed"] = removed
+    record["runtime_generations_already_absent"] = already_absent
+    record["runtime_selection_after"] = current
+    record["marketplace_registration_after"] = lib.marketplace_registrations(
+        context.codex
+    ).get(context.marketplace)
+    record["marketplace_predecessor_normalized"] = record[
+        "marketplace_registration_after"
+    ] == str(context.marketplace_path(PRIOR_KIND)) and record[
+        "marketplace_registration_before"
+    ] != str(context.marketplace_path(PRIOR_KIND))
+    # The dev-stamp check reads the selected receipt's plugin_version,
+    # never the generation directory name; a None selection refuses.
+    selected_plugin_version = current_receipt.get("plugin_version")
+    record["runtime_selection_plugin_version"] = selected_plugin_version
+    selection_dev_stamped = "-dev." in _receipt_plugin_version(current_receipt)
+    record["residue_disposition_verified"] = not remaining and not selection_dev_stamped
+    record["dev_stamped_generations_remaining"] = remaining
+    print(json.dumps(record, ensure_ascii=False))
+    lib.write_document(
+        lib.results_directory("release-acceptance") / "abort-normalization.json",
+        record,
+    )
+    if remaining:
+        raise lib.RecipeError(
+            "this candidate's dev-stamped generations remain after "
+            f"normalization: {remaining}; the successor refuses to continue",
+            "incomplete",
+        )
+    if selection_dev_stamped:
+        raise lib.RecipeError(
+            "the post-restoration runtime selection is dev-stamped "
+            f"({current!r} binds {selected_plugin_version}); the successor "
+            "refuses to continue",
+            "incomplete",
+        )
+    return record
+
+
+def _operation_prefixes(members: list[str]) -> list[str]:
+    """Find native windows even when interruption prevented their receipt."""
+    suffixes = {
+        "input",
+        "jsonl",
+        "stderr",
+        "last",
+        "invocation.json",
+        "setup-before.json",
+        "setup-after.json",
+    }
+    prefixes = set()
+    for member in members:
+        path = Path(member)
+        ordinal, separator, suffix = path.name.partition(".")
+        if (
+            separator
+            and ordinal.isdecimal()
+            and (
+                suffix in suffixes
+                or (suffix.startswith("reconciled-") and suffix.endswith(".json"))
+            )
+        ):
+            prefixes.add((path.parent / ordinal).as_posix())
+    return sorted(prefixes)
+
+
+def _window_requirements(
+    run_root: Path, case: str, members: list[str], include_last: bool, gaps: list[str]
+) -> list[str]:
+    """Require wrapper-produced originals from every operation window.
+
+    The class is defined independently of what exists: a case whose
+    operations directory holds no complete latest window records the gap.
+    """
+    directory = Path("operations") / case
+    prefixes = _operation_prefixes(
+        [member for member in members if Path(member).parent == directory]
+    )
+    if not prefixes:
+        # The required window class, named so a partial run records the
+        # gap in its manifest instead of raising.
+        return [f"operations/{case}/ operation window"]
+    required = []
+    for prefix in prefixes:
+        required += [
+            f"{prefix}.invocation.json",
+            f"{prefix}.input",
+            f"{prefix}.jsonl",
+            f"{prefix}.stderr",
+        ]
+        if case.endswith("-setup"):
+            required += [f"{prefix}.setup-before.json", f"{prefix}.setup-after.json"]
+        if include_last and prefix == prefixes[-1]:
+            required.append(f"{prefix}.last")
+    return required
+
+
+def _setup_observation_evidence(
+    run_root: Path, case: str
+) -> tuple[list[str], list[str], list[str]]:
+    """Transport native setup captures and verify their producer bindings."""
+    members: set[str] = set()
+    required: set[str] = set()
+    gaps: list[str] = []
+    fixtures = (
+        ("task", "epic", "preservation")
+        if case in {"baseline", "upgrade"}
+        else (case.removesuffix("-setup"),)
+    )
+    phases = ("baseline",) if case == "baseline" else ("update", "recovery")
+    for phase in phases:
+        for fixture in fixtures:
+            if case == "upgrade":
+                continue
+            directory = run_root / "setup-observations" / phase / fixture
+            try:
+                contained = directory.resolve().is_relative_to(run_root.resolve())
+            except (OSError, RuntimeError, ValueError):
+                contained = False
+            if directory.is_symlink() or not contained:
+                gaps.append(f"{phase}/{fixture} has an unsafe capture directory")
+                continue
+            for path in sorted(directory.rglob("*.json")):
+                relative = path.relative_to(run_root).as_posix()
+                if path.is_symlink() or not path.is_file():
+                    gaps.append(f"{relative} is not a regular capture")
+                    continue
+                members.add(relative)
+                if path.stem != lib.sha256_file(path):
+                    gaps.append(f"{relative} differs from its capture digest")
+
+    def references(value: Any, fixture: str) -> None:
+        if isinstance(value, list):
+            for entry in value:
+                references(entry, fixture)
+        elif isinstance(value, dict):
+            if "public_observation" in value or "observation_sha256" in value:
+                source = value.get("public_observation")
+                digest = value.get("observation_sha256")
+                if not isinstance(source, str) or not isinstance(digest, str):
+                    gaps.append(f"{fixture} has an invalid setup capture binding")
+                    return
+                path = Path(source)
+                if not path.is_absolute():
+                    path = run_root / path
+                try:
+                    relative = path.resolve().relative_to(run_root.resolve())
+                except (OSError, RuntimeError, ValueError):
+                    gaps.append(f"{fixture} references a capture outside the run root")
+                    return
+                parts = relative.parts
+                if (
+                    len(parts) != 4
+                    or parts[0] != "setup-observations"
+                    or parts[1]
+                    not in (
+                        {"baseline"}
+                        if case == "baseline"
+                        else {"baseline", "update", "recovery"}
+                    )
+                    or parts[2] != fixture
+                ):
+                    gaps.append(f"{fixture} references another setup capture family")
+                    return
+                if case != "upgrade" and parts[1] in phases:
+                    required.add(relative.as_posix())
+                if path.is_symlink() or not path.is_file():
+                    gaps.append(f"{relative} is missing or not a regular capture")
+                elif digest != "sha256:" + lib.sha256_file(path):
+                    gaps.append(f"{relative} differs from its observation binding")
+            for entry in value.values():
+                references(entry, fixture)
+
+    if case in {"baseline", "upgrade"}:
+        document = lib.read_json_safe(
+            run_root
+            / ("baseline.json" if case == "baseline" else "upgrade-observation.json")
+        )
+        setup = document.get("setup", {}) if isinstance(document, dict) else {}
+        for fixture in fixtures:
+            record = setup.get(fixture) if isinstance(setup, dict) else None
+            capture = (
+                record
+                if case == "baseline"
+                else record.get("setup")
+                if isinstance(record, dict)
+                else None
+            )
+            if not isinstance(capture, dict) or "public_observation" not in capture:
+                gaps.append(f"{fixture} has no {case} setup capture binding")
+            else:
+                references(record, fixture)
+        if case == "upgrade":
+            result = lib.read_json_safe(run_root / "result.json")
+            for row in result.get("cases", []) if isinstance(result, dict) else []:
+                setup = row.get("setup", {}) if isinstance(row, dict) else {}
+                for fixture in fixtures:
+                    if isinstance(setup, dict) and fixture in setup:
+                        references(setup[fixture], fixture)
+    else:
+        directory = run_root / "operations" / case
+        prefixes = _operation_prefixes(
+            [path.name for path in directory.iterdir()] if directory.is_dir() else []
+        )
+        records = []
+        for prefix in prefixes:
+            records += [
+                directory / f"{prefix}.setup-before.json",
+                directory / f"{prefix}.setup-after.json",
+            ]
+            records += sorted(directory.glob(f"{prefix}.reconciled-*.json"))
+        for path in records:
+            record = lib.read_json_safe(path)
+            if not isinstance(record, dict):
+                gaps.append(f"{path.relative_to(run_root)} is missing or malformed")
+            else:
+                references(record, fixtures[0])
+        if prefixes and not required:
+            gaps.append(f"{fixtures[0]} has no candidate setup capture binding")
+    return sorted(members), sorted(required), gaps
+
+
+def _startup_requirements(
+    run_root: Path, case: str, members: list[str], gaps: list[str]
+) -> list[str]:
+    """Required records of a startup case, following the driver's writers.
+
+    The driver writes `<case>/startup-evidence.json` with assignment and
+    report references, and `<name>-native-observation.json` and
+    `<name>-checks.json` beside the run root (task-startup writes
+    task-native-observation.json and task-checks.json). Every referenced
+    child artifact must be an archive member. Every window's wrapper
+    originals and the latest last-message file are required beside it.
+    """
+    name = case.removesuffix("-startup")
+    required = [
+        f"{case}/startup-evidence.json",
+        f"{name}-native-observation.json",
+        f"{name}-checks.json",
+    ]
+    evidence_path = run_root / case / "startup-evidence.json"
+    if not evidence_path.is_file():
+        gaps.append(f"{case}/startup-evidence.json is absent")
+    else:
+        raw = evidence_path.read_text(encoding="utf-8")
+        try:
+            evidence = json.loads(raw)
+        except ValueError:
+            evidence = None
+        if not isinstance(evidence, dict):
+            gaps.append(
+                f"{case}/startup-evidence.json is malformed or not a JSON "
+                "object and its child references cannot be validated"
+            )
+        else:
+            for key in (
+                "executor_assignment",
+                "evaluator_assignment",
+                "executor_result",
+                "evaluator_assessment",
+            ):
+                reference = evidence.get(key)
+                if not isinstance(reference, str):
+                    gaps.append(
+                        f"{case}/startup-evidence.json lacks its {key} reference"
+                    )
+                    continue
+                candidate = Path(reference)
+                if not candidate.is_absolute():
+                    candidate = run_root / candidate
+                try:
+                    relative = (
+                        candidate.resolve().relative_to(run_root.resolve()).as_posix()
+                    )
+                except ValueError:
+                    gaps.append(
+                        f"{case} references evidence outside the run root: {reference}"
+                    )
+                    continue
+                required.append(relative)
+    # The startup operation window lives under operations/<case>; an
+    # absent window class is a named gap, so a partial run records it.
+    required += _window_requirements(run_root, case, members, True, gaps)
+    return required
+
+
+def evidence_members(
+    run_root: Path, case: str
+) -> tuple[list[str], list[str], list[str]]:
+    """Fixed archive members per case: (members, required, gaps).
+
+    Required record classes are defined by the producers' contracts, not by
+    what happens to exist on disk. Producer-record gaps (a malformed
+    startup-evidence document, an absent window class) are returned as
+    named gap strings, so every case stages its existing originals and the
+    caller keeps `ok` false while any gap remains.
+    """
+    gaps: list[str] = []
+    if case == "baseline":
+        members = [
+            f"released-{fixture}.last" for fixture in ("task", "epic", "preservation")
+        ] + [
+            f"released-{fixture}.jsonl" for fixture in ("task", "epic", "preservation")
+        ]
+        required = list(members)
+        for optional in ("podway-procedure-check.json", "podway-observe.json"):
+            if (run_root / optional).is_file():
+                members.append(optional)
+        captures, capture_requirements, capture_gaps = _setup_observation_evidence(
+            run_root, case
+        )
+        members += captures
+        required += capture_requirements
+        gaps += capture_gaps
+        return members, required, gaps
+    if case == "upgrade":
+        members = ["baseline.json", "upgrade-observation.json", "result.json"]
+        required = list(members)
+        if (run_root / "result.stale.json").is_file():
+            members.append("result.stale.json")
+        _captures, _capture_requirements, capture_gaps = _setup_observation_evidence(
+            run_root, case
+        )
+        gaps += capture_gaps
+        return members, required, gaps
+    if case in {"task-setup", "epic-setup", "preservation-setup", "runtime-update"}:
+        directory = run_root / "operations" / case
+        members = []
+        if directory.is_dir():
+            members = sorted(
+                entry.relative_to(run_root).as_posix()
+                for entry in directory.rglob("*")
+                if entry.is_file()
+            )
+        required = _window_requirements(
+            run_root,
+            case,
+            members,
+            include_last=(case == "runtime-update"),
+            gaps=gaps,
+        )
+        if case.endswith("-setup"):
+            captures, capture_requirements, capture_gaps = _setup_observation_evidence(
+                run_root, case
+            )
+            members += captures
+            required += capture_requirements
+            gaps += capture_gaps
+        return members, required, gaps
+    if case in {"task-startup", "epic-startup"}:
+        name = case.removesuffix("-startup")
+        members = []
+        directory = run_root / case
+        if directory.is_dir():
+            members += sorted(
+                entry.relative_to(run_root).as_posix()
+                for entry in directory.rglob("*")
+                if entry.is_file()
+            )
+        for sidecar in (f"{name}-native-observation.json", f"{name}-checks.json"):
+            if (run_root / sidecar).is_file():
+                members.append(sidecar)
+        operations = run_root / "operations" / case
+        if operations.is_dir():
+            members += sorted(
+                entry.relative_to(run_root).as_posix()
+                for entry in operations.rglob("*")
+                if entry.is_file()
+            )
+        required = _startup_requirements(run_root, case, members, gaps)
+        return members, required, gaps
+    if case == "stale-skill":
+        directory = run_root / "stale-skill-originals"
+        members = []
+        if directory.is_dir():
+            members = sorted(
+                entry.relative_to(run_root).as_posix()
+                for entry in directory.rglob("*")
+                if entry.is_file()
+            )
+        required = [
+            "stale-skill-originals/skills-list.json",
+            "stale-skill-originals/plant-record.json",
+        ]
+        return members, required, gaps
+    raise lib.RecipeError(f"unknown evidence case: {case}")
+
+
+def _run_driver_phase(
+    function: Any, *arguments: Any, **keywords: Any
+) -> dict[str, Any]:
+    """Run one in-process driver operation, keeping its outcome class."""
+    try:
+        outcome = function(*arguments, **keywords)
+    except Exception as error:  # noqa: BLE001 - record the real boundary
+        return {
+            "exit": {"fail": 1}.get(getattr(error, "outcome", ""), 2),
+            "driver_outcome": getattr(error, "outcome", "incomplete"),
+            "problem": str(error)[-1200:],
+        }
+    return {
+        "exit": 0,
+        "driver_outcome": outcome.get("outcome"),
+        "thread_id": outcome.get("thread_id"),
+    }
+
+
+def _merge_phase_record(results: Path, name: str, document: dict[str, Any]) -> None:
+    """Create-once phase record; later writes (replies) append attempts.
+
+    Each earlier attempt is stored as a detached copy without its own
+    `attempts` list, so no cycle can enter the record.
+    """
+    path = results / name
+    existing = lib.read_json_safe(path)
+    if isinstance(existing, dict):
+        attempts = list(existing.get("attempts", []))
+        detached = {key: value for key, value in existing.items() if key != "attempts"}
+        attempts.append(detached)
+        merged = {**detached, **document, "attempts": attempts}
+        lib.write_document(path, merged)
+    else:
+        lib.write_document(path, document)
+
+
+def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
+    lib.guard(context.root)
+    results = lib.results_directory("release-acceptance")
+    run_root = context.root / "acceptance-run"
+    request = acceptance_request(context)
+
+    def request_json() -> dict[str, Any]:
+        return json.loads(request.read_text(encoding="utf-8"))
+
+    def runtime_request_json() -> dict[str, Any]:
+        document = request_json()
+        # The approved installer retrieves pinned wheels inside this turn.
+        # Keep its network permission out of other calls and saved settings.
+        document["codex_args"] = [
+            *document.get("codex_args", []),
+            "-c",
+            "sandbox_workspace_write.network_access=true",
+        ]
+        return document
+
+    def save_request(document: dict[str, Any]) -> None:
+        request.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+
+    if phase == "machine-prepare":
+        from tree_digest import tree_sha256_from_directory
+
+        artifact_digest = tree_sha256_from_directory(context.root / CANDIDATE_KIND)
+        if artifact_digest != context.inputs["candidate"]["artifact_tree_sha256"]:
+            raise lib.RecipeError("sealed artifact bytes differ from the bound digest")
+        ledger = lib.run_ledger("release-acceptance")
+        normalization = abort_preimage(context)
+        podway_identity = podway_identity_record(context)
+        context.ensure_prior_stable(ledger, predecessors=(CANDIDATE_KIND,))
+        normalization = finish_abort_normalization(context, normalization)
+        acceptance_request(context)
+        import run_acceptance as driver_module
+
+        try:
+            seeded = driver_module.seed(request_json(), run_root)
+        except Exception as error:
+            raise lib.RecipeError(
+                f"driver seed failed: {str(error)[-800:]}", "incomplete"
+            ) from error
+        preservation = preservation_fixture(context)
+        lock = context.inputs.get("fixture_requirements")
+        if not isinstance(lock, str) or not (context.root / lock).is_file():
+            raise lib.RecipeError(
+                "the sealed fixture requirements are required for J-RA", "incomplete"
+            )
+        venv = lib.create_venv(context.python, run_root / "task/.venv")
+        locked = lib.pip_install_locked(venv, context.root / lock)
+        if locked["exit"] != 0:
+            raise lib.RecipeError("hash-locked fixture dependencies failed")
+        identity = codex_identity_record(context)
+        before = context.snapshot(
+            "release-acceptance", "before", profile="stable", capture="prior-baseline"
+        )
+        skill_identity = skill_identity_document(context, "prior")
+        lib.write_document(results / "skill-identity.json", skill_identity)
+        ledger.save()
+        if not skill_identity.get("comparisons", {}).get("all_passed"):
+            raise lib.RecipeError(
+                "the prior-stage skill identity comparison failed; the "
+                "successor refuses to continue",
+                "incomplete",
+            )
+        lib.write_document(
+            results / "machine-prepare.json",
+            {
+                "identity": context.identity,
+                "podway_identity": podway_identity,
+                "codex_identity": identity,
+                "preservation": preservation,
+                "seed_outcome": seeded.get("outcome"),
+                "abort_normalization": normalization,
+                "inventoried_entries": len(before),
+                "venv": bool(venv),
+            },
+        )
+        return 0
+    if phase == "record-setup":
+        if fixture not in {"task", "epic", "preservation"}:
+            raise lib.RecipeError("record-setup needs a fixture name")
+        thread = context_value_argument("thread")
+        document = request_json()
+        document.setdefault("baseline_setup", {})[fixture] = thread
+        save_request(document)
+        lib.write_document(
+            results / f"record-setup-{fixture}.json",
+            {"fixture": fixture, "thread": thread},
+        )
+        return 0
+    if phase == "capture":
+        # The unchanged driver's baseline in-process, so the capture record
+        # binds to this Job's driver import. The old runtime stays selected.
+        import run_acceptance as driver_module
+
+        capture = _run_driver_phase(driver_module.baseline, request_json(), run_root)
+        lib.write_document(results / "capture.json", capture)
+        return 0 if capture["exit"] == 0 else 2
+    if phase == "candidate-install":
+        ledger = lib.run_ledger("release-acceptance")
+        context.ensure_candidate_installed(ledger, predecessors=(PRIOR_KIND,))
+        ledger.save()
+        import run_acceptance as driver_module
+
+        document = request_json()
+        marketplace_dir = context.marketplace_path(CANDIDATE_KIND)
+        version = context.established_plugin_version()
+        installed_root = (
+            context.home
+            / ".codex/plugins/cache"
+            / context.marketplace
+            / "aquarium"
+            / (version or "")
+        )
+        try:
+            row = driver_module.installed_plugin(
+                {"tools": document["tools"]}, marketplace_dir, installed_root
+            )
+        except Exception as error:
+            raise lib.RecipeError(
+                f"installed plugin verification failed: {str(error)[-800:]}",
+                "incomplete",
+            ) from error
+        document["candidate"] = {
+            "git_sha": context.inputs["candidate"]["git_sha"],
+            "source_root": str(context.checkout),
+            "artifact_root": str(marketplace_dir),
+            "artifact_manifest": str(context.root / "artifact-manifest.json"),
+            "installed_plugin_root": str(installed_root),
+            "marketplace_root": str(marketplace_dir),
+        }
+        save_request(document)
+        context.snapshot("release-acceptance", "candidate", capture="post-install")
+        lib.write_document(
+            results / "candidate-install.json",
+            {"plugin": row.get("version"), "candidate": document["candidate"]},
+        )
+        return 0
+    if phase == "skill-identity":
+        document = skill_identity_document(context, "candidate")
+        previous = lib.read_json_safe(results / "skill-identity.json")
+        if isinstance(previous, dict):
+            document["prior_stage"] = previous
+        lib.write_document(results / "skill-identity.json", document)
+        if not document.get("comparisons", {}).get("all_passed"):
+            return 2
+        return 0
+    if phase == "runtime-update":
+        import run_acceptance as driver_module
+
+        prompt = (
+            "Invoke the normally discovered installed $aquarium:dev-setup for "
+            "the user-global aquarium-status runtime, scoped to its managed "
+            "update. Route the global update through the named "
+            "$aquarium:dev-setup-global continuation and its normal approval "
+            "boundary; the repository workflow never installs or repairs the "
+            "global runtime itself. Use the current installed source. This "
+            "transaction's fixture operator is coordinator-fixture-operator; "
+            f"scope authority is epic-019-vm-test-authority. Target version "
+            f"{context.dev_version}. Return the concrete proposal; this "
+            "request does not accept an unseen proposal."
+        )
+        runtime_record_path = results / "runtime-update.json"
+        if runtime_record_path.exists() or runtime_record_path.is_symlink():
+            # Create-once baseline: a rerun must never overwrite the initial
+            # observation or an existing record (even if malformed).
+            raise lib.RecipeError(
+                "runtime-update record already exists; preserve the initial "
+                "record and continue with runtime-reply or reconcile the "
+                "existing thread instead of restarting the phase",
+                "incomplete",
+            )
+        before = lib._version_names(context.home)
+        thread = driver_module.invoke(
+            runtime_request_json(), run_root, "runtime-update", prompt
+        )
+        receipts = sorted(
+            (run_root / "operations/runtime-update").glob("*.invocation.json")
+        )
+        initial = json.loads(receipts[-1].read_text()) if receipts else {}
+        lib.write_document(
+            results / "runtime-update.json",
+            {
+                "phase": "runtime-update",
+                "initial_thread": thread,
+                "initial_exit": initial.get("exit"),
+                "initial_input_sha256": initial.get("input_sha256"),
+                "versions_before_initial": sorted(before),
+                "replies": [],
+                "note": "read NNN.last, continue with the runtime-reply phase",
+            },
+        )
+        return 0
+    if phase == "runtime-reply":
+        import run_acceptance as driver_module
+
+        recorded = lib.read_json_safe(results / "runtime-update.json")
+        if not isinstance(recorded, dict) or not recorded.get("initial_thread"):
+            raise lib.RecipeError("runtime-update must precede runtime-reply")
+        reply_file = Path(lib.context_value("AQUARIUM_VM_REPLY_FILE"))
+        if not reply_file.is_file():
+            raise lib.RecipeError("runtime-reply needs the operator reply file")
+        reply_text = reply_file.read_text(encoding="utf-8")
+        before_reply = lib._version_names(context.home)
+        invoke_error: str | None = None
+        try:
+            driver_module.invoke(
+                runtime_request_json(),
+                run_root,
+                "runtime-update",
+                "",
+                reply=reply_text,
+            )
+        except Exception as error:  # noqa: BLE001 - persist failed reply attempt
+            invoke_error = str(error)[-1200:]
+        receipts = sorted(
+            (run_root / "operations/runtime-update").glob("*.invocation.json")
+        )
+        reply_receipt = json.loads(receipts[-1].read_text()) if receipts else {}
+        after_reply = lib._version_names(context.home)
+        created_in_reply = sorted(after_reply - before_reply)
+        ledger = lib.run_ledger("release-acceptance")
+        for name in created_in_reply:
+            ledger.record_generation(name)
+        ledger.save()
+        expected_version = f"v{context.dev_version.removeprefix('v')}"
+        # One guarded read feeds the whole predicate; an unreadable runtime
+        # is a structured phase failure, never an uncaught traceback.
+        selected_generation: str | None = None
+        receipt: dict[str, Any] = {}
+        selection_error: str | None = None
+        try:
+            selected_generation, receipt = lib.read_current_generation(context.home)
+        except lib.RecipeError as error:
+            selection_error = f"the runtime selection is unreadable: {error}"
+        known_generations = set(recorded.get("versions_before_initial", []))
+        for reply_record in recorded.get("replies", []):
+            if isinstance(reply_record, dict):
+                known_generations.update(
+                    reply_record.get("generations_created_in_reply_window", [])
+                )
+        known_generations.update(created_in_reply)
+        try:
+            all_receipts = lib.generation_receipts(context.home)
+        except lib.RecipeError:
+            all_receipts = {}
+        dev_stamped_outside_windows = sorted(
+            name
+            for name, generation_receipt in all_receipts.items()
+            if _receipt_plugin_version(generation_receipt) == context.dev_version
+            and name not in known_generations
+        )
+        recipe_ran_installer = bool(dev_stamped_outside_windows)
+        approval_completed = (
+            invoke_error is None
+            and selection_error is None
+            and recorded.get("initial_exit") == 0
+            and bool(recorded.get("initial_thread"))
+            and reply_receipt.get("exit") == 0
+            and reply_receipt.get("thread_id") == recorded.get("initial_thread")
+            and str(reply_receipt.get("input_sha256", "")).removeprefix("sha256:")
+            == lib.sha256_file(reply_file)
+            and _receipt_plugin_version(receipt) == expected_version
+            and selected_generation in created_in_reply
+        )
+        problem = selection_error or invoke_error
+        # Append-only reply history: the initial-invocation evidence and
+        # every earlier reply window survive this write.
+        reply_entry: dict[str, Any] = {
+            "reply_thread": reply_receipt.get("thread_id"),
+            "same_thread": reply_receipt.get("thread_id")
+            == recorded.get("initial_thread"),
+            "reply_exit": reply_receipt.get("exit"),
+            "reply_input_sha256": reply_receipt.get("input_sha256"),
+            "reply_file": str(reply_file),
+            "reply_sha256": lib.sha256_file(reply_file),
+            "versions_before_reply": sorted(before_reply),
+            "versions_after_reply": sorted(after_reply),
+            "generations_created_in_reply_window": created_in_reply,
+            "selected_generation": selected_generation,
+            "receipt_plugin_version": receipt.get("plugin_version")
+            if selection_error is None
+            else None,
+            "approval_completed": approval_completed,
+        }
+        if problem is not None:
+            reply_entry["problem"] = problem
+        reply_history = list(recorded.get("replies", []))
+        reply_history.append(reply_entry)
+        latest = reply_history[-1]
+        updated_record: dict[str, Any] = {
+            "phase": "runtime-reply",
+            "initial_thread": recorded.get("initial_thread"),
+            "initial_exit": recorded.get("initial_exit"),
+            "initial_input_sha256": recorded.get("initial_input_sha256"),
+            "versions_before_initial": recorded.get("versions_before_initial"),
+            "replies": reply_history,
+            "reply_thread": latest["reply_thread"],
+            "same_thread": latest["same_thread"],
+            "reply_exit": latest["reply_exit"],
+            "reply_input_sha256": latest["reply_input_sha256"],
+            "reply_file": latest["reply_file"],
+            "reply_sha256": latest["reply_sha256"],
+            "generations_created_in_reply_window": latest[
+                "generations_created_in_reply_window"
+            ],
+            "selected_generation": latest["selected_generation"],
+            "receipt_plugin_version": latest["receipt_plugin_version"],
+            "workflow_exit": latest["reply_exit"],
+            "approval_completed": approval_completed,
+            "recipe_ran_installer": recipe_ran_installer,
+            "dev_stamped_outside_windows": dev_stamped_outside_windows,
+        }
+        if problem is not None:
+            updated_record["problem"] = problem
+        lib.write_document(results / "runtime-update.json", updated_record)
+        return 0 if approval_completed else 2
+    if phase == "managed-updates":
+        if fixture not in {"task", "epic", "preservation"}:
+            raise lib.RecipeError("managed-updates needs a fixture name")
+        import run_acceptance as driver_module
+
+        document = _run_driver_phase(
+            driver_module.setup_update,
+            request_json(),
+            run_root,
+            fixture,
+        )
+        _merge_phase_record(results, f"managed-update-{fixture}.json", document)
+        return 0 if document["exit"] == 0 else 2
+    if phase == "reply":
+        case = context_value_argument("case")
+        reply_file = context_value_argument("reply-file")
+        if not case.endswith("-setup"):
+            raise lib.RecipeError(
+                "the reply phase serves setup cases; startup replies run "
+                "through the driver CLI between gate invocations"
+            )
+        import run_acceptance as driver_module
+
+        reply_text = Path(reply_file).read_text(encoding="utf-8")
+        name = case.removesuffix("-setup")
+        document = _run_driver_phase(
+            driver_module.setup_update,
+            request_json(),
+            run_root,
+            name,
+            reply=reply_text,
+        )
+        # The reply outcome folds into the fixture's declared phase record;
+        # no undeclared reply-<case> file is produced.
+        _merge_phase_record(results, f"managed-update-{name}.json", document)
+        return 0 if document["exit"] == 0 else 2
+    if phase == "startup-smokes":
+        interpreter = shutil.which("python3")
+        # A stale result cannot speak for this invocation: move it aside
+        # before the gate runs, so a passing summary below was necessarily
+        # written by this invocation.
+        result_path = run_root / "result.json"
+        if result_path.is_file():
+            shutil.move(str(result_path), str(run_root / "result.stale.json"))
+        gate = lib.run(
+            ["make", "test-vm"],
+            cwd=context.checkout,
+            env={**os.environ, "AQUARIUM_VM_REQUEST": str(request)},
+            timeout=7200,
+        )
+        summary: dict[str, Any] = {
+            "exit": gate.returncode,
+            "interpreter": interpreter,
+            "tail": (gate.stdout + gate.stderr)[-1500:],
+        }
+        required_cases = ("VM-UPGRADE-01", "VM-TASK-START-01", "VM-EPIC-START-01")
+        if result_path.is_file():
+            document = json.loads(result_path.read_text(encoding="utf-8"))
+            summary["outcome"] = document.get("outcome")
+            # A row without an explicit outcome stays unobserved; only an
+            # explicit "pass" passes.
+            summary["cases"] = [
+                {
+                    "id": case.get("id"),
+                    "outcome": case.get("outcome") or "unobserved",
+                }
+                for case in document.get("cases", [])
+            ]
+            upgrade = next(
+                (case for case in summary["cases"] if case["id"] == "VM-UPGRADE-01"),
+                None,
+            )
+            if upgrade is None:
+                raise lib.RecipeError(
+                    "the driver result lacks the VM-UPGRADE-01 case row",
+                    "incomplete",
+                )
+        else:
+            summary["outcome"] = "unobserved"
+            summary["problem"] = "the driver wrote no result.json"
+        if gate.returncode != 0 and summary.get("outcome") == "pass":
+            summary["problem"] = (
+                "the gate invocation exited nonzero; its result cannot "
+                "establish this phase"
+            )
+            summary["outcome"] = "unobserved"
+        rows = {case["id"]: case["outcome"] for case in summary.get("cases", [])}
+        unobserved_cases = [
+            case_id for case_id in required_cases if rows.get(case_id) != "pass"
+        ]
+        summary["unobserved_cases"] = unobserved_cases
+        if unobserved_cases and summary.get("outcome") == "pass":
+            summary["problem"] = (
+                f"required case rows are unobserved: {unobserved_cases}"
+            )
+            summary["outcome"] = "unobserved"
+        lib.write_document(results / "startup-smokes.json", summary)
+        if gate.returncode == 0 and summary.get("outcome") == "pass":
+            return 0
+        return {"fail": 1}.get(summary.get("outcome"), 2)
+    if phase == "stale-skill":
+        planted = context.home / ".codex/skills" / STALE_SKILL_NAME
+        source = (
+            context.root / f"{PRIOR_KIND}/plugins/aquarium/skills" / STALE_SKILL_NAME
+        )
+        if planted.exists() or planted.is_symlink():
+            raise lib.RecipeError(
+                f"the stale-skill plant target already exists: {planted}; "
+                "the scenario refuses to mutate",
+                "incomplete",
+            )
+        if not source.is_dir():
+            raise lib.RecipeError(
+                "the sealed prior artifact lacks the task-handler skill tree",
+                "incomplete",
+            )
+        registrations_before = lib.marketplace_registrations(context.codex)
+        config_before = effective_configuration_record(context)
+        rules_before = _scope_entries(
+            context.home / ".codex/rules", "codex-rules", ".codex/rules"
+        )
+        before = context.snapshot(
+            "release-acceptance", "candidate", capture="stale-pre"
+        )
+        planted.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source, planted)
+        record: dict[str, Any] = {
+            "schema": "aquarium.vm-stale-skill/v1",
+            "planted": {
+                "path": str(planted),
+                "source": str(source),
+                "tree_sha256": lib.skill_tree_digest(context.checkout, planted),
+            },
+        }
+        observation = discovery(context, run_root / "task")
+        (run_root / "stale-skill-originals").mkdir(parents=True, exist_ok=True)
+        lib.write_document(
+            run_root / "stale-skill-originals/skills-list.json", observation
+        )
+        installed_root = (
+            context.home
+            / ".codex/plugins/cache"
+            / context.marketplace
+            / "aquarium"
+            / (context.established_plugin_version() or "")
+        ).resolve()
+        planted_resolved = planted.resolve()
+        rows = [
+            skill
+            for row in observation.get("data", [])
+            for skill in row.get("skills", [])
+        ]
+        planted_rows = [
+            skill
+            for skill in rows
+            if Path(str(skill.get("path", "")))
+            .resolve()
+            .is_relative_to(planted_resolved)
+        ]
+        shadowed = [
+            skill
+            for skill in rows
+            if skill.get("name", "").startswith("aquarium:")
+            and not Path(str(skill.get("path", "")))
+            .resolve()
+            .is_relative_to(installed_root)
+        ]
+        if shadowed:
+            outcome = "shadowing"
+            decision = (
+                "the namespaced installed skill resolves outside the installed "
+                "plugin root; the driver's stale-or-shadowed diagnostic is the "
+                "observed failure"
+            )
+        elif planted_rows:
+            outcome = "duplication"
+            decision = (
+                "the planted un-namespaced copy is loadable beside the "
+                "installed namespaced skill; the codex-home-skills scope "
+                "comparison is the observed failure"
+            )
+        else:
+            outcome = "ignored-scope"
+            decision = (
+                "the native loader ignored the planted scope; this is a "
+                "reported gap and can never pass"
+            )
+        record["observation"] = {
+            "outcome": outcome,
+            "decision": decision,
+            "planted_rows": planted_rows,
+            "shadowed_rows": shadowed,
+        }
+        shutil.rmtree(planted)
+        after = context.snapshot(
+            "release-acceptance", "candidate", capture="stale-post"
+        )
+        registrations_after = lib.marketplace_registrations(context.codex)
+
+        # Full-identity restoration over all Aquarium-relevant scopes plus the
+        # relevant rules and normalized configuration: path, sha256,
+        # executable bit and symlink target (encoded in each entry's identity)
+        # must match the pre-scenario state. Differences under non-`root-kernel`
+        # marketplace caches (`openai-bundled`, `openai-primary-runtime`, etc.)
+        # during the native `skills/list` read are recorded as Codex-owned
+        # observations rather than restoration failures. The whole-file config
+        # digest is recorded for information only.
+        def _is_non_aquarium_marketplace_cache(scope: str, relative_path: str) -> bool:
+            if scope != "codex-plugin-cache":
+                return False
+            prefix = ".codex/plugins/cache/"
+            if not relative_path.startswith(prefix):
+                return False
+            marketplace_segment = relative_path.removeprefix(prefix).split("/", 1)[0]
+            return (
+                bool(marketplace_segment) and marketplace_segment != context.marketplace
+            )
+
+        all_inventory_diffs = lib.postcondition_violations(
+            before, after, lambda _scope, _path: False
+        )
+        restoration_problems = lib.postcondition_violations(
+            before, after, _is_non_aquarium_marketplace_cache
+        )
+        codex_owned_cache_observations = [
+            item
+            for item in all_inventory_diffs
+            if item not in set(restoration_problems)
+        ]
+        if registrations_before != registrations_after:
+            restoration_problems.append(
+                "marketplace registrations changed during the scenario"
+            )
+        rules_after = _scope_entries(
+            context.home / ".codex/rules", "codex-rules", ".codex/rules"
+        )
+        if rules_before != rules_after:
+            restoration_problems.append(
+                "per-home rule content identities changed during the scenario"
+            )
+        config_after = effective_configuration_record(context)
+        if config_before.get("parse_error") or config_after.get("parse_error"):
+            restoration_problems.append(
+                "effective configuration config.toml failed to parse: "
+                f"before={config_before.get('parse_error')!r}, "
+                f"after={config_after.get('parse_error')!r}"
+            )
+        for key in (
+            "marketplaces",
+            "enabled_plugins",
+            "features",
+            "skill_settings",
+            "settings",
+        ):
+            if config_before.get(key) != config_after.get(key):
+                restoration_problems.append(
+                    f"effective configuration '{key}' changed during the scenario"
+                )
+        config_digests = {
+            "before": config_before.get("config_sha256"),
+            "after": config_after.get("config_sha256"),
+            "informational_only": True,
+        }
+        record["restoration"] = {
+            "problems": restoration_problems,
+            "verified": not restoration_problems,
+            "codex_owned_cache_observations": codex_owned_cache_observations,
+            "config_sha256": config_digests,
+        }
+        # The plant record and decision are archived originals: staging
+        # requires them.
+        lib.write_document(
+            run_root / "stale-skill-originals/plant-record.json",
+            {
+                "planted": record["planted"],
+                "observation": record["observation"],
+            },
+        )
+        lib.write_document(results / "stale-skill.json", record)
+        if outcome == "ignored-scope" or restoration_problems:
+            return 2
+        return 0
+    if phase == "stage-evidence":
+        # Attempt every case: existing originals always travel in the
+        # declared outputs, each case's manifest names its missing required
+        # records, and `ok` stays false while any gap remains.
+        staged: list[dict[str, Any]] = []
+        total = 0
+        problems: list[str] = []
+        lib.write_document(
+            results / "stage-evidence.json",
+            {"ok": False, "problem": "evidence staging is in progress", "archives": []},
+        )
+        # Withdraw only this suite's declared outputs before rebuilding.
+        # A stopped retry cannot retain a previous successful phase claim.
+        for case in EVIDENCE_CASES:
+            (results / f"evidence/{case}.tar").unlink(missing_ok=True)
+            (results / f"evidence/{case}.manifest.json").unlink(missing_ok=True)
+            (results / f"evidence/{case}.tar.partial").unlink(missing_ok=True)
+        try:
+            for case in EVIDENCE_CASES:
+                members, required, case_gaps = evidence_members(run_root, case)
+                problems.extend(f"{case}: {gap}" for gap in case_gaps)
+                archive = results / f"evidence/{case}.tar"
+                temporary = archive.with_name(f"{case}.tar.partial")
+                document = lib.stage_evidence_archive(
+                    temporary, run_root, members, required
+                )
+                size = temporary.stat().st_size
+                missing = list(document.get("missing_required", []))
+                bound_gap: str | None = None
+                if size > ARCHIVE_BYTES_BOUND:
+                    bound_gap = f"archive exceeds the {ARCHIVE_BYTES_BOUND}-byte bound"
+                    problems.append(
+                        f"{case}: the evidence archive exceeds the "
+                        f"{ARCHIVE_BYTES_BOUND}-byte bound"
+                    )
+                elif total + size > ARCHIVE_TOTAL_BYTES_BOUND:
+                    bound_gap = (
+                        f"archive would exceed the {ARCHIVE_TOTAL_BYTES_BOUND}-byte "
+                        f"total bound ({total + size} > {ARCHIVE_TOTAL_BYTES_BOUND})"
+                    )
+                    problems.append(
+                        f"{case}: the staged evidence would exceed the "
+                        f"{ARCHIVE_TOTAL_BYTES_BOUND}-byte total bound "
+                        f"({total + size} > {ARCHIVE_TOTAL_BYTES_BOUND})"
+                    )
+                if bound_gap is not None:
+                    temporary.unlink(missing_ok=True)
+                    archive.unlink(missing_ok=True)
+                    missing_with_bound = [*missing, bound_gap]
+                    gaps_with_bound = [*case_gaps, bound_gap]
+                    lib.write_document(
+                        archive.with_name(f"{case}.manifest.json"),
+                        {
+                            "schema": lib.EVIDENCE_ARCHIVE_SCHEMA,
+                            "archive": archive.name,
+                            "archive_present": False,
+                            "sha256": None,
+                            "algorithm": "sha256",
+                            "members": [],
+                            "required": document["required"],
+                            "missing_required": missing_with_bound,
+                            "gaps": gaps_with_bound,
+                        },
+                    )
+                    staged.append(
+                        {
+                            "case": case,
+                            "archive": (
+                                f"results/release-acceptance/evidence/{case}.tar"
+                            ),
+                            "archive_present": False,
+                            "members": 0,
+                            "required": len(document["required"]),
+                            "missing_required": missing_with_bound,
+                            "gaps": gaps_with_bound,
+                            "size": 0,
+                        }
+                    )
+                    continue
+                temporary.replace(archive)
+                lib.write_document(archive.with_name(f"{case}.manifest.json"), document)
+                total += size
+                if missing:
+                    problems.append(
+                        f"{case}: required evidence records are missing: {missing}"
+                    )
+                staged.append(
+                    {
+                        "case": case,
+                        "archive": f"results/release-acceptance/evidence/{case}.tar",
+                        "archive_present": True,
+                        "members": len(document["members"]),
+                        "required": len(document["required"]),
+                        "missing_required": missing,
+                        "gaps": case_gaps,
+                        "size": size,
+                    }
+                )
+        except lib.RecipeError as error:
+            # The failed attempt keeps its own shape so a later phase or a
+            # review can see exactly which records were missing.
+            lib.write_document(
+                results / "stage-evidence.json",
+                {
+                    "ok": False,
+                    "problem": str(error),
+                    "problems": [*problems, str(error)],
+                    "archives": staged,
+                    "bounds": {
+                        "per_archive": ARCHIVE_BYTES_BOUND,
+                        "total": ARCHIVE_TOTAL_BYTES_BOUND,
+                    },
+                },
+            )
+            return 2
+        lib.write_document(
+            results / "stage-evidence.json",
+            {
+                "ok": not problems,
+                "problems": problems,
+                "archives": staged,
+                "total_size": total,
+                "bounds": {
+                    "per_archive": ARCHIVE_BYTES_BOUND,
+                    "total": ARCHIVE_TOTAL_BYTES_BOUND,
+                },
+            },
+        )
+        return 0 if not problems else 2
+    if phase == "consumer-cleanup":
+        expected_version = f"v{context.dev_version.removeprefix('v')}"
+        required = {
+            "machine-prepare.json": lambda document: isinstance(document, dict),
+            "record-setup-task.json": lambda document: isinstance(document, dict),
+            "record-setup-epic.json": lambda document: isinstance(document, dict),
+            "record-setup-preservation.json": lambda document: isinstance(
+                document, dict
+            ),
+            "capture.json": lambda document: document.get("exit") == 0,
+            "candidate-install.json": lambda document: isinstance(document, dict),
+            "skill-identity.json": lambda document: (
+                document.get("comparisons", {}).get("all_passed") is True
+                and isinstance(document.get("prior_stage"), dict)
+                and document["prior_stage"].get("comparisons", {}).get("all_passed")
+                is True
+            ),
+            "runtime-update.json": lambda document: (
+                document.get("approval_completed") is True
+                and document.get("workflow_exit") == 0
+                and document.get("receipt_plugin_version") == expected_version
+            ),
+            "managed-update-task.json": lambda document: document.get("exit") == 0,
+            "managed-update-epic.json": lambda document: document.get("exit") == 0,
+            "managed-update-preservation.json": lambda document: (
+                document.get("exit") == 0
+            ),
+            "startup-smokes.json": lambda document: (
+                document.get("outcome") == "pass" and document.get("exit") == 0
+            ),
+            "stale-skill.json": lambda document: (
+                document.get("observation", {}).get("outcome")
+                in {"shadowing", "duplication"}
+                and document.get("restoration", {}).get("verified") is True
+            ),
+            "stage-evidence.json": lambda document: document.get("ok") is True,
+        }
+        unsuccessful: list[str] = []
+        for name, predicate in required.items():
+            document = lib.read_json_safe(results / name)
+            if not isinstance(document, dict) or not predicate(document):
+                unsuccessful.append(name)
+        if unsuccessful:
+            return lib.finish(
+                "release-acceptance",
+                "fail",
+                {
+                    "phase": phase,
+                    "problem": f"unsuccessful phases prevent cleanup: {unsuccessful}",
+                },
+                consumer_cleanup="unverified",
+            )
+        ledger = lib.run_ledger("release-acceptance")
+        before = context.snapshot(
+            "release-acceptance", "candidate", capture="cleanup-before"
+        )
+        context.ensure_prior_stable(ledger, predecessors=(CANDIDATE_KIND,))
+        current_name, _receipt = lib.read_current_generation(context.home)
+        removed_generations = []
+        for name in list(ledger.document.get("generations", [])):
+            if name != current_name and lib.remove_owned_generation(
+                context.home, name, ledger
+            ):
+                removed_generations.append(name)
+        removal = lib.remove_owned_marketplace(
+            context.codex, context.home, CANDIDATE_KIND, ledger, context.marketplace
+        )
+        ledger.save()
+        after = context.snapshot(
+            "release-acceptance", "post_cleanup", capture="post-cleanup"
+        )
+        violations = lib.postcondition_violations(
+            before, after, allowed_runtime_changes
+        )
+        lib.assert_registration(
+            context.codex,
+            context.marketplace,
+            str(context.marketplace_path(PRIOR_KIND)),
+        )
+        lib.write_document(
+            results / "consumer-cleanup.json",
+            {
+                "violations": violations,
+                "candidate_marketplace": removal,
+                "runtime_end_state": {
+                    "selected_generation": current_name,
+                    "runtime_update_created_generations_removed": removed_generations,
+                    "declared": (
+                        "the prior generation is selected; every generation this "
+                        "run created through the approved update is removed with "
+                        "the ledger and post-cleanup inventory as evidence"
+                    ),
+                },
+            },
+        )
+        outcome = "pass" if not violations else "fail"
+        return lib.finish(
+            "release-acceptance",
+            outcome,
+            {"phase": phase, "violations": violations},
+            consumer_cleanup="verified" if not violations else "failed",
+        )
+    if phase == "complete-template":
+
+        def observed(document: str, predicate: Any) -> bool:
+            loaded = lib.read_json_safe(results / document)
+            return isinstance(loaded, dict) and bool(predicate(loaded))
+
+        def evidence_reference(name: str) -> list[str]:
+            path = f"results/release-acceptance/{name}"
+            return [path] if (results / name).is_file() else []
+
+        scenarios = [
+            {
+                "id": "released-baseline",
+                "status": "pass"
+                if observed("capture.json", lambda d: d.get("exit") == 0)
+                and (run_root / "baseline.json").is_file()
+                else "unobserved",
+                "evidence_references": [
+                    "results/release-acceptance/capture.json",
+                    "results/release-acceptance/evidence/baseline.tar",
+                ],
+            },
+            {
+                "id": "candidate-upgrade",
+                "status": "pass"
+                if observed("startup-smokes.json", lambda d: d.get("outcome") == "pass")
+                else "unobserved",
+                "evidence_references": [
+                    "results/release-acceptance/startup-smokes.json",
+                    "results/release-acceptance/evidence/upgrade.tar",
+                ],
+            },
+            {
+                "id": "runtime-approval",
+                "status": "pass"
+                if observed(
+                    "runtime-update.json",
+                    lambda d: (
+                        d.get("approval_completed") is True
+                        and d.get("workflow_exit") == 0
+                        and d.get("recipe_ran_installer") is False
+                    ),
+                )
+                else "unobserved",
+                "evidence_references": [
+                    "results/release-acceptance/runtime-update.json",
+                    "results/release-acceptance/evidence/runtime-update.tar",
+                ],
+            },
+            {
+                "id": "skill-identity",
+                "status": "pass"
+                if observed(
+                    "skill-identity.json",
+                    lambda d: (
+                        d.get("comparisons", {}).get("all_passed") is True
+                        and isinstance(d.get("prior_stage"), dict)
+                        and d["prior_stage"].get("comparisons", {}).get("all_passed")
+                        is True
+                    ),
+                )
+                else "unobserved",
+                "evidence_references": evidence_reference("skill-identity.json"),
+            },
+            {
+                "id": "task-startup",
+                "status": "pass"
+                if observed(
+                    "startup-smokes.json",
+                    lambda d: any(
+                        case.get("id") == "VM-TASK-START-01"
+                        and case.get("outcome") == "pass"
+                        for case in d.get("cases", [])
+                    ),
+                )
+                else "unobserved",
+                "evidence_references": [
+                    "results/release-acceptance/startup-smokes.json",
+                    "results/release-acceptance/evidence/task-startup.tar",
+                ],
+            },
+            {
+                "id": "epic-startup",
+                "status": "pass"
+                if observed(
+                    "startup-smokes.json",
+                    lambda d: any(
+                        (
+                            case.get("id") == "VM-EPIC-START-01"
+                            and case.get("outcome") == "pass"
+                        )
+                        for case in d.get("cases", [])
+                    ),
+                )
+                else "unobserved",
+                "evidence_references": [
+                    "results/release-acceptance/startup-smokes.json",
+                    "results/release-acceptance/evidence/epic-startup.tar",
+                ],
+            },
+            {
+                "id": "stale-skill-failure",
+                "status": "pass"
+                if observed(
+                    "stale-skill.json",
+                    lambda d: (
+                        d.get("observation", {}).get("outcome")
+                        in {"shadowing", "duplication"}
+                    ),
+                )
+                else "unobserved",
+                "evidence_references": [
+                    "results/release-acceptance/stale-skill.json",
+                    "results/release-acceptance/evidence/stale-skill.tar",
+                ],
+            },
+            {
+                "id": "stale-skill-restoration",
+                "status": "pass"
+                if observed(
+                    "stale-skill.json",
+                    lambda d: d.get("restoration", {}).get("verified") is True,
+                )
+                else "unobserved",
+                "evidence_references": ["results/release-acceptance/stale-skill.json"],
+            },
+            {
+                "id": "evidence-staging",
+                "status": "pass"
+                if observed("stage-evidence.json", lambda d: d.get("ok") is True)
+                else "unobserved",
+                "evidence_references": [
+                    "results/release-acceptance/stage-evidence.json"
+                ],
+            },
+            {
+                "id": "consumer-cleanup",
+                "status": "pass"
+                if observed(
+                    "consumer-cleanup.json", lambda d: d.get("violations") == []
+                )
+                else "unobserved",
+                "evidence_references": [
+                    "results/release-acceptance/consumer-cleanup.json"
+                ],
+            },
+        ]
+        template = {
+            "schema": "haepari.manual-result/v1",
+            "job_id": "<admitted-job-id>",
+            "installation_id": "<run.json installation_id>",
+            "profile_id": context.profile("candidate")["profile_id"],
+            "profile_digest": context.profile_digest("candidate"),
+            "expected_revision": "<current awaiting job_revision>",
+            "observer": "coordinator-fixture-operator",
+            "scenarios": scenarios,
+        }
+        lib.write_document(results / "manual-complete-template.json", template)
+        print(json.dumps(template, ensure_ascii=False))
+        return 0
+    raise lib.RecipeError(f"unknown release-acceptance phase: {phase}")
+
+
+def context_value_argument(name: str) -> str:
+    value = os.environ.get(f"AQUARIUM_VM_{name.upper().replace('-', '_')}", "")
+    if not value:
+        raise lib.RecipeError(f"phase argument {name} is required")
+    return value
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--suite", required=True)
@@ -1044,6 +3204,10 @@ def main() -> int:
     try:
         if arguments.suite == "manual-hold":
             return run_manual_hold(context, arguments.phase)
+        if arguments.suite == "release-acceptance":
+            return run_release_acceptance(
+                context, arguments.phase, arguments.fixture or ""
+            )
         if arguments.suite not in runners:
             raise lib.RecipeError(f"unknown suite: {arguments.suite}")
         lib.guard(context.root)
@@ -1053,6 +3217,16 @@ def main() -> int:
             arguments.suite,
             error.outcome,
             {"problem": str(error)},
+            consumer_cleanup="unverified",
+        )
+    except RuntimeError as error:
+        # Safety net for driver GateError and similar runtime errors raised
+        # across the lazy driver import: a structured result, never a bare
+        # traceback.
+        return lib.finish(
+            arguments.suite,
+            "incomplete",
+            {"problem": f"{type(error).__name__}: {error}"},
             consumer_cleanup="unverified",
         )
     except lib.TreeDigestError as error:

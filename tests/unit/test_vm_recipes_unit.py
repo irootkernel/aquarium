@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import unittest
 from pathlib import Path
@@ -1116,6 +1117,1307 @@ class GuestMainTest(unittest.TestCase):
                 {"marketplace": {"kind": "artifact", "removed": False}},
             )
         self.assertEqual(problems, [f"run-owned generation remains: {name}"])
+
+
+class ReleaseAcceptanceUnitTest(unittest.TestCase):
+    """Offline unit coverage for the J-RA recipe helpers and phases."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.work = Path(tempfile.mkdtemp(prefix="vm-jra-unit-")).resolve()
+        cls.addClassCleanup(shutil.rmtree, cls.work, True)
+        if str(RECIPES_ROOT) not in sys.path:
+            sys.path.insert(0, str(RECIPES_ROOT))
+        import guest_main
+
+        cls.guest_main = guest_main
+        cls.home = cls.work / "home"
+        (cls.home / ".codex/skills").mkdir(parents=True)
+        (cls.home / ".codex/skills/system-skill").mkdir()
+        (cls.home / ".codex/skills/system-skill/SKILL.md").write_text("system\n")
+        cls.codex_state = cls.work / "residue-codex-state.json"
+        cls.codex_state.write_text(json.dumps({"marketplaces": [], "installed": []}))
+        cls._fake_codex = cls.work / "residue-fake-codex"
+        cls._fake_codex.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json, os, sys\n"
+            "arguments = sys.argv[1:]\n"
+            "if arguments[:3] == ['plugin', 'marketplace', 'list']:\n"
+            "    print(json.dumps({'marketplaces': json.load(\n"
+            "        open(os.environ['FAKE_CODEX_STATE']))['marketplaces']}))\n"
+            "    raise SystemExit(0)\n"
+            "print('unsupported', file=sys.stderr)\n"
+            "raise SystemExit(2)\n"
+        )
+        cls._fake_codex.chmod(0o755)
+
+    def context_stub(self):
+        class Stub:
+            root = self.work / "job"
+            home = self.home
+
+        return Stub()
+
+    def test_codex_identity_records_only_login_mode_from_either_stream(self):
+        context = self.context_stub()
+        context.codex = "/fixture/codex"
+        for stream in ("stdout", "stderr"):
+            with self.subTest(stream=stream):
+                output = {"stdout": "", "stderr": ""}
+                output[stream] = "private account detail\nLogged in using ChatGPT\n"
+                with mock.patch.object(
+                    self.guest_main.lib,
+                    "run",
+                    side_effect=[
+                        subprocess.CompletedProcess([], 0, "codex-cli 0.164.0\n", ""),
+                        subprocess.CompletedProcess([], 0, **output),
+                    ],
+                ):
+                    identity = self.guest_main.codex_identity_record(context)
+                self.assertEqual(
+                    identity["login_status"],
+                    {"exit": 0, "mode": "chatgpt", "line": "Logged in using ChatGPT"},
+                )
+                self.assertNotIn("private account detail", json.dumps(identity))
+
+    def test_codex_identity_refuses_unverified_or_failed_login(self):
+        context = self.context_stub()
+        context.codex = "/fixture/codex"
+        for exit_code, stdout, stderr in (
+            (0, "", ""),
+            (0, "opaque account detail", ""),
+            (0, "", "Logged in using an API key - private fixture value"),
+            (1, "", "Logged in using ChatGPT"),
+        ):
+            with self.subTest(exit_code=exit_code, stdout=stdout, stderr=stderr):
+                with (
+                    mock.patch.object(
+                        self.guest_main.lib,
+                        "run",
+                        side_effect=[
+                            subprocess.CompletedProcess(
+                                [], 0, "codex-cli 0.164.0\n", ""
+                            ),
+                            subprocess.CompletedProcess([], exit_code, stdout, stderr),
+                        ],
+                    ),
+                    self.assertRaises(self.guest_main.lib.RecipeError) as error,
+                ):
+                    self.guest_main.codex_identity_record(context)
+                self.assertEqual(error.exception.outcome, "incomplete")
+
+    def test_numeric_startup_reports_are_preserved_without_becoming_windows(self):
+        root = Path(tempfile.mkdtemp(prefix="startup-reports-", dir=self.work))
+        self.addCleanup(shutil.rmtree, root, True)
+        for case in ("task-startup", "epic-startup"):
+            with self.subTest(case=case):
+                directory = root / case
+                directory.mkdir()
+                fields = (
+                    "executor_assignment",
+                    "evaluator_assignment",
+                    "executor_result",
+                    "evaluator_assessment",
+                )
+                reports = {}
+                for field, suffix in zip(fields, ("input", "jsonl", "stderr", "last")):
+                    path = directory / f"001.{suffix}"
+                    path.write_text(f"original {field}\n")
+                    reports[field] = path.relative_to(root).as_posix()
+                (directory / "startup-evidence.json").write_text(json.dumps(reports))
+                name = case.removesuffix("-startup")
+                for suffix in ("native-observation", "checks"):
+                    (root / f"{name}-{suffix}.json").write_text("{}")
+                operations = root / "operations" / case
+                operations.mkdir(parents=True)
+                for suffix in ("invocation.json", "input", "jsonl", "stderr", "last"):
+                    (operations / f"000.{suffix}").write_text("original window\n")
+                members, required, gaps = self.guest_main.evidence_members(root, case)
+                manifest = self.guest_main.lib.stage_evidence_archive(
+                    root / f"{case}.tar",
+                    root,
+                    members,
+                    required,
+                )
+                self.assertEqual(gaps, [])
+                self.assertEqual(manifest["missing_required"], [])
+                with tarfile.open(root / f"{case}.tar") as archive:
+                    for relative in reports.values():
+                        self.assertEqual(
+                            archive.extractfile(relative).read(),
+                            (root / relative).read_bytes(),
+                        )
+                (operations / "001.input").write_text("interrupted invocation\n")
+                members, required, _ = self.guest_main.evidence_members(root, case)
+                self.assertIn(f"operations/{case}/001.invocation.json", required)
+                self.assertIn(f"operations/{case}/001.input", members)
+
+    def test_restage_bounds_every_publication_and_invalidates_interrupted_attempt(self):
+        root = Path(tempfile.mkdtemp(prefix="publication-", dir=self.work)).resolve()
+        self.addCleanup(shutil.rmtree, root, True)
+        run_root = root / "acceptance-run"
+        run_root.mkdir()
+        results = root / "results/release-acceptance"
+        evidence = results / "evidence"
+        evidence.mkdir(parents=True)
+        cases = ["baseline", "upgrade", "task-setup"]
+        for case, size in zip(cases, (100, 12000, 12000), strict=True):
+            (run_root / f"{case}.bin").write_bytes(b"x" * size)
+        foreign = evidence / "unrelated.tar"
+        foreign.write_bytes(b"preserve this unrelated output")
+        context = self.context_stub()
+        context.root = root
+
+        def stage():
+            with (
+                mock.patch.object(self.guest_main.lib, "guard"),
+                mock.patch.object(
+                    self.guest_main.lib, "results_directory", return_value=results
+                ),
+                mock.patch.object(
+                    self.guest_main,
+                    "acceptance_request",
+                    return_value=root / "unused.json",
+                ),
+                mock.patch.object(self.guest_main, "EVIDENCE_CASES", cases),
+                mock.patch.object(
+                    self.guest_main,
+                    "evidence_members",
+                    side_effect=lambda _root, case: ([f"{case}.bin"], [], []),
+                ),
+                mock.patch.object(self.guest_main, "ARCHIVE_BYTES_BOUND", 30720),
+                mock.patch.object(self.guest_main, "ARCHIVE_TOTAL_BYTES_BOUND", 51200),
+            ):
+                return self.guest_main.run_release_acceptance(
+                    context, "stage-evidence", ""
+                )
+
+        def exposed():
+            return sum(
+                (evidence / f"{case}.tar").stat().st_size
+                for case in cases
+                if (evidence / f"{case}.tar").is_file()
+            )
+
+        self.assertEqual(stage(), 0)
+        self.assertEqual(exposed(), 51200)
+        (run_root / "baseline.bin").write_bytes(b"y" * 12000)
+        replace = Path.replace
+        publications = []
+
+        def observe(path, target):
+            result = replace(path, target)
+            if path.name.endswith(".tar.partial"):
+                publications.append(exposed())
+            return result
+
+        with mock.patch.object(Path, "replace", observe):
+            self.assertEqual(stage(), 2)
+        self.assertTrue(publications)
+        self.assertTrue(all(size <= 51200 for size in publications), publications)
+        for case in cases:
+            manifest = json.loads((evidence / f"{case}.manifest.json").read_text())
+            self.assertEqual(
+                manifest["archive_present"], (evidence / f"{case}.tar").is_file()
+            )
+        (run_root / "baseline.bin").write_bytes(b"x" * 100)
+        self.assertEqual(stage(), 0)
+        (run_root / "baseline.bin").write_bytes(b"y" * 12000)
+
+        def interrupt(path, target):
+            observe(path, target)
+            if path.name.endswith(".tar.partial"):
+                raise KeyboardInterrupt
+
+        with (
+            mock.patch.object(Path, "replace", interrupt),
+            self.assertRaises(KeyboardInterrupt),
+        ):
+            stage()
+        self.assertLessEqual(exposed(), 51200)
+        self.assertIs(
+            json.loads((results / "stage-evidence.json").read_text())["ok"], False
+        )
+        self.assertEqual(foreign.read_bytes(), b"preserve this unrelated output")
+
+    def test_setup_capture_transport_binds_baseline_update_and_recovery_originals(self):
+        root = Path(tempfile.mkdtemp(prefix="capture-", dir=self.work)).resolve()
+        self.addCleanup(shutil.rmtree, root, True)
+        driver = load_module(
+            "setup_capture_producer", REPOSITORY / "tests/vm/run_acceptance.py"
+        )
+        baseline = {"setup": {}}
+        for fixture in ("task", "epic", "preservation"):
+            baseline["setup"][fixture] = driver.save_setup_observation(
+                root, fixture, "baseline", {"fixture": fixture, "phase": "baseline"}
+            )
+            for suffix in ("last", "jsonl"):
+                (root / f"released-{fixture}.{suffix}").write_text("original\n")
+        (root / "baseline.json").write_text(json.dumps(baseline))
+        update = driver.save_setup_observation(
+            root, "task", "update", {"phase": "update"}
+        )
+        recovery = driver.save_setup_observation(
+            root, "task", "recovery", {"phase": "recovery"}
+        )
+        upgrades = {"task": {"setup": update}}
+        for fixture in ("epic", "preservation"):
+            upgrades[fixture] = {
+                "setup": driver.save_setup_observation(
+                    root, fixture, "update", {"fixture": fixture, "phase": "update"}
+                )
+            }
+        upgrade = root / "upgrade-observation.json"
+        upgrade.write_text(json.dumps({"setup": upgrades}))
+        (root / "result.json").write_text("{}\n")
+        self.assertEqual(self.guest_main.evidence_members(root, "upgrade")[2], [])
+        upgrades["task"]["setup"] = {
+            **update,
+            "observation_sha256": "sha256:" + "0" * 64,
+        }
+        upgrade.write_text(json.dumps({"setup": upgrades}))
+        self.assertTrue(self.guest_main.evidence_members(root, "upgrade")[2])
+        upgrades["task"]["setup"] = update
+        upgrade.write_text(json.dumps({"setup": upgrades}))
+        window = root / "operations/task-setup"
+        window.mkdir(parents=True)
+        for suffix in ("input", "jsonl", "stderr", "last"):
+            (window / f"000.{suffix}").write_text("original\n")
+        (window / "000.invocation.json").write_text('{"exit": 0}')
+        (window / "000.setup-before.json").write_text(
+            json.dumps({"basis": baseline["setup"]["task"]})
+        )
+        after = window / "000.setup-after.json"
+        after.write_text(json.dumps({"setup": update}))
+        (window / "000.reconciled-000.json").write_text(
+            json.dumps({"setup": update, "settlement": recovery})
+        )
+        for case in ("baseline", "task-setup"):
+            members, required, gaps = self.guest_main.evidence_members(root, case)
+            self.assertEqual(gaps, [])
+            archive = root / f"{case}.tar"
+            manifest = self.guest_main.lib.stage_evidence_archive(
+                archive, root, members, required
+            )
+            self.assertEqual(manifest["missing_required"], [])
+            expected = (
+                list(baseline["setup"].values())
+                if case == "baseline"
+                else [update, recovery]
+            )
+            with tarfile.open(archive) as handle:
+                for record in expected:
+                    relative = (
+                        Path(record["public_observation"]).relative_to(root).as_posix()
+                    )
+                    stream = handle.extractfile(relative)
+                    self.assertIsNotNone(stream)
+                    self.assertEqual(
+                        "sha256:" + hashlib.sha256(stream.read()).hexdigest(),
+                        record["observation_sha256"],
+                    )
+        capture = Path(update["public_observation"])
+        original = capture.read_bytes()
+        capture.unlink()
+        members, required, gaps = self.guest_main.evidence_members(root, "task-setup")
+        self.assertIn(capture.relative_to(root).as_posix(), required)
+        self.assertTrue(gaps)
+        self.assertIn("operations/task-setup/000.jsonl", members)
+        capture.write_bytes(b"changed capture")
+        self.assertTrue(self.guest_main.evidence_members(root, "task-setup")[2])
+        capture.write_bytes(original)
+        (window / "000.stderr").unlink()
+        members, required, gaps = self.guest_main.evidence_members(root, "task-setup")
+        self.assertNotIn("operations/task-setup/000.stderr", members)
+        self.assertIn("operations/task-setup/000.stderr", required)
+        outside = root.parent / "outside-observation.json"
+        outside.write_text("never read this outside the run root")
+        self.addCleanup(outside.unlink)
+        after.write_text(
+            json.dumps({"setup": {**update, "public_observation": str(outside)}})
+        )
+        digest = self.guest_main.lib.sha256_file
+
+        def bounded_digest(path):
+            self.assertNotEqual(Path(path), outside)
+            return digest(path)
+
+        with mock.patch.object(
+            self.guest_main.lib, "sha256_file", side_effect=bounded_digest
+        ):
+            self.assertTrue(self.guest_main.evidence_members(root, "task-setup")[2])
+
+    def test_scope_roots_cover_the_active_codex_home_skills(self):
+        scopes = self.guest_main.Context.scope_roots(self.context_stub())
+        names = [scope[0] for scope in scopes]
+        self.assertIn("codex-home-skills", names)
+        self.assertIn("shared-agents-skills", names)
+        codex_home = next(scope for scope in scopes if scope[0] == "codex-home-skills")
+        self.assertEqual(codex_home[1], self.home / ".codex/skills")
+
+    def test_baseline_combination_uses_the_driver_reported_shapes(self):
+        stable = {
+            "components": [
+                {"name": "aquarium-plugin", "version": "0.1.21"},
+                {"name": "codex", "version": "0.164.0"},
+                {"name": "podway", "version": "0.2.14"},
+            ]
+        }
+        self.assertEqual(
+            self.guest_main.baseline_combination_from_profile(stable),
+            {"aquarium": "0.1.21", "codex": "0.164.0", "podway": "v0.2.14"},
+        )
+        broken = {"components": [{"name": "podway", "version": "0.2.14"}]}
+        with self.assertRaises(self.guest_main.lib.RecipeError):
+            self.guest_main.baseline_combination_from_profile(broken)
+
+    def test_skill_tree_digest_uses_the_profile_algorithm(self):
+        # The digest comes from the candidate checkout's validator, so a
+        # changed file, an added file or a flipped bit changes the value —
+        # aquarium-skill-tree-sha256/v1, not haepari-tree-sha256/v1.
+        tree = self.work / "skills" / "task-handler"
+        tree.mkdir(parents=True)
+        (tree / "SKILL.md").write_text("# task-handler\n")
+        base = self.guest_main.lib.skill_tree_digest(REPOSITORY, tree)
+        (tree / "SKILL.md").write_text("# task-handler changed\n")
+        self.assertNotEqual(
+            self.guest_main.lib.skill_tree_digest(REPOSITORY, tree), base
+        )
+        (tree / "SKILL.md").write_text("# task-handler\n")
+        self.assertEqual(self.guest_main.lib.skill_tree_digest(REPOSITORY, tree), base)
+        (tree / "SKILL.md").chmod(0o755)
+        try:
+            self.assertNotEqual(
+                self.guest_main.lib.skill_tree_digest(REPOSITORY, tree), base
+            )
+        finally:
+            (tree / "SKILL.md").chmod(0o644)
+
+    def test_archive_is_deterministic_and_manifest_binds_members(self):
+        source = self.work / "originals"
+        source.mkdir()
+        (source / "a.json").write_text('{"a": 1}\n')
+        (source / "b.jsonl").write_text('{"b": 2}\n')
+        archive = self.work / "evidence" / "case.tar"
+        first = self.guest_main.lib.stage_evidence_archive(
+            archive, source, ["a.json", "b.jsonl"], ["a.json"]
+        )
+        self.assertEqual(first["required"], ["a.json"])
+        self.assertEqual(
+            [record["path"] for record in first["members"]], ["a.json", "b.jsonl"]
+        )
+        self.assertEqual(
+            first["sha256"],
+            hashlib.sha256(archive.read_bytes()).hexdigest(),
+        )
+        second = self.guest_main.lib.stage_evidence_archive(
+            archive, source, ["a.json", "b.jsonl"], ["a.json"]
+        )
+        self.assertEqual(first, second)
+
+    def test_missing_required_record_archives_with_named_gap(self):
+        # Partial staging: the existing original still travels in the
+        # archive, the manifest names the missing required record, and the
+        # caller keeps `ok` false while the gap remains.
+        source = self.work / "originals-missing"
+        source.mkdir()
+        (source / "a.json").write_text("{}\n")
+        archive = self.work / "evidence" / "missing.tar"
+        document = self.guest_main.lib.stage_evidence_archive(
+            archive, source, ["a.json"], ["b.json"]
+        )
+        self.assertTrue(archive.is_file())
+        self.assertEqual(document["missing_required"], ["b.json"])
+        self.assertEqual([record["path"] for record in document["members"]], ["a.json"])
+
+    def test_evidence_members_pin_the_required_originals(self):
+        run_root = self.work / "run-root"
+        run_root.mkdir()
+        for fixture in ("task", "epic", "preservation"):
+            (run_root / f"released-{fixture}.last").write_text("last\n")
+        (run_root / "operations/runtime-update").mkdir(parents=True)
+        (run_root / "operations/runtime-update/000.invocation.json").write_text("{}")
+        (run_root / "operations/runtime-update/000.input").write_text("prompt\n")
+        (run_root / "operations/runtime-update/000.last").write_text("proposal\n")
+        _members, required, _excluded = self.guest_main.evidence_members(
+            run_root, "baseline"
+        )
+        self.assertEqual(
+            required,
+            [
+                "released-task.last",
+                "released-epic.last",
+                "released-preservation.last",
+                "released-task.jsonl",
+                "released-epic.jsonl",
+                "released-preservation.jsonl",
+            ],
+        )
+        _members, required, _excluded = self.guest_main.evidence_members(
+            run_root, "runtime-update"
+        )
+        self.assertIn("operations/runtime-update/000.invocation.json", required)
+        self.assertIn("operations/runtime-update/000.input", required)
+        self.assertIn("operations/runtime-update/000.last", required)
+        # A setup case without a complete operation window names its
+        # missing window class as a gap; the required class is defined by
+        # the producer, not by discovery.
+        (run_root / "operations/task-setup").mkdir(parents=True)
+        _members, required, gaps = self.guest_main.evidence_members(
+            run_root, "task-setup"
+        )
+        self.assertIn("operations/task-setup/ operation window", required)
+        self.assertEqual(gaps, [])
+
+    def _residue_home(self, selected: str, dev_names: tuple[str, ...]) -> Path:
+        home = self.work / f"residue-{selected[:8]}-{len(dev_names)}"
+        versions = home / ".aquarium/status-runtime/versions"
+        versions.mkdir(parents=True, exist_ok=True)
+        (home / ".aquarium/status-runtime/current").write_text(
+            f"versions/{selected}\n", encoding="utf-8"
+        )
+        stable = versions / "stable-gen"
+        stable.mkdir(exist_ok=True)
+        (stable / "runtime.json").write_text(json.dumps({"plugin_version": "v0.1.21"}))
+        for name in dev_names:
+            dev = versions / name
+            dev.mkdir(exist_ok=True)
+            (dev / "runtime.json").write_text(
+                json.dumps({"plugin_version": "v0.1.21-dev.db132845624c"})
+            )
+        (home / ".codex/skills").mkdir(parents=True, exist_ok=True)
+        return home
+
+    def _residue_stub(self, home: Path):
+        stub_home = home
+        fake_codex = self._fake_codex
+
+        class Stub:
+            root = self.work / "residue-job"
+            home = stub_home
+            codex = fake_codex
+            marketplace = "root-kernel"
+            dev_version = "v0.1.21-dev.db132845624c"
+
+            def marketplace_path(self, kind):
+                return self.home / ".aquarium-vm-marketplaces" / kind
+
+        return Stub()
+
+    def test_selected_dev_generation_is_preimaged_and_normalized(self):
+        # The approved-update generation left SELECTED by the abort
+        # checkpoint is recorded in the preimage and, after prior selection
+        # is restored, removed with the disposition verified.
+        home = self._residue_home(f"{'c' * 64}-py3.14", (f"{'c' * 64}-py3.14",))
+        os.environ["AQUARIUM_VM_JOB_ID"] = "sim-job-residue"
+        os.environ["AQUARIUM_VM_LEASE_GENERATION"] = "1"
+        os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
+        harness = self.work / "residue-job" / "harness"
+        harness.mkdir(parents=True, exist_ok=True)
+        previous_cwd = os.getcwd()
+        os.chdir(harness)
+        try:
+            record = self.guest_main.abort_preimage(self._residue_stub(home))
+            self.assertEqual(len(record["runtime_generations"]), 1)
+            self.assertTrue(record["runtime_generations"][0]["selected_at_preimage"])
+            preimage_path = (
+                harness.parent / "results/release-acceptance/abort-normalization.json"
+            )
+            persisted = json.loads(preimage_path.read_text())
+            self.assertEqual(
+                persisted["runtime_generations"][0]["generation"],
+                f"{'c' * 64}-py3.14",
+            )
+            # ensure_prior_stable has restored the prior selection.
+            (home / ".aquarium/status-runtime/current").write_text(
+                "versions/stable-gen\n", encoding="utf-8"
+            )
+            finished = self.guest_main.finish_abort_normalization(
+                self._residue_stub(home), record
+            )
+            self.assertEqual(
+                finished["runtime_generations_removed"], [f"{'c' * 64}-py3.14"]
+            )
+            self.assertTrue(finished["residue_disposition_verified"])
+            self.assertFalse(
+                (
+                    home / ".aquarium/status-runtime/versions" / f"{'c' * 64}-py3.14"
+                ).exists()
+            )
+        finally:
+            os.chdir(previous_cwd)
+            os.environ.pop("AQUARIUM_VM_JOB_ID", None)
+            os.environ.pop("AQUARIUM_VM_LEASE_GENERATION", None)
+
+    def test_unreadable_selection_refuses_without_mutation(self):
+        home = self._residue_home("stable-gen", (f"{'c' * 64}-py3.14",))
+        current = home / ".aquarium/status-runtime/current"
+        current.write_bytes(b"versions/\xffgeneration\n")
+        with self.assertRaises(self.guest_main.lib.RecipeError) as raised:
+            self.guest_main.abort_preimage(self._residue_stub(home))
+        self.assertIn("unreadable", str(raised.exception))
+        # No mutation: the dev-stamped generation survives.
+        self.assertTrue(
+            (home / ".aquarium/status-runtime/versions" / f"{'c' * 64}-py3.14").is_dir()
+        )
+
+    def test_preimage_persists_before_each_deletion(self):
+        home = self._residue_home(
+            "stable-gen", (f"{'c' * 64}-py3.14", f"{'d' * 64}-py3.14")
+        )
+        os.environ["AQUARIUM_VM_JOB_ID"] = "sim-job-residue-loop"
+        os.environ["AQUARIUM_VM_LEASE_GENERATION"] = "1"
+        os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
+        harness = self.work / "residue-job-loop" / "harness"
+        harness.mkdir(parents=True, exist_ok=True)
+        previous_cwd = os.getcwd()
+        os.chdir(harness)
+        try:
+            record = self.guest_main.abort_preimage(self._residue_stub(home))
+            calls = {"count": 0}
+
+            def flaky_rmtree(path, *args, **kwargs):
+                calls["count"] += 1
+                if calls["count"] == 2:
+                    raise OSError("injected mid-loop failure")
+                return shutil.rmtree(path, *args, **kwargs)
+
+            with (
+                mock.patch.object(
+                    self.guest_main.shutil, "rmtree", side_effect=flaky_rmtree
+                ),
+                self.assertRaises(OSError),
+            ):
+                self.guest_main.finish_abort_normalization(
+                    self._residue_stub(home), record
+                )
+            persisted = json.loads(
+                (
+                    harness.parent
+                    / "results/release-acceptance/abort-normalization.json"
+                ).read_text()
+            )
+            # The preimage naming both generations was durable before the
+            # first deletion ran.
+            self.assertEqual(len(persisted["runtime_generations"]), 2)
+        finally:
+            os.chdir(previous_cwd)
+            os.environ.pop("AQUARIUM_VM_JOB_ID", None)
+            os.environ.pop("AQUARIUM_VM_LEASE_GENERATION", None)
+
+    def _identity_context(self, home: Path, checkout: Path):
+        """A stub context for skill-identity document tests."""
+        stub_home = home
+        stub_checkout = checkout
+        stub_root = self.work / "identity-job"
+        stub_fake = self._fake_codex
+
+        class Stub:
+            root = stub_root
+            home = stub_home
+            checkout = stub_checkout
+            codex = stub_fake
+            python = "/synthetic/python"
+            marketplace = "root-kernel"
+            dev_version = "v0.1.21-dev.db132845624c"
+
+            def __init__(self):
+                (self.root / "profile").mkdir(parents=True, exist_ok=True)
+                self.inputs = {
+                    "candidate": {"development_version": "v0.1.21-dev.db132845624c"}
+                }
+
+            def profile(self, name):
+                return json.loads((self.root / "profile" / f"{name}.json").read_text())
+
+            def profile_digest(self, name):
+                return "0" * 64
+
+            def established_plugin_version(self):
+                cache = self.home / ".codex/plugins/cache/root-kernel/aquarium"
+                if not cache.is_dir():
+                    return None
+                for entry in sorted(cache.iterdir(), reverse=True):
+                    if entry.is_dir():
+                        return entry.name
+                return None
+
+        return Stub()
+
+    def _identity_fixture(self, with_plugin: bool, use_podway: str | None):
+        """home with an installed plugin skills tree and a use-podway tree;
+        use_podway is None (absent), 'match' or 'mismatch'."""
+        base = Path(tempfile.mkdtemp(prefix="vm-identity-", dir=str(self.work)))
+        self.addCleanup(shutil.rmtree, base, True)
+        home = base / "home"
+        checkout = base / "checkout"
+        (checkout / "tests/vm/profiles").mkdir(parents=True)
+        shutil.copyfile(
+            REPOSITORY / "tests/vm/profiles/validate_profiles.py",
+            checkout / "tests/vm/profiles/validate_profiles.py",
+        )
+        if with_plugin:
+            skills = home / ".codex/plugins/cache/root-kernel/aquarium/0.1.21/skills"
+            skills.mkdir(parents=True)
+            (skills / "task-handler").mkdir()
+            (skills / "task-handler/SKILL.md").write_text("# task-handler\n")
+        if use_podway is not None:
+            tree = home / ".agents/skills/use-podway"
+            tree.mkdir(parents=True)
+            if use_podway == "match":
+                shutil.copytree(
+                    Path.home() / ".agents/skills/use-podway", tree, dirs_exist_ok=True
+                )
+            else:
+                (tree / "SKILL.md").write_text("# drifted\n")
+        os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
+        self.addCleanup(os.environ.pop, "FAKE_CODEX_STATE", None)
+        context = self._identity_context(home, checkout)
+        context.codex = str(self._fake_codex)
+        return context, home
+
+    STABLE_PODWAY_PIN = (
+        "25e79d40154f9129ec8313c2b06e1c34890f8bdc3954efad547f832486c5f35e"
+    )
+
+    def _stable_profile_for(self, context) -> None:
+        stable = json.loads(
+            (
+                REPOSITORY
+                / "tests/vm/profiles"
+                / "proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0"
+                "-podway-0.2.14.json"
+            ).read_text()
+        )
+        # Point the plugin pin at the fixture's own tree so the plugin
+        # comparison is meaningful in isolation.
+        plugin_skills = (
+            context.home / ".codex/plugins/cache/root-kernel/aquarium/0.1.21/skills"
+        )
+        if plugin_skills.is_dir():
+            stable_plugin_pin = self.guest_main.lib.skill_tree_digest(
+                context.checkout, plugin_skills
+            )
+            for component in stable["components"]:
+                if component["name"] == "aquarium-plugin":
+                    component["skill_tree"]["sha256"] = stable_plugin_pin
+        (context.root / "profile/stable.json").write_text(
+            json.dumps(stable, indent=2) + "\n"
+        )
+        candidate = json.loads(json.dumps(stable))
+        candidate["profile_id"] = "sim-candidate"
+        (context.root / "profile/candidate.json").write_text(
+            json.dumps(candidate, indent=2) + "\n"
+        )
+
+    def test_missing_plugin_skills_at_prior_stage_fails(self):
+        context, _home = self._identity_fixture(with_plugin=False, use_podway="match")
+        self._stable_profile_for(context)
+        document = self.guest_main.skill_identity_document(context, "prior")
+        self.assertIs(document["comparisons"]["all_passed"], False)
+        self.assertTrue(
+            any(
+                "tree not found" in problem
+                for problem in document["comparisons"]["problems"]
+            )
+        )
+
+    def test_missing_plugin_skills_at_candidate_stage_fails(self):
+        context, _home = self._identity_fixture(with_plugin=False, use_podway="match")
+        self._stable_profile_for(context)
+        document = self.guest_main.skill_identity_document(context, "candidate")
+        self.assertIs(document["comparisons"]["all_passed"], False)
+
+    def test_missing_use_podway_fails(self):
+        context, _home = self._identity_fixture(with_plugin=True, use_podway=None)
+        self._stable_profile_for(context)
+        document = self.guest_main.skill_identity_document(context, "candidate")
+        self.assertIs(document["comparisons"]["all_passed"], False)
+        self.assertTrue(
+            any(
+                "use-podway" in problem
+                for problem in document["comparisons"]["problems"]
+            )
+        )
+
+    def test_mismatched_use_podway_fails(self):
+        context, _home = self._identity_fixture(with_plugin=True, use_podway="mismatch")
+        self._stable_profile_for(context)
+        document = self.guest_main.skill_identity_document(context, "candidate")
+        self.assertIs(document["comparisons"]["all_passed"], False)
+        self.assertTrue(
+            any(
+                "differs from the pin" in problem
+                for problem in document["comparisons"]["problems"]
+            )
+        )
+
+    def test_matching_trees_pass_and_host_pin_stays_out(self):
+        context, _home = self._identity_fixture(with_plugin=True, use_podway="match")
+        # The host use-haepari tree is absent from the guest home; the
+        # predicate must still pass because host pins are excluded.
+        self._stable_profile_for(context)
+        document = self.guest_main.skill_identity_document(context, "candidate")
+        self.assertIs(document["comparisons"]["all_passed"], True)
+        self.assertNotIn("use-haepari", document["comparisons"]["required"])
+        podway = document["skill_trees"]["use-podway"]
+        self.assertTrue(podway["found"])
+        self.assertIs(podway["match"], True)
+
+    def test_plugin_skill_declared_name_matches_renamed_copy(self):
+        context, _home = self._identity_fixture(with_plugin=True, use_podway="match")
+        plugin_skills = (
+            context.home / ".codex/plugins/cache/root-kernel/aquarium/0.1.21/skills"
+        )
+        shutil.rmtree(plugin_skills / "task-handler")
+        renamed_plugin_dir = plugin_skills / "plugin-dir-renamed"
+        renamed_plugin_dir.mkdir(parents=True)
+        (renamed_plugin_dir / "SKILL.md").write_text(
+            "---\nname: task-handler\n---\n# plugin skill with distinct dir name\n"
+        )
+        self._stable_profile_for(context)
+        os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
+        clean_document = self.guest_main.skill_identity_document(context, "candidate")
+        self.assertIs(clean_document["comparisons"]["all_passed"], True)
+        self.assertEqual(clean_document["duplicates"], [])
+        # A planted per-home copy whose directory name also differs from
+        # both the plugin directory name and the declared front-matter name.
+        planted = context.home / ".codex/skills/renamed-handler"
+        planted.mkdir(parents=True)
+        (planted / "SKILL.md").write_text(
+            "---\nname: task-handler\n---\n# renamed copy\n"
+        )
+        self.addCleanup(shutil.rmtree, planted)
+        document = self.guest_main.skill_identity_document(context, "candidate")
+        self.assertIs(document["comparisons"]["all_passed"], False)
+        self.assertTrue(
+            any(
+                "task-handler" in duplicate and "shadows" in duplicate
+                for duplicate in document["duplicates"]
+            ),
+            document["duplicates"],
+        )
+
+    def test_effective_configuration_records_the_measured_shape(self):
+        context, home = self._identity_fixture(with_plugin=True, use_podway="match")
+        config = home / ".codex/config.toml"
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text(
+            "\n"
+            'notify = ["terminal-command"]\n'
+            "\n"
+            "[desktop]\n"
+            'frame = "none"\n'
+            "\n"
+            "[hooks.session-start]\n"
+            'trusted_hash = "<redacted-example>"\n'
+            "\n"
+            '[marketplaces."root-kernel"]\n'
+            'source_type = "local"\n'
+            'source = "/Users/synthetic/marketplace"\n'
+            "\n"
+            '[plugins."aquarium@root-kernel"]\n'
+            "enabled = true\n"
+            "\n"
+            '[plugins."formatter@openai-bundled"]\n'
+            "enabled = false\n"
+            "\n"
+            "[features]\n"
+            "shell = true\n"
+            "\n"
+            "[mcp_servers.example]\n"
+            'command = "/usr/bin/example"\n'
+            "\n"
+            '[projects."/Users/synthetic/project"]\n'
+            'trust_level = "trusted"\n'
+            "\n"
+            'api_key = "should-not-be-recorded"\n',
+            encoding="utf-8",
+        )
+        document = self.guest_main.effective_configuration_record(context)
+        self.assertIn("config_sha256", document)
+        self.assertEqual(document["settings"], {"notify": ["terminal-command"]})
+        self.assertEqual(
+            document["enabled_plugins"],
+            {
+                "aquarium@root-kernel": True,
+                "formatter@openai-bundled": False,
+            },
+        )
+        self.assertEqual(document["features"], {"shell": True})
+        self.assertIn("api_key", " ".join(document["redacted_key_names"]))
+        self.assertNotIn("should-not-be-recorded", json.dumps(document))
+        # The config names no skills: recorded explicitly.
+        self.assertEqual(
+            document.get("skill_settings_note"),
+            "no key or table names skills",
+        )
+
+    def test_explicit_absence_of_features_and_skill_settings(self):
+        context, home = self._identity_fixture(with_plugin=True, use_podway="match")
+        config = home / ".codex/config.toml"
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text('notify = ["noop"]\n', encoding="utf-8")
+        document = self.guest_main.effective_configuration_record(context)
+        self.assertEqual(document["features_note"], "no [features] table in the config")
+        self.assertEqual(
+            document["skill_settings_note"], "no key or table names skills"
+        )
+
+    def test_merge_keeps_attempts_detached(self):
+        results = self.work / "merge-results"
+        results.mkdir(exist_ok=True)
+        self.guest_main._merge_phase_record(
+            results, "managed-update-task.json", {"exit": 2, "problem": "first"}
+        )
+        self.guest_main._merge_phase_record(
+            results, "managed-update-task.json", {"exit": 0, "driver_outcome": "ok"}
+        )
+        document = json.loads((results / "managed-update-task.json").read_text())
+        self.assertEqual(document["exit"], 0)
+        self.assertEqual(len(document["attempts"]), 1)
+        self.assertEqual(document["attempts"][0]["exit"], 2)
+        self.assertNotIn("attempts", document["attempts"][0])
+
+    def test_absent_generation_recorded_separately(self):
+        home = self._residue_home("stable-gen", (f"{'c' * 64}-py3.14",))
+        os.environ["AQUARIUM_VM_JOB_ID"] = "sim-job-absent-generation"
+        os.environ["AQUARIUM_VM_LEASE_GENERATION"] = "1"
+        os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
+        harness = self.work / "absent-generation-job" / "harness"
+        harness.mkdir(parents=True, exist_ok=True)
+        previous_cwd = os.getcwd()
+        os.chdir(harness)
+        try:
+            record = self.guest_main.abort_preimage(self._residue_stub(home))
+            # The generation directory disappears before normalization.
+            shutil.rmtree(
+                home / ".aquarium/status-runtime/versions" / f"{'c' * 64}-py3.14"
+            )
+            finished = self.guest_main.finish_abort_normalization(
+                self._residue_stub(home), record
+            )
+            self.assertEqual(finished["runtime_generations_removed"], [])
+            self.assertEqual(
+                finished["runtime_generations_already_absent"],
+                [f"{'c' * 64}-py3.14"],
+            )
+            self.assertTrue(finished["residue_disposition_verified"])
+        finally:
+            os.chdir(previous_cwd)
+            os.environ.pop("AQUARIUM_VM_JOB_ID", None)
+            os.environ.pop("AQUARIUM_VM_LEASE_GENERATION", None)
+
+    def test_malformed_startup_evidence_records_its_gap(self):
+        work = Path(
+            tempfile.mkdtemp(prefix="vm-malformed-evidence-", dir=str(self.work))
+        )
+        self.addCleanup(shutil.rmtree, work, True)
+        run_root = work / "run-root"
+        case = run_root / "task-startup"
+        case.mkdir(parents=True)
+        window = run_root / "operations/task-startup"
+        window.mkdir(parents=True)
+        (window / "000.invocation.json").write_text("{}")
+        (window / "000.input").write_text("prompt\n")
+        (window / "000.last").write_text("done\n")
+        for label, raw in (
+            ("malformed", "{not json"),
+            ("array", "[]"),
+            ("null", "null"),
+        ):
+            with self.subTest(evidence=label):
+                (case / "startup-evidence.json").write_text(raw)
+                _members, _required, gaps = self.guest_main.evidence_members(
+                    run_root, "task-startup"
+                )
+                self.assertTrue(any("cannot be validated" in gap for gap in gaps), gaps)
+
+    def test_podway_digest_mismatch_refuses(self):
+        context, _home = self._identity_fixture(with_plugin=True, use_podway="match")
+        self._stable_profile_for(context)
+        fake = self.work / "podway-executable"
+        fake.write_text("#!/bin/sh\n")
+        fake.chmod(0o755)
+        os.environ["AQUARIUM_GUEST_PODWAY"] = str(fake)
+        self.addCleanup(os.environ.pop, "AQUARIUM_GUEST_PODWAY", None)
+        # A marker proves the mismatched binary is never executed.
+        marker = self.work / "podway-executed-marker"
+        marker.unlink(missing_ok=True)
+        fake.write_text(f"#!/bin/sh\ntouch {json.dumps(str(marker))}\n")
+        fake.chmod(0o755)
+        with self.assertRaises(self.guest_main.lib.RecipeError) as raised:
+            self.guest_main.podway_identity_record(context)
+        self.assertIn(
+            "the unverified executable is never executed", str(raised.exception)
+        )
+        self.assertFalse(marker.exists())
+        # A same-path executable whose digest matches the pin passes.
+        import hashlib as _hashlib
+
+        matching_digest = "sha256:" + _hashlib.sha256(fake.read_bytes()).hexdigest()
+        profile_path = context.root / "profile/stable.json"
+        profile = json.loads(profile_path.read_text())
+        for component in profile["components"]:
+            if component.get("name") == "podway":
+                component["executable_sha256"] = matching_digest
+        profile_path.write_text(json.dumps(profile, indent=2) + "\n")
+        record = self.guest_main.podway_identity_record(context)
+        self.assertIs(record["match"], True)
+
+    def test_project_local_duplicate_fails_the_predicate(self):
+        context, _home = self._identity_fixture(with_plugin=True, use_podway="match")
+        self._stable_profile_for(context)
+        os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
+        # Plant a fixture-local duplicate directly through the documented
+        # fixture path root.
+        fixture_skills = (
+            context.root / "acceptance-run/task/.agents/skills/task-handler"
+        )
+        fixture_skills.mkdir(parents=True)
+        (fixture_skills / "SKILL.md").write_text(
+            "---\nname: task-handler\n---\n# local copy\n"
+        )
+        self.addCleanup(shutil.rmtree, fixture_skills)
+        document = self.guest_main.skill_identity_document(context, "candidate")
+        self.assertIs(document["comparisons"]["all_passed"], False)
+        self.assertTrue(
+            any("task-handler" in duplicate for duplicate in document["duplicates"]),
+            document["duplicates"],
+        )
+
+    def test_foreign_dev_selection_after_restoration_refuses(self):
+        home = self._residue_home("stable-gen", ())
+        versions = home / ".aquarium/status-runtime/versions"
+        foreign = versions / f"{'e' * 64}-py3.14"
+        foreign.mkdir()
+        (foreign / "runtime.json").write_text(
+            json.dumps({"plugin_version": "v0.1.20-dev.aaaaaaaaaaaa"})
+        )
+        # The foreign dev generation is SELECTED after restoration.
+        (home / ".aquarium/status-runtime/current").write_text(
+            f"versions/{'e' * 64}-py3.14\n", encoding="utf-8"
+        )
+        os.environ["AQUARIUM_VM_JOB_ID"] = "sim-job-dev-selection"
+        os.environ["AQUARIUM_VM_LEASE_GENERATION"] = "1"
+        os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
+        harness = self.work / "dev-selection-job" / "harness"
+        harness.mkdir(parents=True, exist_ok=True)
+        previous_cwd = os.getcwd()
+        os.chdir(harness)
+        try:
+            record = self.guest_main.abort_preimage(self._residue_stub(home))
+            with self.assertRaises(self.guest_main.lib.RecipeError) as raised:
+                self.guest_main.finish_abort_normalization(
+                    self._residue_stub(home), record
+                )
+            self.assertIn("selection is dev-stamped", str(raised.exception))
+            persisted = json.loads(
+                (
+                    harness.parent
+                    / "results/release-acceptance/abort-normalization.json"
+                ).read_text()
+            )
+            self.assertIs(persisted["residue_disposition_verified"], False)
+            self.assertEqual(
+                persisted["runtime_selection_plugin_version"],
+                "v0.1.20-dev.aaaaaaaaaaaa",
+            )
+            # The foreign generation survives untouched.
+            self.assertTrue(foreign.is_dir())
+        finally:
+            os.chdir(previous_cwd)
+            os.environ.pop("AQUARIUM_VM_JOB_ID", None)
+            os.environ.pop("AQUARIUM_VM_LEASE_GENERATION", None)
+
+    def test_absent_selection_refuses(self):
+        home = self._residue_home("stable-gen", ())
+        (home / ".aquarium/status-runtime/current").unlink()
+        os.environ["AQUARIUM_VM_JOB_ID"] = "sim-job-absent-selection"
+        os.environ["AQUARIUM_VM_LEASE_GENERATION"] = "1"
+        with self.assertRaises(self.guest_main.lib.RecipeError) as raised:
+            self.guest_main.abort_preimage(self._residue_stub(home))
+        self.assertIn("no current selection", str(raised.exception))
+
+    def test_foreign_dev_generation_preserved_and_listed(self):
+        home = self._residue_home("stable-gen", (f"{'c' * 64}-py3.14",))
+        versions = home / ".aquarium/status-runtime/versions"
+        foreign = versions / f"{'e' * 64}-py3.14"
+        foreign.mkdir()
+        (foreign / "runtime.json").write_text(
+            json.dumps({"plugin_version": "v0.1.19-dev.aaaaaaaaaaaa"})
+        )
+        os.environ["AQUARIUM_VM_JOB_ID"] = "sim-job-generation-ownership"
+        os.environ["AQUARIUM_VM_LEASE_GENERATION"] = "1"
+        os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
+        harness = self.work / "generation-ownership-job" / "harness"
+        harness.mkdir(parents=True, exist_ok=True)
+        previous_cwd = os.getcwd()
+        os.chdir(harness)
+        try:
+            record = self.guest_main.abort_preimage(self._residue_stub(home))
+            foreign_listed = record["foreign_dev_generations_preserved"]
+            self.assertEqual(
+                [entry["generation"] for entry in foreign_listed],
+                [f"{'e' * 64}-py3.14"],
+            )
+            self.assertTrue(foreign.is_dir())
+            finished = self.guest_main.finish_abort_normalization(
+                self._residue_stub(home), record
+            )
+            self.assertTrue(foreign.is_dir())
+            self.assertEqual(
+                finished["runtime_generations_removed"], [f"{'c' * 64}-py3.14"]
+            )
+            self.assertTrue(finished["residue_disposition_verified"])
+        finally:
+            os.chdir(previous_cwd)
+            os.environ.pop("AQUARIUM_VM_JOB_ID", None)
+            os.environ.pop("AQUARIUM_VM_LEASE_GENERATION", None)
+
+    def test_remaining_own_generation_refuses(self):
+        home = self._residue_home(
+            "stable-gen",
+            (f"{'c' * 64}-py3.14", f"{'d' * 64}-py3.14"),
+        )
+        os.environ["AQUARIUM_VM_JOB_ID"] = "sim-job-owned-generation"
+        os.environ["AQUARIUM_VM_LEASE_GENERATION"] = "1"
+        os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
+        harness = self.work / "owned-generation-job" / "harness"
+        harness.mkdir(parents=True, exist_ok=True)
+        previous_cwd = os.getcwd()
+        os.chdir(harness)
+        try:
+            record = self.guest_main.abort_preimage(self._residue_stub(home))
+
+            real_rmtree = shutil.rmtree
+
+            def selective_rmtree(path, *args, **kwargs):
+                # The first own generation silently fails to delete, so it
+                # remains after normalization.
+                if str(path).endswith(f"{'c' * 64}-py3.14"):
+                    return None
+                return real_rmtree(path, *args, **kwargs)
+
+            with (
+                mock.patch.object(
+                    self.guest_main.shutil, "rmtree", side_effect=selective_rmtree
+                ),
+                self.assertRaises(self.guest_main.lib.RecipeError) as raised,
+            ):
+                self.guest_main.finish_abort_normalization(
+                    self._residue_stub(home), record
+                )
+            self.assertIn("refuses to continue", str(raised.exception))
+            persisted = json.loads(
+                (
+                    harness.parent
+                    / "results/release-acceptance/abort-normalization.json"
+                ).read_text()
+            )
+            self.assertIs(persisted["residue_disposition_verified"], False)
+            self.assertEqual(
+                persisted["dev_stamped_generations_remaining"],
+                [f"{'c' * 64}-py3.14"],
+            )
+        finally:
+            os.chdir(previous_cwd)
+            os.environ.pop("AQUARIUM_VM_JOB_ID", None)
+            os.environ.pop("AQUARIUM_VM_LEASE_GENERATION", None)
+
+    def test_preimage_file_present_after_midloop_failure(self):
+        home = self._residue_home(
+            "stable-gen", (f"{'c' * 64}-py3.14", f"{'d' * 64}-py3.14")
+        )
+        os.environ["AQUARIUM_VM_JOB_ID"] = "sim-job-abort-preimage"
+        os.environ["AQUARIUM_VM_LEASE_GENERATION"] = "1"
+        os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
+        harness = self.work / "abort-preimage-job" / "harness"
+        harness.mkdir(parents=True, exist_ok=True)
+        previous_cwd = os.getcwd()
+        os.chdir(harness)
+        try:
+            record = self.guest_main.abort_preimage(self._residue_stub(home))
+            declared = (
+                harness.parent / "results/release-acceptance/abort-normalization.json"
+            )
+            self.assertTrue(declared.is_file())
+            with (
+                mock.patch.object(
+                    self.guest_main.shutil,
+                    "rmtree",
+                    side_effect=OSError("injected mid-loop failure"),
+                ),
+                self.assertRaises(OSError),
+            ):
+                self.guest_main.finish_abort_normalization(
+                    self._residue_stub(home), record
+                )
+            # The declared file survives the mid-loop failure.
+            self.assertTrue(declared.is_file())
+            persisted = json.loads(declared.read_text())
+            self.assertEqual(len(persisted["runtime_generations"]), 2)
+        finally:
+            os.chdir(previous_cwd)
+            os.environ.pop("AQUARIUM_VM_JOB_ID", None)
+            os.environ.pop("AQUARIUM_VM_LEASE_GENERATION", None)
+
+    def test_foreign_residue_refuses_without_mutation(self):
+        home = self._residue_home("stable-gen", ())
+        planted = home / ".codex/skills/task-handler"
+        planted.mkdir(parents=True)
+        (planted / "SKILL.md").write_text("# stale planted skill\n")
+        try:
+            with self.assertRaises(self.guest_main.lib.RecipeError) as raised:
+                self.guest_main.abort_preimage(self._residue_stub(home))
+            self.assertIn("refuses to start", str(raised.exception))
+            self.assertTrue(planted.is_dir())
+        finally:
+            shutil.rmtree(planted)
+
+    def test_effective_configuration_normalizes_reordered_tables_and_ignores_non_plugin_sections(
+        self,
+    ):
+        context, home = self._identity_fixture(with_plugin=True, use_podway="match")
+        config = home / ".codex/config.toml"
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text(
+            'notify = ["noop"]\n'
+            '[plugins."aquarium@root-kernel"]\n'
+            "enabled = true\n"
+            '[plugins."formatter@openai-bundled"]\n'
+            "enabled = false\n"
+            "[features]\n"
+            "shell = true\n",
+            encoding="utf-8",
+        )
+        first = self.guest_main.effective_configuration_record(context)
+        config.write_text(
+            "# comment line\n"
+            'notify = [ "noop" ] # formatting and inline comment\n\n'
+            '[plugins."formatter@openai-bundled"]\n'
+            "enabled = false\n\n"
+            '[plugins."aquarium@root-kernel"]\n'
+            "enabled = true\n\n"
+            "[features]\n"
+            "shell = true\n\n"
+            '[projects."/Users/synthetic/plugins/repo"]\n'
+            'trust_level = "trusted"\n\n'
+            "[mcp_servers.plugin_helper]\n"
+            "enabled = true\n",
+            encoding="utf-8",
+        )
+        second = self.guest_main.effective_configuration_record(context)
+        for field in ("enabled_plugins", "features", "skill_settings", "settings"):
+            self.assertEqual(first[field], second[field], field)
+        # Explicit skill table is recorded when present.
+        config.write_text(
+            '[skills]\ndefault_scope = "home"\n',
+            encoding="utf-8",
+        )
+        with_skills = self.guest_main.effective_configuration_record(context)
+        self.assertEqual(
+            with_skills["skill_settings"], {"skills": {"default_scope": "home"}}
+        )
+        # Invalid TOML records parse_error and does not crash.
+        config.write_text("[broken\nenabled = true\n", encoding="utf-8")
+        broken = self.guest_main.effective_configuration_record(context)
+        self.assertIn("parse_error", broken)
+        self.assertTrue(broken["parse_error"])
+
+    def test_evidence_members_includes_stale_result_only_when_present(self):
+        work = Path(tempfile.mkdtemp(prefix="vm-stale-result-", dir=str(self.work)))
+        self.addCleanup(shutil.rmtree, work, True)
+        run_root = work / "run-root"
+        run_root.mkdir(parents=True)
+        (run_root / "result.json").write_text("{}\n")
+        driver = load_module(
+            "stale_result_capture_producer", REPOSITORY / "tests/vm/run_acceptance.py"
+        )
+        setup = {
+            fixture: {
+                "setup": driver.save_setup_observation(
+                    run_root, fixture, "update", {"fixture": fixture}
+                )
+            }
+            for fixture in ("task", "epic", "preservation")
+        }
+        (run_root / "upgrade-observation.json").write_text(json.dumps({"setup": setup}))
+        members_absent, required_absent, gaps_absent = self.guest_main.evidence_members(
+            run_root, "upgrade"
+        )
+        self.assertEqual(
+            members_absent,
+            ["baseline.json", "upgrade-observation.json", "result.json"],
+        )
+        self.assertEqual(
+            required_absent,
+            ["baseline.json", "upgrade-observation.json", "result.json"],
+        )
+        self.assertEqual(gaps_absent, [])
+        (run_root / "result.stale.json").write_text('{"stale": true}\n')
+        members_present, required_present, gaps_present = (
+            self.guest_main.evidence_members(run_root, "upgrade")
+        )
+        self.assertEqual(
+            members_present,
+            [
+                "baseline.json",
+                "upgrade-observation.json",
+                "result.json",
+                "result.stale.json",
+            ],
+        )
+        self.assertEqual(
+            required_present,
+            ["baseline.json", "upgrade-observation.json", "result.json"],
+        )
+        self.assertEqual(gaps_present, [])
+
+    def test_null_and_non_string_plugin_version_guarded_in_abort_normalization(
+        self,
+    ):
+        home = self._residue_home("stable-gen", (f"{'c' * 64}-py3.14",))
+        versions = home / ".aquarium/status-runtime/versions"
+        null_gen = versions / f"{'1' * 64}-py3.14"
+        null_gen.mkdir()
+        (null_gen / "runtime.json").write_text(json.dumps({"plugin_version": None}))
+        int_gen = versions / f"{'2' * 64}-py3.14"
+        int_gen.mkdir()
+        (int_gen / "runtime.json").write_text(json.dumps({"plugin_version": 123}))
+        # Also set the stable selected generation's plugin_version to null to
+        # verify the post-restoration selection check does not raise TypeError.
+        (versions / "stable-gen/runtime.json").write_text(
+            json.dumps({"plugin_version": None})
+        )
+        os.environ["AQUARIUM_VM_JOB_ID"] = "sim-job-version-types"
+        os.environ["AQUARIUM_VM_LEASE_GENERATION"] = "1"
+        os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
+        harness = self.work / "version-types-job" / "harness"
+        harness.mkdir(parents=True, exist_ok=True)
+        previous_cwd = os.getcwd()
+        os.chdir(harness)
+        try:
+            record = self.guest_main.abort_preimage(self._residue_stub(home))
+            self.assertEqual(
+                [row["generation"] for row in record["runtime_generations"]],
+                [f"{'c' * 64}-py3.14"],
+            )
+            finished = self.guest_main.finish_abort_normalization(
+                self._residue_stub(home), record
+            )
+            self.assertEqual(
+                finished["runtime_generations_removed"], [f"{'c' * 64}-py3.14"]
+            )
+            self.assertIsNone(finished["runtime_selection_plugin_version"])
+            self.assertTrue(finished["residue_disposition_verified"])
+            # Neither non-string generation was deleted as own residue.
+            self.assertTrue(null_gen.is_dir())
+            self.assertTrue(int_gen.is_dir())
+        finally:
+            os.chdir(previous_cwd)
+            os.environ.pop("AQUARIUM_VM_JOB_ID", None)
+            os.environ.pop("AQUARIUM_VM_LEASE_GENERATION", None)
 
 
 if __name__ == "__main__":
