@@ -149,10 +149,16 @@ failure propagation and recovery without providers; they do not verify skills.
 
 Invoke that gate only through release-handler or Master's explicit VM-test
 request. Keep it outside ordinary `make test` and automatic Task/Epic checks.
-For this Epic, operate the dedicated UTM VM manually and verify Codex only;
-Haepari is not a prerequisite. The entrypoint runs in the guest using
-candidate-matched test sources. The host release workflow guides preparation and
-collects the result.
+For EPIC-024, operate the dedicated UTM VM manually and verify Codex only;
+Haepari is not a prerequisite for that historical guest gate, which runs in the
+guest using candidate-matched test sources while the host release workflow
+guides preparation and collects the result. Under EPIC-019's policy-cutover
+candidate (TASK-090; the pre-existing guest-side `make test-vm` path remains
+operational until TASK-090 pilot acceptance completes), Aquarium's release gate
+submits one outer-boundary manual Job (`make test-vm-host` with
+`SUITE=release-acceptance` and `MODE=manual`) over the shared release controller
+(`HAEPARI_HOME`) and registered `utm-macos` resource, invoking the reusable
+guest scenarios inside that held Job without recursive resource acquisition.
 
 Observe meaningful released-version state before upgrading. Release acceptance
 checks the exact candidate upgrade, state preservation, managed-file updates,
@@ -184,29 +190,60 @@ meaningful application artifacts are required; success sentences are insufficien
 TASK-088 adds the separate `make test-vm-host HAEPARI=<absolute CLI>
 RESOURCE=<registered id> MODE=auto|manual RUN_DIR=<private 0700 physical
 path> SUITE=<suite|all> GUEST_CONTEXT=<private json>` wrapper over the
-installed Haepari release controller. Invoke it only under explicit VM-test
-authority; ordinary `make test`, automatic Task/Epic checks and the offline
-release-QA contract never run it, and the guest-side `make test-vm` gate
-keeps its own contract unchanged. The wrapper seals an immutable bundle
-(candidate artifact from a clean committed checkout, prior-release artifact,
-candidate Git history, harness recipes as a labelled development snapshot,
-profiles and hash-locked fixture requirements), persists every request key
-and exact spec before the first submission, then submits each
-consumer-declared suite (baseline, install, upgrade with folded regression
-assertions, migration-failure, minimal manual-hold carrying the manual-path
-and reconnect demonstrations, release-acceptance carrying TASK-089's one
-uninterrupted managed release transaction with the startup smokes,
-installed-skill identity, the approval-based runtime update and fixed-name
-evidence archives, and labelled probes) once as a
-`haepari.job/v2` Job. It maps native verdicts truthfully per suite while
-keeping workload outcome, evidence completeness, native cleanup, consumer
-cleanup and manual observations separate. Offline unit tests cover the
-wrapper, bundle sealing, recipes and queue/probe classification using fakes
-built from real envelope shapes; they require no controller, VM, network or
-LLM, and the helper tests do not verify installed behavior. Live suite
-results bind to their recorded candidate, sealed bundle and installed
-combination, stay outside the release-QA invocation, and are documented in
-[the VM guide](tests/vm/README.md#host-submitted-managed-vm-suites).
+installed Haepari release controller (`HAEPARI_HOME`). Invoke it only under
+explicit VM-test or release-handler authority; ordinary `make test`, automatic
+Task/Epic checks and the offline release-QA contract never run it, and the
+guest-side `make test-vm` gate keeps its own contract unchanged when invoked
+directly or inside a held Job. `Makefile` defines `override PYTHON :=
+.venv/bin/python` when `.venv/bin/python` exists in the current working tree and
+`override PYTHON := python3` otherwise, so passing `PYTHON=<path>` on the `make`
+command line is ignored. Callers in the primary checkout use `.venv/bin/python`
+automatically; callers in a clean disposable clone (where `.venv` is absent) and
+`tests/vm/host_bundle.py`'s nested `make aquarium-dev-build` resolve `python3`
+from `PATH`. Prepend the verified repository Python environment
+(`<repo-root>/.venv/bin`) to process-local `PATH` before invoking `make test-vm-host` or
+`<repo-root>/.venv/bin/python -B tests/vm/host_wrapper.py`.
+
+The wrapper seals the committed candidate artifact, prior-release artifact,
+candidate Git history, recipe snapshot, profiles and hash-locked
+`AQUARIUM_VM_FIXTURE_REQUIREMENTS`. It builds the candidate from a clean clone of
+`AQUARIUM_VM_CANDIDATE_SHA` through `make aquarium-dev-build`. The producer
+manifest carries `git_sha`, `development_version` `v<version>-dev.<sha12>` and
+`sha256`; `bundle/harness/inputs.json` separately records
+`candidate.artifact_tree_sha256` for the sealed copy.
+
+Before submission, it persists each request key and exact spec, then submits the
+selected consumer-declared suite as a `haepari.job/v2` Job. The suites cover
+baseline, install, upgrade with regression assertions, migration-failure,
+manual-hold and reconnect, and the uninterrupted TASK-089 release-acceptance transaction
+with installed-skill identity, approved runtime update, startup smokes and
+fixed-name evidence archives. Labelled probes retain their negative outcomes.
+Manual hold declares `fixture-check` and `discovery-check` with five required
+outputs. Queue budgets use `AQUARIUM_VM_QUEUE_SECONDS >= (jobs ahead + 1) * 26100`
+within ceiling `86400`; observer budgets use `AQUARIUM_VM_WAIT_TIMEOUT` and
+`AQUARIUM_VM_WAIT_ROUNDS`.
+
+`host_wrapper.py` returns `0` PASS, `1` FAIL, `2` preflight/refusal or native errors
+(`CONFLICT`, `INVALID_REQUEST`, `RESULT_UNAVAILABLE`), `3` INCOMPLETE,
+`4` CANCELLED, `5` PENDING, and `6` UNKNOWN. An `export-unverified` event does
+not itself select an exit code. If a native PASS lacks verified exported
+consumer cleanup, the wrapper reports ACCEPTANCE-BLOCKED with exit `3`;
+native FAIL, CANCELLED and INCOMPLETE retain their respective exit codes.
+It emits JSON-line
+stdout reports and retains observations in `RUN_DIR/run.json`. GNU `make` maps a
+failed recipe to `2`, so capture the wrapper process exit separately. Workload
+outcome, evidence completeness, native cleanup, consumer cleanup and manual
+observations remain separate.
+
+`SUITE=all` selects all nine suites alphabetically using each suite's first
+declared mode, without filtering by `MODE`; a nonzero result skips later suites.
+Select explicit suites for a passing batch and retain deliberate failures or
+unobserved cases. Offline unit tests exercise the wrapper, sealing, recipes and
+queue/probe classification with native-envelope fakes, without a controller, VM,
+network or LLM. They do not verify installed skill behavior. Live results bind
+the recorded candidate, sealed bundle and installed combination, outside the
+release-QA invocation. See [the VM guide](tests/vm/README.md#host-submitted-managed-vm-suites)
+and [Haepari VM operations](docs/ops/haepari-vm-verification.md).
 
 ## Directory guidance verification
 

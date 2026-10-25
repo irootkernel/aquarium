@@ -50,9 +50,15 @@ After QA passes, re-inspect the exact candidate and confirm that changelog entri
 
 When the target repository requires installed-system VM acceptance, follow its
 declared verification environment and [manual VM acceptance](references/manual-vm-acceptance.md)
-before its release-metadata or publication boundary. Preserve offline release
-QA as a separate result. No transport, VM provider or personal environment is
-implied by this skill.
+before its release-metadata or publication boundary. When that policy selects a
+managed VM adapter (see [Haepari integration](../../references/haepari-integration.md)),
+hold one outer-boundary managed Job across preparation, `awaiting_manual`
+scenario execution, evidence staging, verified consumer cleanup, revision-fenced
+`manual complete`, and collection/export while keeping nested guest entrypoints
+inside that allocation. Preserve offline release QA as a separate result and
+keep missing required guest, native-agent, cleanup, or export observations
+non-passing. No transport, VM provider or personal environment is implied by
+this skill.
 
 Apply only repository-authorized release metadata: the published version, pinned validation expectation, the changelog heading's `Unreleased` to publication-date transition, and deterministic release links when the repository uses them. Any entry-text change invalidates QA and returns to candidate settlement.
 

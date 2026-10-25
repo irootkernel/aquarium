@@ -11,7 +11,8 @@ Aquarium verification is local and layered. Each layer has a bounded claim, and 
 | Python E2E tests | `tests/e2e/` | Local scripts behave correctly against black-box repository fixtures |
 | Approved legacy integration suites | [`tests/test_inspect_tools.py`](../../tests/test_inspect_tools.py), [`tests/test_task_commit_gate.py`](../../tests/test_task_commit_gate.py), [`tests/test_normalize_manifest.py`](../../tests/test_normalize_manifest.py) | Executable inspection, commit-gate, and bundle-normalization boundaries remain compatible |
 | Aggregate development gate | [`Makefile`](../../Makefile) | The enrolled preparation, unit, integration, and E2E stages pass for the candidate |
-| Exact release gate | Repository release policy | Version metadata, release notes, candidate SHA, compatibility artifacts, and publication state satisfy the selected release mode |
+| Host-submitted managed VM suites | [`tests/vm/host_wrapper.py`](../../tests/vm/host_wrapper.py), [`tests/vm/profiles/`](../../tests/vm/profiles/), [`tests/vm/recipes/`](../../tests/vm/recipes/) | Runs sealed candidate/profile inputs and guest installation, migration and startup cases; records original native results and consumer restoration separately, without resetting the persistent guest |
+| Exact release gate | Repository release policy | Version metadata, release notes, candidate SHA, compatibility artifacts, installed VM acceptance, and publication state satisfy the selected release mode |
 
 [`TESTING.md`](../../TESTING.md) owns the meaning, environment, frameworks, diagnostic mapping, and waivers for these stages.
 
@@ -29,4 +30,6 @@ Verification attaches to exact content. A code or substantive documentation chan
 
 Release-QA confirmation has a machine-validated evidence lifecycle. A full pass atomically freezes its exact matrix before remediation; preparation binds the frozen inventory to the Git-derived remediation range and changed surfaces; admission uses an exclusive claim keyed by the frozen-record digest; and completion requires one fresh result for every retained scenario. Prose summaries and reconstructed manifests cannot authorize confirmation.
 
-The repository does not use GitHub Actions as release authority. The selected local release gate and the ordered publication observations remain authoritative.
+The repository does not use GitHub Actions as release authority. The selected local release gate and ordered publication observations remain authoritative.
+
+TASK-090's cutover candidate adds an installed-system release result from one uninterrupted managed manual Job. It binds the committed pre-metadata candidate, sealed plugin tree, test/profile inputs and actual observations; workload outcome, evidence completeness, native Job cleanup and recipe-owned consumer restoration remain separate. The existing manual release path governs until this candidate's installed pilot is accepted. The [final distribution contract](../../plugins/aquarium/references/haepari-integration.md#final-distribution-identity) separately requires release-payload identity to the tested inputs, with only the declared version-stamp difference. A passing local Make gate alone does not check that payload equivalence.

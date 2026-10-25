@@ -16,6 +16,12 @@ The [Herdr migration runbook](herdr-migration.md) covers selected-route readines
 preserved Orca evidence and Procedure snapshots, safe legacy-executor handling,
 and separately authorized repository updates.
 
+The [Haepari VM verification runbook](haepari-vm-verification.md) covers
+read-only controller and resource diagnosis, `PATH`/`.venv` interpreter selection
+for `make test-vm-host`, automatic and manual (`manual-hold` and
+`release-acceptance`) suite execution, same-Job reconnect, revision-fenced
+cancellation, consumer cleanup verification, and escalation boundaries.
+
 ## Runbook Requirements
 
 Every runbook must state:

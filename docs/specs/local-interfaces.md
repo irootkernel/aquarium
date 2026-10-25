@@ -55,6 +55,8 @@ Procedure source bytes live under [`plugins/aquarium/assets/podway/procedures/`]
 | `release-qa/scripts/manage_release_qa.py` | Versioned full-pass, preparation, admission, or finish JSON | `aquarium-release-qa-confirmation-record/v3`, `aquarium-release-qa-confirmation-manifest/v3`, `aquarium-release-qa-confirmation-claim/v2`, `aquarium-release-qa-confirmation-settlement-admission/v1`, or `aquarium-release-qa-confirmation-result/v2` | Creates immutable QA matrices, binds exact remediation and finding-to-scenario coverage, admits one digest-bound settlement per claim, and persists one immutable terminal result |
 | `release-handler/scripts/inspect_publication_state.py` | `aquarium-release-publication-observation/v5` JSON on standard input | `aquarium-release-publication-state/v5` | Checks the repository-resolved expected title, local main, both remote ancestry relations, tag, stable hosted Release, and exact or approved QA-neutral binding; a proven remote descendant can finish publication at the original release SHA |
 | `tests/verify_podway_compatibility.py` | Exact official v0.2.14 `PODWAY_BIN` selected by Make | `aquarium-podway-compatibility.v9` | Runs the single Direct CLI in at most four disposable Git fixtures, binds source/manifest/CLI and Aquarium identities, preserves the full five-Procedure correction and lifecycle scenario inventory, and verifies declaration rejection, workspace/session outcome lookup and replay, legacy/writer refusal and reset, and fenced workspace removal with already-absent readback |
+| `tests/vm/profiles/validate_profiles.py` | Explicit profile or inventory JSON paths | `aquarium.vm-profile-validation/v1` | Validates `aquarium.vm-profile/v1` component, capability, provenance, starting-state and cleanup contracts, and `aquarium.vm-inventory/v1` inventories; profile filenames confer no acceptance |
+| `tests/vm/host_wrapper.py` and `tests/vm/host_bundle.py` | Explicit host `make test-vm-host` parameters (`HAEPARI`, `RESOURCE`, `MODE`, `SUITE`, `RUN_DIR`, `GUEST_CONTEXT`) and environment | `aquarium.vm-host-run/v1` in `run.json`, `aquarium.vm-host-inputs/v1` in sealed `harness/inputs.json`, and `haepari.job/v2` specs | Seals committed plugin and prior-release artifacts, Git history, recipes, profiles and locked requirements; persists keys/specs before submission; reconnects to the same Job; emits stdout observations and verifies exported native and consumer results |
 
 The v9 compatibility result includes `outcome_recovery` and `upgrade_scenarios` beside the retained lifecycle, correction-matrix and workspace-removal results. These are native disposable-fixture assertions, not installed skill acceptance.
 
@@ -403,4 +405,14 @@ The guest-only driver adds `seed-development` and `development` for the
 Its fixed canonical release regressions remain separate. Exact candidate/tools,
 public native role/result and selected evidence, original criteria, application
 approval and case oracles must pass; helper tests do not establish installed
-behavior. See [VM usage](../../tests/vm/README.md).
+behavior. The host-submitted managed VM wrapper (`make test-vm-host`) seals
+committed candidate artifacts via `make aquarium-dev-build`, resolves `$(PYTHON)`
+through `Makefile`'s `override PYTHON` rule (`.venv/bin/python` when present in
+the working tree or `python3` from `PATH`, requiring the verified repository Python environment on `PATH` for disposable
+clones and nested builds
+rather than `PYTHON=<path>` on the Make command line), emits JSON-line stdout
+reports and retains per-Job observations in `RUN_DIR/run.json`. Capture the
+wrapper process exit separately from GNU Make exit `2`. It passes
+the manual operator channel through `<workspace>/operator-parent-context.json`
+(`0600`) to `tests/vm/recipes/guest_entry.sh`. See [VM usage](../../tests/vm/README.md)
+and [Haepari VM operations](../ops/haepari-vm-verification.md).

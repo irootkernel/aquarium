@@ -409,27 +409,54 @@ alter pins afterward.
 TASK-088 adds the separate host wrapper `make test-vm-host HAEPARI=<absolute
 CLI> RESOURCE=<registered id> MODE=auto|manual RUN_DIR=<private physical
 0700 path> SUITE=<suite|all> GUEST_CONTEXT=<private guest-context json>` over
-the installed Haepari release controller. It is invoked only through explicit
-VM-test authority, never from ordinary `make test` or automatic Task/Epic
+the installed Haepari release controller (`HAEPARI_HOME`). It is invoked only through explicit
+VM-test or release-handler authority, never from ordinary `make test` or automatic Task/Epic
 checks, and the guest-side `make test-vm` gate above keeps its own contract
-unchanged. The wrapper refuses to run inside a managed guest context, never
-performs a VM power operation, and never installs a candidate on the host.
+unchanged when invoked directly or inside a held Job. Under TASK-090's
+policy-cutover candidate (see [Haepari VM operations](../../docs/ops/haepari-vm-verification.md);
+the pre-existing guest-side `make test-vm` release path stays operational until
+TASK-090 pilot acceptance completes), Aquarium-owned installation-dependent
+checks targeting the registered shared `utm-macos` VM acquire one outer-boundary
+managed Job on that controller and resource before guest mutation, while guest
+entrypoints (`make test-vm`, `tests/vm/recipes/guest_entry.sh`, and nested
+handler fixtures) run inside the held allocation without recursive resource
+acquisition. `Makefile` defines `override PYTHON := .venv/bin/python` when
+`.venv/bin/python` exists in the current working tree and `override PYTHON :=
+python3` otherwise, so passing `PYTHON=<path>` on the `make` command line is
+ignored. Callers in the primary checkout use `.venv/bin/python` automatically;
+callers in a clean disposable clone (where `.venv` is absent) and
+the nested `make aquarium-dev-build` in `tests/vm/host_bundle.py` resolve
+`python3` from `PATH`. The producer
+(`plugins/aquarium/tools/aquarium-dev/build_aquarium_artifact.py`) builds the
+marketplace tree from a clean clone of `AQUARIUM_VM_CANDIDATE_SHA` and returns
+`git_sha`, `development_version` `v<version>-dev.<sha12>` and `sha256` in its
+manifest, saved as `bundle/artifact-manifest.json`.
+Prepend the verified repository Python environment
+(`<repo-root>/.venv/bin`) to process-local `PATH` before invoking `make test-vm-host` or
+`<repo-root>/.venv/bin/python -B tests/vm/host_wrapper.py`. The wrapper refuses
+to run inside a managed guest context, never performs a VM power operation
+(Master alone operates `utmctl`), and never installs a candidate on the host.
 
 The wrapper persists every request key and exact spec in `RUN_DIR/run.json`
 before the first submission, submits each consumer-declared suite once as a
-`haepari.job/v2` Job, observes through native blocking `wait` and the blocking
+`haepari.job/v2` Job, observes through native blocking `wait` (`AQUARIUM_VM_WAIT_TIMEOUT`,
+integer seconds, default `900`, and `AQUARIUM_VM_WAIT_ROUNDS`, default `480`) and the blocking
 event path to `awaiting_manual`, and reconnects an existing Job from the saved
 run directory without creating a replacement Job. Terminal verdicts map to
 wrapper exits 0/1/3/4 with the native verdict cross-checked; a caller wait
 timeout reports PENDING with exit 5 and never cancels the Job; transport or
 storage uncertainty reports UNKNOWN while preserving the native exit; exit 2
 is classified by envelope code (`RESULT_UNAVAILABLE`, `CONFLICT`,
-`INVALID_REQUEST`) and kept distinct from exit-6 uncertainty. Each suite
+`INVALID_REQUEST`) and kept distinct from exit-6 uncertainty; GNU `make`
+collapses any non-zero recipe exit to `2` while captured stdout and the wrapper process exit preserve its exact disposition;
+`RUN_DIR/run.json` retains per-Job observations. Each suite
 result reports the native `workload_outcome`, `evidence_completeness`,
 `cleanup_outcome` and the recipe's `consumer_cleanup` separately; missing
 observations or failed consumer cleanup never produce PASS, and `SUITE=all`
-retains every Job result and reports skipped suites without aggregating
-partial runs. Suite phases are budgeted inside the registered resource-v2
+selects all nine suites alphabetically using each suite's first declared mode,
+without filtering by `MODE`; a nonzero result skips later suites. Select
+explicit suites for a passing batch and retain deliberate failure or unobserved
+cases separately. Suite phases are budgeted inside the registered resource-v2
 ceilings, each queue budget satisfies the queue-deadline rule for
 capacity-one resources that Haepari v0.1.0 documents in
 `docs/contracts/configuration.md` ("Queue deadlines for capacity-one
@@ -512,15 +539,19 @@ live under `artifacts/<path>` inside the export directory, the manifest's
 with matching digests, and the consumed suite result is
 `artifacts/results/<suite>/result.json`.
 
-The manual-hold operator run: when the Job reaches `awaiting_manual`, take
+The manual-hold operator run: `manual-hold` declares two manual scenarios
+(`fixture-check` and `discovery-check`) and five required outputs
+(`results/manual-hold/{result.json,inventories.json,smoke.json,consumer-cleanup.json,post-cleanup-inventory.json}`).
+When the Job reaches `awaiting_manual`, take
 the workspace root from the `manual_preparation_stopped` event's
 `workspace`. Enter `<workspace>/harness` and invoke
-`tests/vm/recipes/guest_entry.sh --suite manual-hold --phase
+`/bin/sh tests/vm/recipes/guest_entry.sh --suite manual-hold --phase
 consumer-cleanup` there with the saved spec's `workload.environment`, plus
 `HAEPARI_PARENT_CONTEXT` read from `../operator-parent-context.json`
 relative to `harness` (that is, `<workspace>/operator-parent-context.json`;
 mode 0600, written by the suite's setup, removed with the Job root, never
-a declared output). Stage the evidence, then run `manual complete`. Never
+a declared output). Stage the evidence, then run `haepari manual complete
+<job-id> --input <completion-json> --expected-revision <n> --json`. Never
 print the context value in logs or reports.
 
 The `release-acceptance` suite (J-RA) is the one uninterrupted

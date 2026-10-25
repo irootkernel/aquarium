@@ -222,6 +222,10 @@ Verify and complete:
 - [ ] Host stable Aquarium/tools/skills remain usable; runtime changes are confined to approved Haepari/test/own-detachment state.
 - [ ] All pilot criteria and required manual observations are satisfied. Prepare independent whole-Epic validation, Master's overall acceptance, canonical outcomes and this dossier's deletion without waiting for producer returns or shared-channel retirement.
 
+TASK-090 preparation (2026-10-26): the candidate aligns release policy, testing, the VM guide, installed release-handler/Haepari references, the tool catalog, specifications, architecture and the [operations runbook](../ops/haepari-vm-verification.md). The exact installed pilot, final sealed-profile pin, accepted adoption decision and Task completion remain pending. The current manual release path remains authoritative until pilot acceptance. The active dossier and Epic status remain unsettled until independent whole-Epic validation, reviewed closeout preparation and Master's actual overall acceptance.
+
+The scoped read-only legacy audit found that Aquarium's own enrollment record points to another checkout; the current checkout has no post-commit hook and `core.hooksPath` is unset. No `~/.aquarium-dev` state was changed. Detachment and shared retirement remain with EPIC-033 TASK-101 under the existing non-mutation boundary.
+
 ## Epic acceptance, handoff and dossier deletion
 
 - [ ] TASK-086 through TASK-090 meet their criteria, the exact installed pilot passes, required actual manual observations exist and the accepted policy cutover matches the tested candidate.

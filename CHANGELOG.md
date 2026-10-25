@@ -10,6 +10,10 @@ This file records concise shipped outcomes and the planned next stable release.
 - Add the project-owned Haepari VM suites through `make test-vm-host`, submitting the sealed bundle's consumer-declared suites as managed Jobs over the installed release controller with truthful per-suite verdict, consumer-cleanup and export-receipt reporting.
 - Add the managed release-acceptance VM suite: one uninterrupted manual Job carrying installed-skill identity over the native scopes, the approval-based status-runtime update, the EPIC-024 startup smokes, fixed-name evidence archives and verified consumer cleanup before manual completion.
 
+### Changed
+
+- Prepare Aquarium's installed-VM release-policy cutover and [Haepari VM operations runbook](docs/ops/haepari-vm-verification.md) around `make test-vm-host` (`SUITE=release-acceptance`, `MODE=manual`) with shared outer-boundary VM occupancy, `PATH`/`.venv` interpreter selection, and pre-submission versus returned Job/result handoffs, while keeping `release-handler` generic across target repository policies and preserving the guest-side `make test-vm` path until `TASK-090` pilot acceptance completes.
+
 ## v0.1.21 - 2026-10-21
 
 ### Added
