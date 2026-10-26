@@ -14,6 +14,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Prepare Aquarium's installed-VM release-policy cutover and [Haepari VM operations runbook](docs/ops/haepari-vm-verification.md) around `make test-vm-host` (`SUITE=release-acceptance`, `MODE=manual`) with shared outer-boundary VM occupancy, `PATH`/`.venv` interpreter selection, and pre-submission versus returned Job/result handoffs, while keeping `release-handler` generic across target repository policies and preserving the guest-side `make test-vm` path until `TASK-090` pilot acceptance completes.
 
+### Fixed
+
+- Require prospective approval for terminal no-op setup status recording, including the concrete scoped record and its ledger and language-observation effects.
+
 ## v0.1.21 - 2026-10-21
 
 ### Added

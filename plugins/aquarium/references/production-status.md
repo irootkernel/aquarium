@@ -482,14 +482,27 @@ The setup workflows exchange an `aquarium-production-status-attempt/v1`
 document with exactly `schema`, `attempt_id`, `expected_row_revision`,
 `git_root`, `project`, `started_at`, and `scope`. `dev-setup` creates it after
 canonical repository identity and scope are frozen and immediately before its
-first persistent setup mutation. A terminal no-op execution creates it before
-settlement and is recorded like any other terminal setup. Diagnosis, planning,
-and work stopped before execution approval do not create an attempt.
+first approved persistent setup mutation. A terminal no-op execution creates it
+before settlement and is recorded like any other terminal setup, subject to the
+same approval boundary.
+
+Terminal no-op recording is a persistent action on `~/.aquarium/status.yaml`.
+Before creating its attempt or submitting `record`, present the concrete scoped
+settlement (`project`, `scope`, proposed `outcome` and settled component
+observations), the bundled recorder command, and the target ledger row and
+language-observation effects. Obtain approval covering that recording, carrying
+forward current approval when it already covers the action. Setup intent,
+component selection, another attempt's approval, and the requirement to record a
+terminal result do not authorize an unseen record. After approval, re-read the
+current row revision and create the attempt. Diagnosis, planning, and work stopped
+before execution approval do not create an attempt or write a record.
 
 For a bundle run, this direct-run creation rule is replaced by bundle ownership:
 `dev-setup-bundle` creates one attempt per ready target after manifest
 revalidation and identity freeze, then passes it unchanged to
-`dev-setup`. Once `dev-setup` is entered, it exclusively owns completion and
+`dev-setup`. That supplied identity is not recording approval: preserve it
+unchanged and use authority carried by the approved bundle handoff when it covers
+the recording. Once `dev-setup` is entered, it exclusively owns completion and
 recording. It returns `aquarium-production-status-recording-result/v1` with
 exactly `schema`, `status`, `attempt_id`, `receipt`, `retry_request`, and
 `problem_code`. `status` is `recorded`, `replayed`, `failed`, or

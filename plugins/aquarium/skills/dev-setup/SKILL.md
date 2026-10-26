@@ -66,11 +66,17 @@ label. General setup without an explicit component limit is full; every
 explicit component request or continuation is scoped to its sorted unique
 component names, including `agents-guidance` when guidance is selected. Then
 create one `aquarium-production-status-attempt/v1` immediately before
-the first persistent setup mutation. For a terminal no-op, create it immediately
-before settlement. Read the current row revision through `aquarium-status show
---format json`; a missing row uses revision 0. A bundle-supplied attempt replaces
-local creation and must be preserved byte-for-byte. Diagnosis, Plan Mode, and
-work stopped before execution approval do not create an attempt.
+the first approved persistent setup mutation. Terminal no-op recording is also a
+persistent action. Before creating its attempt or writing its record, show the
+concrete scoped settlement and bundled recorder command, disclose the ledger and
+language-observation effects, and obtain approval covering that recording. Carry
+forward existing approval when it covers the recording; setup intent, component
+scope, or approval for another attempt does not accept an unseen record. Re-read the
+current row revision through `aquarium-status show --format json` after approval;
+a missing row uses revision 0. A bundle-supplied attempt replaces local creation
+and must be preserved byte-for-byte; use recording authority from its approved
+handoff when that authority covers the action. Diagnosis, Plan Mode, and work
+stopped before execution approval do not create an attempt.
 
 Herdr readiness diagnosis creates no terminal attempt. For an approved migration
 write, record managed Procedure changes under `podway` and root guidance changes
@@ -111,6 +117,10 @@ A `dev-setup-bundle` handoff must name the requesting skill, manifest digest, ta
 Reject unsupported tools, malformed or conflicting MCP scope lists, invalid Sorage slugs or artist values, or any request to read the manifest. Preserve per-target partial failure and return `ready`, `partial`, `failed`, `declined`, or `skipped` with an exact resumption request.
 
 ## Record Terminal Setup
+
+The recording requirement does not authorize the write. Keep a terminal no-op
+settlement pending until approval covers its record; create no attempt while
+waiting for that approval.
 
 For every attempt created here or supplied by the bundle, submit exactly one
 `aquarium-production-status-record/v1` after the target reaches `ready`,
