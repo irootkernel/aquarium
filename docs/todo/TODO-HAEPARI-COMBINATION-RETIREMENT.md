@@ -10,11 +10,21 @@ This plan claims no runtime result and authorizes no implementation, host deleti
 
 Qualify the full accepted tool/skill combination and its upgrade path, then retire common aquarium-dev source and approved host state after all consumers detach. Individual pilot and producer acceptance remain their original facts; they do not prove the combined candidate. Final verification does not reopen earlier Epics or transfer unfinished criteria from them.
 
+Simplify the Haepari integration accumulated across those Epics before final acceptance. Master's requested scope includes unnecessary Aquarium layers, validators and harness code. EPIC-019's functional qualification does not establish that its implementation is minimal. This is planned repository work; immediate Haepari use and host activation are not part of this planning change.
+
 Read EPIC-019, EPIC-031 and EPIC-032 Canonical Outcomes plus current [tool specifications](../specs/tool-integrations.md), [tool catalog](../../plugins/aquarium/references/tool-catalog.md#haepari), [Haepari integration](../../plugins/aquarium/references/haepari-integration.md), [workflow specifications](../specs/workflow-contracts.md), [architecture](../architecture/README.md), [TESTING.md](../../TESTING.md), [tests/vm/README.md](../../tests/vm/README.md), and [Haepari VM operations](../ops/haepari-vm-verification.md). Require the promoted adapter/profile/cleanup contract, release-role assessment contract, accepted per-producer identity/verification/detachment inventory and the durable Sorage producer coordination protocol. Earlier temporary dossiers must already have been settled and deleted at their own closeout; no input depends on retaining them.
 
 Use exact intended binary/plugin/skill/configuration identities and meaningful prior accepted state in the VM. Exercise the original Job/result/consumer-cleanup handoff through release roles, shared-VM contention and Mulgae's released native advisory lock. Preserve native role concurrency and distinguish advisory expiry from managed unknown-execution containment. Use guest-only stub fault cases by default; real installed and any authorized live observations keep their own evidence. Consumer recipes verify their starting state and cleanup; Haepari never resets the VM or rolls back arbitrary guest changes. Missing required manual or combined evidence prevents acceptance.
 
 The [legacy development dossier](TODO-AQUARIUM-DEV.md) remains a historical/migration reference for this Epic alone as its active retirement consumer. EPIC-002's Cancelled lifecycle and completed history stay intact. Shared source cleanup, host detachment/deletion, publication and host activation are separate effects.
+
+## Haepari integration simplification
+
+TASK-100 inventories the Aquarium adapters, profile and inventory validators, guest recipes, simulation fixtures and related tests accumulated during adoption and rollout. Identify their actual consumers and requirements, overlap with Haepari's native contract, and code that can be deleted or simplified. Record the before/after decisions in the existing Task report; this work needs no new verifier, registry or harness to judge its own size.
+
+TASK-101 implements those reductions. Remove redundant wrappers, duplicated native policy checks, unused abstractions and speculative failure handling without a supported requirement. Delete obsolete fixtures and tests with their removed behavior; simplify tests that only restate implementation details. Keep the Aquarium-specific installation assertions, result handoff, guest-state protection and consumer cleanup that actual callers need. Haepari retains ownership of admission, scheduling, Job recovery, collection, owned Job cleanup and advisory locks. A line-count reduction alone does not demonstrate a simpler design.
+
+TASK-102 verifies the resulting exact candidate through the supported native path. Cover installation and upgrade, shared occupancy, replay/reconnect, cancellation, truthful incomplete results and both native and consumer cleanup, plus the released review-lock behavior. Reuse existing entrypoints and focused behavioral tests. Candidate-installation checks run in the dedicated UTM VM. Preserve earlier evidence and its limits; changed code requires applicable new observations. Update canonical owners and remove obsolete instructions and test selections with the implementation.
 
 ## Combination failures and correction ownership
 
@@ -41,6 +51,7 @@ Preserve `~/.aquarium/`, production tool state, active Codex homes, unrelated sk
 Implement and document:
 
 - [ ] Reconcile all nine accepted returns with the same frozen Haepari contract and current Aquarium candidate, rejecting inconsistent identities, missing skill sources and stale profiles.
+- [ ] Identify redundant Aquarium layers, validators, harness code and tests across the completed adoption and rollout. Give each retained component a concrete consumer requirement and identify deletions or simplifications for TASK-101.
 - [ ] Resolve combined-candidate failures through this Epic's owned-correction or durable producer correction protocol. Accept exact corrected returns and re-verify affected cases; do not reopen earlier Epics or remove shared legacy infrastructure while qualification remains incomplete.
 - [ ] Build the complete intended installation combination and verify clean install plus previous accepted combination to target migration, including fresh-session skills, representative inter-tool behavior and declared consumer cleanup.
 - [ ] Verify prescribed update ordering and busy-work handling without rerunning every producer's internal unit suite as a substitute for integration.
@@ -56,11 +67,13 @@ Verify and complete:
 - [ ] Required per-product and whole-combination observations are complete; known findings and manual gaps are settled under the actual release policy.
 - [ ] Inventory shows every former producer detached or demonstrably not enrolled, making shared retirement safe to plan.
 
-### TASK-101: Retire shared legacy source and approved host state
+### TASK-101: Retire shared legacy source and simplify Haepari integration
 
 Implement and document:
 
 - [ ] Remove the obsolete manager/launcher/MCP declaration, development-channel setup/status consumers, producer-only helpers and obsolete tests only after confirming no remaining consumer needs them.
+- [ ] Remove or simplify the unnecessary Haepari integration layers, validators and harness identified by TASK-100, along with obsolete fixtures and tests. Delegate native responsibilities to Haepari and retain only code justified by current Aquarium consumers and requirements.
+- [ ] Record the actual removals, remaining responsibilities and maintenance impact. Update affected contracts, runbooks and test entrypoints; do not replace removed machinery with another general verification framework or waive required behavior checks.
 - [ ] Reconcile `aquarium-status` and existing persisted metadata without deleting production ledger/history. Preserve ordinary setup skills and the new Haepari integration.
 - [ ] Reconcile the documentation inspector with the roadmap's permitted `Cancelled` epic lifecycle, using objective lifecycle tests. The planning inspection reported `epic_lifecycle_unverifiable` for EPIC-002. Do not label withdrawn work as completed to avoid the warning.
 - [ ] Prepare and execute the separately approved host detachment/removal plan: fresh references/processes/leases/services, exact owned markers, preservation decision, launcher/runtime and final `~/.aquarium-dev/` removal.
@@ -73,6 +86,7 @@ Do not:
 Verify and complete:
 
 - [ ] Current non-historical source and live launch paths no longer depend on aquarium-dev. Historical release notes and completed task evidence remain intact.
+- [ ] The implemented integration reductions match the reviewed decisions, retained components have concrete consumers, and focused behavior checks pass. TASK-102 still qualifies the final installed combination.
 - [ ] A new host development operation uses stable releases and Haepari VM tests without missing-command errors, implicit reinstalls or modification of protected production state.
 
 ### TASK-102: Cold-validate, promote documentation and close out
@@ -80,6 +94,7 @@ Verify and complete:
 Implement and document:
 
 - [ ] Perform fresh end-to-end acceptance of project-owned tests, fixed profiles, skills, meaningful migration, ordered producer returns, final host state and Haepari recovery independence. Include managed VM occupancy and the released native Mulgae advisory lock; preserve incomplete reviews, grant disposition, cleanup and assessment outcomes as separate facts.
+- [ ] Qualify the exact simplified implementation after TASK-101, including required failure and recovery paths. Confirm that removed layers, validators and harness code are absent and remaining behavior works without a replacement framework; earlier candidate results alone do not qualify the changed implementation.
 - [ ] Reconcile all remaining durable statements with their canonical owners and collect Master's actual overall acceptance and required hands-on results.
 - [ ] Promote durable setup/integration requirements to tool specifications/catalog and operations, release ownership to workflow specifications/architecture and native skill references, and scenarios/limits to testing authorities. Consume EPIC-019, EPIC-031 and EPIC-032 Canonical Outcomes without reopening their completed work or restoring their deleted dossiers.
 - [ ] Settle this dossier and the retained legacy dossier after promoting required history and retirement outcomes. Inventory and replace EPIC-002's historical Detailed SOT and all remaining references without changing its Cancelled status or completed Task history. Replace EPIC-033's Detailed SOT with valid Canonical Outcomes, update documentation/TODO indexes and delete only under the approved final-closeout envelope; do not archive duplicates or recreate earlier Epics' dossiers.
@@ -96,6 +111,7 @@ Verify and complete:
 ## Epic completion and dossier deletion
 
 - [ ] The exact combined installed and upgrade/regression candidate passes required cases with actual manual observations, independent whole-Epic validation and truthful native/consumer cleanup results.
+- [ ] Unnecessary Haepari integration layers, validators and harness code are removed or simplified, with documented retention reasons and passing observations for the final implementation. No new verification framework is introduced for this cleanup.
 - [ ] All actual legacy consumers are detached or proved absent before common removal. Approved source and host cleanup are independently verified; production state, supported tools and historical acceptance remain intact.
 - [ ] Durable combined compatibility, recovery, retirement and verification limits are promoted to their canonical owners. Earlier Epic outcomes remain usable without temporary dossiers or local runtime reports.
 - [ ] Obtain Master's actual overall acceptance and replace EPIC-033's Detailed SOT with valid Canonical Outcomes. Settle the legacy dossier's historical roadmap references, including EPIC-002, without relabeling withdrawn work as completed.

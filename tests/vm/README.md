@@ -451,15 +451,23 @@ unproven, and later same-Job terminal/export evidence does not rewrite it.
 Haepari's advertised `qualified_backends` array remains empty, separately from
 the observed producer and Aquarium combination evidence.
 
+The original pre-implementation local baseline receipt is unavailable. A later
+supported-toolchain rerun of the starting HEAD passed; it cannot establish when
+the original baseline ran.
+
 Earlier TASK-088/089 results retain their original artifact and harness scope.
 They are not substituted for this final-harness pilot. Every later release
 retains its exact-candidate verification and distribution-identity obligations.
 Host activation, publication, producer rollout and shared legacy retirement
 remain separate. [ADR-0010](../../docs/architecture-decision-records/0010-haepari-vm-verification-and-advisory-locks.md)
-records the adopted architecture; the active Epic dossier remains until actual
-overall acceptance and closeout.
+records the adopted architecture.
 
 ## Host-submitted managed VM suites
+
+VM and SSH registration stay with the native operator. A new or replaced
+Haepari binary may need macOS Automation approval for UTM access; registration
+can return `PREREQUISITE_UNAVAILABLE` until the operator approves access. Report
+that gap and follow the authorized native registration plan after approval.
 
 TASK-088 adds the separate host wrapper `make test-vm-host HAEPARI=<absolute
 CLI> RESOURCE=<registered id> MODE=auto|manual RUN_DIR=<private physical

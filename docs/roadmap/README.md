@@ -49,7 +49,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-016 | Add selectable workflow review routing | Completed |
 | EPIC-017 | Add Web Pro Review | Planned |
 | EPIC-018 | Correct Aquarium workflow and integration contracts | In Progress |
-| EPIC-019 | Adopt Haepari VM verification for Aquarium | In Progress |
+| EPIC-019 | Adopt Haepari VM verification for Aquarium | Completed |
 | EPIC-020 | Migrate Orca review to Herdr | Completed |
 | EPIC-021 | Adopt supervised agent orchestration | Completed |
 | EPIC-022 | Adopt Podway v0.2.14 | Completed |
@@ -481,15 +481,15 @@ claim that a sent request or an Aquarium-side correction fixes a producer.
 
 ## EPIC-019: Adopt Haepari VM verification for Aquarium
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
-Adopt published Haepari v0.1.0 CLI/skill setup and qualify Aquarium's own managed persistent-VM adapter. TASK-086 through TASK-090 cover exact artifact/backend acceptance, shared controller/resource identity, sealed input/profile/skill and migration contracts, one uninterrupted manual release Job, same-Job recovery and both consumer and native cleanup. External leases and VM power/reset remain excluded. Planning changes no runtime or installed acceptance.
+Published Haepari v0.1.0 CLI/skill setup and Aquarium's managed persistent-VM adapter are qualified. TASK-086 through TASK-090 established exact artifact/backend acceptance, shared controller/resource identity, sealed input/profile/skill and migration contracts, one uninterrupted manual release Job, same-Job recovery and both consumer and native cleanup. External leases and VM power/reset remain excluded.
 
-This Epic ends with the exact installed Aquarium pilot, accepted release-VM policy cutover, promoted canonical contracts, independent validation, Master's overall acceptance and its own dossier settlement. TASK-089 prepares the adapter; TASK-090 updates release/testing/VM/reference owners before verifying the cutover candidate. Wrapper availability alone is not adoption. Preserve current policy until accepted cutover and preserve EPIC-002 history and shared legacy infrastructure still needed by other consumers. Host activation and publication retain separate authority.
+TASK-090 qualified the exact installed release-VM policy cutover and promoted the adapter, profiles, recovery and release handoff into the Canonical Outcomes below. The VM guide preserves the observed qualification limits. EPIC-002 history and shared legacy infrastructure remain available to their remaining consumers. Host activation and publication retain separate authority.
 
 The complete delivery order is EPIC-019 -> EPIC-031 -> EPIC-032 -> EPIC-033. Each Epic completes its own acceptance and documentation closeout before the next starts; Task IDs remain stable. EPIC-019 does not wait for release-role implementation, producer returns, Mulgae integration or common retirement. Promote reusable outcomes before deleting its sole-consumer dossier.
 
-**Detailed SOT:** [Aquarium Haepari adoption dossier](../todo/TODO-HAEPARI-VM-ADOPTION.md)
+**Canonical Outcomes:** [Haepari integration and setup](../specs/tool-integrations.md#haepari), [adapter interfaces](../specs/local-interfaces.md#inspectors-and-helpers), [release workflow](../specs/workflow-contracts.md#release-a-stable-version), [verification architecture](../architecture/verification.md), [ADR-0010](../architecture-decision-records/0010-haepari-vm-verification-and-advisory-locks.md), [VM operations](../ops/haepari-vm-verification.md), [testing authority](../../TESTING.md#host-submitted-managed-vm-suites), and [qualified profiles and pilot limits](../../tests/vm/README.md#qualified-pilot-and-limits).
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
@@ -982,6 +982,8 @@ Close this Epic after independent validation of all nine returns, promotion of a
 
 Begin after completed EPIC-032 and consume EPIC-019, EPIC-031 and EPIC-032 Canonical Outcomes. Existing TASK-100 through TASK-102 own exact whole-combination installed/upgrade verification, shared VM and released Mulgae lock behavior, original Job evidence consumed by release assessments, common legacy source cleanup and separately approved final host removal. Individual producer passes do not establish combined compatibility. TASK-100 owns bounded Aquarium corrections and producer correction requests through EPIC-032's promoted Sorage protocol, accepts corrected returns and re-verifies the exact combination. Preserve native outcomes, manual gaps, meaningful prior state and production/history boundaries.
 
+This Epic also simplifies the accumulated Haepari integration before final acceptance. TASK-100 identifies redundant Aquarium layers, validators and harness code; TASK-101 removes or simplifies them and their obsolete tests, retaining code with a concrete consumer requirement. Delegate native Job and lock behavior to Haepari. TASK-102 verifies the final simplified combination, including recovery and cleanup; earlier passes do not qualify changed code. This planned work does not claim that EPIC-019 already delivered a minimal implementation or authorize immediate host activation.
+
 The retained legacy development dossier is this Epic's historical/migration reference. After required independent validation and Master's actual overall acceptance, promote durable outcomes, replace this Epic's Detailed SOT and resolve EPIC-002's historical dossier references without changing its Cancelled status or completed history. Delete only this Epic's dossier and the settled legacy dossier under their exact closeout envelope. Earlier Epic dossiers are already settled; no earlier Epic is reopened merely to finish this sequence.
 
 **Detailed SOT:** [Combination qualification and retirement dossier](../todo/TODO-HAEPARI-COMBINATION-RETIREMENT.md)
@@ -990,6 +992,6 @@ The [legacy dossier](../todo/TODO-AQUARIUM-DEV.md) remains a retirement referenc
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-100 | Reconcile the full combination and upgrade path | Verify the exact installed/upgrade combination, shared VM, native review lock, release assessment inputs and cleanup; own bounded integration corrections and accept corrected producer returns before re-verification. | Planned | EPIC-032; TASK-099 |
-| TASK-101 | Retire shared legacy source and approved host state | Remove obsolete common CLI/MCP/setup/status dependencies, preserve production history, and perform separately approved final host/root cleanup after all consumers detach. | Planned | TASK-100 |
-| TASK-102 | Cold-validate, promote documentation and close out | Verify managed VM and released Mulgae lock behavior, obtain actual overall/manual acceptance, promote durable setup/release/recovery contracts, replace temporary coordination links and settle dossiers at last-consumer closeout. | Planned | TASK-101 |
+| TASK-100 | Reconcile the full combination and upgrade path | Verify the exact installed/upgrade combination, shared VM, native review lock, release assessment inputs and cleanup; identify redundant integration layers and own bounded corrections and corrected producer returns. | Planned | EPIC-032; TASK-099 |
+| TASK-101 | Retire shared legacy source and simplify Haepari integration | Remove redundant layers, validators, harness code and obsolete tests alongside common legacy dependencies; preserve required behavior and production history, with final host cleanup separately approved. | Planned | TASK-100 |
+| TASK-102 | Cold-validate, promote documentation and close out | Verify the final simplified combination's managed VM, released Mulgae lock, recovery and cleanup behavior; obtain actual overall/manual acceptance, promote durable contracts and settle dossiers at last-consumer closeout. | Planned | TASK-101 |
