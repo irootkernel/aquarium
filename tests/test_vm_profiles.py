@@ -713,7 +713,7 @@ class CommittedCandidateProfileTest(unittest.TestCase):
 
     COMMITTED_CANDIDATE = (
         PROFILES_ROOT / "proposed-candidate-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0"
-        "-podway-0.2.14-dev-db132845624c.json"
+        "-podway-0.2.14-dev-406f84cc58d1.json"
     )
 
     @classmethod
@@ -733,7 +733,15 @@ class CommittedCandidateProfileTest(unittest.TestCase):
         )
         self.assertEqual(
             plugin["sealed_artifact"]["development_version"],
-            "v0.1.21-dev.db132845624c",
+            "v0.1.21-dev.406f84cc58d1",
+        )
+        self.assertEqual(
+            plugin["sealed_artifact"]["tree_sha256"],
+            "899a278e42b9d5f35436bc076f1a5bffbd986855aaa3e0f702980f57d5e0d69a",
+        )
+        self.assertEqual(
+            hashlib.sha256(self.COMMITTED_CANDIDATE.read_bytes()).hexdigest(),
+            "09dcb4f1c599be77207d6af18752652d52bb6b0f2ecce28578ede6dbf9aa5d1c",
         )
         self.assertNotIn("provenance", plugin)
 
@@ -765,7 +773,7 @@ class CommittedCandidateProfileTest(unittest.TestCase):
 
 
 class FullCombinationProfilePairTest(unittest.TestCase):
-    """TASK-089's full-combination stable and candidate pair."""
+    """The qualified full-combination stable and candidate pair."""
 
     STABLE = (
         PROFILES_ROOT / "proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0"
@@ -773,9 +781,9 @@ class FullCombinationProfilePairTest(unittest.TestCase):
     )
     CANDIDATE = (
         PROFILES_ROOT / "proposed-candidate-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0"
-        "-podway-0.2.14-dev-db132845624c.json"
+        "-podway-0.2.14-dev-406f84cc58d1.json"
     )
-    TESTED_SHA12 = "db132845624c"
+    TESTED_SHA12 = "406f84cc58d1"
 
     @classmethod
     def setUpClass(cls):
@@ -842,7 +850,7 @@ class FullCombinationProfilePairTest(unittest.TestCase):
         )
         self.assertEqual(
             plugin["skill_tree"]["sha256"],
-            "e3c96ffef369010dc5407deba3f3cc2774e7a7907832b12d79a698fda92ddfa1",
+            "0029069ef46483360e048d8816b2c0d8543deba14e4d3b9e3d94e078c54a1581",
         )
         prior = [
             state

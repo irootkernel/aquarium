@@ -379,8 +379,8 @@ passed migration.
 | `proposed-candidate-haepari-0.1.0-aquarium-0.1.22.json` | `9d922eb4ee160dbdd5f966387b5754c0e5a5b54798cfba1195ee333ec05a25b4` | superseded |
 | `proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0.json` | `f128ff2c42c27b30d3265c17a3985de0850c1ab8457b23a2d9464647ccd7628b` | superseded |
 | `proposed-candidate-haepari-0.1.0-aquarium-0.1.21-dev-b7c227e301a9.json` | `14618806de8ea6c0eb445a6098132f48b262e159f08747fa91fc287c2eff8edf` | superseded |
-| `proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14.json` | `04df16201e8cff0f89d50082d162dcab00049da42aa9c1c5960e7f9a4e3e8b31` | proposed |
-| `proposed-candidate-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14-dev-db132845624c.json` | `c207740e0ac7be677d628fc84803e55fbf173c16a7ac94953cf2c1a42a5f2fca` | proposed |
+| `proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14.json` | `04df16201e8cff0f89d50082d162dcab00049da42aa9c1c5960e7f9a4e3e8b31` | verified prior baseline |
+| `proposed-candidate-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14-dev-406f84cc58d1.json` | `09dcb4f1c599be77207d6af18752652d52bb6b0f2ecce28578ede6dbf9aa5d1c` | qualified installed pilot |
 
 The two TASK-087 profiles are superseded because the host Codex release moved
 to 0.164.0 after they were written and the candidate version axis is now bound
@@ -399,10 +399,65 @@ through `host_bundle.py`: the plugin's own skill-tree pin is recomputed from
 the sealed artifact's skills tree, unchanged dependency pins stay verbatim,
 the `prior_version` edge is the stable plugin release, and the profile id
 derives from the stable id. It is committed with bytes equal to the sealed
-copy at Task closeout; a fresh bundle built from the explicit tested SHA
-`db13284` seals both files byte for byte. Committing the pair commits bytes
-already fixed at sealing. Promoting fixed bytes is not permission to
+copy at Task closeout. TASK-090 promotes the exact candidate profile sealed
+for the tested commit `406f84cc58d14fbe827f81b138f6ffa268c9239b`; the earlier
+TASK-089 seal remains historical evidence in Git. The profile identifier keeps
+its generated `proposed-` prefix even after the pilot qualifies its bytes.
+Committing the pair commits bytes already fixed at sealing. Promoting fixed bytes is not permission to
 alter pins afterward.
+
+## Qualified pilot and limits
+
+TASK-090 qualified the installed policy-cutover artifact from commit
+`406f84cc58d14fbe827f81b138f6ffa268c9239b`, development version
+`v0.1.21-dev.406f84cc58d1`, using the full-combination profile above. Its sealed
+plugin tree digest is
+`899a278e42b9d5f35436bc076f1a5bffbd986855aaa3e0f702980f57d5e0d69a`;
+the executable recipe tree digest is
+`d375867673cc39f16f13f1ab095a690ef3f5fb35efcff259cfe7f723fa3cd9d7`.
+The completion change promotes those exact profile bytes and noninstalled
+documentation/test pins. It changes neither the qualified plugin payload nor
+the executable recipes and does not claim installation of a newly stamped
+completion artifact.
+
+| Observation | Actual outcome and boundary |
+| --- | --- |
+| Baseline, install, upgrade and bounded migration failure/recovery | PASS with complete evidence and verified cleanup. Install restores product absence; the upgrade cases restore their declared prior stable. |
+| Guard failure | Intentional FAIL, declared leftover and failed consumer cleanup; native Job cleanup is verified separately. |
+| Manual hold and real observer disconnect | The same Job survives the owned host-observer signal. A deliberately unobserved discovery scenario yields INCOMPLETE; verified restoration does not turn that result into PASS. |
+| Two callers, replay and queue handoff | Identical saved admission returns the same Job; a changed survivor receives native CONFLICT. Queued cancellation reaches CANCELLED, capacity-one ownership does not overlap, and a successor baseline passes. |
+| Terminal cancellation | The settled PASS and its exported bytes remain unchanged after the native cancellation disposition. |
+| Matched collection control/fault | Both Jobs intentionally remain INCOMPLETE. Withholding only the owned post-cleanup inventory adds a native required-output gap and removes exactly that artifact. The fault's delivered consumer cleanup stays unverified despite separately retained physical-restoration proof. A later baseline verifies its own starting state. |
+| Uninterrupted release acceptance | All ten scenarios PASS in one manual Job, with complete evidence, verified native and consumer cleanup, all 44 exported files verified and all 376 members of nine bounded archives checked. |
+| Actual stopped VM | Doctor reports a readiness gap; one admitted Job waits under `vm_not_started`, then the same Job returns PASS after Master's restart. A ready-VM admit-despite-gap attempt is refused without admission. |
+
+The release transaction observes the pre-model ChatGPT identity, released setup
+and meaningful prior state, the actual approved runtime update, prospective
+approval before each terminal no-op setup record, upgrade/startup behavior and
+stale-skill duplication followed by restoration across all inventoried scopes.
+The Task startup needed external fixture-operator staging of its three declared
+files after the native sandbox refused index writes. Genuine assignment-coverage
+and report-selection corrections preserved original failures; a new native
+cumulative handoff distinguished earlier implementation from current checks.
+The Epic startup needed no external staging. These assisted observations retain
+their actual scope.
+
+The Task stopped at `document`; the Epic stopped at `record-evidence`. Their
+remaining global criteria and selected technical review stayed unfinished.
+Neither startup PASS establishes full fixture completion, future release-role
+behavior or Master's overall EPIC-019 acceptance. A recurring observer teardown
+`EPERM` produced an earlier `UNKNOWN` reconnect observation; its cause remains
+unproven, and later same-Job terminal/export evidence does not rewrite it.
+Haepari's advertised `qualified_backends` array remains empty, separately from
+the observed producer and Aquarium combination evidence.
+
+Earlier TASK-088/089 results retain their original artifact and harness scope.
+They are not substituted for this final-harness pilot. Every later release
+retains its exact-candidate verification and distribution-identity obligations.
+Host activation, publication, producer rollout and shared legacy retirement
+remain separate. [ADR-0010](../../docs/architecture-decision-records/0010-haepari-vm-verification-and-advisory-locks.md)
+records the adopted architecture; the active Epic dossier remains until actual
+overall acceptance and closeout.
 
 ## Host-submitted managed VM suites
 
@@ -412,10 +467,9 @@ CLI> RESOURCE=<registered id> MODE=auto|manual RUN_DIR=<private physical
 the installed Haepari release controller (`HAEPARI_HOME`). It is invoked only through explicit
 VM-test or release-handler authority, never from ordinary `make test` or automatic Task/Epic
 checks, and the guest-side `make test-vm` gate above keeps its own contract
-unchanged when invoked directly or inside a held Job. Under TASK-090's
-policy-cutover candidate (see [Haepari VM operations](../../docs/ops/haepari-vm-verification.md);
-the pre-existing guest-side `make test-vm` release path stays operational until
-TASK-090 pilot acceptance completes), Aquarium-owned installation-dependent
+unchanged when invoked directly or inside a held Job. Under the managed policy qualified by TASK-090
+(see [Haepari VM operations](../../docs/ops/haepari-vm-verification.md)),
+Aquarium-owned installation-dependent
 checks targeting the registered shared `utm-macos` VM acquire one outer-boundary
 managed Job on that controller and resource before guest mutation, while guest
 entrypoints (`make test-vm`, `tests/vm/recipes/guest_entry.sh`, and nested

@@ -8,9 +8,10 @@ restoration. The persistent guest is not reset.
 The [consumer contract](../../plugins/aquarium/references/haepari-integration.md),
 [VM guide](../../tests/vm/README.md) and [testing authority](../../TESTING.md)
 own the interfaces and scenarios. [Release policy](../../AGENTS.md#release-policy)
-selects the release gate. Its TASK-090 cutover candidate uses one managed
-`release-acceptance` Job; the existing manual release path stays authoritative
-until the exact installed pilot is accepted.
+selects one managed `release-acceptance` Job. TASK-090 qualified this path
+against its exact installed candidate; the [VM guide](../../tests/vm/README.md#qualified-pilot-and-limits)
+records the observed outcomes and limits. Each release retains its own
+exact-candidate verification and distribution identity requirements.
 
 ## Prerequisites and diagnosis
 
@@ -137,6 +138,12 @@ result decisions, ten required scenarios, nine bounded evidence archives and
 abort/recovery checkpoints. One Job holds the VM throughout. The guest-side
 `make test-vm` and nested handler fixtures run inside that allocation.
 
+Read each setup proposal before replying. A terminal no-op status record still
+needs approval covering its concrete scope, recorder command and ledger/language
+effects before attempt creation or recording. Carry an existing covering approval
+forward; a required record alone supplies no authority. The startup smokes stop
+after first-member delivery and semantic progression, with later criteria open.
+
 Stage original case evidence, finish and verify consumer cleanup, then construct
 the suite's closed `haepari.manual-result/v1` input from actual observations.
 J-RA's `complete-template` phase creates it only after the required checks.
@@ -193,6 +200,15 @@ reuse. Manual-hold repairs only its declared guard-probe leftover, and J-RA's
 machine preparation handles its documented abort residues. Neither grants general
 foreign-state cleanup. Haepari never restores arbitrary guest installations or
 excludes direct callers that bypass its selected installation/resource.
+
+The pilot also observed conservative wrapper `UNKNOWN` after
+`OBSERVER_TEARDOWN_INCOMPLETE` reported local observer teardown `EPERM`. Preserve
+that uncertain observation and reconcile the original native Job and owned
+observer state. Reconnect with the original run directory to obtain its actual
+terminal disposition and verified export; neither a new Job nor an assumed
+successful teardown resolves the gap. The cause remains unproven. Separately,
+private physical-restoration proof cannot replace missing required output in a
+native export; delivered consumer cleanup remains unverified in that case.
 
 Aquarium's own legacy-enrollment audit and TASK-101 retain the separate retirement
 boundary. This runbook authorizes no `~/.aquarium-dev` mutation, host candidate

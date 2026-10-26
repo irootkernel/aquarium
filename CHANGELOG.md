@@ -12,7 +12,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
-- Prepare Aquarium's installed-VM release-policy cutover and [Haepari VM operations runbook](docs/ops/haepari-vm-verification.md) around `make test-vm-host` (`SUITE=release-acceptance`, `MODE=manual`) with shared outer-boundary VM occupancy, `PATH`/`.venv` interpreter selection, and pre-submission versus returned Job/result handoffs, while keeping `release-handler` generic across target repository policies and preserving the guest-side `make test-vm` path until `TASK-090` pilot acceptance completes.
+- Qualify Aquarium's installed-VM release-policy cutover and [Haepari VM operations runbook](docs/ops/haepari-vm-verification.md) around `make test-vm-host` (`SUITE=release-acceptance`, `MODE=manual`) with shared outer-boundary VM occupancy, `PATH`/`.venv` interpreter selection, and pre-submission versus returned Job/result handoffs, while keeping `release-handler` generic across target repository policies and running the guest-side `make test-vm` gate inside that held Job. The exact installed pilot covers upgrade, startup, contention, recovery and cleanup; publication and host activation retain separate authority.
 
 ### Fixed
 

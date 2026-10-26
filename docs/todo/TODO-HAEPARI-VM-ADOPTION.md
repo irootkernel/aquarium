@@ -2,9 +2,9 @@
 
 ## Authority and implementation state
 
-The sole consumer is `EPIC-019`, with `TASK-086` through `TASK-090`. The [canonical roadmap](../roadmap/README.md) owns identity, ordering, dependencies and lifecycle. This dossier owns the pilot's detailed scope and acceptance. Checklists describe planned evidence, not completed implementation.
+The sole consumer is `EPIC-019`, with `TASK-086` through `TASK-090`. The [canonical roadmap](../roadmap/README.md) owns identity, ordering, dependencies and lifecycle. This dossier owns the pilot's detailed scope and acceptance. Checked items below identify observed delivery; unchecked items retain pending acceptance or closeout obligations.
 
-Haepari [v0.1.0](https://github.com/irootkernel/haepari/releases/tag/v0.1.0) is published with release tag commit `800da97b7e2ca84a15d4ee5921702ec57bbc7d61`. Its release notes identify the validated archive build as `fc3b975f8a99cacb96aecc988d3adbc04dda7309`; the tag adds release metadata. It provides managed local/UTM Jobs and advisory named locks. Publication removes the old unreleased-product prerequisite; TASK-086 verified and accepted the exact archive, paired skill, capabilities and backend evidence, recorded in its checklist below. This dossier records no installation or later-task result.
+Haepari [v0.1.0](https://github.com/irootkernel/haepari/releases/tag/v0.1.0) is published with release tag commit `800da97b7e2ca84a15d4ee5921702ec57bbc7d61`. Its release notes identify the validated archive build as `fc3b975f8a99cacb96aecc988d3adbc04dda7309`; the tag adds release metadata. It provides managed local/UTM Jobs and advisory named locks. Publication removes the old unreleased-product prerequisite; TASK-086 verified and accepted the exact archive, paired skill, capabilities and backend evidence, recorded in its checklist below. The task outcomes below distinguish artifact acceptance from later installed observations.
 
 Planning authorization covered documents only; execution follows the approved EPIC-019 workflow authorization and the host's installed release. It authorizes no producer edits, broker messages, host cleanup or publication; staging and local commits stay with the Coordinator under the repository commit gate; candidate installation and installation-dependent checks run only in the dedicated UTM VM.
 
@@ -208,21 +208,25 @@ These observations establish startup and same-Job continuation within the declar
 
 Implement and document:
 
-- [ ] Run the Aquarium-only pilot with install/migration/regression/manual evidence, disconnect/cancel/collection/cleanup failures and a successor that verifies its own starting state. Use two disposable project callers against the same capacity-one VM resource and observe actual non-overlap and handoff.
-- [ ] Prepare the canonical release-policy cutover in this Task's candidate and verify that exact installed candidate under explicit pilot authority before accepting adoption. Update `AGENTS.md`, `TESTING.md`, the VM guide and affected release-handler references together; preserve EPIC-024's historical manual results. Do not leave this operational policy change until TASK-102 or accept the cutover from wrapper availability alone.
-- [ ] Promote the accepted setup, adapter, profile, skill/migration and recovery contracts with their actual verification limits. Supply the stable Haepari identity and reusable request/completion templates as canonical handoff inputs; EPIC-032 TASK-091 freezes producer packets after EPIC-031 closes.
-- [ ] Inspect Aquarium's own legacy enrollment and, after explicit approval, detach its owned hook and development use while retaining shared infrastructure required by later producers.
+- [x] Run the Aquarium-only pilot with install/migration/regression/manual evidence, disconnect/cancel/collection/cleanup failures and a successor that verifies its own starting state. Use two disposable project callers against the same capacity-one VM resource and observe actual non-overlap and handoff.
+- [x] Prepare the canonical release-policy cutover in this Task's candidate and verify that exact installed candidate under explicit pilot authority before accepting adoption. Update `AGENTS.md`, `TESTING.md`, the VM guide and affected release-handler references together; preserve EPIC-024's historical manual results. Do not leave this operational policy change until TASK-102 or accept the cutover from wrapper availability alone.
+- [x] Promote the accepted setup, adapter, profile, skill/migration and recovery contracts with their actual verification limits. Supply the stable Haepari identity and reusable request/completion templates as canonical handoff inputs; EPIC-032 TASK-091 freezes producer packets after EPIC-031 closes.
+- [x] Inspect Aquarium's own legacy enrollment and preserve shared infrastructure required by later producers. Detachment requires explicit approval; the read-only audit below routes the outstanding enrollment to TASK-101 under the existing non-mutation restriction.
 
 Do not:
 
-- [ ] Do not dispatch external projects before pilot acceptance, delete the shared manager, treat mock-only UTM evidence as sufficient, or label an acknowledgement as producer completion.
+- [x] Do not dispatch external projects before pilot acceptance, delete the shared manager, treat mock-only UTM evidence as sufficient, or label an acknowledgement as producer completion.
 
 Verify and complete:
 
-- [ ] Host stable Aquarium/tools/skills remain usable; runtime changes are confined to approved Haepari/test/own-detachment state.
-- [ ] All pilot criteria and required manual observations are satisfied. Prepare independent whole-Epic validation, Master's overall acceptance, canonical outcomes and this dossier's deletion without waiting for producer returns or shared-channel retirement.
+- [x] Host stable Aquarium/tools/skills remain usable; runtime changes are confined to approved Haepari/test/own-detachment state.
+- [x] All pilot criteria and required manual observations are satisfied. Prepare independent whole-Epic validation, Master's overall acceptance, canonical outcomes and this dossier's deletion without waiting for producer returns or shared-channel retirement.
 
-TASK-090 preparation (2026-10-26): the candidate aligns release policy, testing, the VM guide, installed release-handler/Haepari references, the tool catalog, specifications, architecture and the [operations runbook](../ops/haepari-vm-verification.md). The exact installed pilot, final sealed-profile pin, accepted adoption decision and Task completion remain pending. The current manual release path remains authoritative until pilot acceptance. The active dossier and Epic status remain unsettled until independent whole-Epic validation, reviewed closeout preparation and Master's actual overall acceptance.
+TASK-090 installed verification outcome (2026-10-26): the exact committed policy-cutover artifact passed the complete final-harness pilot. One uninterrupted release-acceptance Job passed all ten scenarios, with complete evidence and verified consumer and native cleanup. All 44 exported files and all 376 members of nine bounded archives were checked. The [VM guide](../../tests/vm/README.md#qualified-pilot-and-limits) records the fixed candidate/profile identities, designed negative outcomes, actual contention and same-Job recovery, matched collection fault and successor baseline, genuine stopped-VM continuation, and observed limitations. The committed profile is byte-exact to that live seal; later noninstalled documentation and test-pin changes do not claim another installed artifact.
+
+The corrected installed setup requested prospective approval before each terminal no-op record. Task startup preserved and corrected actual assignment/report gaps, with external operator staging after a native sandbox index refusal. The partial Task and Epic smokes retained their unfulfilled global criteria and actual semantic boundaries. A recurring earlier observer-teardown uncertainty remains separately recorded with an unproven cause. These outcomes neither establish full fixture lifecycles nor erase the original pre-implementation baseline-receipt gap recorded above.
+
+The completion candidate promotes the decision through [ADR-0010](../architecture-decision-records/0010-haepari-vm-verification-and-advisory-locks.md), release/testing policy, specifications, architecture and the [operations runbook](../ops/haepari-vm-verification.md). Exact final local checks, independent Task-completion assessments and Coordinator-delegated acceptance precede the Task completion commit. The active dossier and Epic status remain unsettled until independent whole-Epic validation, reviewed closeout preparation and Master's actual overall acceptance.
 
 The scoped read-only legacy audit found that Aquarium's own enrollment record points to another checkout; the current checkout has no post-commit hook and `core.hooksPath` is unset. No `~/.aquarium-dev` state was changed. Detachment and shared retirement remain with EPIC-033 TASK-101 under the existing non-mutation boundary.
 

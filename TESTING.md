@@ -152,9 +152,7 @@ request. Keep it outside ordinary `make test` and automatic Task/Epic checks.
 For EPIC-024, operate the dedicated UTM VM manually and verify Codex only;
 Haepari is not a prerequisite for that historical guest gate, which runs in the
 guest using candidate-matched test sources while the host release workflow
-guides preparation and collects the result. Under EPIC-019's policy-cutover
-candidate (TASK-090; the pre-existing guest-side `make test-vm` path remains
-operational until TASK-090 pilot acceptance completes), Aquarium's release gate
+guides preparation and collects the result. Under the managed policy cutover qualified by TASK-090, Aquarium's release gate
 submits one outer-boundary manual Job (`make test-vm-host` with
 `SUITE=release-acceptance` and `MODE=manual`) over the shared release controller
 (`HAEPARI_HOME`) and registered `utm-macos` resource, invoking the reusable

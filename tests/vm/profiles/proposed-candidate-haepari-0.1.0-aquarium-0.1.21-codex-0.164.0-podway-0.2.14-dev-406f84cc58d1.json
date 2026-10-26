@@ -1,6 +1,6 @@
 {
   "schema": "aquarium.vm-profile/v1",
-  "profile_id": "proposed-candidate-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14-dev-db132845624c",
+  "profile_id": "proposed-candidate-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14-dev-406f84cc58d1",
   "profile_revision": 1,
   "owner": "aquarium",
   "platform": "darwin/arm64",
@@ -51,16 +51,16 @@
       "name": "aquarium-plugin",
       "role": "guest",
       "installation_scope": "codex-plugin-cache",
-      "version": "0.1.21-dev.db132845624c",
+      "version": "0.1.21-dev.406f84cc58d1",
       "skill_tree": {
         "name": "aquarium",
         "installation_scope": "codex-plugin-cache",
-        "sha256": "e3c96ffef369010dc5407deba3f3cc2774e7a7907832b12d79a698fda92ddfa1",
+        "sha256": "0029069ef46483360e048d8816b2c0d8543deba14e4d3b9e3d94e078c54a1581",
         "digest_algorithm": "aquarium-skill-tree-sha256/v1"
       },
       "sealed_artifact": {
-        "tree_sha256": "0c28a123953277f4f25ce8652fa42fe6a3fd695150d3b6e759733fb44ce592f4",
-        "development_version": "v0.1.21-dev.db132845624c"
+        "tree_sha256": "899a278e42b9d5f35436bc076f1a5bffbd986855aaa3e0f702980f57d5e0d69a",
+        "development_version": "v0.1.21-dev.406f84cc58d1"
       }
     },
     {

@@ -497,7 +497,7 @@ The complete delivery order is EPIC-019 -> EPIC-031 -> EPIC-032 -> EPIC-033. Eac
 | TASK-087 | Register Haepari and define fixed test profiles | Add formal CLI/skill setup and native readiness, shared installation/resource selection, fixed combinations, whole-tree checks and starting/cleanup inventories without a shadow registry. | Completed | TASK-086 |
 | TASK-088 | Implement Aquarium's project-owned VM suites | Add a host wrapper over EPIC-024's guest scenarios, sealed inputs and same-Job recovery; stage evidence and finish consumer cleanup before manual completion or automatic workload exit within one release transaction. | Completed | TASK-087; EPIC-024 |
 | TASK-089 | Integrate skills, hands-on and the VM release gate | Connect managed occupancy and original candidate-bound results to the release VM path for the existing release workflow and the later EPIC-031 handoff, preserving offline QA, full/light rules and native authority. | Completed | TASK-088 |
-| TASK-090 | Qualify the Aquarium pilot and prepare Epic closeout | Accept the exact installed policy-cutover candidate; promote adapter/profile/recovery outcomes, prepare whole-Epic acceptance and dossier settlement, and preserve remaining shared legacy consumers. | In Progress | TASK-089 |
+| TASK-090 | Qualify the Aquarium pilot and prepare Epic closeout | Accept the exact installed policy-cutover candidate; promote adapter/profile/recovery outcomes, prepare whole-Epic acceptance and dossier settlement, and preserve remaining shared legacy consumers. | Completed | TASK-089 |
 
 ## EPIC-020: Migrate Orca review to Herdr
 
