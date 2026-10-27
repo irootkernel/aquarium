@@ -104,6 +104,32 @@ def run(
     }
     if phase not in targets:
         raise lib.RecipeError(f"unknown podway-upgrade phase: {phase}")
+    if phase == "consumer-cleanup":
+        aggregate_path = results / "inventories.json"
+        aggregate = lib.read_json_safe(aggregate_path)
+        if not aggregate_path.exists():
+            aggregate = {
+                "schema": "aquarium.vm-suite-inventories/v1",
+                "inventories": {},
+            }
+        if (
+            not isinstance(aggregate, dict)
+            or aggregate.get("schema") != "aquarium.vm-suite-inventories/v1"
+            or not isinstance(aggregate.get("inventories"), dict)
+            or not isinstance(aggregate.get("failed_cleanup_observations", []), list)
+        ):
+            # The driver's generic error handler rewrites malformed aggregates.
+            result = {
+                "schema": lib.RESULT_SCHEMA,
+                "suite": "podway-upgrade",
+                "outcome": "incomplete",
+                "consumer_cleanup": "unverified",
+                "candidate": context.inputs["candidate"],
+                "problem": "preserve the invalid cleanup history",
+            }
+            lib.write_document(results / "result.json", result)
+            print(json.dumps(result))
+            return lib.OUTCOME_EXITS["incomplete"]
     target = results / targets[phase]
     if target.exists():
         raise lib.RecipeError(
@@ -156,9 +182,23 @@ def run(
             raise lib.RecipeError(
                 "restoration lacks the original candidate-bound baseline", "incomplete"
             )
-        problems = lib.postcondition_violations(
+
+        def codex_cache(scope: str, path: str) -> bool:
+            prefix = ".codex/plugins/cache/"
+            if scope != "codex-plugin-cache" or not path.startswith(prefix):
+                return False
+            marketplace = path.removeprefix(prefix).split("/", 1)[0]
+            return bool(marketplace) and marketplace != context.marketplace
+
+        all_changes = lib.postcondition_violations(
             before["inventory"], inventory, lambda _scope, _path: False
         )
+        problems = lib.postcondition_violations(
+            before["inventory"], inventory, codex_cache
+        )
+        document["codex_owned_cache_observations"] = [
+            change for change in all_changes if change not in set(problems)
+        ]
         if restoration_state(before.get("skills", {})) != current_state:
             problems.append(
                 "effective configuration, native registration or Codex rules differ from the baseline"
@@ -168,6 +208,10 @@ def run(
             if before["tools"].get(key) != tools.get(key):
                 problems.append(f"restored {key} differs from the baseline")
         if problems:
+            aggregate.setdefault("failed_cleanup_observations", []).append(
+                {**document, "violations": problems}
+            )
+            lib.write_document(aggregate_path, aggregate)
             raise lib.RecipeError(
                 "consumer restoration failed: " + "; ".join(problems), "incomplete"
             )

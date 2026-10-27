@@ -14,6 +14,9 @@ discard, managed updates, native Codex calls and restoration inventory. Each
 installation or destructive proposal still needs its applicable approval. The
 operator records actual decisions and completes the native Job. Master controls VM power.
 Keep one Haepari Job from the original baseline through verified restoration.
+Preserve the original Aquarium plugin cache, registration, configuration and rules
+before installation. Native plugin replacement can evict the released cache;
+restore its exact recorded bytes from the backup or a digest-matched sealed source.
 Use the existing guest identity and approved provider access; never copy host
 credentials or initialize another shared controller.
 
@@ -110,10 +113,16 @@ After the approved consumer restoration, run:
 The phase requires the original baseline and candidate captures, checks the
 restored CLI and complete skill identities, compares native marketplace and plugin
 registration, effective configuration and Codex rules, and checks every
-inventoried consumer byte and executable bit against the baseline. A difference refuses
-completion; it never normalizes or overwrites the guest. Its PASS covers
+inventoried Aquarium consumer byte and executable bit against the baseline.
+As in release acceptance, changes in other marketplaces' plugin caches are
+recorded as Codex-owned observations. Native discovery can refresh those caches;
+the suite does not roll them back. Aquarium's marketplace, shared skills, rules,
+configuration and registration must still match. An owned difference refuses
+completion; the phase never normalizes or overwrites the guest. Its PASS covers
 consumer restoration only. Functional outcomes remain owned by the seven
 native manual scenario results and Master's actual functional observations.
+Failed cleanup observations, including strict violations and Codex-owned cache
+changes, remain in the collected `inventories.json` across a repair and retry.
 
 Stage original scenario evidence and the declared output files through native
 Haepari collection. Complete the existing manual Job with its current revision,

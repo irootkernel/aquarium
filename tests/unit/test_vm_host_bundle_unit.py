@@ -208,7 +208,9 @@ class HostBundleTest(unittest.TestCase):
         )
 
     def test_all_keeps_podway_upgrade_profile_separate(self):
-        release = Path(tempfile.mkdtemp(prefix="release-input-", dir=self.work))
+        release = Path(
+            tempfile.mkdtemp(prefix="release-input-", dir=self.work)
+        ).resolve()
         hashes = {}
         for relative in self.module.PODWAY_RELEASE_FILES:
             path = release / relative
