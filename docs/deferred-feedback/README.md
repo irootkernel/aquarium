@@ -15,3 +15,11 @@ This index owns small actionable findings intentionally postponed from current w
 - Owner: the VM host wrapper (`tests/vm/host_wrapper.py`).
 - Reason for deferral: the children are read-only and self-ending, change no state, and do not affect results or reconnect.
 - Re-entry condition: resolve before the wrapper is used unattended in automation that sends signals, by extending the observer's bounded teardown to those children.
+
+## DF-004: Reconcile descriptive Goal-version guidance
+
+- Actionable issue: descriptive Goal-version labels disagree. Epic Handler and Procedure node contracts name version 35, while Epic orchestration names version 37.
+- Sources: [Epic Handler](../../plugins/aquarium/skills/epic-handler/SKILL.md), [Procedure node contracts](../../plugins/aquarium/references/procedure-node-contracts.md#goal-procedure), and [Epic orchestration](../../plugins/aquarium/references/epic-orchestration.md#ordinary-execution-and-handler-roles).
+- Owner: workflow documentation for Epic Handler, Procedure node contracts and Epic orchestration.
+- Reason for deferral: the descriptive drift predates TASK-148 and is independent of its collaboration instructions and display-role changes; no current TASK-148 runtime behavior defect is established by this wording mismatch.
+- Re-entry condition: at the next maintenance of Goal-version guidance, reconcile the descriptions against current canonical Procedure sources while preserving admitted historical definitions, source identities and snapshots.

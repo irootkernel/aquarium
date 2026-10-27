@@ -2794,7 +2794,12 @@ def test_approved_sources_continue_actual_pending_roles_without_future_report(
         if role != "coordinator":
             dispatched = result["dispatch"]
             assert dispatched["role"] == role
-            assert dispatched["work"] == original["work"]
+            expected_work = copy.deepcopy(original["work"])
+            if family == "goal":
+                expected_work["display_role"] = (
+                    "Epic Evaluator" if role == "evaluator" else "Task Operator"
+                )
+            assert dispatched["work"] == expected_work
             sources = dispatched["target"]["applied_source_context"]["sources"]
             assert {row["path"] for row in sources} == {"roadmap.md", "dossier.md"}
             assert all(

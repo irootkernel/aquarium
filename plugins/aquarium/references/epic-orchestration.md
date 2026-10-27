@@ -2,16 +2,20 @@
 
 The [adaptive execution contract](adaptive-execution.md) now selects adequate definitions and resolves current mapped placements for this family. The canonical node tables below retain their original meanings; adaptive dispatch uses actual role, capability, evidence and approved due ownership rather than node spelling. Original review, independent assessment, effect and acceptance boundaries remain due.
 
-## Ordinary execution and Evaluator continuity
+## Ordinary execution and Handler roles
 
 Goal version `37` uses ordinary Actions under the [v3 contract](ordinary-agent-orchestration.md).
 Task phase skills do not govern goal-centered Epic work. Supply original criteria,
 current candidate, evidence, checks, exact authority and available public handles.
-Retain one logical native Evaluator across members, corrections, internal validation
-and closeout when supported. Reconnect known handles or restore original criteria
-and current evidence to a fresh independent Evaluator; private executor history and
-configuration digests are not prerequisites. Settle a mutating Executor before
-replacement. Independent cold validation uses a fresh Evaluator.
+For `epic-handler`, call the existing Worker/Executor a Task Operator and its
+single logical Evaluator the Epic Evaluator (EE). Retain that EE across members,
+corrections, internal validation and closeout when supported. Reconnect known
+handles or restore original criteria and current evidence to a fresh independent
+EE; private executor history and configuration digests are not prerequisites.
+Settle a mutating Task Operator before replacement. No Task Evaluator, Squad
+panel or required Support Operator is added. Other callers retain their existing
+role contracts; independent cold validation uses a fresh Evaluator. Machine
+roles, ordinary report IDs and admitted snapshots remain unchanged.
 
 Admitted formal snapshots keep the [v1 contract](formal-agent-orchestration-v1.md)
 and genuine receipts. Ordinary execution cannot reinterpret them.
@@ -27,7 +31,7 @@ guides.
 
 ## Goal checkpoints
 
-| Work or Coordinator evidence record | Independent Evaluator | Coordinator progression |
+| Work or Coordinator evidence record | Independent assessment (EE for Handler) | Coordinator progression |
 | --- | --- | --- |
 | `complete-work` | `evaluator-work` | `decide-work-assessment` then `record-evidence` |
 | `record-evidence` | `evaluator-goal-evidence` | `decide-goal-evidence-assessment` then `confirm-completion-assessment` |
@@ -35,9 +39,10 @@ guides.
 | `prepare-stopped-goal-assessment` | `evaluator-stopped-goal` | Applicability confirmation then `assess-stopped-goal` |
 
 The Coordinator keeps all Decisions and simple operational, approval, Low and
-closeout records. Executor Actions deliver `aquarium.executor-handoff/v3` candidates; final assembly
-records the Coordinator candidate-evidence index;
-Evaluator Actions deliver `aquarium.evaluator-assessment/v3` reports with complete
+closeout records. Machine-role `executor` Actions deliver
+`aquarium.executor-handoff/v3` candidates; final assembly records the Coordinator
+candidate-evidence index. Machine-role `evaluator` Actions deliver
+`aquarium.evaluator-assessment/v3` reports with complete
 original criterion rows. Record actual Executor delivery and applicable independent Evaluator assessments
 with current fences. Keep Decisions, technical operation admission and acceptance
 with the Coordinator. Final assembly is bookkeeping: reuse a complete existing final

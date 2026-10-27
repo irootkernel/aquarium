@@ -25,10 +25,10 @@ For cross-repository work, carry the exact repository and commit identity. A dow
 
 ## Extend Squad collaboration
 
-Use the reserved [collaboration contract](../../plugins/aquarium/references/epic-squad-collaboration.md)
-and the shared [dossier](../todo/TODO-EPIC-COLLABORATION.md) when implementing
-Squad. Keep its first assessments, permitted local closures and current evidence
-composition separate from additional technical-review operations. Extend actual
+Use the [collaboration contract](../../plugins/aquarium/references/epic-squad-collaboration.md),
+[native instructions](../../plugins/aquarium/references/epic-squad-native.md) and
+shared [dossier](../todo/TODO-EPIC-COLLABORATION.md) when implementing Squad. Keep
+its first assessments, permitted local closures and current evidence composition separate from additional technical-review operations. Extend actual
 owner admission, qualified definitions and commit/recovery consumers together;
 do not present a Handler handoff or provider waiver as Squad evidence. Preserve
 existing binding identities, machine roles and immutable snapshots. Verify changed

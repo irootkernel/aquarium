@@ -24,7 +24,7 @@ unimplemented and a later task is assigned to ship or revise the same contract.
 - [Development channel](development-channel.md) specifies producer, enrollment, publication, and inherited-environment launcher behavior.
 - [Production setup status](production-status.md) links to the shipped authority for the user-global setup ledger, reporter, recorder, retention, and installation contracts.
 - [Workflow review routing](review-routing.md) defines the shipped selection, recovery, evidence, and waiver contract for Mulgae, Herdr, Subagent Review, and coordinator-waived review in Task, Epic, and validation workflows.
-- [Supervised agent orchestration](agent-orchestration.md) catalogs ordinary v3 roles, reports and recovery, preserves formal v1 mappings and qualification, and links the reserved Squad collaboration contract; distribution and repository activation remain separate.
+- [Supervised agent orchestration](agent-orchestration.md) catalogs ordinary v3 roles, reports and recovery, preserves formal v1 mappings and qualification, and links native Squad collaboration instructions pending delivery integration; distribution and repository activation remain separate.
 
 ## Adaptive Procedures
 

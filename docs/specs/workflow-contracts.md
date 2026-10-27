@@ -46,6 +46,11 @@ A completed Task review records its optional backend check separately from revie
 
 On an `execute` entry, `epic-handler` checks the execution SOT before creating an Epic session. When an ordinary feature epic needs a dossier or has an unresolved semantic owner, it continues into `new-feature` in the same conversation for the same roadmap epic. That design uses its own Podway Design session and separate execution, diff, and commit approvals. An explicit dossier-waiver request follows the existing composite-SOT flow only when the semantic requirements are complete. After design delivery, start `epic-handler` in a new conversation against the current roadmap and approved, applied documents; require a commit only when repository policy requires one. Plan-only and plan-handoff entries report the design continuation without starting it.
 
+`epic-handler` uses Task Operators for its existing Worker/Executor assignments
+and one continuous Epic Evaluator for its existing logical Evaluator. It adds no
+Task Evaluator, Squad panel or required Support Operator; machine roles, report
+IDs, permissions and admitted snapshots remain unchanged.
+
 `epic-handler` builds a dependency DAG from the canonical roadmap, resolves pre-epic and external prerequisites by exact revision, and completes Tasks in dependency and roadmap order. One approved execution envelope delegates exact member-Task and owned-correction acceptance, with distinct grants for member completion commits, verified correction groups, and a final closeout commit conditional on actual user acceptance. Each Task proceeds through implementation, verification, review, delegated candidate acceptance, and one isolated `task-commit` handoff without a user-review pause. Acceptance covers lifecycle, record, and exact release-note decisions. Changed candidates need fresh acceptance and affected evidence; consumed grants cannot authorize another commit.
 
 Each member task uses one `aquarium-goal-v2` session, decides whether the current evidence is clean, blocking, Low-only, or inconsistent, and records any durable hardening deferral only on the supported Low-only route before goal assessment. After all member tasks are terminal, the handler replaces the disposed final task session with `aquarium-validation-v2`, audits the latest committed epic from scratch, remediates gaps by canonical owner, and converges under the same three-work-unit plus one-remediation-confirmation boundary.
@@ -63,6 +68,23 @@ candidate. Acceptance enables the conditional closeout commit without another
 permission question. Requested changes return to the owning work and affected
 validation while preserving review budgets. The handler never calls the independent
 `epic-validator` implicitly. Progress reports do not pause execution for approval.
+
+## Native Squad collaboration source
+
+The [epic-squad entrypoint](../../plugins/aquarium/skills/epic-squad/SKILL.md) and
+[native coordination instructions](../../plugins/aquarium/references/epic-squad-native.md)
+define directly managed Epic/Task Evaluators, new Task teams, risk-based first
+plan/result panels, both plan scopes before implementation, settled Writer
+transfers and scoped correction/evidence reuse. Independent first assessments
+and nonconflicting required checks use the same frozen completion candidate.
+The Coordinator personally reviews the product and owns exact acceptance and
+commits. Optional Support Operators supply facts and assigned execution only.
+
+Delivery remains blocked pending Squad owner admission, qualified execution and
+commit consumption in TASK-149 and integration/recovery in TASK-150. Explicit
+CLI/model roles remain unavailable until EPIC-028; omission selects native
+configuration without a Herdr prerequisite. Source instructions establish no
+installed observation, and existing Handler/Validator behavior remains intact.
 
 ## Cold-Validate a Completed Epic
 

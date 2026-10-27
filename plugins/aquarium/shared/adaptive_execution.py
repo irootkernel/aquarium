@@ -518,6 +518,13 @@ def execution_context(
     dispatched["instructions"] += (
         "\nRead the complete selected native evidence and original sources. Follow this exact active operation and load each named installed leaf skill completely. Return actual evidence; do not advance Podway or grant approval."
     )
+    if entrypoint == "epic-handler":
+        dispatched["work"]["display_role"] = (
+            "Epic Evaluator" if declaration["role"] == "evaluator" else "Task Operator"
+        )
+        dispatched["instructions"] += (
+            "\nUse work.display_role in current human-facing reports. Task Operator and Epic Evaluator name this Handler's existing executor and single retained evaluator; they add no roles, permissions or checkpoints. Preserve machine roles and report schemas."
+        )
     if binding["family"] == "design":
         dispatched["target"]["design_context"] = copy.deepcopy(result["design"])
         dispatched["authority"]["excluded"] += [

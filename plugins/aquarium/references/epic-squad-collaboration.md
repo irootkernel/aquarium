@@ -2,12 +2,12 @@
 
 ## Status and authority
 
-This is the reserved, unimplemented contract for explicitly invoked
-`aquarium:epic-squad`. TASK-147 defines the collaboration and native-readiness
-requirements. TASK-148 implements the entrypoint and assignments; TASK-149
-connects qualified definitions, admission and commit consumers; TASK-150 completes
-integration and recovery; TASK-151 verifies installed native delivery. An
-entrypoint, parsed profile or launched agent alone does not enable delivery.
+The [epic-squad entrypoint](../skills/epic-squad/SKILL.md) and
+[native coordination instructions](epic-squad-native.md) define the native
+collaboration assignments. Delivery activation remains blocked until TASK-149
+connects qualified definitions, admission, assessment and commit consumers and
+TASK-150 completes integration and recovery. TASK-151 verifies installed native
+delivery. Entrypoint discovery or agent launch alone does not enable delivery.
 Herdr and mixed role execution remain unavailable until their execution, commit
 and recovery integration under EPIC-028 is complete.
 

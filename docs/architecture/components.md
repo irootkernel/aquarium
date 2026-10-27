@@ -26,13 +26,15 @@ The skill entrypoints form four kinds of component:
 
 `task-commit` permits implicit workflow invocation. `herdr-review` may also be selected from an explicit natural-language request that names both the review target and reviewer. `dev-setup` may be selected from an explicit natural-language repository setup request, including Sorage Project registration or binding, and stays within the requested component scope. All other entrypoints require their skill name or an authorized parent-workflow handoff.
 
-## Reserved Squad component boundary
+## Native Squad instruction boundary
 
-The [Squad collaboration contract](../../plugins/aquarium/references/epic-squad-collaboration.md)
-defines an unimplemented collaboration workflow. Aquarium owns role assignments,
-assessment joins and semantic decisions; the native harness owns agent lifecycle
+The [Squad entrypoint](../../plugins/aquarium/skills/epic-squad/SKILL.md) and
+[native coordination instructions](../../plugins/aquarium/references/epic-squad-native.md)
+apply the [collaboration contract](../../plugins/aquarium/references/epic-squad-collaboration.md).
+Aquarium owns role assignments, assessment joins and semantic decisions; the native harness owns agent lifecycle
 and Podway retains one current attempt with qualified source/binding identity.
-The planned owner is `aquarium:epic-squad`, independent of `epic-handler`.
+The required owner is `aquarium:epic-squad`, independent of `epic-handler`; its
+execution and commit admission remain pending integration.
 Existing ordinary report schemas and Handler/Validator responsibilities remain
 unchanged. New-owner execution, commit consumption and recovery must be connected
 before a discovered entrypoint can perform delivery.

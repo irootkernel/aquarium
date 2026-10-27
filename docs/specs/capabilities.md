@@ -28,6 +28,14 @@ These workflows use Ouroboros only for their explicitly approved discovery or QA
 | `$aquarium:task-commit` | Commit request or delegated handoff | Reconciles roadmap lifecycle, roadmap-scoped or native Git identity, exact staging scope, Lore context, Sanho checks, and one authorized commit | A commit never authorizes amend, push, merge, or release |
 | `$aquarium:epic-handler` | Explicit | Orders one epic's tasks, completes task goals and commits, then audits and hardens the integrated epic | External prerequisites require exact committed revisions and independent evidence |
 
+Native [Squad collaboration instructions](../../plugins/aquarium/skills/epic-squad/SKILL.md)
+define direct native roles, both plan scopes, independent first result intake
+and focused corrections. Delivery activation remains blocked until its execution,
+commit and recovery consumers are connected; explicit external role profiles and
+installed behavior remain unimplemented or unverified. Handler display roles are
+Task Operator and Epic Evaluator, preserving its existing single-Evaluator
+behavior and machine contracts.
+
 Task delivery uses at most three `work-unit` assessments followed by one `remediation-confirmation` under the initial workflow envelope. Epic delivery and cold validation use the same boundary. These limits are maxima, not quotas: clean evidence ends immediately, and eligible local corrections or Low dispositions proceed after current verification and zero unmet or unverified completion criteria. A `local-verified-fix` retains its effective priority and consumes no provider ordinal. Necessary further provider assessments use the remaining grant; an exhausted grant requires a fresh explicit user decision through the recorded user-direction gate.
 
 On an `execute` entry, `epic-handler` routes an ordinary feature epic with a required missing dossier or semantic owner to `new-feature` in the same conversation before creating an Epic session. Design finishes with an exact new-conversation `epic-handler` request once its approved documents and any required commit are complete. A user-requested dossier waiver retains the composite-SOT approval flow when the semantic requirements are complete.

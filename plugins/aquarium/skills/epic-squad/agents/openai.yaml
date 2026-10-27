@@ -1,0 +1,6 @@
+interface:
+  display_name: "Epic Squad"
+  short_description: "Coordinate native Epic and Task collaboration"
+  default_prompt: "Use $aquarium:epic-squad with one repository, canonical roadmap and Epic to execute, prepare a plan or handoff, or resume native collaboration. Honor its current integration readiness boundary."
+policy:
+  allow_implicit_invocation: false

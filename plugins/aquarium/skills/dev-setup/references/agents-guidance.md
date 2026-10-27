@@ -117,7 +117,7 @@ Include the common message rules in `Project Configuration > Commit Messages`: a
 Adapt names only when the installed skill namespace differs. Include only references for selected and installed skills:
 
 - Use `$aquarium:task-handler` for one named roadmap task.
-- Use `$aquarium:epic-handler` to implement one roadmap epic as sequential task goals.
+- Use `$aquarium:epic-handler` to implement one roadmap epic as sequential task goals with Task Operators and one continuous Epic Evaluator.
 - Use `$aquarium:epic-validator` to cold-validate and remediate one completed roadmap epic.
 - Use `$aquarium:new-project`, `$aquarium:new-feature`, or `$aquarium:refactor` for an explicitly requested Ouroboros-assisted project or epic design workflow. When an ordinary feature Epic needs a dossier or semantic clarification before execution, `$aquarium:epic-handler` may continue through `$aquarium:new-feature` in the same conversation. Design approvals still apply.
 - Use `$aquarium:war-room` to diagnose one difficult bug and stop at a task, epic, incomplete-investigation proposal, or evidence-backed no-work outcome.

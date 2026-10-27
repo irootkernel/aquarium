@@ -37,11 +37,14 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 - Use the [operations runbooks](ops/README.md) for environment setup, deployment, recurring failures, recovery, and other operator-facing first aid.
 - Use the [roadmap](roadmap/README.md) for delivery identity and state, its linked [TODO and work dossiers](todo/README.md) for detailed planned scope and acceptance, and [deferred feedback](deferred-feedback/README.md) for smaller postponed findings rather than adding future behavior to current specifications.
 
-## Planned Epic collaboration
+## Native Epic collaboration source
 
-The reserved [collaboration contract](../plugins/aquarium/references/epic-squad-collaboration.md)
-defines native readiness, shared roles, assessment and correction semantics.
-The entrypoint and its execution/commit/recovery integration remain unimplemented.
+The [Squad entrypoint](../plugins/aquarium/skills/epic-squad/SKILL.md),
+[native coordination instructions](../plugins/aquarium/references/epic-squad-native.md)
+and [collaboration contract](../plugins/aquarium/references/epic-squad-collaboration.md)
+define native role assignments, readiness, first assessments and correction
+semantics. Delivery remains blocked pending TASK-149 execution/commit integration
+and TASK-150 integration/recovery; installed behavior remains unverified.
 
 The [Epic collaboration dossier](todo/TODO-EPIC-COLLABORATION.md) defines planned
 `epic-squad` delivery of correct, maintainable, extensible and responsive software.
@@ -70,7 +73,9 @@ fixed quotas. EPIC-027 also aligns epic-handler's role wording: its single logic
 Evaluator is called Epic Evaluator and its Worker/Executor is called Task Operator.
 No separate Task Evaluator or mandatory Support Operator is added to Handler.
 Existing Handler/Validator behavior and machine report contracts remain unchanged.
-Both the Squad implementation and the handler terminology update remain planned.
+The Handler role wording is implemented in current source and mapped assignments.
+Squad collaboration instructions are present; its remaining integration and
+installed verification keep their later Task owners.
 
 ## Planned multi-host unification
 
