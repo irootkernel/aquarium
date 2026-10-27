@@ -1,4 +1,4 @@
-"""Verify one exact Podway v0.2.14 binary against Aquarium Procedures."""
+"""Verify one exact Podway v0.2.15 binary against Aquarium Procedures."""
 
 from __future__ import annotations
 
@@ -23,13 +23,13 @@ if RUNTIME_SPEC is None or RUNTIME_SPEC.loader is None:
 podway_runtime_qualification = importlib.util.module_from_spec(RUNTIME_SPEC)
 RUNTIME_SPEC.loader.exec_module(podway_runtime_qualification)
 
-EXPECTED_VERSION = "v0.2.14"
+EXPECTED_VERSION = "v0.2.15"
 OUTPUT_SCHEMA = "podway.output/v4"
 DIAGNOSTICS_SCHEMA = "podway.procedure-diagnostics-result/v1"
 SOURCE_SCHEMA = "podway.procedure-source-result/v1"
 PREVIEW_SCHEMA = "podway.procedure-preview-result/v1"
 DELEGATED_PREVIEW_SCHEMA = "podway.procedure-preview-result/v2"
-RESULT_SCHEMA = "aquarium-podway-compatibility.v9"
+RESULT_SCHEMA = "aquarium-podway-compatibility.v10"
 COMMAND_TIMEOUT_SECONDS = 30
 PROCEDURE_NAMES = (
     "aquarium-design-v2.yaml",
@@ -64,7 +64,7 @@ def exact_binary(value: str | None) -> Path:
 def run(binary: Path, arguments: list[str], repository: Path) -> tuple[int, Any]:
     try:
         completed = subprocess.run(
-            [str(binary), *arguments],
+            [str(binary), "--contract-generation", "2", *arguments],
             cwd=repository,
             capture_output=True,
             text=True,

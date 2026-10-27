@@ -41,9 +41,12 @@ class NativeClient:
             result = subprocess.run(
                 [
                     self.executable,
+                    "--contract-generation",
+                    "2",
                     *(
                         []
-                        if command == "version" or command.startswith("procedure.")
+                        if command in {"help", "version", "completions"}
+                        or command.startswith(("procedure.", "preset."))
                         else ["--worktree", str(self.repository)]
                     ),
                     "--json",
@@ -73,7 +76,14 @@ class NativeClient:
             raise BundleError(
                 code,
                 f"Native {command} refused",
-                {"native_exit_status": result.returncode},
+                {
+                    "native_exit_status": result.returncode,
+                    **{
+                        "native_" + field: envelope[field]
+                        for field in ("details", "recovery")
+                        if isinstance(envelope.get(field), dict)
+                    },
+                },
             )
         payload = envelope.get("result")
         if (
@@ -177,7 +187,7 @@ class NativeClient:
                 "contract_manifest_schema",
                 "contract_manifest_digest",
             }
-            or tuple(map(int, version.groups())) < (0, 2, 14)
+            or tuple(map(int, version.groups())) < (0, 2, 15)
             or identity.get("contract_manifest_schema") != "podway.contract-manifest/v2"
             or identity.get("product") != "podway"
             or identity.get("target") != "aarch64-apple-darwin"
@@ -206,7 +216,7 @@ class NativeClient:
             raise BundleError("runtime-unavailable", "Native workspace is unhealthy")
         try:
             observation = self.read(
-                ["observe"], "session.observe", {"podway.observation-result/v5"}
+                ["observe"], "session.observe", {"podway.observation-result/v6"}
             )
             status = observation.get("status")
             if (

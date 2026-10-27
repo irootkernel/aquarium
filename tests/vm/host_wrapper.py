@@ -1290,6 +1290,9 @@ def main() -> int:
                     else None
                 ),
                 queue_override=args.queue_seconds,
+                podway_release=Path(args.podway_release)
+                if getattr(args, "podway_release", None)
+                else None,
             )
             record = {
                 "schema": RUN_SCHEMA,
@@ -1408,6 +1411,7 @@ def parse_arguments() -> Any:
         if os.environ.get("AQUARIUM_VM_QUEUE_SECONDS")
         else None
     )
+    arguments.podway_release = os.environ.get("AQUARIUM_VM_PODWAY_RELEASE") or None
     arguments.candidate_sha = os.environ.get("AQUARIUM_VM_CANDIDATE_SHA") or None
     arguments.artifact_dir = os.environ.get("AQUARIUM_VM_ARTIFACT_DIR") or None
     arguments.artifact_manifest = (

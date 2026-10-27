@@ -29,6 +29,18 @@ PROFILES_ROOT = REPOSITORY / "tests/vm/profiles"
 STABLE_PROFILE_NAME = (
     "proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14.json"
 )
+PODWAY_RELEASE_COMMIT = "9a3f94c8752298f689832d05aa827a0f6496c1af"
+PODWAY_RELEASE_FILES = {
+    "bin/podway": "dece7fecd90eaf6130b330e2cb70e98532f3e6b73950227cc2ff935a8be8e5ae",
+    "archive.tar.gz": "05e596335ce891192b181ed89dce4fa9ca5dbbe19f4cc5745ea324439e4d2598",
+    "archive.tar.gz.sha256": "c4685838a95e25292fb3a7a616ab002a266d2b08b3b976319e56c40d1f412ccb",
+    "provenance.json": "2ac7871a9dec4903883d8eee0ff713ca7a3bc9ddee04714bfc881197e55787e1",
+    "skills/use-podway/SKILL.md": "e1b067e8e64dc1d297c295ad6f17d0db202c4763fb496dce0d98e13513710200",
+    "skills/use-podway/references/delegation.md": "ea314acd2179ede83c19e92df6cb4db20a2b55b7c7e8a1ded907dd9617be232d",
+    "skills/use-podway/references/lifecycle.md": "736998ddb12262da2a3fca6fc90c84001207623928c9e876908fa9b9e502f4f3",
+    "skills/use-podway/references/goal.md": "facf835661b08da9432d3d063df8be0c064d6899e132256b55ab6155a6bf41d9",
+    "skills/use-podway/references/recovery.md": "2bd11ec4d40fc94f6049d618aa774700589ead55d7a6e0e34d095073d2d403ed",
+}
 HARNESS_ROOT = REPOSITORY / "tests/vm/recipes"
 SUITES_PATH = REPOSITORY / "tests/vm/host_suites.json"
 INPUTS_SCHEMA = "aquarium.vm-host-inputs/v1"
@@ -293,8 +305,14 @@ def validate_suite(name: str, suite: Any, selected_files: set[str]) -> None:
     modes = suite.get("modes")
     if not isinstance(modes, list) or not modes or set(modes) - {"auto", "manual"}:
         raise BundleError(f"{label} modes must be auto/manual entries")
-    if suite.get("environment_profile") not in {"stable", "candidate"}:
-        raise BundleError(f"{label} environment_profile must be stable or candidate")
+    if suite.get("environment_profile") not in {
+        "stable",
+        "candidate",
+        "podway-candidate",
+    }:
+        raise BundleError(
+            f"{label} environment_profile must select a declared stable, candidate or podway-candidate profile"
+        )
     argv = suite.get("argv")
     if (
         not isinstance(argv, list)
@@ -500,6 +518,61 @@ def derive_candidate_profile(
     return profile
 
 
+def seal_podway_release(
+    source: Path, bundle: Path, profile: dict[str, Any]
+) -> tuple[list[str], dict[str, Any]]:
+    """Seal one qualified release without changing the historical baseline."""
+    if not source.is_absolute() or source.resolve() != source or not source.is_dir():
+        raise BundleError("Podway release input must be a physical absolute directory")
+    members = list(source.rglob("*"))
+    if any(
+        path.is_symlink() or not (path.is_file() or path.is_dir()) for path in members
+    ):
+        raise BundleError("Podway release input contains unsafe members")
+    files = {path.relative_to(source).as_posix() for path in members if path.is_file()}
+    if files != set(PODWAY_RELEASE_FILES):
+        raise BundleError(
+            "Podway release input must contain the exact archive, provenance, binary and complete skill tree"
+        )
+    for relative, expected in PODWAY_RELEASE_FILES.items():
+        if hashlib.sha256((source / relative).read_bytes()).hexdigest() != expected:
+            raise BundleError(f"Podway release input digest differs: {relative}")
+    prefix = "dependencies/podway-0.2.15"
+    copied = _copy_tree(source, bundle / prefix)
+    if set(copied) != set(PODWAY_RELEASE_FILES) or any(
+        hashlib.sha256((bundle / prefix / relative).read_bytes()).hexdigest()
+        != expected
+        for relative, expected in PODWAY_RELEASE_FILES.items()
+    ):
+        raise BundleError("Podway release input changed while sealing")
+    skill_digest = skill_tree_digest_from_directory(
+        bundle / prefix / "skills/use-podway"
+    )
+    components = {row["name"]: row for row in profile["components"]}
+    if not {"podway", "use-podway"} <= set(components):
+        raise BundleError("candidate profile lacks Podway and its paired skill")
+    components["podway"].update(
+        version="v0.2.15",
+        executable_sha256="sha256:" + PODWAY_RELEASE_FILES["bin/podway"],
+        archive_sha256=PODWAY_RELEASE_FILES["archive.tar.gz"],
+        provenance={"release_tag": "v0.2.15", "tag_commit": PODWAY_RELEASE_COMMIT},
+    )
+    components["use-podway"]["pin"] = {"commit": PODWAY_RELEASE_COMMIT}
+    components["use-podway"]["skill_tree"]["sha256"] = skill_digest
+    profile["profile_id"] = profile["profile_id"].replace(
+        "-podway-0.2.14-", "-podway-0.2.15-"
+    )
+    return [f"{prefix}/{name}" for name in copied], {
+        "payload_root": prefix,
+        "version": "v0.2.15",
+        "source_commit": PODWAY_RELEASE_COMMIT,
+        "contract_generation": 2,
+        "contract_manifest_digest": "sha256:293cfcf7bcaebb55b55b9e7cabb5842df228dbd9afacea5d1ae78474c25ae01b",
+        "binary_sha256": PODWAY_RELEASE_FILES["bin/podway"],
+        "skill_tree_sha256": skill_digest,
+    }
+
+
 def _check_fixture_lock(path: Path) -> None:
     """Accept pip's standard hash-locked requirements, continuations included."""
     try:
@@ -545,6 +618,7 @@ def build_bundle(
     prior_tag: str = "v0.1.21",
     fixture_requirements: Path | None = None,
     queue_override: int | None = None,
+    podway_release: Path | None = None,
 ) -> dict[str, Any]:
     context = load_guest_context(context_path)
     declarations = load_suites()
@@ -558,6 +632,12 @@ def build_bundle(
     )
     if not names:
         raise BundleError("select a consumer-declared suite or all")
+    if podway_release is not None and "podway-upgrade" not in names:
+        raise BundleError(
+            "Podway release inputs require the explicit manual podway-upgrade suite"
+        )
+    if "podway-upgrade" in names and podway_release is None:
+        raise BundleError("podway-upgrade requires the verified Podway release input")
     suite_modes: dict[str, str] = {}
     for name in names:
         declared = suite_map[name]["modes"]
@@ -620,6 +700,18 @@ def build_bundle(
     candidate_profile = derive_candidate_profile(
         stable_profile, candidate_digest, development_version, candidate_skill_digest
     )
+    dependency_files: list[str] = []
+    podway_upgrade = None
+    if podway_release is not None:
+        podway_profile = json.loads(json.dumps(candidate_profile))
+        dependency_files, podway_upgrade = seal_podway_release(
+            podway_release, bundle, podway_profile
+        )
+        (bundle / "profile/podway-candidate.json").write_text(
+            json.dumps(podway_profile, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        dependency_files.append("profile/podway-candidate.json")
     (bundle / "profile/candidate.json").write_text(
         json.dumps(candidate_profile, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -649,6 +741,7 @@ def build_bundle(
         *(f"prior-artifact/{name}" for name in prior_files),
         "profile/stable.json",
         "profile/candidate.json",
+        *dependency_files,
     ]
     if lock_relative:
         selected.append(lock_relative)
@@ -673,6 +766,8 @@ def build_bundle(
         "harness_tree_sha256": harness_tree,
         "fixture_requirements": lock_relative,
     }
+    if podway_upgrade is not None:
+        inputs["podway_upgrade"] = podway_upgrade
     (bundle / "harness/inputs.json").write_text(
         json.dumps(inputs, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
@@ -692,11 +787,7 @@ def build_bundle(
     run_id = uuid.uuid4().hex
     for index, name in enumerate(names):
         suite = suite_map[name]
-        profile_relative = (
-            "profile/candidate.json"
-            if suite["environment_profile"] == "candidate"
-            else "profile/stable.json"
-        )
+        profile_relative = f"profile/{suite['environment_profile']}.json"
         profile_bytes = (bundle / profile_relative).read_bytes()
         profile = json.loads(profile_bytes.decode("utf-8"))
         deadlines = dict(suite["deadlines"])
@@ -799,6 +890,7 @@ def main() -> int:
     parser.add_argument("--artifact-dir")
     parser.add_argument("--fixture-requirements")
     parser.add_argument("--queue-seconds", type=int)
+    parser.add_argument("--podway-release")
     arguments = parser.parse_args()
     try:
         record = build_bundle(
@@ -817,6 +909,9 @@ def main() -> int:
                 else None
             ),
             queue_override=arguments.queue_seconds,
+            podway_release=Path(arguments.podway_release)
+            if arguments.podway_release
+            else None,
         )
     except (BundleError, OSError, subprocess.SubprocessError) as error:
         print(f"aquarium host bundle: {error}", file=sys.stderr)

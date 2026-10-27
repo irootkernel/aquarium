@@ -1693,6 +1693,8 @@ def test_retirement_reads_native_verbose_status_after_observe(
     for argv, kwargs in calls:
         assert argv == [
             "fixture-podway",
+            "--contract-generation",
+            "2",
             "--worktree",
             str(repository),
             "--json",
@@ -1893,7 +1895,7 @@ def test_public_context_forwards_finalization_recovery_through_native_transport(
             result = {
                 "schema": "podway.version-result/v2",
                 "product": "podway",
-                "version": "v0.2.14",
+                "version": "v0.2.15",
                 "target": "aarch64-apple-darwin",
                 "build_identity": "sha256:" + "1" * 64,
                 "source_commit": None,
@@ -1906,7 +1908,7 @@ def test_public_context_forwards_finalization_recovery_through_native_transport(
         elif arguments == ["observe"]:
             command = "session.observe"
             result = copy.deepcopy(observation)
-            result["schema"] = "podway.observation-result/v5"
+            result["schema"] = "podway.observation-result/v6"
             result["status"].pop("current_trace_history")
         elif arguments == ["status", "--verbose"]:
             command = "session.status"
@@ -3200,7 +3202,7 @@ def test_public_context_continues_pending_applied_sources_through_real_native_tr
                 {
                     "schema": "podway.version-result/v2",
                     "product": "podway",
-                    "version": "v0.2.14",
+                    "version": "v0.2.15",
                     "target": "aarch64-apple-darwin",
                     "build_identity": "sha256:" + "1" * 64,
                     "source_commit": None,
@@ -3216,7 +3218,7 @@ def test_public_context_continues_pending_applied_sources_through_real_native_tr
         elif arguments == ["observe"]:
             command, value = "session.observe", copy.deepcopy(observation)
             value["status"].pop("current_trace_history")
-            value["schema"] = "podway.observation-result/v5"
+            value["schema"] = "podway.observation-result/v6"
         elif arguments == ["status", "--verbose"]:
             command, value = (
                 "session.status",

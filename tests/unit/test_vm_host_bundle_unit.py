@@ -11,6 +11,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 BUNDLE_PATH = REPOSITORY / "tests/vm/host_bundle.py"
@@ -88,6 +89,9 @@ class HostBundleTest(unittest.TestCase):
         (cls.harness / "tracked.md").write_text("tracked harness input\n")
         (cls.harness / "scenarios/probe.md").write_text("scenario\n")
         (cls.harness / "scenarios/manual-hold.md").write_text("hold scenario\n")
+        (cls.harness / "scenarios/podway-upgrade.md").write_text(
+            "manual Podway upgrade\n"
+        )
         (cls.harness / "scenarios/release-acceptance.md").write_text(
             "release-acceptance runbook\n"
         )
@@ -190,6 +194,7 @@ class HostBundleTest(unittest.TestCase):
         )
         self.assertEqual(sealed_manifest["git_sha"], self.git_sha)
         self.assertIn("artifact-manifest.json", spec["input"]["selected_files"])
+
         self.assertTrue(
             (
                 run_dir
@@ -201,6 +206,42 @@ class HostBundleTest(unittest.TestCase):
             hashlib.sha256(candidate_profile).hexdigest(),
             spec["environment"]["profile_digest"],
         )
+
+    def test_all_keeps_podway_upgrade_profile_separate(self):
+        release = Path(tempfile.mkdtemp(prefix="release-input-", dir=self.work))
+        hashes = {}
+        for relative in self.module.PODWAY_RELEASE_FILES:
+            path = release / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(f"synthetic {relative}\n".encode())
+            hashes[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
+        with mock.patch.object(self.module, "PODWAY_RELEASE_FILES", hashes):
+            run_dir, record = self.build("all", podway_release=release)
+        profiles = {
+            name: json.loads((run_dir / f"bundle/profile/{name}.json").read_text())
+            for name in ("stable", "candidate", "podway-candidate")
+        }
+        for name, profile in profiles.items():
+            podway = next(
+                row for row in profile["components"] if row["name"] == "podway"
+            )
+            self.assertEqual(
+                podway["version"],
+                "v0.2.15" if name == "podway-candidate" else "v0.2.14",
+            )
+        for index, name in enumerate(record["declared_suites"]):
+            spec = json.loads((run_dir / f"spec-{index}.json").read_text())
+            if name == "podway-upgrade":
+                self.assertEqual(spec["mode"], "manual")
+                self.assertEqual(
+                    spec["environment"]["profile_id"],
+                    profiles["podway-candidate"]["profile_id"],
+                )
+            else:
+                self.assertNotEqual(
+                    spec["environment"]["profile_id"],
+                    profiles["podway-candidate"]["profile_id"],
+                )
 
     def test_candidate_profile_binds_sealed_artifact_bytes(self):
         run_dir, record = self.build()

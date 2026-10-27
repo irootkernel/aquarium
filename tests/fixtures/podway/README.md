@@ -9,8 +9,4 @@ compatibility helper materializes it only in its disposable fixture to check
 unchanged legacy refusal and an explicitly scoped destructive reset. This is
 rejected historical input, not current DDL or a production conversion path.
 
-The direct-writer fixture uses the current generation-15 Store with only its
-writer-manifest digest set to the exact v0.2.13 manifest. Podway v0.2.13 and
-v0.2.14 ship identical generation-15 DDL. This models writer admission; it does
-not establish an installed v0.2.13-to-v0.2.14 upgrade or skill functionality.
-Those outcomes require separate UTM verification.
+The direct-writer fixtures use the current generation-15 Store with its writer-manifest digest set to the exact v0.2.13 or v0.2.14 manifest. The schemas share generation 15. These are rejected historical writer identities, not an upgrade conversion path. Generation-2 refusal must name the known stored release and preserve the Store and source bytes. Actual installed upgrade and skill functionality require separate UTM verification.

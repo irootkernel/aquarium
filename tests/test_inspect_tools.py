@@ -306,7 +306,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         mcp_list_mode: str = "valid",
         slow_gaori: bool = False,
         failing_mulgae_providers: bool = False,
-        podway_version: str = "v0.2.14",
+        podway_version: str = "v0.2.15",
         podway_identity_ok: bool = True,
         podway_writer_mismatch: bool = False,
         podway_doctor_ok: bool = True,
@@ -814,6 +814,11 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                 print(json.dumps(result))
                 raise SystemExit(0)
             if name == "podway":
+                if arguments[:2] != ["--contract-generation", "2"]:
+                    raise SystemExit(2)
+                arguments = arguments[2:]
+                if arguments[:1] == ["--worktree"]:
+                    arguments = arguments[2:]
                 if arguments == ["version", "--json"]:
                     print(json.dumps({{"name": "podway", "version": {podway_version!r}}}))
                     raise SystemExit(0)
@@ -5197,7 +5202,7 @@ else:
 
                 def session_probe(command, repository, timeout, state=state):
                     probe = original_probe(command, repository, timeout)
-                    if command[1:] == ["--json", "status"]:
+                    if probe.get("result", {}).get("command") == "session.status":
                         probe["result"]["result"]["delegation"] = state
                     return probe
 
@@ -5238,7 +5243,7 @@ else:
 
                 def preview_probe(command, repository, timeout, case=case):
                     probe = original_probe(command, repository, timeout)
-                    if command[1:4] == ["--json", "procedure", "preview"]:
+                    if probe.get("result", {}).get("command") == "procedure.preview":
                         payload = probe["result"]["result"]
                         if case == "direct-schema":
                             payload["schema"] = "podway.procedure-preview-result/v1"
@@ -6280,7 +6285,7 @@ else:
         identity = {
             "schema": "podway.version-result/v2",
             "product": "podway",
-            "version": "v0.2.14",
+            "version": "v0.2.15",
             "target": "aarch64-apple-darwin",
             "build_identity": "sha256:" + "a" * 64,
             "source_commit": None,
@@ -6341,9 +6346,10 @@ else:
             ("v0.2.12", False),
             ("0.2.12", False),
             ("v0.2.13", False),
-            ("v0.2.14", True),
-            ("0.2.14", True),
-            ("v0.2.14-rc.1", False),
+            ("v0.2.15", True),
+            ("v0.2.14", False),
+            ("0.2.15", True),
+            ("v0.2.15-rc.1", False),
             ("v1.0.0", True),
             ("v0.2.12-rc.1", False),
             ("0.2.99", True),

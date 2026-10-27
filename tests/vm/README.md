@@ -839,3 +839,8 @@ candidate, later runtime and evaluator separately. Do not rewrite an immutable
 case binding, relabel an earlier result as a new candidate pass, or report a
 partial or manual assessment as an automatic all-case pass. Preserve failed
 collection results alongside any independently verified native evidence.
+
+
+## Podway v0.2.15 adoption suite
+
+The [Podway upgrade scenario](recipes/scenarios/podway-upgrade.md) owns the explicit manual `podway-upgrade` suite, its exact external release input, seven original-evidence cases and consumer restoration. The bundle retains stable v0.2.14 and creates a separate sealed v0.2.15 candidate profile. This is preparation for EPIC-034; it establishes no installed result before native manual completion and actual functional observation. Existing qualification records retain their original identities and limits.

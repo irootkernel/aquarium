@@ -23,9 +23,9 @@ import yaml
 
 OUTPUT_SCHEMA = "podway.output/v4"
 ERROR_SCHEMA = "podway.error/v2"
-OBSERVATION_SCHEMA = "podway.observation-result/v5"
-EXPECTED_VERSION = "v0.2.14"
-RELEASE_SOURCE_COMMIT = "fa29dba929777b020377bc9803cb0a3954d219b1"
+OBSERVATION_SCHEMA = "podway.observation-result/v6"
+EXPECTED_VERSION = "v0.2.15"
+RELEASE_SOURCE_COMMIT = "9a3f94c8752298f689832d05aa827a0f6496c1af"
 COMMAND_TIMEOUT_SECONDS = 20
 # The delegated Task scenario needs 150 loop iterations and about 576s; allow
 # room for required rework coverage and variation in native command latency.
@@ -33,7 +33,7 @@ RUN_TIMEOUT_SECONDS = 900
 MAX_GRAPH_STEPS = 192
 MAX_PARALLEL_RUNTIMES = 4
 CONTRACT_MANIFEST_DIGEST = (
-    "sha256:c699977dd232891041f4063d66295b94004702875855baace876f8a7e0c6391d"
+    "sha256:293cfcf7bcaebb55b55b9e7cabb5842df228dbd9afacea5d1ae78474c25ae01b"
 )
 
 TASK_REVIEW_ENTRY_NODES = {
@@ -944,7 +944,7 @@ def release_identity(completed: subprocess.CompletedProcess[bytes]) -> dict[str,
         or re.fullmatch(r"sha256:[0-9a-f]{64}", identity["build_identity"]) is None
     ):
         raise RuntimeQualificationError(
-            "CLI does not match the official v0.2.14 identity"
+            "CLI does not match the official v0.2.15 identity"
         )
     return identity
 
@@ -1683,6 +1683,185 @@ class ManagedRuntime:
             "session_exact_replay": True,
         }
 
+    def exercise_generation2(self) -> dict[str, Any]:
+        """Execute released lifecycle templates only in this disposable fixture."""
+        rejected = self.raw(
+            [
+                "--json",
+                "procedure",
+                "check",
+                ".podway/procedures/aquarium-task-v2.yaml",
+                "--if-goal-revision",
+                "1",
+            ],
+            expected_exit=None,
+        )
+        if rejected.returncode == 0 or error_code(rejected) != "REQUEST_INVALID":
+            raise RuntimeQualificationError(
+                "local authoring accepted a workspace request option"
+            )
+        self.raw(
+            [
+                "--json",
+                "start",
+                "--preset",
+                "small-change-v2",
+                "--task",
+                "generation-2 lifecycle qualification",
+                "--idempotency-key",
+                self.next_key("generation2-start"),
+            ]
+        )
+        prepared = self.observe()
+        if sorted(row["command"] for row in prepared["mutation_templates"]) != [
+            "session.begin",
+            "session.reset",
+            "session.start_replace",
+            "session.start_replace",
+        ]:
+            raise RuntimeQualificationError("generation-2 prepared window differs")
+        self.invoke_template(prepared, "session.begin")
+        self.invoke_template(
+            self.observe(),
+            "session.cancel",
+            {
+                "<reason>": "Disposable lifecycle qualification; no external work was performed.",
+            },
+        )
+        undisposed = self.observe()
+        if [row["command"] for row in undisposed["mutation_templates"]] != [
+            "session.terminal_disposition",
+            "session.terminal_disposition",
+        ]:
+            raise RuntimeQualificationError("generation-2 undisposed window differs")
+        self.invoke_template(
+            undisposed,
+            "session.terminal_disposition",
+            {
+                "<reason>": "Disposable native guard exercise requires no handoff.",
+            },
+            variant="not-required",
+        )
+        disposed = self.observe()
+        if sorted(row["command"] for row in disposed["mutation_templates"]) != [
+            "session.archive",
+            "session.reset",
+            "session.start",
+            "session.start",
+        ]:
+            raise RuntimeQualificationError("generation-2 disposed window differs")
+
+        starts = [
+            row
+            for row in disposed["mutation_templates"]
+            if row["command"] == "session.start"
+        ]
+        for row in starts:
+            argv = row["argv"]
+            for flag, value in (
+                ("--if-workspace-uuid", self.workspace_uuid(disposed)),
+                ("--if-session-id", disposed["status"]["session"]["id"]),
+                (
+                    "--if-session-revision",
+                    str(disposed["status"]["session"]["revision"]),
+                ),
+            ):
+                if argv.count(flag) != 1 or argv[argv.index(flag) + 1] != value:
+                    raise RuntimeQualificationError(
+                        "plain start omitted current lifecycle fences"
+                    )
+            if row.get("requires_explicit_authorization") is not True:
+                raise RuntimeQualificationError(
+                    "start template lost its authorization boundary"
+                )
+
+        # Both preset and custom-source variants must execute, with distinct keys.
+        relative = ".podway/procedures/aquarium-task-v2.yaml"
+        preview = self.preview(relative)
+        values = {
+            "<preset>": "small-change-v2",
+            "<task>": "fenced successor",
+            "<procedure-file>": relative,
+            "<procedure-digest>": preview["procedure_digest"],
+        }
+        for variant in ("--preset", "--procedure"):
+            template = next(
+                row
+                for row in disposed["mutation_templates"]
+                if row["command"] == "session.start" and variant in row["argv"]
+            )
+            argv = [values.get(value, value) for value in template["argv"][1:]]
+            argv[argv.index("<idempotency-key>")] = self.next_key("generation2-start")
+            for flag, value, expected in (
+                ("--if-session-id", str(uuid.uuid4()), "SESSION_ID_MISMATCH"),
+                (
+                    "--if-session-revision",
+                    str(disposed["status"]["session"]["revision"] + 1),
+                    "SESSION_REVISION_CONFLICT",
+                ),
+            ):
+                stale = list(argv)
+                stale[stale.index(flag) + 1] = value
+                rejected = self.raw(["--json", *stale], expected_exit=None)
+                if (
+                    rejected.returncode == 0
+                    or error_code(rejected) != expected
+                    or self.observe() != disposed
+                ):
+                    raise RuntimeQualificationError(
+                        "stale plain start changed current state"
+                    )
+            started = self.raw(["--json", *argv])
+            if json_payload(started) != json_payload(self.raw(["--json", *argv])):
+                raise RuntimeQualificationError(
+                    "fenced start did not replay after archival"
+                )
+            successor = self.observe()
+            self.invoke_template(successor, "session.reset")
+            # Restore a disposed current session for the second variant.
+            self.raw(
+                [
+                    "--json",
+                    "start",
+                    "--preset",
+                    "small-change-v2",
+                    "--task",
+                    "next lifecycle variant",
+                    "--idempotency-key",
+                    self.next_key("next-lifecycle"),
+                ]
+            )
+            self.invoke_template(self.observe(), "session.begin")
+            self.invoke_template(
+                self.observe(),
+                "session.cancel",
+                {"<reason>": "Disposable variant completed."},
+            )
+            self.invoke_template(
+                self.observe(),
+                "session.terminal_disposition",
+                {
+                    "<reason>": "Disposable guard exercise requires no handoff.",
+                },
+                variant="not-required",
+            )
+            disposed = self.observe()
+        self.invoke_template(self.observe(), "session.archive")
+        absent = self.raw(["--json", "observe"], expected_exit=None)
+        if absent.returncode == 0 or error_code(absent) != "SESSION_NOT_FOUND":
+            raise RuntimeQualificationError(
+                "archive template retained the current session"
+            )
+        return {
+            "prepared": True,
+            "undisposed": True,
+            "disposed": True,
+            "fenced_start_variants": 2,
+            "stale_fences": True,
+            "replay_after_archival": True,
+            "archive": True,
+        }
+
     def exercise_upgrade(self, legacy_sql: Path) -> list[dict[str, Any]]:
         assert self.sandbox is not None
         podway = self.sandbox / ".podway"
@@ -1703,9 +1882,20 @@ class ManagedRuntime:
             )
         }
         results = []
-        for kind, expected_code in (
-            ("legacy-generation-13", "LEGACY_RUNTIME_STATE_UNSUPPORTED"),
-            ("v0.2.13-writer-manifest", "WORKSPACE_CONTRACT_MISMATCH"),
+        for kind, expected_code, manifest, writer_version in (
+            ("legacy-generation-13", "LEGACY_RUNTIME_STATE_UNSUPPORTED", None, None),
+            (
+                "v0.2.13-writer-manifest",
+                "WORKSPACE_CONTRACT_MISMATCH",
+                "sha256:dc47bcc5449f7c2e60c920c5b820eb793405b5f2d2f573346ee326f90264d2aa",
+                "v0.2.13",
+            ),
+            (
+                "v0.2.14-writer-manifest",
+                "WORKSPACE_CONTRACT_MISMATCH",
+                "sha256:c699977dd232891041f4063d66295b94004702875855baace876f8a7e0c6391d",
+                "v0.2.14",
+            ),
         ):
             shown = json_payload(self.raw(["--json", "workspace", "show"]))
             old_uuid = shown["workspace"]["uuid"]
@@ -1722,9 +1912,7 @@ class ManagedRuntime:
                 with closing(sqlite3.connect(database)) as connection:
                     connection.execute(
                         "UPDATE writer_contract SET contract_manifest_digest = ?",
-                        (
-                            "sha256:dc47bcc5449f7c2e60c920c5b820eb793405b5f2d2f573346ee326f90264d2aa",
-                        ),
+                        (manifest,),
                     )
                     connection.commit()
                     connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
@@ -1764,6 +1952,15 @@ class ManagedRuntime:
             ):
                 rejected = self.raw(arguments, expected_exit=None)
                 code = error_code(rejected)
+                if code == "WORKSPACE_CONTRACT_MISMATCH":
+                    details = json_payload(rejected).get("details", {})
+                    if (
+                        details.get("actual_contract_manifest_digest") != manifest
+                        or details.get("actual_product_version") != writer_version
+                    ):
+                        raise RuntimeQualificationError(
+                            "writer mismatch omitted its released identity"
+                        )
                 expected_errors = {expected_code}
                 if "--if-workspace-uuid" in arguments:
                     expected_errors.add("WORKSPACE_ID_CONFLICT")
@@ -1850,7 +2047,7 @@ class ManagedRuntime:
                 "isolated runtime exceeded overall deadline"
             )
         return bounded_process(
-            [str(self.snapshot_binary), *arguments],
+            [str(self.snapshot_binary), "--contract-generation", "2", *arguments],
             cwd=self.sandbox,
             environment=self.environment,
             stdin=stdin,
@@ -2073,6 +2270,8 @@ class ManagedRuntime:
         replacements: dict[str, str] | None = None,
         *,
         expected_exit: int | None = 0,
+        variant: str | None = None,
+        semantic_arguments: list[str] | None = None,
     ) -> subprocess.CompletedProcess[bytes]:
         if command == "session.complete" and expected_exit == 0:
             node = observation["guidance"]["node"]["graph_node_id"]
@@ -2082,6 +2281,7 @@ class ManagedRuntime:
             template
             for template in observation.get("mutation_templates", [])
             if template.get("command") == command
+            and (variant is None or variant in template.get("argv", []))
         ]
         if not templates and command == "session.complete":
             status = observation["status"]
@@ -2110,12 +2310,17 @@ class ManagedRuntime:
                 "commands="
                 f"{[item.get('command') for item in observation.get('mutation_templates', [])]!r}"
             )
+        if len(templates) != 1:
+            raise RuntimeQualificationError(
+                f"ambiguous {command} template; select its variant"
+            )
         argv = list(templates[0]["argv"])[1:]
         if "--json" not in argv:
             argv.insert(0, "--json")
         values = {"<idempotency-key>": self.next_key(command)}
         values.update(replacements or {})
         argv = [values.get(argument, argument) for argument in argv]
+        argv.extend(semantic_arguments or [])
         if any(
             argument.startswith("<") and argument.endswith(">") for argument in argv
         ):
@@ -4242,6 +4447,29 @@ class ManagedRuntime:
         for criterion in goal.get("criteria", []):
             if criterion.get("status") != "unassessed":
                 continue
+            rejected = self.invoke_template(
+                observation,
+                "goal.assess_criterion",
+                {"<status>": status, "<reason>": "Probe an inadmissible citation."},
+                semantic_arguments=["--evidence", "native-invalid-reference"],
+                expected_exit=None,
+            )
+            details = json_payload(rejected).get("details", {})
+            if (
+                rejected.returncode == 0
+                or error_code(rejected) != "CRITERION_CITATION_INVALID"
+                or details.get("schema")
+                != "podway.criterion-citation-invalid-details/v1"
+                or any(
+                    not isinstance(details.get(field), list)
+                    or any(not isinstance(value, str) for value in details[field])
+                    for field in ("citable_evidence_source_nodes", "citable_item_ids")
+                )
+                or self.observe() != observation
+            ):
+                raise RuntimeQualificationError(
+                    "invalid citation lost its generation-2 details or changed state"
+                )
             completed = self.invoke_template(
                 observation,
                 "goal.assess_criterion",
@@ -6383,7 +6611,7 @@ class ManagedRuntime:
                 "--summary",
                 f"qualified {procedure_id}",
                 "--reference",
-                f"official-v0.2.14-run-{self.run_index}",
+                f"official-v0.2.15-run-{self.run_index}",
                 "--idempotency-key",
                 self.next_key("terminal-disposition"),
                 "--if-workspace-uuid",
@@ -6703,6 +6931,7 @@ def qualify_runtime(binary: Path, repository: Path) -> dict[str, Any]:
     try:
         with ManagedRuntime(binary, procedures, 0) as cleanup_probe:
             probe_root = cleanup_probe.root
+            generation2_lifecycle = cleanup_probe.exercise_generation2()
             outcome_recovery = cleanup_probe.exercise_outcomes()
             upgrade_scenarios = cleanup_probe.exercise_upgrade(
                 repository / "tests/fixtures/podway/generation-13-populated.sql"
@@ -6745,6 +6974,7 @@ def qualify_runtime(binary: Path, repository: Path) -> dict[str, Any]:
         "max_parallel_runtimes": MAX_PARALLEL_RUNTIMES,
         "failure_cleanup": "passed",
         "outcome_recovery": outcome_recovery,
+        "generation2_lifecycle": generation2_lifecycle,
         "upgrade_scenarios": upgrade_scenarios,
         "workspace_removal": workspace_removal,
         "wait_scenarios": wait_scenarios,

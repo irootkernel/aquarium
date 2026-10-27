@@ -507,7 +507,7 @@ def test_native_error_codes_and_malformed_envelopes(
     )
     with pytest.raises(bundles.BundleError) as error:
         admission.NativeClient(repository, "fake").read(
-            ["observe"], "session.observe", {"podway.observation-result/v5"}
+            ["observe"], "session.observe", {"podway.observation-result/v6"}
         )
     assert error.value.code == expected
 
@@ -798,7 +798,11 @@ def test_native_reads_bind_cwd_and_respect_authoring_request_contract(
         {"schema": "podway.output/v4", "command": "session.observe", "result": {}}
     ).encode()
     client.read(["observe"], "session.observe", None)
-    assert run.call_args.args[0][1:3] == ["--worktree", str(repository)]
+    assert run.call_args.args[0][3:5] == ["--worktree", str(repository)]
+    assert all(
+        call.args[0][1:3] == ["--contract-generation", "2"]
+        for call in run.call_args_list
+    )
 
 
 def test_known_contract_covers_current_sources_and_stays_stable_when_extended(
@@ -1286,13 +1290,70 @@ def native_identity_payload():
     return {
         "schema": "podway.version-result/v2",
         "product": "podway",
-        "version": "v0.2.14",
+        "version": "v0.2.15",
         "target": "aarch64-apple-darwin",
         "build_identity": "sha256:" + "a" * 64,
         "source_commit": "b" * 40,
         "contract_manifest_schema": "podway.contract-manifest/v2",
         "contract_manifest_digest": "sha256:" + "c" * 64,
     }
+
+
+@pytest.mark.parametrize("version", ["v0.2.14", "v0.2.15-rc.1"])
+def test_generation2_client_refuses_unsupported_writer(
+    repository, monkeypatch, version
+):
+    identity = {**native_identity_payload(), "version": version}
+    run = Mock(
+        return_value=subprocess.CompletedProcess(
+            [],
+            0,
+            json.dumps(
+                {
+                    "schema": "podway.output/v4",
+                    "command": "version",
+                    "result": identity,
+                }
+            ).encode(),
+            b"",
+        )
+    )
+    monkeypatch.setattr(admission.subprocess, "run", run)
+    with pytest.raises(bundles.BundleError) as error:
+        admission.NativeClient(repository, "synthetic").health()
+    assert error.value.code == "unsupported-runtime"
+    assert run.call_count == 1
+
+
+def test_generation2_native_error_preserves_writer_and_citation_details(
+    repository, monkeypatch
+):
+    details = {
+        "schema": "podway.workspace-contract-mismatch-details/v2",
+        "actual_product_version": "v0.2.14",
+        "actual_contract_manifest_digest": "sha256:" + "a" * 64,
+    }
+    run = Mock(
+        return_value=subprocess.CompletedProcess(
+            [],
+            5,
+            json.dumps(
+                {
+                    "schema": "podway.error/v2",
+                    "code": "WORKSPACE_CONTRACT_MISMATCH",
+                    "details": details,
+                }
+            ).encode(),
+            b"",
+        )
+    )
+    monkeypatch.setattr(admission.subprocess, "run", run)
+    with pytest.raises(bundles.BundleError) as error:
+        admission.NativeClient(repository, "synthetic").read(
+            ["observe"], "session.observe", {"podway.observation-result/v6"}
+        )
+    assert error.value.details["native_details"] == details
+    assert run.call_count == 1
 
 
 @pytest.fixture
@@ -1305,7 +1366,11 @@ def runtime_probes(repository, monkeypatch):
     monkeypatch.setattr(inspector.platform, "machine", lambda: "arm64")
 
     def probe(arguments, *args, **kwargs):
-        request = arguments[1:]
+        assert arguments[1:3] == ["--contract-generation", "2"]
+        request = arguments[3:]
+        if request[:1] == ["--worktree"]:
+            assert request[1] == str(repository)
+            request = request[2:]
         result = {
             "attempted": True,
             "ok": True,
@@ -1315,7 +1380,7 @@ def runtime_probes(repository, monkeypatch):
             "stderr": "",
         }
         if request == ["version", "--json"]:
-            result["result"] = {"name": "podway", "version": "v0.2.14"}
+            result["result"] = {"name": "podway", "version": "v0.2.15"}
             return result
         if request == ["--json", "version", "--identity"]:
             command = "version"
@@ -1469,7 +1534,7 @@ def test_real_native_client_health_machine_envelopes(
             "schema": "podway.output/v4",
             "command": "session.observe",
             "result": {
-                "schema": "podway.observation-result/v5",
+                "schema": "podway.observation-result/v6",
                 "status": {
                     "procedure": {
                         "id": "foreign",
@@ -1707,3 +1772,27 @@ def test_empty_equivalent_alias_has_established_selected_damage(repository, know
         and item["key_established"] is True
         for item in resolved["diagnostics"]
     )
+
+
+def test_generation2_client_does_not_retry_observation_v5(repository, monkeypatch):
+    run = Mock(
+        return_value=subprocess.CompletedProcess(
+            [],
+            0,
+            json.dumps(
+                {
+                    "schema": "podway.output/v4",
+                    "command": "session.observe",
+                    "result": {"schema": "podway.observation-result/v5"},
+                }
+            ).encode(),
+            b"",
+        )
+    )
+    monkeypatch.setattr(admission.subprocess, "run", run)
+    with pytest.raises(bundles.BundleError) as error:
+        admission.NativeClient(repository, "synthetic").read(
+            ["observe"], "session.observe", {"podway.observation-result/v6"}
+        )
+    assert error.value.code == "unsupported-runtime"
+    assert run.call_count == 1

@@ -1345,7 +1345,9 @@ def _declared_skill_name(directory: Path) -> str | None:
     return directory.name
 
 
-def skill_identity_document(context: Context, stage: str) -> dict[str, Any]:
+def skill_identity_document(
+    context: Context, stage: str, *, candidate_profile: str = "candidate"
+) -> dict[str, Any]:
     """Whole-tree skill identity across the native scopes the dossier names.
 
     Each applicable scope is inspected separately with provenance and
@@ -1356,7 +1358,7 @@ def skill_identity_document(context: Context, stage: str) -> dict[str, Any]:
     scope, and `comparisons.all_passed` binds the scenario predicate to
     every recorded comparison.
     """
-    profile_name = "stable" if stage == "prior" else "candidate"
+    profile_name = "stable" if stage == "prior" else candidate_profile
     profile = context.profile(profile_name)
     plugin_pin = None
     pinned_skills: dict[str, dict[str, Any]] = {}
@@ -3204,6 +3206,16 @@ def main() -> int:
     try:
         if arguments.suite == "manual-hold":
             return run_manual_hold(context, arguments.phase)
+        if arguments.suite == "podway-upgrade":
+            import podway_upgrade
+
+            return podway_upgrade.run(
+                context,
+                arguments.phase,
+                lambda stage: skill_identity_document(
+                    context, stage, candidate_profile="podway-candidate"
+                ),
+            )
         if arguments.suite == "release-acceptance":
             return run_release_acceptance(
                 context, arguments.phase, arguments.fixture or ""

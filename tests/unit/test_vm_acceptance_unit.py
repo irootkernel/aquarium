@@ -1536,3 +1536,79 @@ def test_make_target_is_external_to_normal_aggregate():
     )
     assert result.returncode == 0
     assert " -B tests/vm/run_acceptance.py run" in result.stdout
+
+
+@pytest.mark.parametrize(
+    "schema,accepted",
+    [("podway.observation-result/v6", True), ("podway.observation-result/v5", False)],
+)
+def test_explicit_generation2_vm_observation_never_falls_back(
+    tmp_path, monkeypatch, schema, accepted
+):
+    calls = []
+
+    def command(argv, **kwargs):
+        calls.append(argv)
+        return SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps(
+                {"schema": "podway.output/v4", "result": {"schema": schema}}
+            ),
+        )
+
+    monkeypatch.setattr(gate, "command", command)
+    request = {"tools": {"podway": "/tools/podway"}, "podway_contract_generation": 2}
+    if accepted:
+        assert gate.observe(request, tmp_path)["schema"] == schema
+    else:
+        with pytest.raises(gate.GateError):
+            gate.observe(request, tmp_path)
+    assert len(calls) == 1
+    assert calls[0][1:3] == ["--contract-generation", "2"]
+
+
+@pytest.mark.parametrize("generation", [True, 0, 3, "2", None])
+def test_vm_observer_rejects_invalid_contract_selection(generation):
+    with pytest.raises(gate.GateError):
+        gate.podway_generation_options({"podway_contract_generation": generation})
+
+
+@pytest.mark.parametrize("generation", [1, 2])
+def test_baseline_authoring_checks_honor_the_explicit_generation(
+    tmp_path, monkeypatch, generation
+):
+    repository = tmp_path / "task"
+    (repository / ".git").mkdir(parents=True)
+    procedures = repository / ".podway/procedures"
+    procedures.mkdir(parents=True)
+    (procedures / gate.PROCEDURES[0]).write_text("fixture source")
+    combination = {
+        "aquarium": "0.1.21",
+        "podway": "v0.2.14" if generation == 1 else "v0.2.15",
+    }
+    monkeypatch.setattr(gate, "versions", lambda *args: combination)
+
+    class Captured(Exception):
+        pass
+
+    calls = []
+
+    def command(argv, **kwargs):
+        calls.append((argv, kwargs))
+        raise Captured
+
+    monkeypatch.setattr(gate, "command", command)
+    request = {
+        "tools": {"podway": "/tools/podway"},
+        "released_plugin_root": str(tmp_path / "plugin"),
+        "baseline_combination": combination,
+        "podway_contract_generation": generation,
+    }
+    with pytest.raises(Captured):
+        gate.baseline(request, tmp_path)
+    assert len(calls) == 1
+    argv, kwargs = calls[0]
+    assert ("--contract-generation" in argv) == (generation == 2)
+    assert "procedure" in argv and "check" in argv
+    assert "--worktree" not in argv
+    assert kwargs["cwd"] == repository

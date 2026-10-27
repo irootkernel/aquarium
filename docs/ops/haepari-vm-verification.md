@@ -213,3 +213,8 @@ native export; delivered consumer cleanup remains unverified in that case.
 Aquarium's own legacy-enrollment audit and TASK-101 retain the separate retirement
 boundary. This runbook authorizes no `~/.aquarium-dev` mutation, host candidate
 installation, controller replacement, VM power operation or publication.
+
+
+## Explicit Podway upgrade qualification
+
+Use `SUITE=podway-upgrade MODE=manual` only under the exact VM-test authority described by the [operator scenario](../../tests/vm/recipes/scenarios/podway-upgrade.md). Supply `AQUARIUM_VM_PODWAY_RELEASE` with its physical prepared release-input path in addition to the normal candidate, resource and private guest context. The selected Job retains the original v0.2.14 baseline and a separate v0.2.15 candidate profile. Seven native manual cases, actual installed skill observations and verified restoration remain required; the helper never installs tools or discards runtime state. Recover the original Job and phase captures after disconnect.

@@ -19,6 +19,8 @@ override PYTEST_ADDOPTS :=
 export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
+	tests/unit/test_podway_release_bundle_unit.py \
+	tests/unit/test_podway_upgrade_unit.py \
 	plugins/aquarium/shared/adaptive_promotion.py \
 	plugins/aquarium/shared/promote_adaptive_procedure.py \
 	tests/vm/adaptive_cases.py \
@@ -59,6 +61,7 @@ PYTHON_FILES := \
 	tests/vm/host_wrapper.py \
 	tests/vm/host_bundle.py \
 	tests/vm/recipes/guest_main.py \
+	tests/vm/recipes/podway_upgrade.py \
 	tests/vm/recipes/recipe_lib.py \
 	tests/vm/recipes/tree_digest.py \
 	tests/unit/test_vm_guest_simulation_unit.py \

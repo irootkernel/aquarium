@@ -188,6 +188,16 @@ def load_request(path):
     return request, root, identity
 
 
+def podway_generation_options(request):
+    generation = request.get("podway_contract_generation", 1)
+    require(
+        type(generation) is int and generation in (1, 2),
+        "select Podway contract generation 1 or 2 explicitly",
+    )
+    # Generation 1 is retained for released baselines and their original writer.
+    return [] if generation == 1 else ["--contract-generation", "2"]
+
+
 def versions(request, plugin):
     observed = {
         "aquarium": read_json(Path(plugin) / ".codex-plugin/plugin.json")["version"]
@@ -196,7 +206,13 @@ def versions(request, plugin):
         if name == "python":
             continue
         argv = (
-            [executable, "--json", "version", "--identity"]
+            [
+                executable,
+                *podway_generation_options(request),
+                "--json",
+                "version",
+                "--identity",
+            ]
             if name == "podway"
             else [executable, "--version"]
         )
@@ -323,7 +339,14 @@ def seed(request, root):
 
 def observe(request, repository, *, optional=False):
     output = command(
-        [request["tools"]["podway"], "--worktree", repository, "--json", "observe"],
+        [
+            request["tools"]["podway"],
+            *podway_generation_options(request),
+            "--worktree",
+            repository,
+            "--json",
+            "observe",
+        ],
         check=False,
     )
     payload = json.loads(output.stdout)
@@ -335,7 +358,12 @@ def observe(request, repository, *, optional=False):
     )
     result = payload["result"]
     require(
-        result.get("schema") == "podway.observation-result/v5",
+        result.get("schema")
+        == (
+            "podway.observation-result/v6"
+            if request.get("podway_contract_generation", 1) == 2
+            else "podway.observation-result/v5"
+        ),
         "unsupported Podway observation",
     )
     return result
@@ -397,6 +425,7 @@ def baseline(request, root):
             command(
                 [
                     request["tools"]["podway"],
+                    *podway_generation_options(request),
                     "--json",
                     "procedure",
                     "check",

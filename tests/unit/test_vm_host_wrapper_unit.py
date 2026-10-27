@@ -569,7 +569,12 @@ class HostWrapperTest(unittest.TestCase):
         )
 
     def invoke_wrapper(
-        self, run_dir: Path, state: Path, **overrides
+        self,
+        run_dir: Path,
+        state: Path,
+        *,
+        suite_declarations: Path | None = None,
+        **overrides,
     ) -> subprocess.CompletedProcess:
         environment = {
             **os.environ,
@@ -585,14 +590,31 @@ class HostWrapperTest(unittest.TestCase):
             "AQUARIUM_VM_WAIT_TIMEOUT": "1",
             "AQUARIUM_VM_WAIT_ROUNDS": "2",
             "AQUARIUM_VM_FIXTURE_REQUIREMENTS": "",
+            "AQUARIUM_VM_PODWAY_RELEASE": "",
             "AQUARIUM_VM_CANDIDATE_SHA": "",
             "AQUARIUM_VM_QUEUE_SECONDS": "",
             "AQUARIUM_VM_PROBE": "",
             "AQUARIUM_VM_CANCEL": "",
         }
         environment.update({key: str(value) for key, value in overrides.items()})
+        command = [sys.executable, "-B", str(WRAPPER_PATH)]
+        if suite_declarations is not None:
+            # Isolate generic queue behavior from release-input provisioning.
+            command = [
+                sys.executable,
+                "-B",
+                "-c",
+                (
+                    "import sys; from pathlib import Path; "
+                    f"sys.path.insert(0, {str(WRAPPER_PATH.parent)!r}); "
+                    "import host_bundle, host_wrapper; "
+                    "load_suites = host_bundle.load_suites; "
+                    f"host_bundle.load_suites = lambda: load_suites(Path({str(suite_declarations)!r})); "
+                    "sys.exit(host_wrapper.main())"
+                ),
+            ]
         return subprocess.run(
-            [sys.executable, "-B", str(WRAPPER_PATH)],
+            command,
             capture_output=True,
             text=True,
             env=environment,
@@ -722,19 +744,36 @@ class HostWrapperTest(unittest.TestCase):
 
     def test_all_reports_skipped_suites_after_failure(self):
         run_dir, state = self.scenario("all")
+        declarations = json.loads(
+            (REPOSITORY / "tests/vm/host_suites.json").read_text()
+        )
+        declarations["suites"] = {
+            name: declarations["suites"][name] for name in ("baseline", "manual-hold")
+        }
+        suites = state / "suites.json"
+        suites.write_text(json.dumps(declarations))
         self.doctor_ok(state)
         self.submit_ok(state)
         self.respond(
             state, 1, envelope("wait", {"final_verdict": "FAIL"}), match="wait"
         )
-        result = self.invoke_wrapper(run_dir, state, AQUARIUM_VM_SUITE="all")
+        result = self.invoke_wrapper(
+            run_dir, state, suite_declarations=suites, AQUARIUM_VM_SUITE="all"
+        )
         self.assertEqual(result.returncode, 1)
-        # Nine declared suites: the first FAIL skips the remaining eight.
-        self.assertEqual(result.stdout.count('"kind": "skipped"'), 8)
+        self.assertEqual(result.stdout.count('"kind": "skipped"'), 1)
         record = json.loads((run_dir / "run.json").read_text())
-        self.assertEqual(len(record["declared_suites"]), 9)
-        self.assertIn("release-acceptance", record["declared_suites"])
-        self.assertNotIn("regression", record["declared_suites"])
+        self.assertEqual(record["declared_suites"], ["baseline", "manual-hold"])
+
+    def test_all_missing_podway_release_refuses_before_submission(self):
+        run_dir, state = self.scenario("all-missing-podway")
+        self.doctor_ok(state)
+        result = self.invoke_wrapper(run_dir, state, AQUARIUM_VM_SUITE="all")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((run_dir / "run.json").exists())
+        self.assertFalse(
+            any(row["argv"][:1] == ["submit"] for row in self.log_entries(state))
+        )
 
     def test_changed_survivor_probe_conflicts_and_stays_pending(self):
         run_dir, state = self.scenario("conflict")

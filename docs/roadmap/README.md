@@ -64,6 +64,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-031 | Adopt Coordinator, Evaluator and Executor roles in release workflows | Planned |
 | EPIC-032 | Adopt Haepari across integrated tools | Planned |
 | EPIC-033 | Qualify the combined environment and retire the development channel | Planned |
+| EPIC-034 | Adopt Podway v0.2.15 and contract generation 2 | In Progress |
 
 ## EPIC-000: Independent Tasks
 
@@ -995,3 +996,19 @@ The [legacy dossier](../todo/TODO-AQUARIUM-DEV.md) remains a retirement referenc
 | TASK-100 | Reconcile the full combination and upgrade path | Verify the exact installed/upgrade combination, shared VM, native review lock, release assessment inputs and cleanup; identify redundant integration layers and own bounded corrections and corrected producer returns. | Planned | EPIC-032; TASK-099 |
 | TASK-101 | Retire shared legacy source and simplify Haepari integration | Remove redundant layers, validators, harness code and obsolete tests alongside common legacy dependencies; preserve required behavior and production history, with final host cleanup separately approved. | Planned | TASK-100 |
 | TASK-102 | Cold-validate, promote documentation and close out | Verify the final simplified combination's managed VM, released Mulgae lock, recovery and cleanup behavior; obtain actual overall/manual acceptance, promote durable contracts and settle dossiers at last-consumer closeout. | Planned | TASK-101 |
+
+
+## EPIC-034: Adopt Podway v0.2.15 and contract generation 2
+
+**Status:** `In Progress`
+
+Raise the supported stable release floor to v0.2.15 without an upper bound, pin the official runtime skill, and select contract generation 2 throughout current Aquarium integrations. This is breaking: existing v0.2.14 runtime state requires its original writer and an explicitly authorized fresh-runtime reset before use with the new writer. Candidate installation and functional verification must pass in the dedicated UTM VM before support is accepted.
+
+**Detailed SOT:** [Podway v0.2.15 adoption](../todo/TODO-PODWAY-0215.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-177 | Align the released generation-2 contract | Update the supported floor, release-pinned skill, command rules and original-writer upgrade guidance. | In Review | External Podway v0.2.15 release |
+| TASK-178 | Adopt generation 2 in native consumers | Select generation 2 in setup and shared native calls, require observation v6, preserve status v5 and native recovery details. | In Review | TASK-177 |
+| TASK-179 | Qualify the exact official release | Preserve all five Procedure scenarios and add generation-2 lifecycle, stale-fence, replay and v0.2.14 writer-refusal coverage. | In Review | TASK-178 |
+| TASK-180 | Verify the installed upgrade and promote outcomes | Prepare separate released/candidate VM identities, verify the installed combination under explicit VM authority, complete independent review and promote durable contracts. | In Progress | TASK-179 |

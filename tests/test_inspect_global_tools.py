@@ -2198,7 +2198,14 @@ def test_global_podway_identity_uses_neutral_directory(tmp_path: Path) -> None:
     ):
         result = inspect_global_tools.inspect_global_podway(inspector, tmp_path, 3.5)
     inspector.json_probe.assert_called_once_with(
-        ["/fixture/podway", "--json", "version", "--identity"],
+        [
+            "/fixture/podway",
+            "--contract-generation",
+            "2",
+            "--json",
+            "version",
+            "--identity",
+        ],
         Path(tmp_path.anchor),
         3.5,
     )
@@ -2231,7 +2238,7 @@ def test_global_podway_rejects_unusable_identity(
     identity = {
         "schema": "podway.version-result/v2",
         "product": "podway",
-        "version": "v0.2.14",
+        "version": "v0.2.15",
         "target": "aarch64-apple-darwin",
         "build_identity": "sha256:" + "a" * 64,
         "source_commit": None,
@@ -2258,7 +2265,7 @@ def test_global_podway_rejects_unusable_identity(
     tool = {
         "installed": True,
         "version_supported": True,
-        "version": "v0.2.14",
+        "version": "v0.2.15",
         "status": "installed",
         "executable": "/fixture/podway",
         "probes": {},

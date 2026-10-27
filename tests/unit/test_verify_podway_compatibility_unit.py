@@ -1320,7 +1320,7 @@ def test_low_blocker_rework_effect_records_complete_cause(
     assert arguments[arguments.index("--if-attempt") + 1] == "current-effect-attempt"
 
 
-def test_workspace_removal_replay_requires_success_with_v9_receipt() -> None:
+def test_workspace_removal_replay_requires_success_with_v10_receipt() -> None:
     runtime = verify_podway_compatibility.podway_runtime_qualification
     result = runtime.workspace_removal_result(
         removal_replay_process(), "/tmp/repository", None
@@ -1328,15 +1328,16 @@ def test_workspace_removal_replay_requires_success_with_v9_receipt() -> None:
     assert result["already_absent"] is True
     assert result["workspace_uuid"] is None
     assert (
-        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v9"
+        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v10"
     )
-    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.14"
+    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.15"
 
 
 @pytest.mark.parametrize(
     ("name", "version", "accepted"),
     [
-        ("podway", "v0.2.14", True),
+        ("podway", "v0.2.15", True),
+        ("podway", "v0.2.14", False),
         ("podway", "v0.2.13", False),
         ("podway", "v0.2.11", False),
         ("podway", "v0.3.0", False),
@@ -1609,9 +1610,9 @@ def test_runtime_preview_and_observation_follow_admitted_source(
 
     def raw(arguments: list[str], **kwargs) -> subprocess.CompletedProcess[bytes]:
         preview = "procedure" in arguments
-        version = (2 if delegated else 1) if preview else 5
+        version = (2 if delegated else 1) if preview else 6
         if wrong_schema:
-            version = (3 - version) if preview else (7 - version)
+            version = (3 - version) if preview else 5
         result = {
             "schema": f"podway.procedure-preview-result/v{version}"
             if preview

@@ -201,7 +201,7 @@ def inspect_global_podway(
         "podway",
         neutral_cwd,
         timeout_seconds,
-        ["version", "--json"],
+        ["--contract-generation", "2", "version", "--json"],
         inspector.supported_podway_version,
         platform_required=True,
     )
@@ -214,7 +214,14 @@ def inspect_global_podway(
         return tool
     probe = (
         inspector.json_probe(
-            [tool["executable"], "--json", "version", "--identity"],
+            [
+                tool["executable"],
+                "--contract-generation",
+                "2",
+                "--json",
+                "version",
+                "--identity",
+            ],
             neutral_cwd,
             timeout_seconds,
         )

@@ -43,7 +43,7 @@ MULGAE_NATIVE_CONTRACT: dict[str, Any] = {
 }
 MULGAE_MCP_TOOL_TIMEOUT_SEC = 7501
 MAX_COMMAND_TIMEOUT_SECONDS = 86_400.0
-PODWAY_MINIMUM_VERSION = (0, 2, 14)
+PODWAY_MINIMUM_VERSION = (0, 2, 15)
 CONFLICT_STATUSES = {"DD", "AU", "UD", "UA", "DU", "AA", "UU"}
 CANONICAL_NUMERIC_COMPONENT = r"(?:0|[1-9][0-9]*)"
 CANONICAL_SEMVER = re.compile(
@@ -1932,12 +1932,17 @@ def normalize_podway_envelope(
             "WORKSPACE_BUSY",
             "WORKSPACE_MAINTENANCE",
             "COMMAND_RETIRED",
+            "CRITERION_CITATION_INVALID",
             "REQUEST_INVALID",
         }:
             normalized["error_code"] = code
         else:
             normalized["error_code"] = "unrecognized_podway_error"
         normalized["output_schema"] = schema
+        if code in {"WORKSPACE_CONTRACT_MISMATCH", "CRITERION_CITATION_INVALID"}:
+            details = envelope.get("details")
+            if isinstance(details, dict):
+                normalized["native_details"] = details
         return normalized, None
     if schema != "podway.output/v4":
         normalized["ok"] = False
@@ -5051,7 +5056,9 @@ def inspect_podway(
             tool["readiness_status"] = "degraded"
         return tool
     version_probe = json_probe(
-        [tool["executable"], "version", "--json"], repository, timeout_seconds
+        [tool["executable"], "--contract-generation", "2", "version", "--json"],
+        repository,
+        timeout_seconds,
     )
     tool["probes"]["version"] = normalized_probe(version_probe)
     tool["version"] = version_from_probe(version_probe)
@@ -5059,7 +5066,14 @@ def inspect_podway(
 
     identity_probe = (
         json_probe(
-            [tool["executable"], "--json", "version", "--identity"],
+            [
+                tool["executable"],
+                "--contract-generation",
+                "2",
+                "--json",
+                "version",
+                "--identity",
+            ],
             repository,
             timeout_seconds,
         )
@@ -5083,10 +5097,30 @@ def inspect_podway(
     native_session_lifecycle = None
     if initialized:
         doctor_probe = json_probe(
-            [tool["executable"], "doctor", "--json"], repository, timeout_seconds
+            [
+                tool["executable"],
+                "--contract-generation",
+                "2",
+                "--worktree",
+                str(repository),
+                "doctor",
+                "--json",
+            ],
+            repository,
+            timeout_seconds,
         )
         session_probe = json_probe(
-            [tool["executable"], "--json", "status"], repository, timeout_seconds
+            [
+                tool["executable"],
+                "--contract-generation",
+                "2",
+                "--worktree",
+                str(repository),
+                "--json",
+                "status",
+            ],
+            repository,
+            timeout_seconds,
         )
         normalized_doctor, doctor_payload = normalize_podway_envelope(
             doctor_probe, "workspace.doctor"
@@ -5202,6 +5236,8 @@ def inspect_podway(
         check = json_probe(
             [
                 tool["executable"],
+                "--contract-generation",
+                "2",
                 "--json",
                 "procedure",
                 "check",
@@ -5230,6 +5266,8 @@ def inspect_podway(
             preview = json_probe(
                 [
                     tool["executable"],
+                    "--contract-generation",
+                    "2",
                     "--json",
                     "procedure",
                     "preview",
