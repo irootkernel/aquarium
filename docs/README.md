@@ -39,6 +39,10 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 
 ## Planned Epic collaboration
 
+The reserved [collaboration contract](../plugins/aquarium/references/epic-squad-collaboration.md)
+defines native readiness, shared roles, assessment and correction semantics.
+The entrypoint and its execution/commit/recovery integration remain unimplemented.
+
 The [Epic collaboration dossier](todo/TODO-EPIC-COLLABORATION.md) defines planned
 `epic-squad` delivery of correct, maintainable, extensible and responsive software.
 Its shared role names are Coordinator, Epic Evaluator, Task Evaluator, Task

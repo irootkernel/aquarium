@@ -57,7 +57,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-024 | Restore native agent workflows and add manual VM release acceptance | Completed |
 | EPIC-025 | Align review strategies with delivery goals | Completed |
 | EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | Completed |
-| EPIC-027 | Add native Epic Squad collaboration | Planned |
+| EPIC-027 | Add native Epic Squad collaboration | In Progress |
 | EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | Planned |
 | EPIC-029 | Add directory AGENTS.md documentation indexes | Completed |
 | EPIC-030 | Unify Aquarium delivery across five agent hosts | Planned |
@@ -759,7 +759,7 @@ preservation does not require new native authentication or extra routine review.
 
 ## EPIC-027: Add native Epic Squad collaboration
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Add explicitly invoked `epic-squad` delivery through the current Coordinator's
 native subagents as the first phase of one role-configurable workflow. Deliver
@@ -820,7 +820,7 @@ delivery while the extension develops.
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-147 | Establish collaboration contracts and native readiness | Define product quality, shared Squad/Handler role names and mapping, optional support, risk-based first assessments, purpose-bound work, correction/deferral and evidence reuse, node mapping and native readiness; preserve existing handler behavior. | Planned | EPIC-026 |
+| TASK-147 | Establish collaboration contracts and native readiness | Define product quality, shared Squad/Handler role names and mapping, optional support, risk-based first assessments, purpose-bound work, correction/deferral and evidence reuse, node mapping and native readiness; preserve existing handler behavior. | Completed | EPIC-026 |
 | TASK-148 | Implement native Squad collaboration | Implement Task teams, both plan scopes, independent/concurrent result intake, One Active Writer, bounded support and focused correction/deferral; align Handler role wording without adding roles or checkpoints; preserve first assessments and block unimplemented explicit routes. | Planned | TASK-147 |
 | TASK-149 | Integrate Squad execution and commit authority | Qualify Squad Goal/Validation definitions and bindings, map shared role names to retained machine contracts, expose plan/correction boundaries and carry original assessments plus verified deltas to commit; support no additional technical review and preserve old callers/snapshots. | Planned | TASK-148 |
 | TASK-150 | Complete Squad integration and recovery | Deliver Epic integration, scoped seam correction, post-commit inspection and user-accepted closeout; recover evidence applicability, closures, deferred work and pending operations without blanket reassessment or effect replay. | Planned | TASK-149 |

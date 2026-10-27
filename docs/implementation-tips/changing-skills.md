@@ -23,6 +23,18 @@ When adding or changing a handoff, define the producer, consumer, required field
 
 For cross-repository work, carry the exact repository and commit identity. A downstream statement that work exists is not proof until the owning repository and required independent validation confirm the exact candidate.
 
+## Extend Squad collaboration
+
+Use the reserved [collaboration contract](../../plugins/aquarium/references/epic-squad-collaboration.md)
+and the shared [dossier](../todo/TODO-EPIC-COLLABORATION.md) when implementing
+Squad. Keep its first assessments, permitted local closures and current evidence
+composition separate from additional technical-review operations. Extend actual
+owner admission, qualified definitions and commit/recovery consumers together;
+do not present a Handler handoff or provider waiver as Squad evidence. Preserve
+existing binding identities, machine roles and immutable snapshots. Verify changed
+executable boundaries with behavioral tests, and reserve native collaboration
+claims for exact installed observations under repository VM authority.
+
 ## Maintain directory guidance
 
 Use the [shared contract](../../plugins/aquarium/references/directory-agent-guidance.md)

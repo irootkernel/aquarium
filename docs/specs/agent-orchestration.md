@@ -43,6 +43,22 @@ The separate guest-side `make test-vm` entrypoint requires actual observations
 for the exact candidate; its availability and helper tests do not prove those
 outcomes.
 
+## Reserved Epic Squad collaboration
+
+The [collaboration contract](../../plugins/aquarium/references/epic-squad-collaboration.md)
+defines the reserved, unimplemented `epic-squad` interface: shared role names,
+native readiness and profile defaults, independent Task/Epic plan scopes,
+risk-based first assessments, Writer control, scoped correction and evidence
+reuse, and Procedure/assignment ownership. It preserves existing Handler and
+Validator behavior and machine report identities.
+
+The [shared dossier](../todo/TODO-EPIC-COLLABORATION.md) retains detailed execution
+criteria. TASK-148 implements native assignments, TASK-149 connects the new owner
+to execution and commits, TASK-150 completes integration/recovery, and TASK-151
+verifies installed delivery. Explicit CLI/model role execution stays unavailable
+until EPIC-028's Herdr/mixed integration is complete. These definitions do not
+establish a shipped entrypoint or native functional result.
+
 ## Formal v1 delivery contract
 
 The formal v1 contract applies to retained formal sources, installed handlers
