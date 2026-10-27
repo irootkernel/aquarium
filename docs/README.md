@@ -40,20 +40,33 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 ## Planned Epic collaboration
 
 The [Epic collaboration dossier](todo/TODO-EPIC-COLLABORATION.md) defines planned
-`epic-squad` delivery with native agents by default and role-specific Herdr
-profiles when supplied. Independent plan and result assessments combine Task/Epic
-Evaluators with the Coordinator's project and product review. Task plans receive
-detailed Task assessment and Epic direction/continuity/handoff assessment;
-the Coordinator uses concise conclusions to assign implementation. All roles
-assess missing requirements and unjustified additions; material additions need
-a reason tied to existing requirements, and product scope expansion requires
-the user's authority.
-Each Task starts new Executor and Task Evaluator instances with fresh
-conversations where supported, while the Epic Evaluator retains context across
-Tasks. The [roadmap](roadmap/README.md#epic-027-add-native-epic-squad-collaboration) owns
-implementation order: the native foundation first, then Herdr and mixed execution
-in the same skill. Existing Handler/Validator behavior remains unchanged;
-`epic-squad` is not implemented yet.
+`epic-squad` delivery of correct, maintainable, extensible and responsive software.
+Its shared role names are Coordinator, Epic Evaluator, Task Evaluator, Task
+Operator and Support Operator. Task Operators deliver or independently review
+assigned work; distinct Task/Epic Evaluators provide risk-based assessments and
+the Coordinator owns product review. Every Task retains its first scoped
+assessments; subsequent corrections use focused checks, eligible local closure
+and affected review rather than automatic full tests and TE/EE reapproval.
+Current defects and mandatory evidence gaps remain blocking. Independent future
+improvements go to the canonical deferred-work owner.
+
+The dossier separates roadmap Tasks, Podway boundaries and agent assignments.
+Aquarium owns the Squad Procedure/binding changes, role dispatch and semantic
+scope decisions; no Podway engine extension is required. Optional Support
+Operators supply facts or assigned execution results, not verdicts. All roles,
+including the Coordinator, must justify material support tooling by a current
+need. Existing helpers and verification are preferred to new harnesses.
+
+Each Task starts fresh delivery/review and Task Evaluator contexts where supported;
+the Epic Evaluator retains continuity. The
+[roadmap](roadmap/README.md#epic-027-add-native-epic-squad-collaboration) keeps the
+native foundation before Herdr/mixed execution in the same skill. Selected lessons
+from the Pilot v0.0.4 proposal inform the design without adopting its runtime or
+fixed quotas. EPIC-027 also aligns epic-handler's role wording: its single logical
+Evaluator is called Epic Evaluator and its Worker/Executor is called Task Operator.
+No separate Task Evaluator or mandatory Support Operator is added to Handler.
+Existing Handler/Validator behavior and machine report contracts remain unchanged.
+Both the Squad implementation and the handler terminology update remain planned.
 
 ## Planned multi-host unification
 

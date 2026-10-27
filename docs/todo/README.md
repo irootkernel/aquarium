@@ -22,10 +22,14 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 - [Workflow review corrections dossier](TODO-WORKFLOW-REVIEW-CORRECTIONS.md) maps
   the 2026-09-25 review findings, Aquarium-owned corrections, producer requests,
   and acceptance for `EPIC-018` and `TASK-077` through `TASK-085`.
-- [Epic collaboration dossier](TODO-EPIC-COLLABORATION.md) defines the single
-  `epic-squad` workflow, its native foundation and subsequent role-specific Herdr
-  and mixed execution, assessments, configuration, authority and recovery for
-  `EPIC-027` and `EPIC-028`.
+- [Epic collaboration dossier](TODO-EPIC-COLLABORATION.md) defines product-first
+  `epic-squad` delivery for `EPIC-027` and `EPIC-028`: shared Coordinator, Epic
+  Evaluator, Task Evaluator, Task Operator and Support Operator names; native then
+  Herdr/mixed execution; Podway mappings, independent first assessments, bounded
+  corrections, evidence reuse, justified deferral and recovery. It includes
+  epic-handler's terminology alignment without adding roles or changing its
+  behavior, and selected Pilot lessons without requiring v0.0.4 or a Podway
+  engine extension.
 - [Multi-host unification dossier](TODO-MULTI-HOST-UNIFICATION.md) defines shared
   instructions, host packages, five-host qualification and the single-repository
   migration for `EPIC-030` and `TASK-162` through `TASK-171`.
