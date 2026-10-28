@@ -1,6 +1,6 @@
 schema: podway.procedure/v2
 id: aquarium-squad-validation
-version: "2"
+version: "5"
 name: Squad validation collaboration
 purpose: Explicit Squad collaboration boundaries; original requirements, independent suitability, actual evidence and authority remain due.
 goal_tracking: true
@@ -18,6 +18,14 @@ node_definitions:
         required: true
         allowed_media_types:
           - application/json
+      - id: validation-scope
+        type: choice
+        prompt: Authorized Validation work-unit scope
+        required: true
+        choices:
+          - integration
+          - correction-group
+          - epic-closeout
       - id: workflow-owner
         type: choice
         prompt: workflow owner
@@ -72,7 +80,7 @@ node_definitions:
     title: Collect independent current integration coverage
     intent: Collect independent current integration coverage
     instructions:
-      - Collect the continuous EE and at least two fresh non-authoring TO integration reviews. Preserve each original report and meaningful disagreement. Coordinator product review and nonconflicting due checks join the same frozen candidate.
+      - Obtain actual first or missing assembled coverage from the continuous EE and at least two fresh non-authoring TOs. Applicable original first reports remain evidence during supported successor reentry; dispatch only missing or affected work. Preserve every original report, disagreement and closure. Current Coordinator product review and due checks remain required.
     items:
       - id: evaluator-assessment
         type: artifact
@@ -126,6 +134,7 @@ node_definitions:
     intent: Classify the complete current issue set
     instructions:
       - Preserve actual reports, exact target, current authority and negative results. Coordinator alone advances the native workflow.
+      - For final closeout, retain actual first substantive closeout EE coverage and the original integration panel. Select closeout for missing or genuinely affected EE judgment; eligible meaning-preserving local record closure may preserve a prior closeout judgment through verified current applicability. Do not manufacture first coverage from a relabelled integration report or replace a negative EE result with missing-evidence recovery. Complete current checks and Coordinator product judgment before the one actual user acceptance.
     items:
       - id: correction-basis
         type: artifact
@@ -144,6 +153,7 @@ node_definitions:
           - plan
           - evidence
           - blocked
+          - closeout
       - id: correction-summary
         type: text
         prompt: correction summary
@@ -205,6 +215,14 @@ node_definitions:
               node: classify-corrections
               item: correction-route
             equals: blocked
+      - id: closeout
+        label: Assess final closeout
+        criteria: The record-only final candidate needs its actual exact-candidate EE judgment and Coordinator product review.
+        guards:
+          - evidence:
+              node: classify-corrections
+              item: correction-route
+            equals: closeout
     reason:
       required: true
       prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
@@ -253,7 +271,8 @@ node_definitions:
     title: Assess only due affected judgments
     intent: Assess only due affected judgments
     instructions:
-      - "Use the actual correction classification: EE is primary for assembled-Epic corrections, with only the primary, one TO or two TOs as required by correction depth. Preserve applicable first reports and request only outstanding affected judgment; do not recall retired Task Evaluators for an Epic seam."
+      - Use the actual correction classification and complete original unresolved assessment references. Dispatch EE as primary for integration, correction-group and closeout, plus only the independent TOs due for correction depth and original judgment owners. Preserve all source findings; no unrelated full-panel recall.
+      - For epic-closeout, assess the actual substantive lifecycle/document candidate as affected-epic. Retain the original panel and any eligible verified local applicability without routine Task-team recall or invented product tests. Return complete positive or negative original results; the Coordinator preserves real gaps, completes current product judgment and asks once for overall acceptance of the final presented candidate.
     items:
       - id: evaluator-assessment
         type: artifact
@@ -328,6 +347,7 @@ node_definitions:
     instructions:
       - Use adaptive current-composition consumption with target.squad.compositions for this exact placement. Preserve all actual TE, independent Task Operator and EE source reports and original verdicts; a summary is not a substitute.
       - Reconcile original criteria, direct checks, finite authorized closures, outstanding judgments and current target. Record fail/inconclusive or nonzero counts truthfully. Eligible local closure does not request a fresh TE/EE pass.
+      - Record a composition_error with its original code, message, target and basis as unavailable/inconclusive. Leave unestablished criterion and pending counts absent; never convert an error into a composition or guessed zeros. Recover the original reports/checks, then re-record under fresh native fences.
     items:
       - id: composition-basis
         type: artifact
@@ -335,6 +355,13 @@ node_definitions:
         required: true
         allowed_media_types:
           - application/json
+      - id: composition-evidence
+        type: choice
+        prompt: Current composition evidence availability
+        required: true
+        choices:
+          - established
+          - unavailable
       - id: composition-current
         type: check_result
         prompt: composition current
@@ -356,6 +383,7 @@ node_definitions:
           - task-result
           - integration
           - epic-closeout
+          - correction-group
       - id: composition-goal-outcome
         type: choice
         prompt: composition goal outcome
@@ -366,32 +394,50 @@ node_definitions:
       - id: composition-unmet
         type: integer
         prompt: composition unmet
-        required: true
+        required: false
+        required_when:
+          - item: composition-evidence
+            equals: established
         minimum: 0
       - id: composition-unverified
         type: integer
         prompt: composition unverified
-        required: true
+        required: false
+        required_when:
+          - item: composition-evidence
+            equals: established
         minimum: 0
       - id: pending-local
         type: integer
         prompt: pending local
-        required: true
+        required: false
+        required_when:
+          - item: composition-evidence
+            equals: established
         minimum: 0
       - id: pending-low
         type: integer
         prompt: pending low
-        required: true
+        required: false
+        required_when:
+          - item: composition-evidence
+            equals: established
         minimum: 0
       - id: current-blockers
         type: integer
         prompt: current blockers
-        required: true
+        required: false
+        required_when:
+          - item: composition-evidence
+            equals: established
         minimum: 0
       - id: pending-judgment
         type: integer
         prompt: pending judgment
-        required: true
+        required: false
+        required_when:
+          - item: composition-evidence
+            equals: established
         minimum: 0
   check-current-criteria:
     type: decision
@@ -481,6 +527,40 @@ node_definitions:
       - id: superseded
         label: superseded
         criteria: The separately reconciled goal is superseded.
+      - id: group-ready
+        label: group-ready
+        criteria: Current group obligations are settled; whole-Epic confirmation remains pending.
+        guards:
+          - evidence:
+              node: current-composition
+              item: composition-current
+            field: outcome
+            equals: pass
+          - evidence:
+              node: current-composition
+              item: composition-goal-outcome
+            equals: not-achieved
+          - evidence:
+              node: current-composition
+              item: composition-scope
+            equals: correction-group
+      - id: closeout-ready
+        label: closeout-ready
+        criteria: Current integration remains applicable; only authorized closeout records changed.
+        guards:
+          - evidence:
+              node: current-composition
+              item: composition-current
+            field: outcome
+            equals: pass
+          - evidence:
+              node: current-composition
+              item: composition-goal-outcome
+            equals: achieved
+          - evidence:
+              node: current-composition
+              item: composition-scope
+            equals: epic-closeout
     reason:
       required: true
       prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
@@ -491,6 +571,8 @@ node_definitions:
         not-achieved: not_achieved
         stopped: not_achieved
         superseded: superseded
+        group-ready: not_achieved
+        closeout-ready: achieved
   record-acceptance:
     type: action
     title: Record exact candidate acceptance and distinct grant
@@ -564,9 +646,17 @@ node_definitions:
               item: grant-current
             field: outcome
             equals: pass
+          - evidence:
+              node: current-composition
+              item: composition-scope
+            equals: epic-closeout
+          - evidence:
+              node: record-acceptance
+              item: grant-kind
+            equals: conditional-closeout
       - id: delegated
         label: delegated
-        criteria: Coordinator accepts exact member/correction or continuing internal validation under the envelope.
+        criteria: Coordinator accepts only the exact scoped correction group under its existing correction grant.
         guards:
           - evidence:
               node: record-acceptance
@@ -578,12 +668,37 @@ node_definitions:
             field: outcome
             equals: pass
           - evidence:
-              node: baseline
-              item: workflow-owner
-            equals: epic-squad
+              node: current-composition
+              item: composition-scope
+            equals: correction-group
+          - evidence:
+              node: record-acceptance
+              item: grant-kind
+            equals: correction
       - id: changes-requested
         label: changes requested
         criteria: Renew only affected work and evidence; never reuse exact acceptance after target change.
+      - id: approved-group
+        label: Approved scoped group
+        criteria: Actual user accepts only the scoped correction; whole-Epic confirmation remains pending.
+        guards:
+          - evidence:
+              node: record-acceptance
+              item: acceptance-source
+            equals: user
+          - evidence:
+              node: record-acceptance
+              item: grant-current
+            field: outcome
+            equals: pass
+          - evidence:
+              node: current-composition
+              item: composition-scope
+            equals: correction-group
+          - evidence:
+              node: record-acceptance
+              item: grant-kind
+            equals: correction
     reason:
       required: true
       prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
@@ -593,6 +708,7 @@ node_definitions:
     intent: Commit through required tooling and verify native finalization
     instructions:
       - The Coordinator alone invokes task-commit as aquarium:epic-squad under the exact unconsumed grant. Preserve original reports, current composition, lifecycle/record/release-note decisions and post-hook identity. Recover a successful commit without replay; complete native finalization separately. No push or installation is implied.
+      - Before retirement retain complete role results, configuration, public handles and pending operations. Separate rejected/stopped records from accepted work. If a commit already succeeded, verify its actual post-hook bytes and consumed grant, then finish only pending native finalization; do not invoke commit again. A changed hook/candidate reopens only affected guarantees before renewed acceptance.
     items:
       - id: closeout-summary
         type: text
@@ -681,6 +797,7 @@ node_definitions:
     intent: Report unachieved or superseded work
     instructions:
       - Preserve actual reports, exact target, current authority and negative results. Coordinator alone advances the native workflow.
+      - Before retirement retain complete role results, configuration, public handles and pending operations. Separate rejected/stopped records from accepted work. If a commit already succeeded, verify its actual post-hook bytes and consumed grant, then finish only pending native finalization; do not invoke commit again. A changed hook/candidate reopens only affected guarantees before renewed acceptance.
     items:
       - id: closeout-summary
         type: text
@@ -695,6 +812,7 @@ node_definitions:
     intent: Report the stopped boundary
     instructions:
       - Retain exact original criteria, actual reports, unknown guarantees, pending operations and authority. Stopping neither accepts work nor grants commit or restart.
+      - Before retirement retain complete role results, configuration, public handles and pending operations. Separate rejected/stopped records from accepted work. If a commit already succeeded, verify its actual post-hook bytes and consumed grant, then finish only pending native finalization; do not invoke commit again. A changed hook/candidate reopens only affected guarantees before renewed acceptance.
     items:
       - id: closeout-summary
         type: text
@@ -703,12 +821,128 @@ node_definitions:
         min_length: 1
         max_length: 4000
         multiline: true
+  current-composition-evidence:
+    type: decision
+    title: Check current evidence availability
+    objective: Keep missing evidence distinct from feature counts.
+    prompt: Is the original composition established?
+    options:
+      - id: established
+        label: Established
+        criteria: The strict consumer returned an actual composition with complete current counts.
+        guards:
+          - evidence:
+              node: current-composition
+              item: composition-evidence
+            equals: established
+      - id: unavailable
+        label: Recover evidence
+        criteria: The strict consumer failed; preserve its original error and recover only the missing guarantee.
+    reason:
+      required: true
+      prompt: Cite the actual result, missing guarantee and current recovery owner.
+  select-validation-scope:
+    type: decision
+    title: Select the authorized validation boundary
+    objective: Keep integration, correction and final closeout separate.
+    prompt: Which exact work unit is authorized?
+    options:
+      - id: integration
+        label: integration
+        criteria: Obtain first assembled Epic assessments; member passes cannot supply them.
+        guards:
+          - evidence:
+              node: baseline
+              item: validation-scope
+            equals: integration
+      - id: restored
+        label: Restore scoped integration
+        criteria: Restore the original audit for the exact correction-group or final-closeout scope recorded at baseline.
+        guards:
+          - evidence:
+              node: baseline
+              item: validation-scope
+            not_equals: integration
+    reason:
+      required: true
+      prompt: Cite current scope, original audit, exact candidate and remaining authority.
+  integration-complete:
+    type: action
+    title: Retain completed integration before user acceptance
+    intent: Return current assembled assessments and remaining final-closeout authority.
+    instructions:
+      - Retain actual EE and two fresh non-authoring TO reports, Coordinator product review, current composition and unknown installed guarantees. This boundary performs no commit and supplies no actual user acceptance. A later closeout-only work unit uses the same original integration evidence after applicability verification.
+    items:
+      - id: integration-summary
+        type: text
+        prompt: Original integration results and remaining closeout authority
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  group-commit:
+    type: action
+    title: Commit only the scoped correction and continue Validation
+    intent: Verify one correction commit without finalizing the active validation session.
+    instructions:
+      - The Coordinator invokes task-commit only for the exact ready correction group and its unused correction grant. Retain original integration negatives, closures, checks and actual committed post-hook bytes. Whole-Epic confirmation stays pending and the native goal stays not-achieved. This is an intermediate action in this same Validation session; never start or finalize a nested Goal. Recover a successful commit by verification without replay.
+    items:
+      - id: closeout-summary
+        type: text
+        prompt: closeout summary
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  resume-integration:
+    type: decision
+    title: Resume current assembled integration
+    objective: Re-record original integration with current applicability after the group commit.
+    prompt: Continue the same Validation operation?
+    options:
+      - id: continue
+        label: Continue integration
+        criteria: Settle commit/native records, retain original reports and consumed grant, then restore only affected current composition; no blanket panel or test rerun.
+      - id: stop
+        label: Stop
+        criteria: Record the current stopped boundary with original integration and pending whole-Epic confirmation.
+    reason:
+      required: true
+      prompt: Cite exact commit, original audit, preserved closures, applicable checks, remaining gaps and next owner.
+  restore-closeout-basis:
+    type: action
+    title: Restore current integration for record-only closeout
+    intent: Verify applicable original integration evidence without a new panel.
+    instructions:
+      - Read the actual executed or restored complete integration composition, EE/two-TO reports, closures, due checks and Coordinator product review. Preserve negative history and verify current applicability. Supply integration-basis to classification and current composition. Final closeout obtains actual exact-candidate affected-EE review before user acceptance. A true Task reopen first settles Validation and restores its Task-owned sequence.
+    items:
+      - id: integration-basis
+        type: artifact
+        prompt: Original integration composition and current applicability
+        required: true
+        allowed_media_types:
+          - application/json
+  prepare-final-closeout:
+    type: decision
+    title: Prepare actual user closeout
+    objective: Keep completed integration separate from actual user acceptance.
+    prompt: Is record-only final closeout ready?
+    options:
+      - id: ready
+        label: Prepare closeout
+        criteria: Prepare exact lifecycle changes, restore applicable integration evidence and obtain actual exact-candidate affected-EE and Coordinator product assessment before requesting the one overall user acceptance. Re-record closeout under fresh fences.
+      - id: stop
+        label: Stop
+        criteria: Retain integration evidence and all remaining authority without inferred user acceptance.
+    reason:
+      required: true
+      prompt: Cite original integration, current candidate, record-only delta and actual acceptance state.
 graph:
   entry: baseline
   nodes:
     - id: baseline
       use: baseline
-      next: deliver-work
+      next: select-validation-scope
     - id: deliver-work
       use: deliver-work
       evidence_from:
@@ -725,21 +959,21 @@ graph:
       use: assess-integration
       evidence_from:
         - node: deliver-work
-          required: true
+          required: false
           items:
             - executor-handoff
             - work-summary
-      next: classify-corrections
+      next: restore-closeout-basis
     - id: classify-corrections
       use: classify-corrections
       evidence_from:
         - node: deliver-work
-          required: true
+          required: false
           items:
             - executor-handoff
             - work-summary
         - node: assess-integration
-          required: true
+          required: false
           items:
             - evaluator-assessment
             - evaluator-verdict
@@ -747,6 +981,16 @@ graph:
             - evaluator-unverified-criteria
             - evaluator-applicability
             - evaluator-checkpoint-result
+        - node: baseline
+          required: true
+          items:
+            - context-brief
+            - validation-scope
+            - authority-reference
+        - node: restore-closeout-basis
+          required: false
+          items:
+            - integration-basis
       next: decide-corrections
     - id: decide-corrections
       use: decide-corrections
@@ -768,13 +1012,16 @@ graph:
           to: affected-correction
           effect: advance
         plan:
-          to: deliver-work
+          to: baseline
           effect: rework
         evidence:
           to: recover-evidence
           effect: advance
         blocked:
           to: record-stop
+          effect: advance
+        closeout:
+          to: assess-affected
           effect: advance
     - id: local-correction
       use: local-correction
@@ -800,7 +1047,7 @@ graph:
       use: assess-affected
       evidence_from:
         - node: affected-correction
-          required: true
+          required: false
           items:
             - executor-handoff
             - correction-summary
@@ -810,6 +1057,10 @@ graph:
             - correction-basis
             - correction-route
             - correction-summary
+        - node: restore-closeout-basis
+          required: false
+          items:
+            - integration-basis
       next: current-composition
     - id: recover-evidence
       use: recover-evidence
@@ -825,12 +1076,12 @@ graph:
       use: current-composition
       evidence_from:
         - node: deliver-work
-          required: true
+          required: false
           items:
             - executor-handoff
             - work-summary
         - node: assess-integration
-          required: true
+          required: false
           items:
             - evaluator-assessment
             - evaluator-verdict
@@ -862,7 +1113,17 @@ graph:
           items:
             - recovered-evidence
             - recovery-summary
-      next: check-current-criteria
+        - node: baseline
+          required: true
+          items:
+            - context-brief
+            - validation-scope
+            - authority-reference
+        - node: restore-closeout-basis
+          required: false
+          items:
+            - integration-basis
+      next: current-composition-evidence
     - id: check-current-criteria
       use: check-current-criteria
       evidence_from:
@@ -879,6 +1140,7 @@ graph:
             - pending-low
             - current-blockers
             - pending-judgment
+            - composition-evidence
       routes:
         current:
           to: check-current-pending
@@ -902,6 +1164,7 @@ graph:
             - pending-low
             - current-blockers
             - pending-judgment
+            - composition-evidence
       routes:
         current:
           to: assess-goal
@@ -925,9 +1188,10 @@ graph:
             - pending-low
             - current-blockers
             - pending-judgment
+            - composition-evidence
       routes:
         achieved:
-          to: record-acceptance
+          to: integration-complete
           effect: advance
         not-achieved:
           to: classify-corrections
@@ -937,6 +1201,12 @@ graph:
           effect: advance
         superseded:
           to: not-achieved-closeout
+          effect: advance
+        group-ready:
+          to: record-acceptance
+          effect: advance
+        closeout-ready:
+          to: record-acceptance
           effect: advance
     - id: record-acceptance
       use: record-acceptance
@@ -962,6 +1232,7 @@ graph:
             - pending-low
             - current-blockers
             - pending-judgment
+            - composition-evidence
       next: approve-closeout
     - id: approve-closeout
       use: approve-closeout
@@ -974,6 +1245,7 @@ graph:
             - review-route
             - authority-reference
             - plan-handoff-artifact
+            - validation-scope
         - node: record-acceptance
           required: true
           items:
@@ -996,6 +1268,7 @@ graph:
             - pending-low
             - current-blockers
             - pending-judgment
+            - composition-evidence
       routes:
         approved:
           to: closeout
@@ -1006,6 +1279,9 @@ graph:
         changes-requested:
           to: classify-corrections
           effect: rework
+        approved-group:
+          to: group-commit
+          effect: advance
     - id: closeout
       use: closeout
       evidence_from:
@@ -1031,9 +1307,10 @@ graph:
             - pending-low
             - current-blockers
             - pending-judgment
+            - composition-evidence
       terminal: true
     - id: delegated-closeout
-      use: closeout
+      use: group-commit
       evidence_from:
         - node: record-acceptance
           required: true
@@ -1057,7 +1334,8 @@ graph:
             - pending-low
             - current-blockers
             - pending-judgment
-      terminal: true
+            - composition-evidence
+      next: resume-integration
     - id: record-stop
       use: record-stop
       next: confirm-stop
@@ -1074,7 +1352,7 @@ graph:
           to: stopped-outcome
           effect: advance
         continue:
-          to: deliver-work
+          to: baseline
           effect: rework
     - id: stopped-outcome
       use: stopped-outcome
@@ -1103,6 +1381,98 @@ graph:
     - id: stopped-closeout
       use: stopped-closeout
       terminal: true
+    - id: current-composition-evidence
+      use: current-composition-evidence
+      evidence_from:
+        - node: current-composition
+          required: true
+          items:
+            - composition-evidence
+            - composition-current
+            - composition-basis
+      routes:
+        established:
+          to: check-current-criteria
+          effect: advance
+        unavailable:
+          to: classify-corrections
+          effect: rework
+    - id: select-validation-scope
+      use: select-validation-scope
+      evidence_from:
+        - node: baseline
+          required: true
+          items:
+            - validation-scope
+            - context-brief
+            - authority-reference
+      routes:
+        integration:
+          to: deliver-work
+          effect: advance
+        restored:
+          to: restore-closeout-basis
+          effect: advance
+    - id: integration-complete
+      use: integration-complete
+      evidence_from:
+        - node: current-composition
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+      next: prepare-final-closeout
+    - id: group-commit
+      use: group-commit
+      evidence_from:
+        - node: record-acceptance
+          required: true
+          items:
+            - acceptance-source
+            - grant-reference
+            - grant-current
+        - node: current-composition
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+      next: resume-integration
+    - id: resume-integration
+      use: resume-integration
+      evidence_from:
+        - node: group-commit
+          required: false
+          items:
+            - closeout-summary
+        - node: delegated-closeout
+          required: false
+          items:
+            - closeout-summary
+      routes:
+        continue:
+          to: current-composition
+          effect: rework
+        stop:
+          to: record-stop
+          effect: advance
+    - id: restore-closeout-basis
+      use: restore-closeout-basis
+      next: classify-corrections
+    - id: prepare-final-closeout
+      use: prepare-final-closeout
+      evidence_from:
+        - node: integration-complete
+          required: true
+          items:
+            - integration-summary
+      routes:
+        ready:
+          to: restore-closeout-basis
+          effect: rework
+        stop:
+          to: record-stop
+          effect: advance
 manual_rework:
   allowed_targets:
     - deliver-work

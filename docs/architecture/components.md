@@ -37,8 +37,10 @@ The required owner is `aquarium:epic-squad`, independent of `epic-handler`; its
 execution and commit admission use its owner-specific qualified bindings and
 [current-composition consumer](../../plugins/aquarium/references/epic-squad-execution.md).
 Existing ordinary report schemas and Handler/Validator responsibilities remain
-unchanged. Integration/recovery completion remains due before delivery activation; source
-checks establish no installed behavior.
+unchanged. The mapped consumer records unavailable evidence separately from
+feature counts. Validation keeps correction commits inside one session and
+requires actual user acceptance for final closeout. Source checks establish no
+installed behavior.
 
 ## Directory documentation flow
 

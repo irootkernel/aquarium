@@ -31,9 +31,9 @@ These workflows use Ouroboros only for their explicitly approved discovery or QA
 Native [Squad collaboration instructions](../../plugins/aquarium/skills/epic-squad/SKILL.md)
 define direct native roles, both plan scopes, independent first result intake
 and focused corrections. [Squad Goal/Validation and exact-composition consumers](../../plugins/aquarium/references/epic-squad-execution.md)
-connect source preparation, evidence and commit/design handoffs. Delivery
-activation remains blocked pending integration/recovery; explicit external role profiles and
-installed behavior remain unimplemented or unverified. Handler display roles are
+connect source preparation, evidence, scoped integration corrections and
+commit/design recovery. Explicit external role profiles remain unimplemented,
+and installed native behavior remains unverified. Handler display roles are
 Task Operator and Epic Evaluator, preserving its existing single-Evaluator
 behavior and machine contracts.
 

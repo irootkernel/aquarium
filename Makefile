@@ -19,6 +19,7 @@ override PYTEST_ADDOPTS :=
 export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
+	tests/unit/test_vm_squad_unit.py \
 	tests/unit/test_podway_release_bundle_unit.py \
 	tests/unit/test_podway_upgrade_unit.py \
 	plugins/aquarium/shared/adaptive_promotion.py \

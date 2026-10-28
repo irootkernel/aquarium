@@ -63,6 +63,16 @@ def object_value(value, name):
 
 def artifact(repository, reference):
     reference = object_value(reference, "Squad artifact reference")
+    if (
+        not isinstance(reference.get("path"), str)
+        or not reference["path"]
+        or not isinstance(reference.get("sha256"), str)
+        or type(reference.get("bytes")) is not int
+        or reference["bytes"] < 0
+    ):
+        raise BundleError(
+            "invalid-input", "Squad artifact reference needs path, sha256 and byte size"
+        )
     path = Path(reference["path"])
     if not path.is_absolute():
         path = Path(repository) / path
@@ -88,7 +98,9 @@ def correction_roles(classification, repository):
     depth = classification.get("depth")
     phase = classification.get("phase")
     if (
-        depth not in {"primary-only", "bounded", "elevated"}
+        not isinstance(depth, str)
+        or depth not in {"primary-only", "bounded", "elevated"}
+        or not isinstance(phase, str)
         or phase
         not in {
             "task-plan",
@@ -130,8 +142,11 @@ def correction_roles(classification, repository):
         role, producer = reference.get("role"), reference.get("producer")
         identifier = reference.get("id")
         if (
-            role not in {"Task Evaluator", "Epic Evaluator", "Task Operator"}
+            not isinstance(role, str)
+            or role not in {"Task Evaluator", "Epic Evaluator", "Task Operator"}
+            or not isinstance(producer, str)
             or not producer
+            or not isinstance(identifier, str)
             or not identifier
             or identifier in identifiers
         ):
@@ -145,7 +160,10 @@ def correction_roles(classification, repository):
         )
         if (
             native.get("public_handle") != reference["producer"]
-            or report.get("work", {}).get("display_role") != reference["role"]
+            or object_value(report.get("work"), "Original assessment work").get(
+                "display_role"
+            )
+            != reference["role"]
         ):
             raise BundleError(
                 "not-established", "Original judgment owner is not established"
@@ -169,7 +187,12 @@ def owns_original(current, original, originals):
             return covered
         if not isinstance(replacement, dict):
             return covered
-        previous = originals.get(replacement.get("assessment"))
+        assessment = replacement.get("assessment")
+        if not isinstance(assessment, str) or not assessment:
+            raise BundleError(
+                "invalid-input", "Replacement assessment must name its original report"
+            )
+        previous = originals.get(assessment)
         if (
             previous is None
             or previous["reference"]["role"] != original["role"]
@@ -194,7 +217,9 @@ def finding_states(report, reference):
         )
     result = {}
     future = reference.get("future_findings", [])
-    if not isinstance(future, list):
+    if not isinstance(future, list) or any(
+        not isinstance(identifier, str) for identifier in future
+    ):
         raise BundleError(
             "not-established", "Future findings need original identifiers"
         )
@@ -206,6 +231,10 @@ def finding_states(report, reference):
                 "not-established", "Original findings need unique identifiers"
             )
         status = finding.get("state", finding.get("disposition"))
+        if status is not None and not isinstance(status, str):
+            raise BundleError(
+                "invalid-input", "Original finding state must be a string"
+            )
         if identifier in future:
             applicability = finding.get("applicability")
             if not (
@@ -256,10 +285,18 @@ def criterion_rows(rows):
     result = {}
     for row in rows:
         row = object_value(row, "Squad criterion")
+        if not isinstance(row.get("id"), str) or not row["id"]:
+            raise BundleError("invalid-input", "Squad criterion needs its original ID")
+        if row.get("parts") is not None and not isinstance(row["parts"], list):
+            raise BundleError("invalid-input", "Squad criterion parts must be a list")
         parts = row.get("parts") or [
             {"id": "whole", "state": row.get("state"), "basis": row.get("basis")}
         ]
         parts = [object_value(part, "Squad criterion part") for part in parts]
+        if (row.get("state") is not None and not isinstance(row["state"], str)) or any(
+            not isinstance(part.get("state"), str) for part in parts
+        ):
+            raise BundleError("invalid-input", "Squad criterion states must be strings")
         if row.get("state") in {"unmet", "unverified"} and all(
             part.get("state") in {"met", "not-applicable"} for part in parts
         ):
@@ -268,6 +305,14 @@ def criterion_rows(rows):
                 "Compound criterion summary conflicts with its part states",
             )
         for part in parts:
+            if (
+                not isinstance(part.get("id"), str)
+                or not part["id"]
+                or not isinstance(part.get("state"), str)
+            ):
+                raise BundleError(
+                    "invalid-input", "Squad criterion part needs ID and state"
+                )
             key = (row["id"], part["id"])
             if key in result or part.get("state") not in {
                 "met",
@@ -317,7 +362,9 @@ def assessment_rows(report, scope, expected):
         or checkpoint.get("phase") != scope
         or not isinstance(checkpoint.get("basis"), str)
         or not checkpoint["basis"].strip()
+        or not isinstance(checkpoint.get("state"), str)
         or checkpoint.get("state") not in {"met", "unmet", "unverified"}
+        or not isinstance(report.get("checkpoint_result"), str)
         or report.get("checkpoint_result") not in {"pass", "fail", "inconclusive"}
     ):
         raise BundleError(
@@ -392,6 +439,121 @@ def assessment_rows(report, scope, expected):
     return original, rows
 
 
+def closeout_scope(repository, report, *, moved=False):
+    """Resolve original purpose; generic affected-Epic metadata is not closeout."""
+    target = object_value(report.get("target"), "Original assessment target")
+    contexts = []
+    if "squad" in target:
+        contexts.append(target["squad"])
+    assigned = report.get("assignment")
+    if (
+        isinstance(assigned, dict)
+        and assigned.get("schema") != "aquarium.assignment/v3"
+    ):
+        reference = assigned
+        assigned = None
+        if isinstance(reference.get("path"), str) and isinstance(
+            reference.get("sha256"), str
+        ):
+            path = Path(reference["path"])
+            if not path.is_absolute():
+                path = Path(repository) / path
+            # This optional ordinary provenance is not a required Squad artifact.
+            # If available, its declared identity must still agree with its bytes.
+            if path.is_symlink():
+                raise BundleError(
+                    "not-established", "Original assignment is not a regular file"
+                )
+            if path.is_file():
+                try:
+                    raw = path.read_bytes()
+                except OSError:
+                    raw = None
+                if raw is not None:
+                    digest = reference["sha256"]
+                    if not digest.startswith("sha256:"):
+                        digest = "sha256:" + digest
+                    if sha256(raw) != digest or (
+                        "bytes" in reference and reference["bytes"] != len(raw)
+                    ):
+                        raise BundleError(
+                            "source-drift", "Original assignment identity changed"
+                        )
+                    try:
+                        assigned = json.loads(raw)
+                    except (UnicodeError, ValueError) as error:
+                        raise BundleError(
+                            "not-established", "Original assignment is unreadable"
+                        ) from error
+                    assigned = object_value(assigned, "Original ordinary assignment")
+    if (
+        isinstance(assigned, dict)
+        and assigned.get("schema") == "aquarium.assignment/v3"
+    ):
+        original_target = object_value(
+            assigned.get("target"), "Original closeout assignment target"
+        )
+        if "squad" in original_target:
+            contexts.append(original_target["squad"])
+    # Dispatch supplies semantic scope even when its copied work-unit metadata is
+    # coarser. It cannot establish first closeout coverage across a later delta.
+    work_contexts = (
+        report.get("work"),
+        assigned.get("work") if isinstance(assigned, dict) else None,
+    )
+    if moved and any(
+        isinstance(work, dict)
+        and work.get("assignment_scope")
+        in {
+            "integration",
+            "epic-plan",
+            "task-plan",
+            "task-result",
+            "epic-contribution",
+            "affected-result",
+        }
+        for work in work_contexts
+    ):
+        return False
+    purposes = []
+    closeout_phase = False
+    for context in contexts:
+        if not isinstance(context, dict):
+            return False
+        if "candidate" in context and context["candidate"] != target.get("candidate"):
+            return False
+        if context.get("work_unit_kind") is not None:
+            purposes.append(context["work_unit_kind"] == "epic-closeout")
+        correction = context.get("correction")
+        if correction is not None:
+            if not isinstance(correction, dict):
+                return False
+            if correction.get("phase") is not None:
+                purposes.append(correction["phase"] == "epic-closeout")
+                closeout_phase = correction["phase"] == "epic-closeout"
+    # Read all original provenance before accepting an affirmative report context.
+    if False in purposes:
+        return False
+    if (
+        moved
+        and not closeout_phase
+        and not any(
+            isinstance(work, dict) and work.get("assignment_scope") == "affected-epic"
+            for work in work_contexts
+        )
+    ):
+        return None
+    return True if purposes else None
+
+
+def original_reference(reference):
+    return {
+        key: value
+        for key, value in reference.items()
+        if key not in {"applicability", "applicability_evidence"}
+    }
+
+
 def composition(repository, assignment, value):
     """Verify a current basis; never turn a source rework verdict into a new pass."""
     value = object_value(value, "Squad composition")
@@ -410,7 +572,7 @@ def composition(repository, assignment, value):
         )
     squad = object_value(assignment["target"].get("squad"), "target.squad")
     phase = value.get("phase")
-    if phase not in {
+    if not isinstance(phase, str) or phase not in {
         "task-plan",
         "epic-plan",
         "task-result",
@@ -423,7 +585,7 @@ def composition(repository, assignment, value):
     if not isinstance(target, str) or not target or value.get("target") != target:
         raise BundleError("source-drift", "Squad composition target is not current")
     risk = squad.get("risk")
-    if risk not in {"standard", "elevated"}:
+    if not isinstance(risk, str) or risk not in {"standard", "elevated"}:
         raise BundleError(
             "not-established", "The Task risk and its assessment scope are required"
         )
@@ -451,7 +613,12 @@ def composition(repository, assignment, value):
         raise BundleError(
             "not-established", "Actual independent first assessments are required"
         )
-    authors = set(squad.get("authors", []))
+    author_rows = squad.get("authors", [])
+    if not isinstance(author_rows, list) or any(
+        not isinstance(author, str) for author in author_rows
+    ):
+        raise BundleError("invalid-input", "Original authors must be a list of handles")
+    authors = set(author_rows)
     if not authors:
         raise BundleError(
             "not-established", "Original plan and implementation authors are required"
@@ -468,12 +635,19 @@ def composition(repository, assignment, value):
         role = ref.get("role")
         producer = ref.get("producer")
         if (
-            role not in {"Task Evaluator", "Epic Evaluator", "Task Operator"}
+            not isinstance(role, str)
+            or role not in {"Task Evaluator", "Epic Evaluator", "Task Operator"}
             or not isinstance(producer, str)
             or not producer
             or producer in authors
-            or report.get("work", {}).get("display_role") != role
-            or report.get("native", {}).get("public_handle") != producer
+            or object_value(report.get("work"), "Original assessment work").get(
+                "display_role"
+            )
+            != role
+            or object_value(
+                report.get("native"), "Original assessment native identity"
+            ).get("public_handle")
+            != producer
             or report.get("schema")
             != (
                 "aquarium.executor-handoff/v3"
@@ -486,9 +660,18 @@ def composition(repository, assignment, value):
                 "Independent original producer and role are not established",
             )
         scope = ref.get("scope")
-        source_target = report.get("target", {}).get(
-            "plan" if phase.endswith("plan") else "candidate"
-        )
+        if (
+            not isinstance(scope, str)
+            or not isinstance(ref.get("target"), str)
+            or not isinstance(ref.get("applicability"), str)
+        ):
+            raise BundleError(
+                "invalid-input",
+                "Assessment needs scope, target and applicability strings",
+            )
+        source_target = object_value(
+            report.get("target"), "Original assessment target"
+        ).get("plan" if phase.endswith("plan") else "candidate")
         if (
             source_target != ref.get("target")
             or ref.get("applicability") not in {"current", "preserved"}
@@ -499,12 +682,23 @@ def composition(repository, assignment, value):
                 "Assessment target or current applicability is missing",
             )
         verdict = report.get("verdict")
-        if verdict not in {"pass", "rework", "evidence-needed"}:
+        if not isinstance(verdict, str) or verdict not in {
+            "pass",
+            "rework",
+            "evidence-needed",
+        }:
             raise BundleError(
                 "not-established", "Original assessment verdict is unavailable"
             )
         all_rows, rows = assessment_rows(report, scope, expected)
-        future = set(ref.get("future_criteria", []))
+        future_rows = ref.get("future_criteria", [])
+        if not isinstance(future_rows, list) or any(
+            not isinstance(identifier, str) for identifier in future_rows
+        ):
+            raise BundleError(
+                "invalid-input", "Future criteria must retain their original IDs"
+            )
+        future = set(future_rows)
         if any(key[0] not in future for key in set(all_rows) - expected):
             raise BundleError(
                 "incompatible",
@@ -551,8 +745,32 @@ def composition(repository, assignment, value):
                     "not-established",
                     "Changed assessment basis lacks current preserved-scope proof",
                 )
+        closeout_applicable = source_target == target
+        if (
+            phase == "epic-closeout"
+            and role == "Epic Evaluator"
+            and scope == "affected-epic"
+        ):
+            original_scope = closeout_scope(
+                repository, report, moved=source_target != target
+            )
+            if original_scope is False:
+                closeout_applicable = False
+            elif source_target != target:
+                closeout_applicable = (
+                    original_scope is True
+                    and applicability.get("source_assessment")
+                    == original_reference(ref)
+                    and applicability.get("local_eligible") is True
+                    and applicability.get("record_only") is True
+                    and applicability.get("meaning_preserved") is True
+                    and applicability.get("unresolved_judgment") is False
+                    and bool(applicability.get("delta"))
+                    and bool(applicability.get("basis"))
+                )
         sources[identity] = {
             "reference": ref,
+            "closeout_applicable": closeout_applicable,
             "verdict": verdict,
             "rows": rows,
             "original_criteria": copy.deepcopy(report["criteria"]),
@@ -588,6 +806,7 @@ def composition(repository, assignment, value):
         "epic-closeout": [
             ("Epic Evaluator", "integration", 1),
             ("Task Operator", "integration", 2),
+            ("Epic Evaluator", "affected-epic", 1),
         ],
         "correction-group": [("Epic Evaluator", "integration", 1)],
     }[phase]
@@ -620,7 +839,25 @@ def composition(repository, assignment, value):
                 "not-established",
                 "Required independent Squad assessment scope is missing",
             )
-        required_producers.extend(handles)
+        if phase == "epic-closeout" and scope == "affected-epic":
+            if not any(
+                source["reference"]["role"] == role
+                and source["reference"]["scope"] == scope
+                and source["closeout_applicable"]
+                and set(source["rows"]) == expected
+                for source in sources.values()
+            ):
+                raise BundleError(
+                    "not-established",
+                    "Final closeout needs an actual applicable Epic assessment",
+                )
+            # Only the same logical EE lane may coincide with the integration EE.
+            # Fresh independent EEs remain distinct from all integration TOs.
+            required_producers.extend(
+                handles - producers.get(("Epic Evaluator", "integration"), set())
+            )
+        else:
+            required_producers.extend(handles)
     if len(set(required_producers)) != len(required_producers):
         raise BundleError(
             "incompatible",
@@ -632,6 +869,13 @@ def composition(repository, assignment, value):
     settled = set()
     for closure in closures:
         closure = object_value(closure, "Squad closure")
+        if any(
+            closure.get(field) is not None and not isinstance(closure[field], str)
+            for field in ("assessment", "criterion", "part", "finding", "disposition")
+        ):
+            raise BundleError(
+                "invalid-input", "Closure obligation identifiers must be strings"
+            )
         key = (
             closure.get("assessment"),
             closure.get("criterion"),
@@ -650,7 +894,7 @@ def composition(repository, assignment, value):
             or source is None
             or not obligation
             or closure.get("before") != source["reference"]["target"]
-            or closure.get("after") != target
+            or not isinstance(closure.get("after"), str)
             or closure.get("disposition")
             not in {"local-verified-fix", "affected-assessment"}
             or not closure.get("basis")
@@ -660,11 +904,11 @@ def composition(repository, assignment, value):
                 "not-established",
                 "Closure lacks an exact original obligation and eligible delta",
             )
-        proof = artifact(repository, closure["verification"])
+        proof = artifact(repository, closure.get("verification"))
         if (
             proof.get("outcome") != "pass"
             or proof.get("before") != closure["before"]
-            or proof.get("after") != target
+            or proof.get("after") != closure["after"]
             or proof.get("unresolved_judgment") is not False
             or not proof.get("delta")
             or not proof.get("checks")
@@ -672,6 +916,59 @@ def composition(repository, assignment, value):
             raise BundleError(
                 "not-established", "Current finite local verification is incomplete"
             )
+        carry = None
+        if closure["after"] != target:
+            carry = artifact(repository, closure.get("applicability_evidence"))
+            original_closure = original_reference(closure)
+            contextual = "before_context" in carry or "after_context" in carry
+            before_context = carry.get("before_context")
+            preserved_context = (
+                isinstance(before_context, dict)
+                and set(before_context)
+                == {"inputs", "coverage", "dependencies", "environment", "judgment"}
+                and all(
+                    item and (not isinstance(item, str) or item.strip())
+                    for item in before_context.values()
+                )
+                and before_context == carry.get("after_context")
+                and isinstance(carry.get("checks"), list)
+                and isinstance(value.get("checks"), list)
+                and all(
+                    isinstance(check, str)
+                    and any(
+                        isinstance(row, dict) and row.get("id") == check
+                        for row in value["checks"]
+                    )
+                    for check in carry["checks"]
+                )
+            )
+            preserved_delta = (
+                preserved_context
+                if contextual
+                else (
+                    carry.get("local_eligible") is True
+                    and carry.get("record_only") is True
+                )
+            )
+            if (
+                closure.get("applicability") != "preserved"
+                or carry.get("source_closure") != original_closure
+                or carry.get("before") != closure["after"]
+                or carry.get("after") != target
+                or carry.get("current_scope") != phase
+                or carry.get("outcome") != "pass"
+                or carry.get("unknown_impact") is not False
+                or not preserved_delta
+                or carry.get("meaning_preserved") is not True
+                or carry.get("unresolved_judgment") is not False
+                or not carry.get("delta")
+                or not carry.get("checks")
+                or not carry.get("basis")
+            ):
+                raise BundleError(
+                    "not-established",
+                    "Settled closure lacks exact current applicability",
+                )
         if closure["disposition"] == "local-verified-fix":
             if proof.get("local_eligible") is not True:
                 raise BundleError(
@@ -710,24 +1007,46 @@ def composition(repository, assignment, value):
                     "not-established",
                     "Affected classification does not identify the original obligation",
                 )
-            if classification["phase"] != phase:
+            if classification["phase"] != phase and (
+                classification["phase"],
+                phase,
+            ) not in {
+                ("correction-group", "integration"),
+                ("correction-group", "epic-closeout"),
+                ("integration", "epic-closeout"),
+            }:
                 raise BundleError(
                     "not-established",
                     "Affected correction scope differs from the current composition",
                 )
-            confirmation = [
-                sources.get(identifier) for identifier in proof.get("assessments", [])
-            ]
+            assessment_ids = proof.get("assessments")
+            if not isinstance(assessment_ids, list) or any(
+                not isinstance(identifier, str) for identifier in assessment_ids
+            ):
+                raise BundleError(
+                    "invalid-input",
+                    "Affected confirmation must identify its original reports",
+                )
+            confirmation = [sources.get(identifier) for identifier in assessment_ids]
             if not confirmation or any(source is None for source in confirmation):
                 raise BundleError(
                     "not-established",
                     "Affected closure lacks original independent delta reports",
                 )
+            if carry is not None and (
+                carry.get("preserved_scope") != classification["phase"]
+                or carry.get("confirmations")
+                != [original_reference(source["reference"]) for source in confirmation]
+            ):
+                raise BundleError(
+                    "not-established",
+                    "Closure applicability lacks its exact original confirmation scope and reports",
+                )
             covered = {}
             for current_source in confirmation:
                 ref = current_source["reference"]
                 if (
-                    ref["target"] != target
+                    ref["target"] != closure["after"]
                     or not current_source["scoped_pass"]
                     or (
                         current_source["findings"].get(key[3]) != "met"
@@ -800,10 +1119,15 @@ def composition(repository, assignment, value):
         else:
             policy = object_value(entry, "Due check policy")
             identifier = policy.get("id")
-            if policy.get("execution") not in {
-                "current-target",
-                "reusable",
-            } or not policy.get("basis"):
+            if (
+                not isinstance(policy.get("execution"), str)
+                or policy.get("execution")
+                not in {
+                    "current-target",
+                    "reusable",
+                }
+                or not policy.get("basis")
+            ):
                 raise BundleError(
                     "not-established", "Due check reuse policy is unknown"
                 )
@@ -812,6 +1136,9 @@ def composition(repository, assignment, value):
         policies[identifier] = policy
     observed = set()
     for ref in checks:
+        ref = object_value(ref, "Squad check reference")
+        if not isinstance(ref.get("id"), str) or not ref["id"]:
+            raise BundleError("invalid-input", "Squad check needs its original ID")
         check = artifact(repository, ref)
         if (
             not check.get("target")
@@ -912,6 +1239,45 @@ def composition(repository, assignment, value):
             "composition-current": {"outcome": "pass" if ready else "fail"},
         },
     }
+
+
+def composition_record(repository, assignment, value, *, availability=True):
+    """Expose failed consumption for native recording without inventing counts."""
+    try:
+        current = composition(repository, assignment, value)
+        if availability:
+            current["native_values"]["composition-evidence"] = "established"
+        return {"composition": current}
+    except BundleError as error:
+        if not availability:
+            raise
+        phase = value.get("phase") if isinstance(value, dict) else None
+        native = {
+            "composition-evidence": "unavailable",
+            "composition-current": {"outcome": "inconclusive"},
+            "composition-goal-outcome": "not-achieved",
+        }
+        if isinstance(phase, str) and phase in {
+            "task-plan",
+            "epic-plan",
+            "task-result",
+            "integration",
+            "correction-group",
+            "epic-closeout",
+        }:
+            native["composition-scope"] = phase
+        return {
+            "composition_error": {
+                "code": error.code,
+                "message": str(error),
+                "details": copy.deepcopy(error.details),
+                "phase": phase,
+                "target": value.get("target") if isinstance(value, dict) else None,
+                "basis": copy.deepcopy(value),
+                "criterion_counts": None,
+                "native_values": native,
+            }
+        }
 
 
 def assignments(assignment, node, role, effects=(), *, reentry=False):

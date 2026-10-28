@@ -688,3 +688,43 @@ Read-only native source previews retain their exact source and native version;
 a v0.2.14 preview does not establish the candidate's v0.2.15 installed/runtime
 contract. TASK-151 and Master's separate functional observations retain that
 verification scope under the dedicated UTM policy.
+
+
+## Squad integration and recovery verification
+
+The Squad helper/source tests cover recordable negative consumption without
+invented criterion counts, conditional count presence with guarded success,
+scoped correction commits within one Validation session, and actual-user final
+closeout boundaries. Pure composition/commit still rejects missing evidence.
+VM adapter tests keep the new manual `epic-squad` suite on the existing sealed
+official Podway profile and consumer-restoration path while preserving old suites.
+
+The [installed scenario](tests/vm/recipes/scenarios/epic-squad.md) and
+[original-row inventory](tests/vm/fixtures/squad/cases.json) own reusable methods
+for TASK-151. Unit/source checks prove no actual role assessment, native runtime
+progression, installed behavior or Master functional acceptance. Those remain
+candidate/harness-specific observations under explicit dedicated-VM authority.
+
+Squad VM evidence controls verify fixed declared archives/manifests, exact raw
+member hashes, inclusion of the actual post-restoration receipt/inventory,
+missing and unsafe source failures, existing archive bounds and preserved failed
+staging history. These controls prove collection wiring only; manual scenario
+verdicts, actual pinned capacity, export completeness and installed behavior
+retain their separate observation requirements.
+
+TASK-150 correction controls cover malformed Squad evidence through the actual
+context CLI consumer, declared capability field mapping, exact final-candidate
+EE requirements and restored integration producer reachability. VM adapter
+controls cover checkpoint staging before cleanup, exclusive cleanup receipts,
+refused phase handling and interrupted staging with preserved archives/history.
+These synthetic controls do not establish installed native behavior, timing,
+independent suitability or actual user acceptance.
+
+The second TASK-150 correction controls exercise EE-owned and TO-owned affected
+closure carry across group, integration and record-only closeout; real negative
+closeout intake; supported replacement identity errors; independent final EE
+instances; and eligible local applicability after actual first closeout coverage.
+They also preserve malformed restoration inventories through staging and refusal.
+The affected VM selection runs on an isolated owned projection with the index
+fixture; earlier working-fixture receipts retain their original scope. These
+checks establish neither installed behavior nor native artifact collection.

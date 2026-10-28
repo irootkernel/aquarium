@@ -1,0 +1,503 @@
+{
+  "schema": "aquarium.vm-squad-cases/v1",
+  "cases": {
+    "released-baseline": "Observe meaningful released state and settle original writers before the sanctioned Podway upgrade; retain all consumer preimages.",
+    "installed-discovery": "Load the actual installed epic-squad and Handler skills in fresh native contexts; verify exact candidate and official Podway generation-2 identities.",
+    "native-multitask": "Execute at least two dependent Tasks using native Squad. Observe both plan scopes, independent first Task panels and EE contributions, sole Writer settlement, exact scoped grants/commits and fresh Task teams with continuous EE.",
+    "correction-seams": "Exercise local editorial and independently established bounded expectation repair, then a real contract/security correction. Preserve required, optional, invalid and genuinely deferred findings; use actual affected depth/owners and Task reopen at the Task/Epic seam.",
+    "negative-evidence": "Use a valid fixture with a misleading green test, missing due check, unreadable/truncated report and stale candidate. Observe truthful native negative evidence, rejected achievement and required recovery without erasing original negatives.",
+    "operation-recovery": "Recover interrupted/partial actual role output through the same public handle; retain results/configuration before supported replacement. Resolve an actionable circular dependency and an explained overrun through current owners without time-based cancellation or duplicate dispatch.",
+    "candidate-finalization-recovery": "Change the candidate and observe invalidated applicability; exercise an actual authorized hook change and a successful commit interrupted before native finalization. Resume the same operation, retain consumed grant and actual post-hook identity, and prove no duplicate commit/effect.",
+    "integration-closeout": "Obtain continuous EE plus two fresh nonauthoring TO first integration views and Coordinator product review. Resolve disagreement with original owners, perform a scoped correction commit inside the same Validation session with not-achieved/pending whole-Epic, re-record current integration, and keep actual user closeout acceptance distinct.",
+    "handler-continuity": "Exercise the retained installed Handler through later checkpoints and at least a subsequent Task plus real same-session recovery. Observe one logical continuous Epic Evaluator, Task Operator labels, no added mandatory TE/support, and original machine/report identities.",
+    "consumer-restoration": "Settle all run-owned handles and restore exact original CLI, upstream paired skill, plugin registration/configuration/rules and consumer bytes before native collection/cleanup."
+  },
+  "harnesses": [
+    "Codex",
+    "Claude"
+  ],
+  "limits": [
+    "Only actual observed cases may pass.",
+    "A capability gap remains unverified; no cross-harness inference.",
+    "Actual Master functional verification is separate from native manual scenario results."
+  ],
+  "original_scenarios": [
+    {
+      "scenario": "Normal multi-Task delivery",
+      "required_observation": "Both plan scopes precede implementation; required first assessments, applicable closures/checks and Coordinator acceptance precede a verified Task commit. No Task waits for future Task functionality.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "native-multitask"
+    },
+    {
+      "scenario": "Plan defect or material design change",
+      "required_observation": "Refresh affected plan scopes before implementation; a material change cannot use local closure, while editorial or bounded clarification does not restart all plan reviews. Both scoped obligations cover the assigned plan.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Task plan direction and continuity",
+      "required_observation": "Every plan receives detailed Task review and an Epic review of direction, verified prior-output use and downstream deliverable design, including plans with no material cross-Task change.",
+      "implementation_and_applicability": "TASK-147, TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "native-multitask"
+    },
+    {
+      "scenario": "Role-scoped planning context",
+      "required_observation": "Actual concise assessments and source references reach the Coordinator; the Epic role retains consequential continuity decisions and the Task role retains detail. Concrete concerns allow targeted source inspection; final product review remains substantive.",
+      "implementation_and_applicability": "TASK-147, TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "native-multitask"
+    },
+    {
+      "scenario": "Routine supervision and quiet work",
+      "required_observation": "State-first observation avoids repeated console reads; healthy quiet work is not restarted merely for silence, and repetitive output alone is not progress. Compare read count/volume with detection delay, missed incidents and false recovery.",
+      "implementation_and_applicability": "TASK-147, TASK-148 / TASK-153, TASK-154; both",
+      "observed": false,
+      "case": "operation-recovery"
+    },
+    {
+      "scenario": "Dependency and supervision starvation",
+      "required_observation": "Requests needing Coordinator action reach it without an in-turn circular wait; one pending participant does not hide a peer's blocked or completed state. Supported safe native interactions remain usable.",
+      "implementation_and_applicability": "TASK-148, TASK-150 / TASK-153, TASK-155; both",
+      "observed": false,
+      "case": "operation-recovery"
+    },
+    {
+      "scenario": "Uncertain progress or missed dialog",
+      "required_observation": "An overrun, hung tool or partially detected UI triggers enough inspection to choose continued observation, supported recovery or a reported gap without duplicate dispatch or an endless unexplained wait.",
+      "implementation_and_applicability": "TASK-148, TASK-150 / TASK-153, TASK-155; both",
+      "observed": false,
+      "case": "operation-recovery"
+    },
+    {
+      "scenario": "Active-turn input and stale report",
+      "required_observation": "No terminal status prompt queues unintended work; complete reports match the current assignment and revision even after stalled submission or an older visible pass.",
+      "implementation_and_applicability": "TASK-148, TASK-150 / TASK-153, TASK-155; both",
+      "observed": false,
+      "case": "operation-recovery"
+    },
+    {
+      "scenario": "Coordinator context recovery",
+      "required_observation": "Pending handles, requests, candidate and next owners survive recovery through existing runtime records without a new state store or transcript import.",
+      "implementation_and_applicability": "TASK-148, TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "operation-recovery"
+    },
+    {
+      "scenario": "New Task team",
+      "required_observation": "Each new Task starts distinct Task Operator and Task Evaluator instances with fresh conversations where supported, concise source-based handoffs and disclosed inheritance limits; same-Task roles remain recoverable through commit verification while the Epic Evaluator retains continuity.",
+      "implementation_and_applicability": "TASK-147, TASK-148 / TASK-153, TASK-154; both",
+      "observed": false,
+      "case": "native-multitask"
+    },
+    {
+      "scenario": "Task Operator scope expansion",
+      "required_observation": "A plan or result adds an unsupported feature, abstraction or restriction; required behavior working does not prevent rework of the unjustified addition.",
+      "implementation_and_applicability": "TASK-147, TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Reviewer scope expansion",
+      "required_observation": "An Evaluator or Coordinator proposes optional hardening, an unsupported prerequisite or disproportionate tests; the team excludes it from mandatory work despite reviewer agreement.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Necessary internal implementation",
+      "required_observation": "A required outcome needs an internal mechanism or defect correction omitted from the design detail; a concrete necessity basis allows it without demanding literal specification of every implementation choice.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Required and excessive verification",
+      "required_observation": "Required checks and tests for reachable failure paths remain due; speculative or implementation-mirroring tests are excluded, and sufficient evidence permits pass without extra tests.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Cumulative restrictions and rewritten docs",
+      "required_observation": "Epic review catches normal supported user scenarios blocked by accumulated restrictions; agent approval or documentation changed to match those restrictions does not establish scope authority.",
+      "implementation_and_applicability": "TASK-150 / TASK-154, TASK-155; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Result defect or missing evidence",
+      "required_observation": "Required corrections/evidence are distinguished from preferences; due gaps prevent passage.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "negative-evidence"
+    },
+    {
+      "scenario": "Coordinator/Evaluator disagreement",
+      "required_observation": "Original findings remain visible; focused evidence resolves readiness without forced consensus or evaluator shopping.",
+      "implementation_and_applicability": "TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "integration-closeout"
+    },
+    {
+      "scenario": "Changed candidate",
+      "required_observation": "Classify the cumulative delta; retain unaffected evidence, close eligible local repairs and refresh only invalidated assessments/checks. Neither changed bytes nor a new hash alone triggers full reapproval.",
+      "implementation_and_applicability": "TASK-148, TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "candidate-finalization-recovery"
+    },
+    {
+      "scenario": "Limited native capacity",
+      "required_observation": "Native independent reviewers can run sequentially with complete actual results and preserved scope, including in mixed teams; roles are not impersonated or omitted.",
+      "implementation_and_applicability": "TASK-148 / TASK-153; both",
+      "observed": false,
+      "case": "native-multitask"
+    },
+    {
+      "scenario": "One-shot/replaced Task or Epic role",
+      "required_observation": "Original sources, candidate, findings and remaining authority survive; restored reports do not create fresh approval.",
+      "implementation_and_applicability": "TASK-148 / TASK-155; both",
+      "observed": false,
+      "case": "operation-recovery"
+    },
+    {
+      "scenario": "Different worktree or snapshot",
+      "required_observation": "Required reviews inspect the integrated acceptance candidate, including owned dirty/untracked content.",
+      "implementation_and_applicability": "TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "negative-evidence"
+    },
+    {
+      "scenario": "Native permission limit",
+      "required_observation": "Assignment-only read-only restrictions are disclosed; unsupported technical isolation is never claimed.",
+      "implementation_and_applicability": "TASK-147 / TASK-153; both",
+      "observed": false,
+      "case": "native-multitask"
+    },
+    {
+      "scenario": "Uncertain Writer/background work",
+      "required_observation": "No Writer transfer or candidate freeze occurs until modifying activity, including descendants and background commands, is settled; a settled parent turn, vanished pane, stable diff or absent Git lock alone is insufficient. Recheck the exact candidate before admitting assessments.",
+      "implementation_and_applicability": "TASK-148 / TASK-155; both",
+      "observed": false,
+      "case": "operation-recovery"
+    },
+    {
+      "scenario": "Truncated output or uncertain submission",
+      "required_observation": "Existing output/operation is inspected first, without duplicate implementation or a disguised new review.",
+      "implementation_and_applicability": "TASK-148 / TASK-155; both",
+      "observed": false,
+      "case": "operation-recovery"
+    },
+    {
+      "scenario": "Hook change or pending finalization",
+      "required_observation": "Classify post-review bytes by their actual effects; use eligible local closure or affected reassessment and preserve a successful commit without replay.",
+      "implementation_and_applicability": "TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "candidate-finalization-recovery"
+    },
+    {
+      "scenario": "Final integration without a new diff",
+      "required_observation": "Fresh independent integration and Coordinator review still occur; no empty commit is manufactured.",
+      "implementation_and_applicability": "TASK-150 / TASK-154; both",
+      "observed": false,
+      "case": "integration-closeout"
+    },
+    {
+      "scenario": "Distinct Evaluator roles",
+      "required_observation": "Direct distinct Epic and Task instances receive original criteria and separate scoped approvals; optional descendants do not replace direct management.",
+      "implementation_and_applicability": "TASK-148 / TASK-153; both",
+      "observed": false,
+      "case": "native-multitask"
+    },
+    {
+      "scenario": "Configuration replacement/descendants",
+      "required_observation": "Final reporting includes actual applied controls and available confirmation, with unknown values retained.",
+      "implementation_and_applicability": "TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "operation-recovery"
+    },
+    {
+      "scenario": "Podway default, opt-out and resume",
+      "required_observation": "Correct owner, source and pending lifecycle remain intact; no in-place relabeling or duplicate goal is introduced.",
+      "implementation_and_applicability": "TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "handler-continuity"
+    },
+    {
+      "scenario": "Selected additional technical review",
+      "required_observation": "Route-specific team, result, source transmission and authority remain distinct from collaboration assessments.",
+      "implementation_and_applicability": "TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "handler-continuity"
+    },
+    {
+      "scenario": "Final user acceptance",
+      "required_observation": "Only actual user acceptance unlocks the conditional closeout commit; delegated Task acceptance is attributed to the Coordinator.",
+      "implementation_and_applicability": "TASK-150 / TASK-154; both",
+      "observed": false,
+      "case": "integration-closeout"
+    },
+    {
+      "scenario": "Shared Epic role names",
+      "required_observation": "Squad uses C/EE/TE/TO/SO. Handler uses C, its single continuous EE and TO, with SO only for existing authorized support. No separate TE, extra checkpoint, doubled assessment or required support launch is introduced. Writer/Reviewer/Leader remain assignment duties.",
+      "implementation_and_applicability": "TASK-147, TASK-148, TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "handler-continuity"
+    },
+    {
+      "scenario": "Existing workflows",
+      "required_observation": "Handler terminology follows the shared mapping; Handler/Validator behavior, admitted sources, generic machine roles/report schemas and evaluator permissions remain unchanged. Other workflow roles are not renamed implicitly.",
+      "implementation_and_applicability": "TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "handler-continuity"
+    },
+    {
+      "scenario": "Intermediate versus final Milestone",
+      "required_observation": "Intermediate reviews preserve the active Task; only the completed Task reaches completion acceptance and its normal commit grant.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "native-multitask"
+    },
+    {
+      "scenario": "No additional technical review selected",
+      "required_observation": "New-owner definitions and consumers accept the explicit state without provider execution, a fake waiver or missing collaboration reviews.",
+      "implementation_and_applicability": "TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "handler-continuity"
+    },
+    {
+      "scenario": "Pre-upgrade retained bundle resume",
+      "required_observation": "Legacy Goal/Validation source and binding identities remain usable after new callers are admitted.",
+      "implementation_and_applicability": "TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "handler-continuity"
+    },
+    {
+      "scenario": "Missing dossier or semantic owner",
+      "required_observation": "Execute enters bounded design, preserves its approval/commit rules and ends with an exact new-conversation Squad invocation carrying explicit profiles and omitted roles. Waiver and active-session rules remain due.",
+      "implementation_and_applicability": "TASK-147, TASK-148 / TASK-152, TASK-153; both",
+      "observed": false,
+      "case": "installed-discovery"
+    },
+    {
+      "scenario": "Final rejection or requested changes",
+      "required_observation": "Record-only edits and implementation changes follow their respective lifecycle and affected review paths; revised final content needs actual acceptance.",
+      "implementation_and_applicability": "TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "integration-closeout"
+    },
+    {
+      "scenario": "Stopped before achievement",
+      "required_observation": "Pending effects and unmet obligations remain visible; a stopped assessment neither resumes work nor declares completion.",
+      "implementation_and_applicability": "TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "integration-closeout"
+    },
+    {
+      "scenario": "Cold validation after collaboration delivery",
+      "required_observation": "An explicitly invoked epic-validator resolves Squad-origin evidence through its existing cold-validation contract.",
+      "implementation_and_applicability": "TASK-151 / TASK-156; both",
+      "observed": false,
+      "case": "integration-closeout"
+    },
+    {
+      "scenario": "Unsupported native role",
+      "required_observation": "Report unsupported creation or matching configuration and preserve unaffected preparation; no impersonated roles or switch to Herdr without user direction. Fully external roles do not require optional native support.",
+      "implementation_and_applicability": "TASK-147, TASK-148 / TASK-153; both",
+      "observed": false,
+      "case": "installed-discovery"
+    },
+    {
+      "scenario": "No role profiles",
+      "required_observation": "All required roles use matching native instances; Herdr availability is not an admission condition.",
+      "implementation_and_applicability": "TASK-148 / TASK-153; both",
+      "observed": false,
+      "case": "native-multitask"
+    },
+    {
+      "scenario": "Omitted effort versus omitted profile",
+      "required_observation": "Explicit CLI/model with omitted effort applies high; an omitted whole profile matches the Coordinator's current effort.",
+      "implementation_and_applicability": "TASK-147 / TASK-152; both",
+      "observed": false,
+      "case": "installed-discovery"
+    },
+    {
+      "scenario": "Invalid or conflicting input",
+      "required_observation": "Partial/empty profiles, an empty explicit Task Operator list or common plus scoped Evaluator entries are resolved before affected agents launch.",
+      "implementation_and_applicability": "TASK-147 / TASK-152; both",
+      "observed": false,
+      "case": "installed-discovery"
+    },
+    {
+      "scenario": "Native-first and partial Herdr extension",
+      "required_observation": "Explicit profiles remain unimplemented until required execution, commit and recovery integration is complete; no native substitution without user direction. Existing native-only delivery remains usable.",
+      "implementation_and_applicability": "TASK-147, TASK-148 / TASK-153, TASK-154, TASK-155; both",
+      "observed": false,
+      "case": "installed-discovery"
+    },
+    {
+      "scenario": "Unavailable route and resume",
+      "required_observation": "Preserve selected roles, pending findings and actual route-specific handles; route/profile changes need user direction. Omitted roles match the current Coordinator, with inheritance changes disclosed and prior records retained.",
+      "implementation_and_applicability": "TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "operation-recovery"
+    },
+    {
+      "scenario": "Durable product repair",
+      "required_observation": "An in-scope structural fix improves a required maintainability or extension boundary instead of applying a brittle patch; supporting work stays proportional and original behavior remains verified.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Required performance behavior",
+      "required_observation": "A change on a performance-sensitive path checks the affected requirement under representative conditions; no unrelated benchmark system is built.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Standard versus elevated first review",
+      "required_observation": "Standard work gets TE plus one independent Task Operator; elevated work gets TE plus two. Actual changed risk expands coverage; local corrections do not recreate the initial panel automatically.",
+      "implementation_and_applicability": "TASK-147, TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Concurrent first result intake",
+      "required_observation": "Ready independent reviews and nonconflicting required checks use one frozen candidate and produce one correction set; peer verdicts are withheld until first views are formed.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Editorial-only correction",
+      "required_observation": "An already assessed non-normative typo receives document/integrity checks and closure without product tests, full review or routine TE/EE recall. A missing optional helper does not start validator development.",
+      "implementation_and_applicability": "TASK-148, TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Obsolete expectation",
+      "required_observation": "A display-string expectation traces to an approved external basis, only intended literals change, and referring/previously unexecuted required tests run. Other applicable evidence survives.",
+      "implementation_and_applicability": "TASK-148, TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "False expectation repair",
+      "required_observation": "A changed error code, numeric expectation, matcher or assertion weakening cannot be called an editorial fix just because tests become green. Resolve intended behavior and the actual defect.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Mixed correction delta",
+      "required_observation": "An eligible typo beside a contract change never exempts that contract; assess their combined effects and retain only genuinely unaffected evidence.",
+      "implementation_and_applicability": "TASK-148, TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Serious but isolated repair",
+      "required_observation": "An important current defect is fixed before acceptance; direct deterministic proof can establish local eligibility without downgrading its priority or hiding a required independent judgment.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Contract/security correction",
+      "required_observation": "A small high-consequence change gets relevant consumer/failure checks and elevated delta review, with EE for cross-Task impact. A required full test gate does not automatically create a full review of unrelated work.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Deferred versus blocking work",
+      "required_observation": "A genuine independent improvement reaches the existing deferred owner with reason and re-entry condition; a current correctness/acceptance gap is repaired or blocked, never postponed for speed.",
+      "implementation_and_applicability": "TASK-148, TASK-150 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Existing failure or suspected flake",
+      "required_observation": "Preserve failing evidence and establish the cause; no silent skip, relaxed assertion or automatic allowance based solely on later green reruns. Applicable mandatory-gate authority remains due.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Execution/retrieval incident",
+      "required_observation": "A wrong directory, interrupted run or truncated report repairs only affected execution/evidence; retrieve the same operation before redispatch and do not restart source review without a changed guarantee.",
+      "implementation_and_applicability": "TASK-148, TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Coordinator-authored correction",
+      "required_observation": "Semantic closure gets focused non-authoring confirmation; the Coordinator does not count its own check as an independent review or require a new generic checker.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Support work displaces product work",
+      "required_observation": "Task Operator, Reviewer or Coordinator support expansion is paused/narrowed when no required outcome advances; an existing sufficient command is used instead. Useful diagnosis counts despite no code change.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Necessary harness work",
+      "required_observation": "A required behavior/evidence gap permits the smallest sufficient fixture or harness repair, without a blanket prohibition, unjustified expansion or unrelated hardening.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Optional Support Operator",
+      "required_observation": "Assigned facts/checks match the fixed candidate, original results are inspected, and the SO supplies no verdict, Writer transfer, finding closure or extra approval stage.",
+      "implementation_and_applicability": "TASK-148 / TASK-153, TASK-154; both",
+      "observed": false,
+      "case": "correction-seams"
+    },
+    {
+      "scenario": "Explicit plan gate and negative assessment",
+      "required_observation": "Implementation cannot precede satisfied plan scopes. A faithful negative assessment completes its Action and follows the declared corrective Decision without fabricated passage.",
+      "implementation_and_applicability": "TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "negative-evidence"
+    },
+    {
+      "scenario": "One node with several agents",
+      "required_observation": "Aquarium joins independent results/checks while Podway retains one active attempt; no nested Task session, extra cursor or concurrent Writer is needed.",
+      "implementation_and_applicability": "TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "native-multitask"
+    },
+    {
+      "scenario": "Rework evidence invalidation",
+      "required_observation": "Native stale items remain unusable; applicable original artifacts are checked and re-recorded as a current composition. Changed inputs or unknown applicability keep obligations open.",
+      "implementation_and_applicability": "TASK-149, TASK-150 / TASK-154, TASK-155; both",
+      "observed": false,
+      "case": "candidate-finalization-recovery"
+    },
+    {
+      "scenario": "Recovery after local closure",
+      "required_observation": "Restored original verdicts, verified deltas and pending obligations avoid repeating settled reviews/tests; missing or changed evidence receives focused recovery rather than assumed success.",
+      "implementation_and_applicability": "TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "operation-recovery"
+    },
+    {
+      "scenario": "Source drift and retained definition",
+      "required_observation": "A distribution update does not rewrite the active Procedure/binding or turn old assessment into fresh evidence. Existing retained-bundle recovery works without a second Pilot runtime.",
+      "implementation_and_applicability": "TASK-149, TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "candidate-finalization-recovery"
+    }
+  ],
+  "source": "docs/todo/TODO-EPIC-COLLABORATION.md#verification-scenarios"
+}

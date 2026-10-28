@@ -45,8 +45,8 @@ and [collaboration contract](../plugins/aquarium/references/epic-squad-collabora
 define native role assignments, readiness, first assessments and correction
 semantics. The [Squad execution and current-composition consumer](../plugins/aquarium/references/epic-squad-execution.md)
 connects qualified source preparation, evidence and commit/design handoffs.
-Delivery remains blocked pending TASK-150 integration/recovery; installed
-behavior remains unverified.
+Integration and recovery are implemented in source; installed behavior remains
+unverified pending TASK-151's actual observations.
 
 The [Epic collaboration dossier](todo/TODO-EPIC-COLLABORATION.md) defines planned
 `epic-squad` delivery of correct, maintainable, extensible and responsive software.
@@ -76,8 +76,8 @@ Evaluator is called Epic Evaluator and its Worker/Executor is called Task Operat
 No separate Task Evaluator or mandatory Support Operator is added to Handler.
 Existing Handler/Validator behavior and machine report contracts remain unchanged.
 The Handler role wording is implemented in current source and mapped assignments.
-Squad collaboration instructions are present; its remaining integration and
-installed verification keep their later Task owners.
+Squad integration and recovery are present in source; installed verification
+retains its TASK-151 owner.
 
 ## Planned multi-host unification
 

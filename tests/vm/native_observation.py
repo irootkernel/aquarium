@@ -178,3 +178,46 @@ def collect(codex, cwd, thread_id):
         "requests": requests,
         "reader_exit": reader.process.returncode,
     }
+
+
+def main(argv=None):
+    """Capture an existing guest operation; never launch or resume a provider turn."""
+    import argparse
+    from pathlib import Path
+
+    import adaptive_cases
+    import run_acceptance as gate
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--codex", required=True)
+    parser.add_argument("--cwd", required=True, type=Path)
+    parser.add_argument("--thread-id", required=True)
+    parser.add_argument("--expected-guest-uuid", required=True)
+    parser.add_argument("--candidate", required=True)
+    parser.add_argument("--case", required=True)
+    parser.add_argument("--output", required=True, type=Path)
+    args = parser.parse_args(argv)
+    gate.guest_guard(args.expected_guest_uuid)
+    gate.require(
+        not args.output.exists() and not args.output.is_symlink(),
+        "preserve the original capture",
+    )
+    gate.require(
+        args.cwd.is_dir() and not args.cwd.is_symlink(),
+        "capture needs the actual fixture repository",
+    )
+    observation = collect(args.codex, args.cwd, args.thread_id)
+    observation.update(
+        candidate=args.candidate,
+        case=args.case,
+        product_image=adaptive_cases.original_image(gate, args.cwd),
+        assurance="Public observation only; semantic scenario and settlement judgments remain due.",
+    )
+    with args.output.open("x") as stream:
+        json.dump(observation, stream, indent=2)
+        stream.write("\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

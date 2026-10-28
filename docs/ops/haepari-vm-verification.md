@@ -144,7 +144,25 @@ effects before attempt creation or recording. Carry an existing covering approva
 forward; a required record alone supplies no authority. The startup smokes stop
 after first-member delivery and semantic progression, with later criteria open.
 
-Stage original case evidence, finish and verify consumer cleanup, then construct
+Stage original case evidence incrementally at case checkpoints and before
+restoration or an authorized cancellation/deadline/abort checkpoint. The
+[epic-squad scenario](../../tests/vm/recipes/scenarios/epic-squad.md#incremental-evidence-and-abnormal-checkpoints)
+uses its declared fixed archives even while staging is INCOMPLETE. Its six-hour
+manual window and evidence/cleanup reserve are planning assumptions; actual
+sufficiency and immutable Job pin fit remain installed-verification observations.
+Automated termination before a checkpoint leaves only previously staged
+declared snapshots available for native collection, not newer unstaged originals. Keep the same Job/key/run directory
+and report gaps; positively absent outputs can release an incomplete Job, while
+existing outputs that cannot be collected retain native protection.
+
+Finish and verify consumer cleanup, then restage its actual immutable pass
+receipt and restoration inventory in the same held Job. For epic-squad,
+`consumer-cleanup` seals `consumer-result.json` before another phase can overwrite
+aggregate `result.json`; `stage-evidence` consumes that receipt without executing
+the restored writer or reinstalling the candidate. Verify current complete
+staging as well as actual functional results before manual completion. Staging
+preserves a malformed restoration inventory and returns INCOMPLETE; it does not
+replace invalid failed-history bytes with an empty aggregate on retry. Then construct
 the suite's closed `haepari.manual-result/v1` input from actual observations.
 J-RA's `complete-template` phase creates it only after the required checks.
 Persist the input and use the actual current revision:

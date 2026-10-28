@@ -17,10 +17,9 @@ report identifiers. Do not invoke `epic-handler` or Task-handler phase skills.
 
 The native collaboration instructions, real-owner Goal/Validation admission,
 qualified source preparation and exact composition/commit/design consumers are
-present in development source. TASK-150 still owns integration and recovery
-completion; until those consumers are integrated, report the remaining boundary
-alongside invocation/profile blockers and stop before affected delivery or managed
-session mutation. TASK-151 owns actual installed observations. Read-only
+integrated in development source, including negative evidence, scoped Validation
+correction commits and exact recovery. TASK-151 owns actual installed observations;
+source completion supplies no installed functional result. Read-only
 preparation may inspect the packaged optional Squad templates without assuming
 managed copies or prior suitability.
 
@@ -58,7 +57,7 @@ retain their own route and authority.
 
 ## Establish the execution envelope
 
-Once integration is available, resolve the original requirements,
+Resolve the original requirements,
 dependency DAG and exact committed prerequisite evidence. Prepare the Context
 Brief, delivery order, native configuration and limitations, Task risk and first
 panels, documentation and checks, correction routes and commit boundaries.
@@ -122,10 +121,29 @@ finalization are verified. Recover a successful commit without replaying it.
 Final integration independently assesses the assembled original Epic with EE
 and at least two fresh non-authoring Task Operators, alongside the Coordinator's
 product review. Internal validation uses Squad's own owner and does not invoke
-the cold `epic-validator` implicitly.
+the cold `epic-validator` implicitly. Keep audit-scoped correction groups and
+their intermediate commits within that same Validation session, with the group
+not achieved and whole-Epic confirmation pending.
 
-Prepare closeout only after current integration evidence is complete. Ask for
-actual overall user verification and acceptance once, then consume only the
-matching conditional closeout grant. Preserve required functional evidence,
-pending external handoffs and source-versus-installed limits. Report actual
+Prepare closeout only after current integration evidence is complete. Obtain
+the Epic Evaluator's substantive closeout assessment with verified current
+applicability, and complete Coordinator product review and due checks before asking for overall user
+verification and acceptance once. Then consume only the matching conditional
+closeout grant. Preserve required functional evidence,
+pending external handoffs and source-versus-installed limits. Report actual local
 commits, native finalization, checks, unverified routes and remaining work.
+
+The final report covers delivered behavior, documentation, checks and limitations;
+each Task's original assessments, closures, current applicability and Coordinator
+acceptance; integration, deferred work and substantive disagreements with their
+dispositions. Explain material support work and why it was needed without a
+mandatory support-size ledger. Record actual user acceptance only after it occurs.
+
+Include a concise configuration table by role and Task/Epic scope: route, CLI,
+requested profile or omitted-profile default, applied model and effort, observed
+confirmation and unconfirmed information. Include the Coordinator's available
+settings and relevant permission limits, Support Operators, implementation and
+review helpers, descendants, replacements, configuration changes and closeout
+participants. Collect their available records before retiring sessions. Report
+applied inheritance or matching controls without assuming children matched their
+parents; do not infer private telemetry or include credentials.

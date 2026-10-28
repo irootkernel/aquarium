@@ -35,6 +35,13 @@ existing binding identities, machine roles and immutable snapshots. Verify chang
 executable boundaries with behavioral tests, and reserve native collaboration
 claims for exact installed observations under repository VM authority.
 
+Keep missing composition evidence distinct from feature verdict/counts. Conditional
+count presence must retain actual zero-count and passing-check guards on every
+success route. Test scoped Validation commits as intermediate steps with
+whole-Epic confirmation pending, and preserve original reports through rework.
+Use the existing [VM suite](../../tests/vm/recipes/scenarios/epic-squad.md) for
+installed observation; it adds no automatic LLM evaluation to the local gate.
+
 ## Maintain directory guidance
 
 Use the [shared contract](../../plugins/aquarium/references/directory-agent-guidance.md)

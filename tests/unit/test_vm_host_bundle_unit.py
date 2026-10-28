@@ -92,6 +92,7 @@ class HostBundleTest(unittest.TestCase):
         (cls.harness / "scenarios/podway-upgrade.md").write_text(
             "manual Podway upgrade\n"
         )
+        (cls.harness / "scenarios/epic-squad.md").write_text("native Squad cases\n")
         (cls.harness / "scenarios/release-acceptance.md").write_text(
             "release-acceptance runbook\n"
         )
@@ -233,7 +234,20 @@ class HostBundleTest(unittest.TestCase):
             )
         for index, name in enumerate(record["declared_suites"]):
             spec = json.loads((run_dir / f"spec-{index}.json").read_text())
-            if name == "podway-upgrade":
+            if name == "epic-squad":
+                outputs = spec["workload"]["required_outputs"]
+                cases = self.module.load_suites()["suites"][name]["manual"][
+                    "required_scenarios"
+                ]
+                self.assertEqual(len(outputs), 28)
+                for case in cases:
+                    for suffix in ("tar", "manifest.json"):
+                        self.assertIn(
+                            f"results/epic-squad/evidence/{case}.{suffix}", outputs
+                        )
+                self.assertIn("results/epic-squad/consumer-result.json", outputs)
+                self.assertIn("results/epic-squad/stage-evidence.json", outputs)
+            if name in {"podway-upgrade", "epic-squad"}:
                 self.assertEqual(spec["mode"], "manual")
                 self.assertEqual(
                     spec["environment"]["profile_id"],

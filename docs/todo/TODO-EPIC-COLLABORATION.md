@@ -1191,8 +1191,13 @@ version merely to rename scoped roles.
 
 Podway is enabled by default, with existing explicit pre-session opt-out and
 in-progress stop/recovery rules preserved. On the managed path, reuse selected
-Goal-family sessions for member/correction/closeout work and Validation-family
-execution for final integration. Adapt only where fit requires it. The actual
+Goal-family sessions for member and pre-validation remediation work and
+Validation-family execution for assembled integration. The qualified native
+adaptation keeps audit-scoped correction groups in that same Validation and
+uses an adequate retained or restored Validation closeout scope for final record
+work, with actual exact-candidate EE review before user acceptance. A separately
+selected adequate Goal closeout remains available when fit requires it. Adapt
+only where fit requires it. The actual
 Coordinator alone advances the workflow. Record `aquarium:epic-squad` as the
 single owner for native, Herdr and mixed execution; do not forge an
 `epic-handler` handoff. Extend admission, qualification, ownership and delegated
@@ -1223,9 +1228,17 @@ manager, and one node need not correspond to one agent or one roadmap Task.
 | Node-to-role mapping | Aquarium's qualified binding and existing ordinary assignments: role, scope, effects, due capabilities, evidence and consuming decision. |
 | Agent execution and tests | The selected native harness or Herdr route, paired tools and repository commands. |
 
-Use one Goal-family session per active member/correction/closeout work unit and
-one Validation-family session for assembled-Epic assessment. Do not keep an active
-parent Epic session with nested Task sessions in the same worktree. EE continuity
+Use one Goal-family session per active member or pre-validation remediation
+work unit and one Validation-family session for assembled-Epic assessment,
+intermediate audit-scoped correction groups and adequate final closeout. This is
+a qualified template-fit adaptation, not an explicit topology acceptance by the
+user. If Task completion truly reopens, settle active Validation before the
+Task-owned remediation Goal and restore its Task/EE/Coordinator sequence; then
+restore the audit in an adequately qualified successor Validation. A separately
+selected adequate Goal may own closeout when needed, after settling Validation.
+Keep actual final-candidate EE and Coordinator review, user acceptance and each
+distinct grant due on either topology. Do not keep an active parent Epic session
+with nested Task sessions in the same worktree. EE continuity
 belongs to Aquarium and spans successive sessions; TE and delivery/review contexts
 belong to the current Task. Support assignments have only their useful assignment
 lifetime. Reuse approved successor/finalization contracts without making an old

@@ -844,3 +844,38 @@ collection results alongside any independently verified native evidence.
 ## Podway v0.2.15 adoption suite
 
 The [Podway upgrade scenario](recipes/scenarios/podway-upgrade.md) owns the explicit manual `podway-upgrade` suite, its exact external release input, seven original-evidence cases and consumer restoration. The bundle retains stable v0.2.14 and creates a separate sealed v0.2.15 candidate profile. This is preparation for EPIC-034; it establishes no installed result before native manual completion and actual functional observation. Existing qualification records retain their original identities and limits.
+
+
+## Native Squad installed cases
+
+The [Squad scenario](recipes/scenarios/epic-squad.md) owns the separately
+authorized manual `epic-squad` suite. It uses the existing sealed official Podway
+dependency and baseline/candidate/restoration recipe, retaining the ordinary
+profiles and suites. Its [inventory](fixtures/squad/cases.json) maps every original
+native/shared scenario to finite grouped cases while keeping each observation
+separately due. Actual Codex/Claude results, multi-Task and Handler continuity,
+negative evidence and genuine same-operation/finalization recovery remain
+unverified until performed on the exact installed candidate.
+
+`native_observation.py` captures an existing Codex operation and its public
+descendants without another provider turn; it reuses the adaptive product-image
+collector. Capture files establish neither semantic passage nor settlement. Keep
+original reports/configuration and actual available counts/durations, with
+unobserved harnesses and costs explicit. Master's separate functional result
+cannot be inferred from setup, scenario records or a native Job verdict.
+
+The suite declares 28 collected outputs, including fixed per-case archives and
+content manifests. After actual consumer restoration and its receipt/inventory
+capture, the same held Job runs `--phase stage-evidence`; no candidate reinstall
+is needed. Original role/capture/check bytes live in the case archives rather
+than only in metadata references. Partial or unsafe evidence keeps staging
+incomplete, and native collection/export digests remain separately required.
+
+The Squad scenario stages declared original evidence at case checkpoints and
+before restoration or an authorized early stop. Pre-cleanup staging can remain
+INCOMPLETE while preserving available originals. Cleanup seals its pass receipt
+immediately; final staging adds that receipt and the actual inventory. A failed
+or interrupted staging attempt retains its progress and the last complete
+archives for same-Job retry. The six-hour window and cleanup reserve are planning
+assumptions, with actual timing, pin fit and collected snapshot coverage still
+to be observed in installed verification.

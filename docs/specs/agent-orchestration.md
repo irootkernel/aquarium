@@ -58,11 +58,11 @@ The [shared dossier](../todo/TODO-EPIC-COLLABORATION.md) retains detailed execut
 criteria. Native role assignments and Handler display wording are implemented
 in current source. The [Squad execution consumer](../../plugins/aquarium/references/epic-squad-execution.md)
 connects the actual owner, qualified Goal/Validation bindings, direct assignment
-groups, current evidence and exact commit/design handoffs. TASK-150 completes
-integration/recovery, and TASK-151 verifies installed delivery.
+groups, current evidence, scoped Validation correction commits and exact
+commit/design recovery. TASK-151 verifies installed delivery.
 Explicit CLI/model role execution stays unavailable
-until EPIC-028's Herdr/mixed integration is complete. These definitions do not
-activate delivery or establish an installed native functional result.
+until EPIC-028's Herdr/mixed integration is complete. These source definitions
+establish no installed native functional result.
 
 For `epic-handler`, Task Operator names its existing Worker/Executor and Epic
 Evaluator names its existing single logical Evaluator. Mapped ordinary assignments

@@ -4,9 +4,9 @@ Use this reference only from an explicitly invoked
 [epic-squad](../skills/epic-squad/SKILL.md). The
 [collaboration contract](epic-squad-collaboration.md) owns shared semantics.
 The [execution consumer](epic-squad-execution.md) connects qualified definitions,
-current evidence and commit/design handoffs. TASK-150's integration/recovery
-completion still precedes delivery activation. These assignments
-do not bypass that boundary or establish an installed execution result.
+current evidence, scoped integration corrections and commit/design recovery.
+These source contracts establish no installed execution result; TASK-151 owns
+actual native observations.
 
 ## Assign native roles
 
@@ -190,3 +190,13 @@ when current acceptance, safe execution or trustworthy required evidence depends
 on it; optional missing automation creates no obligation to build a framework.
 Stop correction when its required property is established, carrying only
 independent future work to its canonical owner.
+
+For final closeout, preserve actual first EE coverage and the original assembled
+panel. A finite meaning-preserving record delta may use verified current
+applicability under the shared correction table; a stale reference alone cannot
+supply the first closeout review. Complete negative EE results remain actual
+negative judgments, with findings and counts intact. Same-EE continuity and
+supported same-role replacement do not permit an integration TO to become EE.
+Use the [execution contract](epic-squad-execution.md#native-integration-and-recovery)
+for exact closure/confirmation applicability and the integration-scope successor
+restoration sequence after a true Task reopen.

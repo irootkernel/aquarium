@@ -20,7 +20,7 @@ from adaptive_definitions import ASSETS, canonical_json, validate_definition
 from adaptive_design import context as design_context
 from adaptive_preparation import prepare
 from adaptive_qualification import qualify
-from adaptive_squad import assignments, commit_handoff, composition
+from adaptive_squad import assignments, commit_handoff, composition, composition_record
 
 LEGACY_MAPPINGS = {
     "goal": "sha256:f885c7f6b0da1086c582dbae3bb683f8e2089ab6d43fdf467d98149adbe4fc16",
@@ -981,7 +981,12 @@ def test_commit_cannot_omit_a_plan_scope_when_native_is_opted_out(basis, scope):
         commit_handoff(basis[0], value)
 
 
-def test_conditional_closeout_grant_requires_actual_user_acceptance(basis):
+@pytest.mark.parametrize(
+    "assignment_form", ["absent", "text", "inline", "no-bytes", "unavailable"]
+)
+def test_conditional_closeout_grant_requires_actual_user_acceptance(
+    basis, assignment_form
+):
     tmp_path, assignment, current = basis
     value = commit_input(basis)
     assignment["target"]["squad"]["work_unit_kind"] = "epic-closeout"
@@ -1000,6 +1005,13 @@ def test_conditional_closeout_grant_requires_actual_user_acceptance(basis):
             "producer": "fresh-reviewer",
         }
     )
+    current["assessments"].append(
+        {**copy.deepcopy(ee), "id": "closeout-ee", "scope": "affected-epic"}
+    )
+    closeout = current["assessments"][-1]
+    report = json.loads(Path(closeout["path"]).read_bytes())
+    ordinary_closeout_assignment(tmp_path, assignment, report, assignment_form)
+    closeout.update(write_artifact(tmp_path, "ordinary-commit-closeout", report))
     value["grant"].update(kind="conditional-closeout", id="closeout-1")
     assignment["authority"]["commit_grants"] = [copy.deepcopy(value["grant"])]
     with pytest.raises(BundleError):
@@ -1008,6 +1020,12 @@ def test_conditional_closeout_grant_requires_actual_user_acceptance(basis):
     result = commit_handoff(tmp_path, value)
     assert result["acceptance"]["source"] == "user"
     assert result["grant"]["kind"] == "conditional-closeout"
+    report.update(verdict="rework", criteria=report_rows("unmet"))
+    closeout.update(
+        write_artifact(tmp_path, "ordinary-negative-commit-closeout", report)
+    )
+    with pytest.raises(BundleError):
+        commit_handoff(tmp_path, value)
 
 
 def test_pure_commit_consumer_executes_no_native_or_commit_effect(basis):
@@ -2154,8 +2172,13 @@ def test_actual_composition_placement_requires_and_consumes_original_evidence(
     current["pending"]["judgment"] = 1
     assert consume()["composition"]["status"] == "unresolved"
     Path(current["assessments"][0]["path"]).unlink()
-    with pytest.raises(BundleError):
-        consume()
+    failed = consume()
+    assert "composition" not in failed
+    assert failed["composition_error"]["code"] == "not-established"
+    assert (
+        failed["composition_error"]["native_values"]["composition-evidence"]
+        == "unavailable"
+    )
 
 
 def test_affected_primary_and_reviewer_cannot_share_one_instance(basis):
@@ -3003,3 +3026,1496 @@ def test_supported_recovery_needs_no_history_before_the_original_obligation(basi
     for closure in basis[2]["closures"]:
         closure["verification"] = verification
     assert composition(*basis)["status"] == "ready"
+
+
+@pytest.mark.parametrize(
+    "fault", ["missing-check", "failed-check", "coverage", "drift"]
+)
+def test_native_negative_record_keeps_strict_failure_without_counts(basis, fault):
+    tmp_path, assignment, current = basis
+    handoff = commit_input(basis)
+    assert (
+        composition_record(tmp_path, assignment, current)["composition"]["status"]
+        == "ready"
+    )
+    if fault == "missing-check":
+        current["checks"] = []
+    elif fault == "failed-check":
+        current["checks"] = [
+            {
+                **write_artifact(
+                    tmp_path,
+                    "negative-run",
+                    {
+                        "target": current["target"],
+                        "command": ["existing-test", "behavior"],
+                        "outcome": "fail",
+                    },
+                ),
+                "id": "behavior",
+            }
+        ]
+    elif fault == "coverage":
+        current["assessments"].pop()
+    else:
+        Path(current["assessments"][0]["path"]).write_text("changed")
+    with pytest.raises(BundleError) as original:
+        composition(tmp_path, assignment, current)
+    result = composition_record(tmp_path, assignment, current)
+    assert "composition" not in result
+    error = result["composition_error"]
+    assert error["code"] == original.value.code
+    assert error["message"] == str(original.value)
+    assert error["details"] == original.value.details
+    assert error["target"] == "candidate1"
+    assert error["basis"] == current
+    assert error["criterion_counts"] is None
+    assert error["native_values"] == {
+        "composition-evidence": "unavailable",
+        "composition-current": {"outcome": "inconclusive"},
+        "composition-goal-outcome": "not-achieved",
+        "composition-scope": "task-result",
+    }
+    with pytest.raises(BundleError):
+        commit_handoff(tmp_path, handoff)
+    # Re-reading the same unavailable basis cannot promote its outcome on resume.
+    assert composition_record(tmp_path, assignment, current) == result
+
+
+@pytest.mark.parametrize("family", ["goal", "validation"])
+def test_unavailable_native_evidence_completes_only_negative_route(family):
+    document, binding = reusable(family)
+    assert proof(document, binding)["status"] == "compatible"
+    for definition in document["node_definitions"].values():
+        items = {row["id"]: row for row in definition.get("items", [])}
+        if "composition-current" not in items:
+            continue
+        for name in (
+            "composition-unmet",
+            "composition-unverified",
+            "pending-local",
+            "pending-low",
+            "current-blockers",
+            "pending-judgment",
+        ):
+            assert items[name]["required"] is False
+            assert items[name]["required_when"] == [
+                {"item": "composition-evidence", "equals": "established"}
+            ]
+    # A positive check cannot replace the original real zero-count guard.
+    for definition in document["node_definitions"].values():
+        for option in definition.get("options", []):
+            option["guards"] = [
+                row
+                for row in option.get("guards", [])
+                if row["evidence"]["item"] != "composition-unverified"
+            ]
+    assert proof(document, binding)["status"] != "compatible"
+
+
+def test_validation_group_commit_is_intermediate_and_closeout_is_user_only():
+    document, binding = reusable("validation")
+    nodes = {row["id"]: row for row in document["graph"]["nodes"]}
+    assess = document["node_definitions"]["assess-goal"]
+    assert assess["assessment"]["outcomes"]["group-ready"] == "not_achieved"
+    assert nodes["assess-goal"]["routes"]["group-ready"]["to"] == "record-acceptance"
+    for name in ("group-commit", "delegated-closeout"):
+        assert not nodes[name].get("terminal", False)
+        assert nodes[name]["next"] == "resume-integration"
+    assert nodes["resume-integration"]["routes"]["continue"] == {
+        "to": "current-composition",
+        "effect": "rework",
+    }
+    assert (
+        nodes["approve-closeout"]["routes"]["delegated"]["to"] == "delegated-closeout"
+    )
+    delegated = next(
+        row
+        for row in document["node_definitions"]["approve-closeout"]["options"]
+        if row["id"] == "delegated"
+    )
+    assert {
+        "evidence": {"node": "current-composition", "item": "composition-scope"},
+        "equals": "correction-group",
+    } in delegated["guards"]
+    assert "integration-complete" not in {row["node"] for row in binding["closeout"]}
+
+
+def test_retained_old_composition_keeps_its_original_record_contract(basis):
+    tmp_path, assignment, current = basis
+    assert (
+        "composition-evidence"
+        not in composition_record(tmp_path, assignment, current, availability=False)[
+            "composition"
+        ]["native_values"]
+    )
+    current["checks"] = []
+    with pytest.raises(BundleError):
+        composition_record(tmp_path, assignment, current, availability=False)
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "reference",
+        "criterion",
+        "part",
+        "work",
+        "native",
+        "target",
+        "closure",
+        "phase-shape",
+        "criterion-shape",
+        "parts-shape",
+        "closure-shape",
+        "findings-shape",
+        "confirmation-shape",
+        "correction-identity-shape",
+        "check-policy-shape",
+    ],
+)
+def test_malformed_composition_has_structured_unavailable_record(basis, fault):
+    repo, _assignment, current = basis
+    assert composition(*basis)["status"] == "ready"
+    if fault in {"confirmation-shape", "correction-identity-shape"}:
+        _roles, proof = affected_case(basis, "task-result", "primary-only")
+        if fault == "confirmation-shape":
+            proof["assessments"] = [None, {}]
+        else:
+            proof["correction"]["original_assessments"][0]["id"] = ["invalid"]
+        verification = write_artifact(repo, "malformed-closure-proof", proof)
+        current["closures"][0]["verification"] = verification
+    elif fault == "check-policy-shape":
+        basis[1]["target"]["squad"]["required_checks"] = [
+            {"id": "behavior", "execution": {}}
+        ]
+    elif fault == "phase-shape":
+        current["phase"] = {"unknown": True}
+    elif fault == "criterion-shape":
+        current["criteria"][0]["state"] = []
+    elif fault == "parts-shape":
+        current["criteria"][0]["parts"] = {"unknown": True}
+    elif fault == "closure-shape":
+        current["closures"] = [{"assessment": ["not-an-id"]}]
+    elif fault == "findings-shape":
+        ref = current["assessments"][0]
+        report = json.loads(Path(ref["path"]).read_bytes())
+        report["findings"] = [{"id": "invalid", "state": {}}]
+        ref.update(write_artifact(repo, "malformed-finding-state", report))
+    elif fault == "reference":
+        current["assessments"][0].pop("sha256")
+    elif fault == "criterion":
+        current["criteria"][0].pop("id")
+    elif fault == "part":
+        current["criteria"][0]["parts"][0].pop("id")
+    elif fault == "closure":
+        affected_case(basis, "task-result", "primary-only")
+        current["closures"][0].pop("verification")
+    else:
+        ref = current["assessments"][0]
+        report = json.loads(Path(ref["path"]).read_text())
+        report[fault] = None
+        ref.update(write_artifact(repo, "malformed-" + fault, report))
+    with pytest.raises(BundleError) as original:
+        composition(*basis)
+    result = composition_record(*basis)["composition_error"]
+    assert result["code"] == original.value.code
+    assert result["message"] == str(original.value)
+    assert result["basis"] == current
+    assert result["criterion_counts"] is None
+    assert result["native_values"]["composition-current"]["outcome"] == "inconclusive"
+    with pytest.raises(BundleError):
+        composition_record(*basis, availability=False)
+
+
+def test_closeout_requires_actual_exact_candidate_ee_in_addition_to_first_panel(basis):
+    repo, _assignment, current = basis
+    integration_basis(repo, current)
+    assert composition(*basis)["status"] == "ready"
+    current["phase"] = "epic-closeout"
+    with pytest.raises(BundleError):
+        composition(*basis)
+    ref = next(ref for ref in current["assessments"] if ref["role"] == "Epic Evaluator")
+    closeout = copy.deepcopy(ref)
+    closeout.update(id="closeout-ee", scope="affected-epic")
+    current["assessments"].append(closeout)
+    assert composition(*basis)["status"] == "ready"
+    current["assessments"].remove(ref)
+    with pytest.raises(BundleError):
+        composition(*basis)
+
+
+@pytest.mark.parametrize("aliased", [False, True])
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "reference",
+        "work",
+        "criterion",
+        "closure",
+        "replacement-list",
+        "replacement-object",
+        "negative-closeout",
+        "noncloseout-purpose",
+        "contrary-closeout-provenance",
+        "dispatch-integration",
+        "coarse-unknown-first",
+        *[
+            f"ordinary-{form}-{result}"
+            for form in ("text", "inline", "no-bytes", "unavailable")
+            for result in ("pass", "negative")
+        ],
+    ],
+)
+def test_context_cli_consumes_malformed_basis_without_traceback(
+    basis, monkeypatch, capsys, aliased, fault
+):
+    import adaptive_admission
+    import adaptive_entrypoint
+    import manage_adaptive_procedure as cli
+
+    repo, assignment, current = basis
+    document, binding = reusable(
+        "validation" if fault == "dispatch-integration" else "goal"
+    )
+    if fault == "dispatch-integration":
+        assignment["target"]["procedure_plan"]["family"] = "validation"
+    if aliased:
+        capability = binding["nodes"]["current-composition"]["capabilities"][0]
+        capability["fields"]["composition-evidence"] = "availability"
+        for item in document["node_definitions"]["current-composition"]["items"]:
+            if item["id"] == "composition-evidence":
+                item["id"] = "availability"
+    monkeypatch.setattr(
+        execution,
+        "resume_selected",
+        lambda *args, **kwargs: {
+            "binding": binding,
+            "source": yaml.safe_dump(document).encode(),
+            "bundle_id": "fixture",
+            "path": str(repo),
+            "qualification": {},
+        },
+    )
+    observation = {
+        "status": {
+            "procedure": binding["procedure"],
+            "session": {"id": "session", "lifecycle": "running", "revision": 1},
+            "current": {"attempt": {"attempt_id": "attempt", "attempt_number": 1}},
+        },
+        "guidance": {"node": {"graph_node_id": "current-composition"}},
+        "active_items": [],
+        "mutation_templates": [],
+    }
+    monkeypatch.setattr(
+        adaptive_admission,
+        "NativeClient",
+        lambda *args: SimpleNamespace(health=lambda: observation),
+    )
+    monkeypatch.setattr(adaptive_entrypoint, "branch", lambda *args, **kwargs: None)
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    qualification = repo / "invocation.json"
+    assignment["target"]["squad"]["compositions"] = {"current-composition": current}
+
+    def consume():
+        qualification.write_text(json.dumps({"assignment": assignment}))
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "context",
+                "context",
+                "--repository",
+                str(repo),
+                "--root",
+                "definitions",
+                "--entrypoint",
+                "epic-squad",
+                "--qualification",
+                str(qualification),
+                "--podway",
+                "not-executed",
+            ],
+        )
+        code = cli.main()
+        result = json.loads(capsys.readouterr().out)
+        assert code == 0, result
+        return result
+
+    assert consume()["composition"]["status"] == "ready"
+    if fault.startswith("replacement-"):
+        _proof, _recovered, delta = owner_recovery_case(basis)
+        assert consume()["composition"]["status"] == "ready"
+        report = json.loads(Path(delta["path"]).read_bytes())
+        report["native"]["replaces"]["assessment"] = (
+            [] if fault.endswith("list") else {}
+        )
+        delta.update(write_artifact(repo, "bad-cli-replacement", report))
+    elif fault.startswith("ordinary-"):
+        ref = closeout_case(basis)
+        assert consume()["composition"]["status"] == "ready"
+        report = json.loads(Path(ref["path"]).read_bytes())
+        form, outcome = fault.removeprefix("ordinary-").rsplit("-", 1)
+        ordinary_closeout_assignment(repo, assignment, report, form)
+        if outcome == "negative":
+            report.update(verdict="rework", criteria=report_rows("unmet"))
+            current["criteria"] = report_rows("unmet")
+        ref.update(write_artifact(repo, "cli-ordinary-closeout", report))
+        result = consume()["composition"]
+        assert result["status"] == ("unresolved" if outcome == "negative" else "ready")
+        assert result["native_values"]["composition-unmet"] == int(
+            outcome == "negative"
+        )
+        return
+    elif fault == "coarse-unknown-first":
+        ref = closeout_case(basis)
+        report = json.loads(Path(ref["path"]).read_bytes())
+        ordinary_closeout_assignment(repo, assignment, report, "text")
+        ref.update(write_artifact(repo, "cli-coarse-purpose-original", report))
+        assert consume()["composition"]["status"] == "ready"
+        moved_candidate(basis)
+        preserve_closeout_report(basis, ref)
+        assert consume()["composition"]["status"] == "ready"
+        report["work"].pop("assignment_scope")
+        ref.update(write_artifact(repo, "cli-coarse-purpose-unknown", report))
+        preserve_closeout_report(basis, ref)
+    elif fault == "dispatch-integration":
+        ref = closeout_case(basis, form="assignment")
+        report = json.loads(Path(ref["path"]).read_bytes())
+        assignment["target"]["squad"]["work_unit_kind"] = "epic-closeout"
+        observation["guidance"]["node"]["graph_node_id"] = "assess-integration"
+        original = consume()["dispatches"][0]
+        assert original["work"]["assignment_scope"] == "integration"
+        assert original["target"]["squad"]["work_unit_kind"] == "epic-closeout"
+        assert "correction" not in original["target"]["squad"]
+        observation["guidance"]["node"]["graph_node_id"] = "current-composition"
+        report["assignment"] = write_artifact(
+            repo, "cli-dispatched-integration", original
+        )
+        ref.update(write_artifact(repo, "cli-original-integration", report))
+        assert consume()["composition"]["status"] == "ready"
+        moved_candidate(basis)
+        preserve_closeout_report(basis, ref)
+    elif fault in {"noncloseout-purpose", "contrary-closeout-provenance"}:
+        ref = closeout_case(basis, form="checkpoint")
+        assert consume()["composition"]["status"] == "ready"
+        report = json.loads(Path(ref["path"]).read_bytes())
+        original = copy.deepcopy(assignment)
+        original["role"] = "evaluator"
+        original["authority"]["effects"] = []
+        original["target"]["procedure_plan"]["family"] = "validation"
+        original["checkpoint"] = "assess-affected"
+        original["target"]["squad"]["work_unit_kind"] = "validation-remediation"
+        original["target"]["squad"]["correction"] = {"phase": "integration"}
+        report["assignment"] = write_artifact(
+            repo, "cli-original-noncloseout-purpose", original
+        )
+        if fault == "noncloseout-purpose":
+            report["target"].pop("squad", None)
+            current["phase"] = "integration"
+        ref.update(write_artifact(repo, "cli-affected-report-provenance", report))
+        if fault == "noncloseout-purpose":
+            assert consume()["composition"]["status"] == "ready"
+            current["phase"] = "epic-closeout"
+        moved_candidate(basis)
+        preserve_closeout_report(basis, ref)
+    elif fault == "negative-closeout":
+        ref = closeout_case(basis)
+        assert consume()["composition"]["status"] == "ready"
+        report = json.loads(Path(ref["path"]).read_bytes())
+        report.update(verdict="rework", criteria=report_rows("unmet"))
+        current["criteria"] = report_rows("unmet")
+        ref.update(write_artifact(repo, "actual-cli-negative-closeout", report))
+        result = consume()["composition"]
+        assert result["status"] == "unresolved"
+        assert result["native_values"]["composition-unmet"] == 1
+        assert (
+            result["native_values"][
+                "availability" if aliased else "composition-evidence"
+            ]
+            == "established"
+        )
+        return
+    elif fault == "reference":
+        current["assessments"][0].pop("bytes")
+    elif fault == "criterion":
+        current["criteria"][0].pop("id")
+    elif fault == "closure":
+        affected_case(basis, "task-result", "primary-only")
+        current["closures"][0].pop("verification")
+    else:
+        ref = current["assessments"][0]
+        report = json.loads(Path(ref["path"]).read_bytes())
+        report["work"] = None
+        ref.update(write_artifact(repo, "malformed-cli-work", report))
+    result = consume()
+    assert "composition" not in result
+    assert result["composition_error"]["criterion_counts"] is None
+    native = result["composition_error"]["native_values"]
+    assert (
+        native["availability" if aliased else "composition-evidence"] == "unavailable"
+    )
+
+
+def test_scoped_validation_original_producers_reach_strict_composition():
+    document, binding = reusable("validation")
+    assert proof(document, binding)["status"] == "compatible"
+    nodes = {r["id"]: r for r in document["graph"]["nodes"]}
+    assert nodes["assess-integration"]["next"] == "restore-closeout-basis"
+    assert (
+        nodes["prepare-final-closeout"]["routes"]["ready"]["to"]
+        == "restore-closeout-basis"
+    )
+    assert nodes["decide-corrections"]["routes"]["closeout"]["to"] == "assess-affected"
+    for obligation in binding["obligations"].values():
+        assert {
+            "node": "restore-closeout-basis",
+            "item": "integration-basis",
+        } in obligation["producers"]
+        assert {"node": "baseline", "item": "context-brief"} not in obligation[
+            "producers"
+        ]
+    nodes["current-composition"]["evidence_from"] = [
+        r
+        for r in nodes["current-composition"]["evidence_from"]
+        if r["node"] != "restore-closeout-basis"
+    ]
+    assert proof(document, binding)["status"] != "compatible"
+
+
+@pytest.mark.parametrize("fault", ["missing-producer", "unconsumed-producer"])
+def test_restored_integration_obligation_cannot_lose_its_native_endpoint(fault):
+    document, binding = reusable("validation")
+    assert proof(document, binding)["status"] == "compatible"
+    if fault == "missing-producer":
+        document["node_definitions"]["restore-closeout-basis"]["items"] = []
+    else:
+        for row in document["graph"]["nodes"]:
+            if row["id"] in {"current-composition", "classify-corrections"}:
+                row["evidence_from"] = [
+                    ref
+                    for ref in row["evidence_from"]
+                    if ref["node"] != "restore-closeout-basis"
+                ]
+    assert proof(document, binding)["status"] != "compatible"
+
+
+def test_preserved_old_ee_target_cannot_replace_exact_final_closeout_assessment(basis):
+    repo, _assignment, current = basis
+    integration_basis(repo, current)
+    current["phase"] = "epic-closeout"
+    ee = next(ref for ref in current["assessments"] if ref["role"] == "Epic Evaluator")
+    current["assessments"].append(
+        {**copy.deepcopy(ee), "id": "exact-closeout-ee", "scope": "affected-epic"}
+    )
+    assert composition(*basis)["status"] == "ready"
+    moved_candidate(basis)
+    with pytest.raises(BundleError):
+        composition(*basis)
+    ref = current["assessments"][-1]
+    report = json.loads(Path(ref["path"]).read_bytes())
+    report["target"]["candidate"] = "candidate2"
+    ref.update(
+        write_artifact(repo, "actual-final-closeout-ee", report),
+        target="candidate2",
+        applicability="current",
+    )
+    assert composition(*basis)["status"] == "ready"
+
+
+def test_record_only_closeout_dispatch_keeps_unchanged_to_panel_as_evidence(basis):
+    repo, assignment, current = basis
+    integration_basis(repo, current)
+    ee = next(ref for ref in current["assessments"] if ref["role"] == "Epic Evaluator")
+    assignment["target"]["squad"]["correction"] = {
+        "id": "final-records",
+        "phase": "epic-closeout",
+        "depth": "primary-only",
+        "epic_scope_changed": False,
+        "basis": "Exact final record-only candidate, original first panel preserved",
+        "original_assessments": [copy.deepcopy(ee)],
+    }
+    assert assignments(assignment, "assess-affected", "evaluator") == [
+        ("Epic Evaluator", "affected-epic")
+    ]
+
+
+def test_validation_delegation_uses_only_existing_correction_grant_kind():
+    document, _binding = reusable("validation")
+    option = next(
+        row
+        for row in document["node_definitions"]["approve-closeout"]["options"]
+        if row["id"] == "delegated"
+    )
+    assert {
+        "evidence": {"node": "record-acceptance", "item": "grant-kind"},
+        "equals": "correction",
+    } in option["guards"]
+
+
+def closeout_case(basis, producer="ee", form="work"):
+    repo, _assignment, current = basis
+    integration_basis(repo, current)
+    current["phase"] = "epic-closeout"
+    report = {
+        "schema": "aquarium.evaluator-assessment/v3",
+        "work": {"display_role": "Epic Evaluator"},
+        "native": {"public_handle": producer},
+        "target": {"candidate": current["target"]},
+        "verdict": "pass",
+        "criteria": report_rows(),
+    }
+    if form == "work":
+        report["work"]["assignment_scope"] = "affected-epic"
+        report["target"]["squad"] = {
+            "work_unit_kind": "epic-closeout",
+            "candidate": current["target"],
+        }
+    elif form == "checkpoint":
+        report["target"]["squad"] = {
+            "correction": {"phase": "epic-closeout"},
+            "candidate": current["target"],
+        }
+        report["checkpoint_assessment"] = {
+            "phase": "affected-epic",
+            "state": "met",
+            "basis": "Actual final lifecycle record review",
+            "criteria": report_rows(),
+        }
+        report["checkpoint_result"] = "pass"
+    elif form in {"assignment", "assignment-plain"}:
+        assigned = copy.deepcopy(basis[1])
+        assigned["role"] = "evaluator"
+        assigned["work"]["display_role"] = "Epic Evaluator"
+        assigned["work"]["assignment_scope"] = "affected-epic"
+        assigned["target"]["squad"]["work_unit_kind"] = "epic-closeout"
+        report["assignment"] = write_artifact(
+            repo, "actual-closeout-assignment", assigned
+        )
+        if form == "assignment-plain":
+            report["assignment"]["sha256"] = report["assignment"][
+                "sha256"
+            ].removeprefix("sha256:")
+    ref = {
+        **write_artifact(repo, "closeout-first-report", report),
+        "id": "closeout-first",
+        "role": "Epic Evaluator",
+        "producer": producer,
+        "scope": "affected-epic",
+        "target": current["target"],
+        "applicability": "current",
+        "basis": "Actual first substantive final-record judgment",
+    }
+    current["assessments"].append(ref)
+    return ref
+
+
+def preserve_closeout_report(basis, ref):
+    repo, _assignment, current = basis
+    proof = {
+        "before": ref["target"],
+        "after": current["target"],
+        "outcome": "pass",
+        "preserved_scope": "affected-epic",
+        "checks": ["record readback and integrity"],
+        "unknown_impact": False,
+        "local_eligible": True,
+        "record_only": True,
+        "meaning_preserved": True,
+        "unresolved_judgment": False,
+        "delta": "Finite meaning-preserving final record edit",
+        "basis": "Original first closeout judgment still applies",
+        "source_assessment": {
+            k: v
+            for k, v in ref.items()
+            if k not in {"applicability", "applicability_evidence"}
+        },
+    }
+    ref["applicability"] = "preserved"
+    ref["applicability_evidence"] = write_artifact(
+        repo, "preserved-closeout-judgment", proof
+    )
+    return proof
+
+
+def test_complete_negative_closeout_ee_remains_established(basis):
+    repo, _assignment, current = basis
+    ref = closeout_case(basis)
+    assert composition(*basis)["status"] == "ready"
+    report = json.loads(Path(ref["path"]).read_bytes())
+    report.update(verdict="rework", criteria=report_rows("unmet"))
+    ref.update(write_artifact(repo, "negative-closeout", report))
+    current["criteria"] = report_rows("unmet")
+    result = composition_record(*basis)
+    assert result["composition"]["status"] == "unresolved"
+    assert result["composition"]["native_values"]["composition-unmet"] == 1
+    assert (
+        result["composition"]["native_values"]["composition-evidence"] == "established"
+    )
+    assert result["composition"]["original_verdicts"][ref["id"]] == "rework"
+
+
+@pytest.mark.parametrize(
+    "form", ["work", "checkpoint", "assignment", "assignment-plain"]
+)
+def test_real_closeout_first_assessment_allows_verified_local_record_delta(basis, form):
+    ref = closeout_case(basis, form=form)
+    assert composition(*basis)["status"] == "ready"
+    moved_candidate(basis)
+    preserve_closeout_report(basis, ref)
+    assert composition(*basis)["status"] == "ready"
+
+
+def test_integration_to_cannot_supply_final_ee_instance(basis):
+    ref = closeout_case(basis)
+    assert composition(*basis)["status"] == "ready"
+    report = json.loads(Path(ref["path"]).read_bytes())
+    report["native"]["public_handle"] = "reviewer"
+    ref.update(
+        write_artifact(basis[0], "to-disguised-as-ee", report), producer="reviewer"
+    )
+    with pytest.raises(BundleError):
+        composition(*basis)
+
+
+@pytest.mark.parametrize("bad", [[], {}])
+def test_malformed_replacement_identity_is_structured_after_valid_recovery(basis, bad):
+    _proof, _recovered, delta = owner_recovery_case(basis)
+    assert composition(*basis)["status"] == "ready"
+    report = json.loads(Path(delta["path"]).read_bytes())
+    report["native"]["replaces"]["assessment"] = bad
+    delta.update(write_artifact(basis[0], "malformed-replacement-identity", report))
+    with pytest.raises(BundleError):
+        composition(*basis)
+    assert composition_record(*basis)["composition_error"]["code"] == "invalid-input"
+    with pytest.raises(BundleError):
+        composition_record(*basis, availability=False)
+
+
+def test_affected_group_closure_survives_integration_phase_without_relabel(basis):
+    _roles, proof = affected_case(basis, "correction-group", "primary-only")
+    assert composition(*basis)["status"] == "ready"
+    basis[2]["phase"] = "integration"
+    assert composition(*basis)["status"] == "ready"
+    assert proof["correction"]["phase"] == "correction-group"
+
+
+def carried_group_case(basis, owner="Epic Evaluator"):
+    repo, _assignment, current = basis
+    _roles, proof = affected_case(basis, "correction-group", "bounded")
+    if owner == "Task Operator":
+        original = next(
+            r
+            for r in current["assessments"]
+            if r["role"] == "Task Operator" and r["scope"] == "integration"
+        )
+        report = json.loads(Path(original["path"]).read_bytes())
+        report["verdict"] = "rework"
+        report["findings"] = [
+            {
+                "id": "TO-1",
+                "state": "unmet",
+                "basis": "Required original reviewer finding",
+            }
+        ]
+        original.update(write_artifact(repo, "original-to-objection", report))
+        proof["correction"]["original_assessments"].append(copy.deepcopy(original))
+        delta = next(
+            r
+            for r in current["assessments"]
+            if r["role"] == "Task Operator" and r["scope"] == "affected-result"
+        )
+        report = json.loads(Path(delta["path"]).read_bytes())
+        report["native"]["public_handle"] = original["producer"]
+        report["findings"] = [
+            {
+                "id": "TO-1",
+                "state": "met",
+                "basis": "Exact independently assessed repair",
+            }
+        ]
+        delta.update(
+            write_artifact(repo, "actual-to-confirmation", report),
+            producer=original["producer"],
+        )
+        current["closures"].append(
+            {
+                **copy.deepcopy(current["closures"][0]),
+                "assessment": original["id"],
+                "finding": "TO-1",
+            }
+        )
+        current["closures"][-1].pop("criterion")
+        current["closures"][-1].pop("part")
+        ee_delta = next(
+            r
+            for r in current["assessments"]
+            if r["role"] == "Epic Evaluator" and r["id"] in proof["assessments"]
+        )
+        report = json.loads(Path(ee_delta["path"]).read_bytes())
+        report["findings"] = [
+            {
+                "id": "TO-1",
+                "state": "met",
+                "basis": "EE confirms the same original reviewer correction",
+            }
+        ]
+        ee_delta.update(write_artifact(repo, "ee-confirms-to-obligation", report))
+        verification = write_artifact(repo, "ee-to-group-closure-proof", proof)
+        for closure in current["closures"]:
+            closure["verification"] = verification
+    assert composition(*basis)["status"] == "ready"
+    current["phase"] = "integration"
+    assert composition(*basis)["status"] == "ready"
+    current["phase"] = "epic-closeout"
+    report = {
+        "schema": "aquarium.evaluator-assessment/v3",
+        "work": {"display_role": "Epic Evaluator", "assignment_scope": "affected-epic"},
+        "native": {"public_handle": "ee"},
+        "target": {"candidate": current["target"]},
+        "criteria": report_rows(),
+        "verdict": "pass",
+    }
+    first = {
+        **write_artifact(repo, "first-substantive-closeout", report),
+        "id": "final-first",
+        "role": "Epic Evaluator",
+        "producer": "ee",
+        "scope": "affected-epic",
+        "target": current["target"],
+        "applicability": "current",
+        "basis": "Actual first final record review",
+    }
+    report["target"]["squad"] = {
+        "work_unit_kind": "epic-closeout",
+        "candidate": current["target"],
+    }
+    first.update(write_artifact(repo, "first-substantive-closeout", report))
+    current["assessments"].append(first)
+    assert composition(*basis)["status"] == "ready"
+    current["target"] = basis[1]["target"]["squad"]["candidate"] = "candidate3"
+    for ref in current["assessments"]:
+        ref["applicability"] = "preserved"
+        ref["applicability_evidence"] = write_artifact(
+            repo,
+            ref["id"] + "-record-applicability",
+            {
+                "before": ref["target"],
+                "after": "candidate3",
+                "outcome": "pass",
+                "preserved_scope": ref["scope"],
+                "unknown_impact": False,
+                "checks": ["record readback"],
+            },
+        )
+    preserve_closeout_report(basis, first)
+    # Existing affected EE confirmations are not the final-first intake. Keep their
+    # ordinary scope applicability and bind them in the original closure carry.
+    current["checks"] = [
+        {
+            **write_artifact(
+                repo,
+                "current-record-check",
+                {
+                    "target": "candidate3",
+                    "command": ["existing-test", "behavior"],
+                    "outcome": "pass",
+                },
+            ),
+            "id": "behavior",
+        }
+    ]
+    for closure in current["closures"]:
+        original = copy.deepcopy(closure)
+        carry = {
+            "before": closure["after"],
+            "after": "candidate3",
+            "current_scope": "epic-closeout",
+            "preserved_scope": "correction-group",
+            "outcome": "pass",
+            "unknown_impact": False,
+            "local_eligible": True,
+            "record_only": True,
+            "meaning_preserved": True,
+            "unresolved_judgment": False,
+            "delta": "Record-only meaning-preserving change",
+            "basis": "Original independent repair remains applicable",
+            "checks": ["record integrity"],
+            "source_closure": original,
+            "confirmations": [
+                {
+                    k: v
+                    for k, v in ref.items()
+                    if k not in {"applicability", "applicability_evidence"}
+                }
+                for identifier in proof["assessments"]
+                for ref in current["assessments"]
+                if ref["id"] == identifier
+            ],
+        }
+        closure["applicability"] = "preserved"
+        closure["applicability_evidence"] = write_artifact(
+            repo, closure["assessment"] + "-closure-carry", carry
+        )
+    return proof, first
+
+
+@pytest.mark.parametrize("owner", ["Epic Evaluator", "Task Operator"])
+def test_original_affected_group_judgments_carry_to_record_closeout(basis, owner):
+    proof, _first = carried_group_case(basis, owner)
+    assert composition(*basis)["status"] == "ready"
+    assert proof["correction"]["phase"] == "correction-group"
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "source-closure",
+        "confirmations",
+        "unknown",
+        "meaning",
+        "scope",
+        "prior-scope",
+        "missing-confirmation",
+        "lost-original",
+        "missing-owner",
+        "failed-confirmation",
+    ],
+)
+def test_carried_affected_closure_refuses_unestablished_current_basis(basis, fault):
+    proof, _first = carried_group_case(basis, "Task Operator")
+    assert composition(*basis)["status"] == "ready"
+    closure = basis[2]["closures"][-1]
+    carry = json.loads(Path(closure["applicability_evidence"]["path"]).read_bytes())
+    if fault == "source-closure":
+        carry["source_closure"]["owner"] = "unrelated owner"
+    elif fault == "confirmations":
+        carry["confirmations"][0]["sha256"] = "sha256:" + "0" * 64
+    elif fault == "unknown":
+        carry["unknown_impact"] = True
+    elif fault == "meaning":
+        carry["meaning_preserved"] = False
+    elif fault == "scope":
+        carry["current_scope"] = "task-result"
+    elif fault == "prior-scope":
+        carry["preserved_scope"] = "integration"
+    elif fault == "missing-confirmation":
+        basis[2]["assessments"] = [
+            r for r in basis[2]["assessments"] if r["id"] != proof["assessments"][-1]
+        ]
+    elif fault == "lost-original":
+        Path(proof["correction"]["original_assessments"][-1]["path"]).unlink()
+    elif fault == "missing-owner":
+        ref = next(
+            r for r in basis[2]["assessments"] if r["id"] == proof["assessments"][-1]
+        )
+        report = json.loads(Path(ref["path"]).read_bytes())
+        report["native"]["public_handle"] = "unrelated"
+        ref.update(
+            write_artifact(basis[0], "wrong-carried-owner", report),
+            producer="unrelated",
+        )
+    else:
+        ref = next(
+            r for r in basis[2]["assessments"] if r["id"] == proof["assessments"][-1]
+        )
+        report = json.loads(Path(ref["path"]).read_bytes())
+        report["verdict"] = "rework"
+        ref.update(write_artifact(basis[0], "negative-old-confirmation", report))
+    closure["applicability_evidence"] = write_artifact(
+        basis[0], "invalid-carry-" + fault, carry
+    )
+    with pytest.raises(BundleError):
+        composition(*basis)
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "unknown",
+        "meaning",
+        "record-kind",
+        "source-report",
+        "first-scope",
+        "missing-first",
+        "material-judgment",
+    ],
+)
+def test_preserved_closeout_ee_needs_real_first_coverage_and_local_fit(basis, fault):
+    ref = closeout_case(basis, form="assignment")
+    assert composition(*basis)["status"] == "ready"
+    moved_candidate(basis)
+    proof = preserve_closeout_report(basis, ref)
+    assert composition(*basis)["status"] == "ready"
+    if fault == "unknown":
+        proof["unknown_impact"] = True
+    elif fault == "meaning":
+        proof["meaning_preserved"] = False
+    elif fault == "record-kind":
+        proof["record_only"] = False
+    elif fault == "source-report":
+        proof["source_assessment"]["bytes"] += 1
+    elif fault == "first-scope":
+        report = json.loads(Path(ref["path"]).read_bytes())
+        report.pop("assignment")
+        report["work"]["assignment_scope"] = "integration"
+        ref.update(write_artifact(basis[0], "old-integration-not-closeout", report))
+        proof["source_assessment"] = {
+            k: v
+            for k, v in ref.items()
+            if k not in {"applicability", "applicability_evidence"}
+        }
+    elif fault == "missing-first":
+        basis[2]["assessments"].remove(ref)
+    else:
+        proof["unresolved_judgment"] = True
+    ref["applicability_evidence"] = write_artifact(
+        basis[0], "invalid-local-closeout-" + fault, proof
+    )
+    with pytest.raises(BundleError):
+        composition(*basis)
+
+
+@pytest.mark.parametrize("kind", ["same-ee", "fresh-ee", "replacement-ee"])
+def test_final_ee_continuity_preserves_distinct_role_instances(basis, kind):
+    producer = "ee" if kind == "same-ee" else "fresh-final-ee"
+    ref = closeout_case(basis, producer=producer)
+    if kind == "replacement-ee":
+        original = next(
+            r
+            for r in basis[2]["assessments"]
+            if r["role"] == "Epic Evaluator" and r["scope"] == "integration"
+        )
+        report = json.loads(Path(ref["path"]).read_bytes())
+        report["native"]["replaces"] = {
+            "assessment": original["id"],
+            "public_handle": original["producer"],
+            "basis": "Supported same-role EE continuity",
+        }
+        ref.update(write_artifact(basis[0], "supported-final-ee-replacement", report))
+    assert composition(*basis)["status"] == "ready"
+
+
+@pytest.mark.parametrize("form", ["work", "checkpoint"])
+@pytest.mark.parametrize(
+    "original_phase", ["integration", "correction-group", "epic-plan"]
+)
+def test_generic_affected_epic_purpose_cannot_create_first_closeout(
+    basis, form, original_phase
+):
+    repo, assignment, current = basis
+    ref = closeout_case(basis, form=form)
+    report = json.loads(Path(ref["path"]).read_bytes())
+    report["target"].pop("squad", None)
+    original = copy.deepcopy(assignment)
+    original["role"] = "evaluator"
+    original["work"].update(
+        display_role="Epic Evaluator", assignment_scope="affected-epic"
+    )
+    original["target"]["squad"]["work_unit_kind"] = (
+        "member-task" if original_phase == "epic-plan" else "validation-remediation"
+    )
+    original["target"]["procedure_plan"]["family"] = (
+        "goal" if original_phase == "epic-plan" else "validation"
+    )
+    original["checkpoint"] = "assess-affected"
+    original["target"]["squad"]["correction"] = {
+        "id": "original-non-closeout",
+        "phase": original_phase,
+        "depth": "primary-only",
+        "epic_scope_changed": False,
+        "basis": "Actual non-closeout affected Epic assessment",
+        "original_assessments": [copy.deepcopy(current["assessments"][1])],
+    }
+    report["assignment"] = write_artifact(
+        repo, "non-closeout-original-assignment", original
+    )
+    ref.update(write_artifact(repo, "genuine-non-closeout-affected-report", report))
+    current["phase"] = "integration"
+    assert composition(*basis)["status"] == "ready"
+    current["phase"] = "epic-closeout"
+    moved_candidate(basis)
+    preserve_closeout_report(basis, ref)
+    with pytest.raises(BundleError):
+        composition(*basis)
+
+
+def test_generic_affected_metadata_without_original_purpose_stays_unknown(basis):
+    ref = closeout_case(basis)
+    report = json.loads(Path(ref["path"]).read_bytes())
+    report["target"].pop("squad", None)
+    ref.update(write_artifact(basis[0], "generic-affected-without-purpose", report))
+    # Existing exact-candidate ordinary compatibility is retained.
+    assert composition(*basis)["status"] == "ready"
+    moved_candidate(basis)
+    preserve_closeout_report(basis, ref)
+    with pytest.raises(BundleError):
+        composition(*basis)
+
+
+def test_original_assignment_contradiction_cannot_be_hidden_by_closeout_report_context(
+    basis,
+):
+    repo, assignment, _current = basis
+    ref = closeout_case(basis)
+    assert composition(*basis)["status"] == "ready"
+    report = json.loads(Path(ref["path"]).read_bytes())
+    report["target"]["squad"] = {
+        "work_unit_kind": "epic-closeout",
+        "candidate": ref["target"],
+    }
+    original = copy.deepcopy(assignment)
+    original["target"]["squad"]["work_unit_kind"] = "validation-remediation"
+    original["target"]["procedure_plan"]["family"] = "validation"
+    original["checkpoint"] = "assess-affected"
+    original["target"]["squad"]["correction"] = {"phase": "integration"}
+    report["assignment"] = write_artifact(repo, "contrary-original-purpose", original)
+    ref.update(write_artifact(repo, "closeout-label-with-contrary-provenance", report))
+    moved_candidate(basis)
+    preserve_closeout_report(basis, ref)
+    with pytest.raises(BundleError):
+        composition(*basis)
+
+
+def ordinary_closeout_assignment(repo, assignment, report, form):
+    original = copy.deepcopy(assignment)
+    original["role"] = "evaluator"
+    original["work"]["display_role"] = "Epic Evaluator"
+    original["work"]["assignment_scope"] = "affected-epic"
+    original["target"]["squad"]["work_unit_kind"] = "epic-closeout"
+    if form == "text":
+        report["assignment"] = "Ordinary assignment delivered as supported text"
+    elif form == "inline":
+        report["assignment"] = original
+    elif form in {"no-bytes", "unavailable"}:
+        reference = write_artifact(repo, "ordinary-final-assignment", original)
+        if form == "no-bytes":
+            reference.pop("bytes")
+        else:
+            Path(reference["path"]).unlink()
+        report["assignment"] = reference
+
+
+@pytest.mark.parametrize(
+    "form", ["absent", "text", "inline", "no-bytes", "unavailable"]
+)
+@pytest.mark.parametrize("negative", [False, True])
+def test_ordinary_exact_closeout_forms_preserve_actual_result(basis, form, negative):
+    repo, assignment, current = basis
+    ref = closeout_case(basis)
+    assert composition(*basis)["status"] == "ready"
+    report = json.loads(Path(ref["path"]).read_bytes())
+    ordinary_closeout_assignment(repo, assignment, report, form)
+    if negative:
+        report.update(verdict="rework", criteria=report_rows("unmet"))
+        current["criteria"] = report_rows("unmet")
+    ref.update(write_artifact(repo, "ordinary-final-report", report))
+    result = composition(*basis)
+    assert result["status"] == ("unresolved" if negative else "ready")
+    assert result["native_values"]["composition-unmet"] == int(negative)
+
+
+@pytest.mark.parametrize("inline", [False, True])
+@pytest.mark.parametrize("moved", [False, True])
+def test_dispatch_scope_discriminates_first_closeout_from_integration(
+    basis, inline, moved
+):
+    repo, _assignment, _current = basis
+    ref = closeout_case(basis, form="assignment")
+    assert composition(*basis)["status"] == "ready"
+    report = json.loads(Path(ref["path"]).read_bytes())
+    original = json.loads(Path(report["assignment"]["path"]).read_bytes())
+    # Actual dispatch retains coarse work-unit kind, but supplies semantic scope.
+    assert original["target"]["squad"]["work_unit_kind"] == "epic-closeout"
+    original["work"]["assignment_scope"] = "integration"
+    original["checkpoint"] = "arbitrary-supported-placement"
+    report["assignment"] = (
+        original
+        if inline
+        else write_artifact(repo, "dispatched-integration-assignment", original)
+    )
+    ref.update(write_artifact(repo, "original-integration-assessment", report))
+    assert composition(*basis)["status"] == "ready"
+    if moved:
+        moved_candidate(basis)
+        preserve_closeout_report(basis, ref)
+        with pytest.raises(BundleError):
+            composition(*basis)
+
+
+@pytest.mark.parametrize("stage", ["correction-group", "integration", "epic-closeout"])
+@pytest.mark.parametrize(
+    "fault",
+    [
+        None,
+        "inputs",
+        "coverage",
+        "dependencies",
+        "environment",
+        "judgment",
+        "unknown",
+        "checks",
+        "missing-context",
+        "empty-context",
+        "contrary-record",
+        "failed-current-check",
+    ],
+)
+def test_settled_obligation_survives_known_independent_behavioral_delta(
+    basis, stage, fault
+):
+    original_proof, first = carried_group_case(basis)
+    assert composition(*basis)["status"] == "ready"
+    current = basis[2]
+    current["phase"] = stage
+    if stage == "epic-closeout":
+        report = json.loads(Path(first["path"]).read_bytes())
+        report["target"]["candidate"] = current["target"]
+        report["target"]["squad"]["candidate"] = current["target"]
+        first.update(
+            write_artifact(basis[0], "current-behavioral-first-closeout", report),
+            target=current["target"],
+            applicability="current",
+            basis="Actual first closeout judgment after the behavioral change",
+        )
+        first.pop("applicability_evidence")
+        assert first["target"] == report["target"]["candidate"] == "candidate3"
+        assert first["applicability"] == "current"
+        assert "applicability_evidence" not in first
+    else:
+        current["assessments"].remove(first)
+    assert current["closures"][0]["after"] == "candidate2"
+    assert current["closures"][0]["owner"] == "Epic Evaluator"
+    assert original_proof["correction"]["phase"] == "correction-group"
+    for identifier in original_proof["assessments"]:
+        confirmation = next(r for r in current["assessments"] if r["id"] == identifier)
+        actual = json.loads(Path(confirmation["path"]).read_bytes())
+        assert confirmation["target"] == actual["target"]["candidate"] == "candidate2"
+    closure = current["closures"][0]
+    carry = json.loads(Path(closure["applicability_evidence"]["path"]).read_bytes())
+    carry.update(
+        current_scope=stage,
+        record_only=False,
+        local_eligible=False,
+        delta="Independent behavioral correction after the settled repair",
+        checks=[current["checks"][0]["id"]],
+    )
+    context = {
+        "inputs": ["settled repair input digest"],
+        "coverage": ["original C1/whole"],
+        "dependencies": ["unchanged repair dependencies"],
+        "environment": "same supported runtime",
+        "judgment": "Original owners' confirmed repair meaning",
+    }
+    carry["before_context"] = copy.deepcopy(context)
+    carry["after_context"] = copy.deepcopy(context)
+    closure["applicability_evidence"] = write_artifact(
+        basis[0], "behavioral-closure-carry", carry
+    )
+    assert composition(*basis)["status"] == "ready"
+    if fault is None:
+        return
+    if fault in {"inputs", "coverage", "dependencies", "environment", "judgment"}:
+        carry["after_context"][fault] = "Changed settled obligation"
+    elif fault == "unknown":
+        carry["unknown_impact"] = True
+    elif fault == "checks":
+        carry["checks"] = ["not-a-current-passed-check"]
+    elif fault == "empty-context":
+        carry["before_context"]["judgment"] = carry["after_context"]["judgment"] = " "
+    elif fault == "contrary-record":
+        carry.update(record_only=True, local_eligible=True)
+        carry["after_context"]["judgment"] = "Contrary known judgment"
+    elif fault == "failed-current-check":
+        reference = current["checks"][0]
+        check = json.loads(Path(reference["path"]).read_bytes())
+        check["outcome"] = "fail"
+        reference.update(
+            write_artifact(basis[0], "failed-current-closure-check", check)
+        )
+    else:
+        carry.pop("before_context")
+    closure["applicability_evidence"] = write_artifact(
+        basis[0], "invalid-behavioral-carry", carry
+    )
+    with pytest.raises(BundleError):
+        composition(*basis)
+
+
+@pytest.mark.parametrize("form", ["text", "inline", "no-bytes", "unavailable"])
+def test_moved_closeout_ordinary_forms_still_need_substantive_purpose(basis, form):
+    repo, assignment, _current = basis
+    ref = closeout_case(basis)
+    report = json.loads(Path(ref["path"]).read_bytes())
+    ordinary_closeout_assignment(repo, assignment, report, form)
+    ref.update(write_artifact(repo, "ordinary-preserved-first-closeout", report))
+    moved_candidate(basis)
+    proof = preserve_closeout_report(basis, ref)
+    assert composition(*basis)["status"] == "ready"
+    report["target"].pop("squad")
+    ref.update(write_artifact(repo, "ordinary-without-report-purpose", report))
+    proof["source_assessment"] = {
+        k: v
+        for k, v in ref.items()
+        if k not in {"applicability", "applicability_evidence"}
+    }
+    ref["applicability_evidence"] = write_artifact(
+        repo, "ordinary-purpose-proof", proof
+    )
+    if form in {"inline", "no-bytes"}:
+        assert composition(*basis)["status"] == "ready"
+    else:
+        with pytest.raises(BundleError):
+            composition(*basis)
+
+
+def test_optional_assignment_file_does_not_ignore_available_identity_drift(basis):
+    repo, assignment, _current = basis
+    ref = closeout_case(basis)
+    report = json.loads(Path(ref["path"]).read_bytes())
+    ordinary_closeout_assignment(repo, assignment, report, "no-bytes")
+    ref.update(write_artifact(repo, "optional-assignment-identity-control", report))
+    assert composition(*basis)["status"] == "ready"
+    Path(report["assignment"]["path"]).write_text("{}")
+    with pytest.raises(BundleError) as error:
+        composition(*basis)
+    assert error.value.code == "source-drift"
+
+
+@pytest.mark.parametrize(
+    "transition", ["later-group", "hook-rewrite", "restored-integration"]
+)
+def test_behavioral_carry_preserves_settled_originals_across_recovery(
+    basis, transition
+):
+    repo, assignment, current = basis
+    proof, first = carried_group_case(basis)
+    original_closure = copy.deepcopy(current["closures"][0])
+    old_refs = {r["id"]: copy.deepcopy(r) for r in current["assessments"]}
+    current["phase"] = (
+        "correction-group" if transition == "later-group" else "integration"
+    )
+    current["assessments"].remove(first)
+    closure = current["closures"][0]
+    carry = json.loads(Path(closure["applicability_evidence"]["path"]).read_bytes())
+    context = {
+        "inputs": ["original settled repair"],
+        "coverage": ["original:behavior/success"],
+        "dependencies": ["unchanged original dependencies"],
+        "environment": "same fixture runtime",
+        "judgment": "Original independent EE/TO confirmations",
+    }
+    carry.update(
+        current_scope=current["phase"],
+        record_only=False,
+        local_eligible=False,
+        before_context=context,
+        after_context=copy.deepcopy(context),
+        checks=["behavior"],
+        delta=transition,
+    )
+    closure["applicability_evidence"] = write_artifact(repo, "recovery-carry", carry)
+    if transition == "later-group":
+        report = {
+            "schema": "aquarium.evaluator-assessment/v3",
+            "work": {"display_role": "Epic Evaluator"},
+            "native": {"public_handle": "second-group-ee"},
+            "target": {"candidate": "candidate2"},
+            "verdict": "rework",
+            "criteria": report_rows(),
+            "findings": [
+                {
+                    "id": "new-independent-obligation",
+                    "state": "unmet",
+                    "basis": "Separate second behavioral group",
+                }
+            ],
+        }
+        source = {
+            **write_artifact(repo, "second-group-source", report),
+            "id": "second-group-source",
+            "role": "Epic Evaluator",
+            "producer": "second-group-ee",
+            "scope": "integration",
+            "target": "candidate2",
+            "applicability": "preserved",
+            "basis": "Original second-group audit",
+        }
+        source["applicability_evidence"] = write_artifact(
+            repo,
+            "second-group-source-applicability",
+            {
+                "before": "candidate2",
+                "after": "candidate3",
+                "outcome": "pass",
+                "preserved_scope": "integration",
+                "checks": ["behavior"],
+                "unknown_impact": False,
+            },
+        )
+        current["assessments"].append(source)
+        classification = {
+            "id": "second-group",
+            "phase": "correction-group",
+            "depth": "bounded",
+            "epic_scope_changed": False,
+            "basis": "Independent second behavioral correction",
+            "original_assessments": [copy.deepcopy(source)],
+        }
+        assignment["target"]["squad"]["correction"] = classification
+        confirmations = []
+        for role, producer, scope in [
+            ("Epic Evaluator", "second-group-ee", "affected-epic"),
+            ("Task Operator", "second-group-to", "affected-result"),
+        ]:
+            ref = delta_report(
+                repo,
+                role,
+                producer,
+                scope,
+                findings=[
+                    {
+                        "id": "new-independent-obligation",
+                        "state": "met",
+                        "basis": "Actual second-group repair confirmation",
+                    }
+                ],
+            )
+            report = json.loads(Path(ref["path"]).read_bytes())
+            report["target"]["candidate"] = "candidate3"
+            ref.update(
+                write_artifact(repo, "second-group-" + producer, report),
+                id="second-group-" + producer,
+                target="candidate3",
+            )
+            current["assessments"].append(ref)
+            confirmations.append(ref["id"])
+        verification = write_artifact(
+            repo,
+            "second-group-repair",
+            {
+                "before": "candidate2",
+                "after": "candidate3",
+                "outcome": "pass",
+                "unresolved_judgment": False,
+                "delta": "Independent behavior repaired",
+                "checks": ["behavior"],
+                "correction": classification,
+                "assessments": confirmations,
+            },
+        )
+        current["closures"].append(
+            {
+                "assessment": source["id"],
+                "finding": "new-independent-obligation",
+                "before": "candidate2",
+                "after": "candidate3",
+                "owner": "Epic Evaluator",
+                "disposition": "affected-assessment",
+                "basis": "Independent second group",
+                "verification": verification,
+            }
+        )
+    elif transition == "hook-rewrite":
+        output = repo / "hook-produced-record.txt"
+        output.write_text("same settled meaning\n")
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from pathlib import Path; p=Path('hook-produced-record.txt'); p.write_text(p.read_text().rstrip()+'\\n\\n')",
+            ],
+            cwd=repo,
+            check=False,
+        )
+        assert result.returncode == 0
+        assert output.read_text() == "same settled meaning\n\n"
+    else:
+        # A new consumer restores original integration inputs from disk; no native
+        # successor session or installed behavior is claimed by this pure control.
+        recovered = write_artifact(repo, "restored-integration-basis", current)
+        current = json.loads(Path(recovered["path"]).read_bytes())
+        assignment = copy.deepcopy(assignment)
+    result = composition(repo, assignment, current)
+    assert result["status"] == "ready"
+    assert proof["correction"]["phase"] == "correction-group"
+    for key, value in original_closure.items():
+        if key not in {"applicability", "applicability_evidence"}:
+            assert current["closures"][0][key] == value
+    assert all(
+        next(r for r in current["assessments"] if r["id"] == identifier) == reference
+        for identifier, reference in old_refs.items()
+        if identifier != first["id"]
+    )
+    if transition == "later-group":
+        assert result["whole_epic_confirmation"] == "pending"
+
+
+@pytest.mark.parametrize(
+    "form", ["text", "path-only", "missing", "unreadable", "absent"]
+)
+def test_moved_coarse_closeout_kind_needs_actual_original_scope(
+    basis, monkeypatch, form
+):
+    repo, assignment, current = basis
+    ref = closeout_case(basis)
+    report = json.loads(Path(ref["path"]).read_bytes())
+    if form == "text":
+        ordinary_closeout_assignment(repo, assignment, report, "text")
+    elif form == "path-only":
+        ordinary_closeout_assignment(repo, assignment, report, "no-bytes")
+        report["assignment"] = {"path": report["assignment"]["path"]}
+    elif form == "missing":
+        ordinary_closeout_assignment(repo, assignment, report, "unavailable")
+    elif form == "unreadable":
+        ordinary_closeout_assignment(repo, assignment, report, "no-bytes")
+        optional_path = Path(report["assignment"]["path"])
+        read_bytes = Path.read_bytes
+
+        def read_optional(path):
+            if path == optional_path:
+                raise OSError("optional original assignment is unreadable")
+            return read_bytes(path)
+
+        monkeypatch.setattr(Path, "read_bytes", read_optional)
+    actual_scope = report["work"].pop("assignment_scope")
+    ref.update(write_artifact(repo, "coarse-purpose-exact", report))
+    assert composition(*basis)["status"] == "ready"
+    report.update(verdict="rework", criteria=report_rows("unmet"))
+    current["criteria"] = report_rows("unmet")
+    ref.update(write_artifact(repo, "coarse-purpose-exact-negative", report))
+    negative = composition(*basis)
+    assert negative["status"] == "unresolved"
+    assert negative["native_values"]["composition-unmet"] == 1
+    report.update(verdict="pass", criteria=report_rows())
+    current["criteria"] = report_rows()
+    report["work"]["assignment_scope"] = actual_scope
+    ref.update(write_artifact(repo, "coarse-purpose-original", report))
+    assert composition(*basis)["status"] == "ready"
+    moved_candidate(basis)
+    proof = preserve_closeout_report(basis, ref)
+    assert composition(*basis)["status"] == "ready"
+    report["work"].pop("assignment_scope")
+    assert report["target"]["squad"] == {
+        "work_unit_kind": "epic-closeout",
+        "candidate": ref["target"],
+    }
+    ref.update(write_artifact(repo, "coarse-purpose-without-actual-scope", report))
+    proof["source_assessment"] = {
+        k: v
+        for k, v in ref.items()
+        if k not in {"applicability", "applicability_evidence"}
+    }
+    ref["applicability_evidence"] = write_artifact(
+        repo, "coarse-purpose-local-proof", proof
+    )
+    result = composition_record(*basis)
+    assert "composition" not in result
+    error = result["composition_error"]
+    assert error["phase"] == "epic-closeout"
+    assert error["target"] == current["target"]
+    assert error["criterion_counts"] is None
+    assert error["native_values"]["composition-evidence"] == "unavailable"
+    assert error["native_values"]["composition-goal-outcome"] == "not-achieved"
+    with pytest.raises(BundleError):
+        composition(*basis)

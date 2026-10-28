@@ -82,8 +82,8 @@ commits. Optional Support Operators supply facts and assigned execution only.
 
 Squad's [execution and current-composition contract](../../plugins/aquarium/references/epic-squad-execution.md)
 connects qualified source preparation, both plan gates, negative-result routing,
-verified closures and exact commit/design handoffs. Delivery remains blocked
-pending integration/recovery in TASK-150. Explicit
+verified closures, scoped integration correction commits and exact recovery.
+Explicit
 CLI/model roles remain unavailable until EPIC-028; omission selects native
 configuration without a Herdr prerequisite. Source instructions establish no
 installed observation, and existing Handler/Validator behavior remains intact.

@@ -99,12 +99,7 @@ def guarantee_minima(signature):
             "current-blockers",
             "pending-judgment",
         ]
-        fields.update(
-            {
-                name: {"type": "integer", "required": True, "minimum": 0}
-                for name in counts
-            }
-        )
+        fields.update({name: {"type": "integer", "minimum": 0} for name in counts})
     elif kind == "approval":
         return [{"kind": "decision", "options": ["approved", "changes-requested"]}]
     elif kind == "review-control":

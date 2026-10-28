@@ -632,12 +632,13 @@ def build_bundle(
     )
     if not names:
         raise BundleError("select a consumer-declared suite or all")
-    if podway_release is not None and "podway-upgrade" not in names:
+    dependency_suites = {"podway-upgrade", "epic-squad"}
+    if podway_release is not None and not dependency_suites.intersection(names):
         raise BundleError(
-            "Podway release inputs require the explicit manual podway-upgrade suite"
+            "Podway release inputs require an explicit manual dependency suite"
         )
-    if "podway-upgrade" in names and podway_release is None:
-        raise BundleError("podway-upgrade requires the verified Podway release input")
+    if dependency_suites.intersection(names) and podway_release is None:
+        raise BundleError("selected suite requires the verified Podway release input")
     suite_modes: dict[str, str] = {}
     for name in names:
         declared = suite_map[name]["modes"]

@@ -1058,8 +1058,8 @@ EVIDENCE_CASES = (
     "epic-startup",
     "stale-skill",
 )
-ARCHIVE_BYTES_BOUND = 32 * 1024 * 1024
-ARCHIVE_TOTAL_BYTES_BOUND = 256 * 1024 * 1024
+ARCHIVE_BYTES_BOUND = lib.EVIDENCE_ARCHIVE_BYTES_BOUND
+ARCHIVE_TOTAL_BYTES_BOUND = lib.EVIDENCE_TOTAL_BYTES_BOUND
 
 
 def baseline_combination_from_profile(stable: dict[str, Any]) -> dict[str, str]:
@@ -3203,10 +3203,15 @@ def main() -> int:
             )
         )
         return 2
+    finish_options = (
+        {"preserve_invalid_inventory": True}
+        if arguments.suite == "epic-squad" and arguments.phase == "stage-evidence"
+        else {}
+    )
     try:
         if arguments.suite == "manual-hold":
             return run_manual_hold(context, arguments.phase)
-        if arguments.suite == "podway-upgrade":
+        if arguments.suite in {"podway-upgrade", "epic-squad"}:
             import podway_upgrade
 
             return podway_upgrade.run(
@@ -3215,6 +3220,7 @@ def main() -> int:
                 lambda stage: skill_identity_document(
                     context, stage, candidate_profile="podway-candidate"
                 ),
+                suite=arguments.suite,
             )
         if arguments.suite == "release-acceptance":
             return run_release_acceptance(
@@ -3230,6 +3236,7 @@ def main() -> int:
             error.outcome,
             {"problem": str(error)},
             consumer_cleanup="unverified",
+            **finish_options,
         )
     except RuntimeError as error:
         # Safety net for driver GateError and similar runtime errors raised
@@ -3240,6 +3247,7 @@ def main() -> int:
             "incomplete",
             {"problem": f"{type(error).__name__}: {error}"},
             consumer_cleanup="unverified",
+            **finish_options,
         )
     except lib.TreeDigestError as error:
         # Safety net: an unconverted strict-validation error still produces
@@ -3249,6 +3257,7 @@ def main() -> int:
             "incomplete",
             {"problem": f"TreeDigestError: {error}"},
             consumer_cleanup="unverified",
+            **finish_options,
         )
     except OSError as error:
         return lib.finish(
@@ -3256,6 +3265,7 @@ def main() -> int:
             "incomplete",
             {"problem": f"OSError: {error}"},
             consumer_cleanup="unverified",
+            **finish_options,
         )
     except ValueError as error:
         # Defense in depth for decoding paths outside the structured
@@ -3265,6 +3275,7 @@ def main() -> int:
             "incomplete",
             {"problem": f"ValueError: {error}"},
             consumer_cleanup="unverified",
+            **finish_options,
         )
 
 

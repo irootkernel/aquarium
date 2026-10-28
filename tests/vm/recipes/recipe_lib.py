@@ -38,6 +38,8 @@ RUNTIME_ERROR_SCHEMA = "aquarium-status-runtime-error/v1"
 OWNERSHIP_MARKER = "AQUARIUM-VM-OWNED"
 OUTCOME_EXITS = {"pass": 0, "fail": 1, "incomplete": 2}
 EVIDENCE_ARCHIVE_SCHEMA = "aquarium.vm-evidence-archive/v1"
+EVIDENCE_ARCHIVE_BYTES_BOUND = 32 * 1024 * 1024
+EVIDENCE_TOTAL_BYTES_BOUND = 256 * 1024 * 1024
 SKILL_TREE_DIGEST_ALGORITHM = "aquarium-skill-tree-sha256/v1"
 
 
@@ -1123,6 +1125,7 @@ def finish(
     *,
     consumer_cleanup: str,
     inputs: dict[str, Any] | None = None,
+    preserve_invalid_inventory: bool = False,
 ) -> int:
     result = {
         "schema": RESULT_SCHEMA,
@@ -1134,6 +1137,23 @@ def finish(
     }
     aggregate_path = results_directory(suite) / "inventories.json"
     aggregate = read_json_safe(aggregate_path)
+    if (
+        preserve_invalid_inventory
+        and aggregate_path.exists()
+        and (
+            not isinstance(aggregate, dict)
+            or aggregate.get("schema") != "aquarium.vm-suite-inventories/v1"
+            or not isinstance(aggregate.get("inventories"), dict)
+            or not isinstance(aggregate.get("failed_cleanup_observations", []), list)
+        )
+    ):
+        # Staging errors must retain the original cleanup bytes for collection.
+        result.update(
+            outcome="incomplete", consumer_cleanup="unverified", evidence_staging=False
+        )
+        write_document(results_directory(suite) / "result.json", result)
+        print(json.dumps(result, ensure_ascii=False))
+        return OUTCOME_EXITS["incomplete"]
     if not isinstance(aggregate, dict) or not isinstance(
         aggregate.get("inventories"), dict
     ):

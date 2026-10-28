@@ -5,9 +5,8 @@
 The [epic-squad entrypoint](../skills/epic-squad/SKILL.md) and
 [native coordination instructions](epic-squad-native.md) define the native
 collaboration assignments. The [execution contract](epic-squad-execution.md) connects qualified definitions,
-admission, current evidence and commit/design consumers. Delivery activation
-remains blocked until TASK-150 completes integration and recovery. TASK-151 verifies installed native
-delivery. Entrypoint discovery or agent launch alone does not enable delivery.
+admission, current evidence, integration and recovery through commit/design
+consumers. TASK-151 verifies installed native delivery. Entrypoint discovery or agent launch alone does not enable delivery.
 Herdr and mixed role execution remain unavailable until their execution, commit
 and recovery integration under EPIC-028 is complete.
 
@@ -339,9 +338,14 @@ Use current released Procedure capabilities without a Podway engine/CLI/API
 extension or another registry, scheduler, mailbox or policy runtime.
 
 Podway is default with existing explicit pre-session opt-out and in-progress
-stop/recovery rules. Use one selected Goal-family session per member, correction
-or closeout work unit and one Validation-family session for final integration;
-never nest Task sessions under an active parent in one worktree. Reuse adequate
+stop/recovery rules. Use one selected Goal-family session per member or
+pre-validation correction and one Validation-family session for assembled
+integration. Its audit-scoped correction groups and intermediate commits remain
+inside that same Validation cursor, with whole-Epic confirmation pending. Final
+record-only closeout uses the retained or restored Validation basis, with actual
+exact-candidate EE and Coordinator assessment before user acceptance. Select an
+adequate Goal closeout instead when its fit requires it, after settling Validation. Never nest a Goal/Task session under an active parent in one
+worktree. Reuse adequate
 Squad definitions, adapt only for a missing boundary, qualify exact source and
 binding, and retain the self-contained bundle before start. Task identity,
 criteria and role configuration are assignment data unless the definition changes.

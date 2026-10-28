@@ -463,11 +463,51 @@ def execution_context(
         phase_skills=phase_skills(document, binding, assignment, node),
     )
     if entrypoint == "epic-squad":
-        from adaptive_squad import composition
+        from adaptive_squad import composition_record
 
         values = assignment["target"].get("squad", {}).get("compositions", {})
         if node in values:
-            result["composition"] = composition(repository, assignment, values[node])
+            result.update(
+                composition_record(
+                    repository,
+                    assignment,
+                    values[node],
+                    availability=any(
+                        capability["fields"].get(
+                            "composition-evidence", "composition-evidence"
+                        )
+                        in {
+                            item["id"]
+                            for item in document["node_definitions"][
+                                placement["use"]
+                            ].get("items", [])
+                        }
+                        and "composition-evidence"
+                        in binding.get("capability_definitions", {})
+                        .get(capability["signature"], {})
+                        .get("fields", {})
+                        for capability in declaration["capabilities"]
+                    ),
+                )
+            )
+            record = result.get("composition", result.get("composition_error"))
+            if record is not None:
+                fields = next(
+                    (
+                        capability["fields"]
+                        for capability in declaration["capabilities"]
+                        if capability["signature"]
+                        in {
+                            "aquarium.squad.current-composition/v2",
+                            "aquarium.squad.plan-composition/v2",
+                        }
+                    ),
+                    {},
+                )
+                record["native_values"] = {
+                    fields.get(name, name): value
+                    for name, value in record["native_values"].items()
+                }
         elif any(
             capability["signature"]
             in {
