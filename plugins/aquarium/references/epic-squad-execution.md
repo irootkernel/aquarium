@@ -156,6 +156,49 @@ globally met for a plan to pass.
 Task-result and integration negatives still require their exact eligible closure
 or affected assessment; a met checkpoint row cannot replace that router.
 
+A source-bound `procedure_plan.member_scope` may distinguish current member
+readiness from unverified whole-Epic source states. The map retains every
+original criterion/part, source path and pin, with readable current, later and
+separately gated duties under the adaptive preparation contract. Both independent
+Task-plan and Epic-plan bases must cover this exact map and current plan.
+Native callers retain those bases in `target.squad.compositions`; the pure
+commit caller supplies its existing `plan_compositions`. Ordinary opt-out needs
+the same plan judgments, without a native or prepared-definition prerequisite.
+
+For this matching `member-task` only, each plan/result report's ordinary target
+and each composition carry the same `member_scope`. Actual newly reconciled
+TE/TO Task-result and EE contribution checkpoints retain the original canonical
+criterion/part pairs. They assess all duties due for this member while the
+reports retain their original global criteria and verdicts. An original
+`unverified` part may be met for the current member only when its original
+assessment explains the future applicability and the map includes matching
+later or gated duties. An original unmet obligation still follows its exact
+closure/affected-assessment route. Current due unknowns, failed checks, required
+findings and unidentified negative verdicts remain blocking. A core-only milestone or an unchanged
+inconclusive conservative projection cannot become member completion.
+
+The returned member basis identifies the scope of current counts and member Goal
+achievement; `original_criteria` and `original_verdicts` preserve global states.
+Integration, correction-group and closeout continue to consume whole original
+obligations. Member readiness does not establish final Epic completion, actual
+acceptance, a commit grant or native finalization. Absent-scope callers retain
+their existing consumption rules.
+
+When an original Markdown source becomes an approved lifecycle deliverable,
+retain its pin and use the existing approved-original-source recovery path.
+Native continuation threads its validated reader into composition and both plan
+bases, preserving checkpoint/session/attempt/goal/trace and definition fences.
+Pure commit may carry the existing `target.applied_source_context`: readable
+original capture/Git references, exact proposal/approval or continuous change
+history, approved applied images and ordinary work provenance. This pure
+consumer requires no native observation or checkpoint; the native wrapper and
+Coordinator retain their actual continuity checks independently. Before and after
+consumption, revalidate the emitted context against the original bytes, actual
+approval, full affected-source chain and current postimages. Strict pre-start
+source checks remain. Lifecycle changes still require proof that assessments
+apply to the current candidate, plus product review, acceptance and the matching
+unconsumed grant. Original-source recovery waives none of these requirements.
+
 Criterion parts retain all four ordinary states, including `not-applicable`.
 Each such part needs its readable applicability `basis` or `reason`, in the
 original assessment of that part and in the current composition. The canonical

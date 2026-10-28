@@ -92,6 +92,29 @@ changes still require their affected checks; see
   source whose positive decimal revision will be advanced. Composition supplies
   explicit exact imports and typed ports under the contract below.
 
+For a Squad member whose original sources also cover later Tasks, optional
+`target.procedure_plan.member_scope` records the actual `task` and a `criteria`
+list containing every original `criterion`/`part` pair exactly once. Each row
+retains `source` and `source_sha256`, plus `due`, `later` and `gates` lists. Each
+list entry contains literal original `clause` text and a readable applicability
+`basis`. `due` covers the complete current Task and currently due parent duties;
+`later` preserves downstream obligations; `gates` preserves acceptance, commit
+and finalization duties for their actual boundaries. A shared clause may occur
+both now and later. This map does not split or replace original criterion IDs,
+parts, full text or pins.
+
+Preparation checks pair coverage, source identity and readable clause references,
+and retains the map in the existing coverage plan and exact suitability target.
+Those structural checks do not establish semantic completeness. Independent
+assessment must compare the map with the full plan and original sources,
+including all current member and due parent obligations. Reject a fit that
+assumes current-member passage without a representation the result consumer
+can use. Omitting a current CLI, documentation or verification duty cannot be
+justified by calling it future work.
+Reassess affected obligations when the scope changes. A qualification label
+does not supply assessment evidence. Ordinary opt-out uses the same Task/Epic
+plan basis without native receipts or a prepared definition.
+
 Discovery compares package defaults and sources in approved locations. An
 adequate unchanged known source is preferred; byte-identical aliases and other
 optional files need no separate disposition after adequate reuse is selected.

@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from adaptive_bundles import BundleError, sha256
-from adaptive_preparation import requirements
+from adaptive_preparation import member_scope, requirements
 
 ASSESSMENT_PHASES = {
     "assess-task-plan": "task-plan",
@@ -340,12 +340,17 @@ def criterion_rows(rows):
     return result
 
 
-def assessment_rows(report, scope, expected):
+def assessment_rows(report, scope, expected, *, member=None):
     """Retain global states while consuming an actual scoped per-part judgment."""
     original = criterion_rows(report.get("criteria"))
     rows = {key: state for key, state in original.items() if key in expected}
     checkpoint = report.get("checkpoint_assessment")
     if checkpoint is None:
+        if member is not None:
+            raise BundleError(
+                "not-established",
+                "Member assessment needs its actual current checkpoint",
+            )
         return original, rows
     checkpoint = object_value(checkpoint, "Original scoped checkpoint assessment")
     if (
@@ -375,7 +380,9 @@ def assessment_rows(report, scope, expected):
         raise BundleError(
             "not-established", "Scoped assessment omits original due criterion parts"
         )
-    if scope in {"task-result", "integration"}:
+    if scope in {"task-result", "integration"} or (
+        member is not None and scope == "epic-contribution"
+    ):
         counts = {
             "due_unmet": sum(state == "unmet" for state in checkpoint_rows.values()),
             "due_unverified": sum(
@@ -409,6 +416,32 @@ def assessment_rows(report, scope, expected):
                 "not-established",
                 "Checkpoint gaps are contradictory or absent from original obligations",
             )
+        if member is None or scope == "integration":
+            return original, rows
+        applicable = {
+            (row["criterion"], row["part"]): bool(row["later"] or row["gates"])
+            for row in member["criteria"]
+        }
+        reasons = {
+            (row["id"], part["id"]): part.get("applicability") or part.get("reason")
+            for row in report["criteria"]
+            for part in row.get("parts") or [{**row, "id": "whole"}]
+        }
+        for key, status in rows.items():
+            if status == "unverified" and checkpoint_rows[key] in {
+                "met",
+                "not-applicable",
+            }:
+                if (
+                    not applicable[key]
+                    or not isinstance(reasons.get(key), str)
+                    or not reasons[key].strip()
+                ):
+                    raise BundleError(
+                        "not-established",
+                        "Member passage lacks original future applicability",
+                    )
+                rows[key] = checkpoint_rows[key]
         return original, rows
     rows = checkpoint_rows
     applicability = {
@@ -554,7 +587,9 @@ def original_reference(reference):
     }
 
 
-def composition(repository, assignment, value):
+def composition(
+    repository, assignment, value, *, plan_compositions=None, source_reader=None
+):
     """Verify a current basis; never turn a source rework verdict into a new pass."""
     value = object_value(value, "Squad composition")
     if assignment["target"]["procedure_plan"][
@@ -595,11 +630,60 @@ def composition(repository, assignment, value):
         .get("coverage_plan", {})
         .get("criteria")
     )
-    original = requirements(repository, assignment, verify_sources=prepared is None)
+    original = requirements(
+        repository,
+        assignment,
+        verify_sources=prepared is None and source_reader is None,
+        source_reader=source_reader,
+    )
     if prepared is not None and original != prepared:
         raise BundleError(
             "source-drift", "Original requirement meaning changed after qualification"
         )
+    scoped = member_scope(assignment, original)
+    if prepared is not None and (
+        assignment["target"]["prepared_definition"]["coverage_plan"].get("member_scope")
+        != scoped
+    ):
+        raise BundleError(
+            "source-drift", "Assessed member scope changed after preparation"
+        )
+    member = (
+        scoped
+        if squad.get("work_unit_kind") == "member-task"
+        and assignment["target"]["procedure_plan"]["family"] == "goal"
+        and phase in {"task-plan", "epic-plan", "task-result"}
+        else None
+    )
+    if member is not None:
+        if value.get("member_scope") != member:
+            raise BundleError(
+                "not-established", "Composition lacks its actual member basis"
+            )
+        if phase == "task-result":
+            plans = (
+                plan_compositions
+                if plan_compositions is not None
+                else squad.get("compositions", {})
+            )
+            plans = object_value(plans, "Actual independent member plan bases")
+            for due in ("task-plan", "epic-plan"):
+                matches = [
+                    row
+                    for row in plans.values()
+                    if isinstance(row, dict) and row.get("phase") == due
+                ]
+                if (
+                    len(matches) != 1
+                    or composition(
+                        repository, assignment, matches[0], source_reader=source_reader
+                    )["status"]
+                    != "ready"
+                ):
+                    raise BundleError(
+                        "not-established",
+                        "Both actual independent member plans must be ready",
+                    )
     expected = {
         (key, part["id"]) for key, row in original.items() for part in row["parts"]
     }
@@ -690,7 +774,17 @@ def composition(repository, assignment, value):
             raise BundleError(
                 "not-established", "Original assessment verdict is unavailable"
             )
-        all_rows, rows = assessment_rows(report, scope, expected)
+        if (
+            member is not None
+            and object_value(report.get("target"), "Assessment target").get(
+                "member_scope"
+            )
+            != member
+        ):
+            raise BundleError(
+                "source-drift", "Assessment does not cover the current member basis"
+            )
+        all_rows, rows = assessment_rows(report, scope, expected, member=member)
         future_rows = ref.get("future_criteria", [])
         if not isinstance(future_rows, list) or any(
             not isinstance(identifier, str) for identifier in future_rows
@@ -721,7 +815,15 @@ def composition(repository, assignment, value):
             verdict != "pass"
             and not negative
             and not due_findings
-            and not (scoped_future and report.get("checkpoint_result") == "pass")
+            and not (
+                scoped_future
+                and report.get("checkpoint_result") == "pass"
+                and (
+                    member is None
+                    or verdict != "rework"
+                    or "future" in findings.values()
+                )
+            )
         ):
             gaps.append(
                 {"assessment": identity, "reason": "unresolved-negative-verdict"}
@@ -1205,6 +1307,7 @@ def composition(repository, assignment, value):
         "status": "ready" if ready else "unresolved",
         "phase": phase,
         "target": target,
+        **({"member_scope": copy.deepcopy(member)} if member is not None else {}),
         "original_verdicts": {
             key: source["verdict"] for key, source in sources.items()
         },
@@ -1241,10 +1344,14 @@ def composition(repository, assignment, value):
     }
 
 
-def composition_record(repository, assignment, value, *, availability=True):
+def composition_record(
+    repository, assignment, value, *, availability=True, source_reader=None
+):
     """Expose failed consumption for native recording without inventing counts."""
     try:
-        current = composition(repository, assignment, value)
+        current = composition(
+            repository, assignment, value, source_reader=source_reader
+        )
         if availability:
             current["native_values"]["composition-evidence"] = "established"
         return {"composition": current}
@@ -1344,7 +1451,24 @@ def commit_handoff(repository, value):
         raise BundleError(
             "incompatible", "Squad commit consumption requires its real owner"
         )
-    current = composition(repository, assignment, value.get("composition"))
+    recovery = assignment["target"].get("applied_source_context")
+    source_reader = None
+    if recovery is not None:
+        from adaptive_finalization import approved_original_sources
+
+        def recover():
+            return approved_original_sources(
+                Path(repository).resolve(), assignment, recovery
+            )
+
+        source_reader, source_context = recover()
+    current = composition(
+        repository,
+        assignment,
+        value.get("composition"),
+        plan_compositions=value.get("plan_compositions"),
+        source_reader=source_reader,
+    )
     if current["status"] != "ready" or current["phase"].endswith("plan"):
         raise BundleError(
             "not-established", "Exact current completion composition is not ready"
@@ -1396,7 +1520,9 @@ def commit_handoff(repository, value):
             value.get("plan_compositions"), "Current independent plan bases"
         )
         for scope in ("task-plan", "epic-plan"):
-            plan = composition(repository, assignment, plans.get(scope))
+            plan = composition(
+                repository, assignment, plans.get(scope), source_reader=source_reader
+            )
             if plan["phase"] != scope or plan["status"] != "ready":
                 raise BundleError(
                     "not-established",
@@ -1553,7 +1679,17 @@ def commit_handoff(repository, value):
                     "not-established",
                     "Technical settlement verification is stale, missing or negative",
                 )
+    if recovery is not None and recover()[1] != source_context:
+        raise BundleError(
+            "source-drift",
+            "Approved original source context changed during commit consumption",
+        )
     return {
+        **(
+            {"applied_source_context": copy.deepcopy(source_context)}
+            if recovery is not None
+            else {}
+        ),
         "workflow_owner": "aquarium:epic-squad",
         "work": copy.deepcopy(assignment["work"]),
         "accepted_target": current["target"],

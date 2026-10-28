@@ -388,10 +388,22 @@ def execution_context(
         ],
     }
 
+    def checked_basis(reader):
+        from adaptive_suitability import current_basis, reassessment_route
+
+        try:
+            current_basis(repository, assignment, in_session=True, source_reader=reader)
+        except BundleError as error:
+            if error.code == "reassessment-required":
+                raise BundleError(
+                    error.code, str(error), reassessment_route(document, binding)
+                ) from error
+            raise
+
     def checked(value):
         if continuation is not None:
             current = finalization_observation(client, observation)
-            _, current_sources = approved_sources(
+            current_reader, current_sources = approved_sources(
                 repository, assignment, continuation, current, continuation=True
             )
             if current_sources != source_context:
@@ -410,6 +422,7 @@ def execution_context(
                 raise BundleError(
                     "source-drift", "Admitted definition changed during continuation"
                 )
+            checked_basis(current_reader)
         return value
 
     if source_context is not None:
@@ -418,10 +431,11 @@ def execution_context(
         from adaptive_finalization import selected_assessment
 
         recovery_observation = finalization_observation(client, observation)
-        _, affected_assessment = finalization_sources(
+        current_reader, affected_assessment = finalization_sources(
             repository, assignment, recovery, recovery_observation
         )
         selected_assessment(binding, recovery, affected_assessment)
+        checked_basis(current_reader)
         result["status"] = "finalization-resolved"
         result["next_owner"] = "Coordinator finalization/disposition"
         result["limits"].append(
@@ -472,6 +486,7 @@ def execution_context(
                     repository,
                     assignment,
                     values[node],
+                    source_reader=source_reader,
                     availability=any(
                         capability["fields"].get(
                             "composition-evidence", "composition-evidence"
@@ -681,6 +696,12 @@ def execution_context(
                 else "executor"
             )
             scoped["work"].update(display_role=display_role, assignment_scope=scope)
+            member = assignment["target"]["procedure_plan"].get("member_scope")
+            if member is not None:
+                scoped["target"]["member_scope"] = copy.deepcopy(member)
+                scoped["instructions"] += (
+                    "\nReconcile the full original sources and exact member_scope with the actual plan. Preserve this member basis in the assessment target, all global future states and every current due negative. A core milestone is not member completion."
+                )
             scoped["authority"]["effects"] = (
                 []
                 if display_role != "Task Operator" or declaration["role"] == "evaluator"

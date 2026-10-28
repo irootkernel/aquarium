@@ -1907,3 +1907,129 @@ def test_consumed_fit_containers_fail_as_public_json_input_errors(repository, ca
     assert result.returncode == 2
     assert json.loads(result.stdout)["status"] == "invalid-input"
     assert result.stderr == ""
+
+
+def member_preparation(repository):
+    value = assignment(repository)
+    value["work"]["task"] = "TASK-001"
+    plan = value["target"]["procedure_plan"]
+    plan.update(
+        family="goal", entrypoint="epic-squad", review={"route": "not-required"}
+    )
+    value["authority"]["review"] = {"route": "not-required"}
+    criteria = prep.requirements(repository, value)
+    scope = {
+        "task": "TASK-001",
+        "criteria": [
+            {
+                "criterion": identifier,
+                "part": part["id"],
+                "source": row["source"],
+                "source_sha256": row["source_sha256"],
+                "due": [
+                    {
+                        "clause": part["text"],
+                        "basis": "Current Task obligation from full original sources",
+                    }
+                ],
+                "later": [
+                    {
+                        "clause": part["text"],
+                        "basis": "Shared duty also applies to the downstream Task",
+                    }
+                ],
+                "gates": [],
+            }
+            for identifier, row in criteria.items()
+            for part in row["parts"]
+        ],
+    }
+    plan["member_scope"] = scope
+    path = ROOT / "plugins/aquarium/assets/adaptive/reusable/squad-goal.yaml"
+    native = yaml.safe_load(path.read_bytes())
+    binding = json.loads(path.with_suffix(".binding.json").read_bytes())
+    coverage = [
+        {
+            "criterion": row["criterion"],
+            "part": row["part"],
+            "obligation": "deliver-work",
+            "reason": "Complete source retained; independent full plan/scope judgment remains due",
+        }
+        for row in scope["criteria"]
+    ]
+    return value, criteria, native, binding, coverage
+
+
+def test_member_fit_retains_full_inventory_and_shared_applicability(repository):
+    value, original, native, binding, coverage = member_preparation(repository)
+    current = prep.requirements(repository, value)
+    assert current == original
+    result = prep.fit(value, current, native, binding, coverage)
+    assert result["criteria"] == original
+    assert result["member_scope"] == value["target"]["procedure_plan"]["member_scope"]
+    assert (
+        result["semantic_completeness"]
+        == "requires-independent-original-source-assessment"
+    )
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "task",
+        "missing",
+        "duplicate",
+        "unknown",
+        "unreadable-clause",
+        "basis",
+        "null",
+        "foreign-owner",
+        "source-pin",
+    ],
+)
+def test_member_fit_refuses_untraceable_or_incomplete_scope(repository, fault):
+    value, _criteria, _native, _binding, _coverage = member_preparation(repository)
+    plan = value["target"]["procedure_plan"]
+    scope = plan["member_scope"]
+    if fault == "task":
+        scope["task"] = "TASK-002"
+    elif fault == "missing":
+        scope["criteria"].pop()
+    elif fault == "duplicate":
+        scope["criteria"].append(copy.deepcopy(scope["criteria"][0]))
+    elif fault == "unknown":
+        scope["criteria"][0]["part"] = "invented"
+    elif fault == "unreadable-clause":
+        scope["criteria"][0]["due"][0]["clause"] = "Not in the original source"
+    elif fault == "basis":
+        scope["criteria"][0]["later"][0]["basis"] = " "
+    elif fault == "null":
+        plan["member_scope"] = None
+    elif fault == "source-pin":
+        scope["criteria"][0]["source_sha256"] = "sha256:" + "0" * 64
+    else:
+        plan["entrypoint"] = "epic-handler"
+    with pytest.raises(bundles.BundleError):
+        prep.requirements(repository, value)
+
+
+def test_member_fit_is_in_existing_exact_independent_suitability_target(repository):
+    from adaptive_suitability import assess_current, suitability_target
+    from test_adaptive_suitability_unit import report_for
+
+    value, criteria, document, binding, coverage = member_preparation(repository)
+    fitted = prep.fit(value, criteria, document, binding, coverage)
+    basis = {
+        "work": value["work"],
+        "criteria": criteria,
+        "plan": value["target"]["procedure_plan"],
+    }
+    target = suitability_target(binding, basis, coverage_plan=fitted)
+    report = report_for(target)
+    assess_current(report, target)
+    changed = copy.deepcopy(target)
+    changed["coverage_plan"]["member_scope"]["criteria"][0]["due"][0]["basis"] = (
+        "Unassessed changed applicability"
+    )
+    with pytest.raises(bundles.BundleError):
+        assess_current(report, changed)

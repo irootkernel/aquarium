@@ -628,9 +628,12 @@ def test_native_role_groups_keep_distinct_scopes(basis, risk, count):
         assignments(assignment, "observe", "executor", ["work"])
 
 
+@pytest.mark.parametrize("member", [False, True])
 def test_mapped_groups_preserve_machine_roles_and_no_implicit_writer(
-    basis, monkeypatch
+    basis, monkeypatch, member
 ):
+    if member:
+        whole_member_case(basis)
     tmp_path, assignment, _ = basis
     document, binding = reusable()
     monkeypatch.setattr(
@@ -673,6 +676,12 @@ def test_mapped_groups_preserve_machine_roles_and_no_implicit_writer(
         "Epic Evaluator",
     ]
     assert all(row["authority"]["effects"] == [] for row in result["dispatches"])
+    if member:
+        assert all(
+            row["target"]["member_scope"]
+            == assignment["target"]["procedure_plan"]["member_scope"]
+            for row in result["dispatches"]
+        )
     observation["status"]["current"]["attempt"] = {
         "attempt_id": "reentry",
         "attempt_number": 2,
@@ -1028,8 +1037,9 @@ def test_conditional_closeout_grant_requires_actual_user_acceptance(
         commit_handoff(tmp_path, value)
 
 
-def test_pure_commit_consumer_executes_no_native_or_commit_effect(basis):
-    value = commit_input(basis)
+@pytest.mark.parametrize("member", [False, True])
+def test_pure_commit_consumer_executes_no_native_or_commit_effect(basis, member):
+    value = whole_member_case(basis) if member else commit_input(basis)
     path = basis[0] / "handoff.json"
     path.write_text(json.dumps(value))
     result = subprocess.run(
@@ -3260,6 +3270,9 @@ def test_closeout_requires_actual_exact_candidate_ee_in_addition_to_first_panel(
         "contrary-closeout-provenance",
         "dispatch-integration",
         "coarse-unknown-first",
+        "member-positive",
+        "member-current-negative",
+        "member-no-plan",
         *[
             f"ordinary-{form}-{result}"
             for form in ("text", "inline", "no-bytes", "unavailable")
@@ -3367,6 +3380,38 @@ def test_context_cli_consumes_malformed_basis_without_traceback(
             outcome == "negative"
         )
         return
+    elif fault.startswith("member-"):
+        whole_member_case(basis)
+        assignment["target"]["squad"]["compositions"]["current-composition"] = current
+        assert consume()["composition"]["status"] == "ready"
+        if fault == "member-positive":
+            result = consume()["composition"]
+            assert result["native_values"]["composition-unverified"] == 0
+            assert set(result["original_verdicts"].values()) == {"evidence-needed"}
+            assert (
+                result["member_scope"]
+                == assignment["target"]["procedure_plan"]["member_scope"]
+            )
+            return
+        if fault == "member-no-plan":
+            assignment["target"]["squad"]["compositions"].pop("epic-plan")
+        else:
+            ref = current["assessments"][0]
+            report = json.loads(Path(ref["path"]).read_bytes())
+            checkpoint = report["checkpoint_assessment"]
+            checkpoint["criteria"][0]["state"] = checkpoint["criteria"][0]["parts"][0][
+                "state"
+            ] = "unverified"
+            checkpoint.update(state="unverified", due_unverified=1)
+            report["checkpoint_result"] = "inconclusive"
+            current["criteria"][0]["state"] = current["criteria"][0]["parts"][0][
+                "state"
+            ] = "unverified"
+            ref.update(write_artifact(repo, "cli-member-current-negative", report))
+            result = consume()["composition"]
+            assert result["status"] == "unresolved"
+            assert result["native_values"]["composition-goal-outcome"] == "not-achieved"
+            return
     elif fault == "coarse-unknown-first":
         ref = closeout_case(basis)
         report = json.loads(Path(ref["path"]).read_bytes())
@@ -4519,3 +4564,1105 @@ def test_moved_coarse_closeout_kind_needs_actual_original_scope(
     assert error["native_values"]["composition-goal-outcome"] == "not-achieved"
     with pytest.raises(BundleError):
         composition(*basis)
+
+
+# Complete pinned inputs of the installed TASK-001 counterexample, kept as data.
+MEMBER_ROADMAP = """# Roadmap
+
+Lifecycle: `Planned` means not started; `In Progress` means authorized work is
+active; `In Review` means delivery is awaiting required review or acceptance;
+`Completed` means the original criteria and required acceptance are settled;
+`Blocked` means a concrete prerequisite prevents progress; `Deferred` means
+the operator has explicitly postponed the work. Start a dependent Task only
+after its predecessor is completed.
+
+## EPIC-001: Add greeting options
+
+**Status:** `Planned`
+
+Add uppercase and repeat options while preserving the original default and
+named greetings. Deliver TASK-001 before TASK-002.
+
+**Detailed SOT:** [Greeting options dossier](../todo/TODO-GREETING-OPTIONS.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-001 | Add uppercase greetings | Add --uppercase for default and named greetings without changing existing behavior. | Planned | None |
+| TASK-002 | Add repeated greetings | Add --repeat with a positive integer count and support its combination with --uppercase. | Planned | TASK-001 |
+"""
+
+MEMBER_DOSSIER = """# Greeting options
+
+The roadmap owns EPIC-001 and its member identities and lifecycle. Implement
+TASK-001, then TASK-002 in separate task-owned changes under the operator's
+approved execution scope.
+
+TASK-001 adds `--uppercase`. `python3 greet.py --uppercase` prints
+`HELLO, WORLD!` followed by one newline. `python3 greet.py --uppercase Ada`
+prints `HELLO, ADA!` followed by one newline. Existing default and named
+greetings remain byte-identical. Add meaningful tests and update user guidance.
+
+TASK-002 adds `--repeat N`. A positive integer prints exactly N complete greeting
+lines. A missing option retains one line. Zero, negative and noninteger counts
+fail with a nonzero exit status. Combine `--uppercase` and `--repeat`. Preserve
+TASK-001 and original behavior; add tests and user guidance.
+
+Use the installed handlers, native Codex Workers, an independent Codex Judge and
+the explicitly selected three-agent Codex Subagent Review route. Run the
+complete fixture Make gate. The operator accepts each ready plan or exact
+candidate through the normal handler boundary; no document grants acceptance.
+
+Release startup acceptance stops after real first-member delivery, checks,
+independent assessment and semantic progression. It does not establish full
+Epic delivery, final review, closeout or publication readiness. Full delivery
+and recovery are separate development-verification obligations.
+"""
+
+
+def whole_member_case(basis, *, prepared=False, other_source=None):
+    from adaptive_preparation import requirements
+
+    repo, assignment, current = basis
+    assert composition(*basis)["status"] == "ready"
+    value = commit_input(basis)
+    assignment["work"]["requirement_sources"] = []
+    scope_rows = []
+    for identifier, raw, due, later, gate in [
+        (
+            "roadmap",
+            MEMBER_ROADMAP,
+            "| TASK-001 | Add uppercase greetings | Add --uppercase for default and named greetings without changing existing behavior. | Planned | None |",
+            "| TASK-002 | Add repeated greetings | Add --repeat with a positive integer count and support its combination with --uppercase. | Planned | TASK-001 |",
+            "Start a dependent Task only\nafter its predecessor is completed.",
+        ),
+        (
+            "dossier",
+            MEMBER_DOSSIER,
+            "TASK-001 adds `--uppercase`. `python3 greet.py --uppercase` prints\n`HELLO, WORLD!` followed by one newline. `python3 greet.py --uppercase Ada`\nprints `HELLO, ADA!` followed by one newline. Existing default and named\ngreetings remain byte-identical. Add meaningful tests and update user guidance.",
+            "TASK-002 adds `--repeat N`. A positive integer prints exactly N complete greeting\nlines. A missing option retains one line. Zero, negative and noninteger counts\nfail with a nonzero exit status. Combine `--uppercase` and `--repeat`. Preserve\nTASK-001 and original behavior; add tests and user guidance.",
+            "The operator accepts each ready plan or exact\ncandidate through the normal handler boundary; no document grants acceptance.",
+        ),
+    ]:
+        criterion = identifier + ":whole"
+        source_fields = {}
+        if identifier == "dossier" and other_source:
+            if other_source == "markdown":
+                raw = (
+                    "# Selected\n"
+                    + raw.replace("# Greeting options", "## Greeting options", 1)
+                    + "\n# Notes\nOriginal note.\n"
+                )
+                source_fields = {"section": "Selected"}
+            else:
+                raw = json.dumps(
+                    {
+                        "criteria": [
+                            {
+                                "id": "whole",
+                                "text": raw,
+                                "parts": [{"id": "whole", "text": raw}],
+                            }
+                        ],
+                        "notes": "Original note.",
+                    }
+                )
+                source_fields = {"format": "json"}
+        path = repo / (identifier + ".md")
+        path.write_text(raw)
+        assignment["work"]["requirement_sources"].append(
+            {
+                "id": identifier,
+                "path": path.name,
+                "sha256": sha256(path.read_bytes()),
+                **source_fields,
+            }
+        )
+        scope_rows.append(
+            {
+                "criterion": criterion,
+                "part": "whole",
+                "source": path.name,
+                "source_sha256": sha256(path.read_bytes()),
+                "due": [
+                    {
+                        "clause": due,
+                        "basis": "Current complete TASK-001 product and due parent obligations",
+                    }
+                ],
+                "later": [
+                    {
+                        "clause": later,
+                        "basis": "Future TASK-002 after predecessor finalization",
+                    }
+                ],
+                "gates": [
+                    {
+                        "clause": gate,
+                        "basis": "Actual acceptance, member commit and native finalization remain separate gates",
+                    }
+                ],
+            }
+        )
+    shared = {
+        "clause": "Run the\ncomplete fixture Make gate.",
+        "basis": "Complete gate applies to each member, not only the final Epic",
+    }
+    scope_rows[1]["due"].append(copy.deepcopy(shared))
+    scope_rows[1]["later"].append(copy.deepcopy(shared))
+    scope = {"task": "TASK-001", "criteria": scope_rows}
+    assignment["success_criteria"] = ["roadmap:whole", "dossier:whole"]
+    assignment["target"]["procedure_plan"]["member_scope"] = scope
+    rows = [
+        {
+            "id": row["criterion"],
+            "state": "met",
+            "parts": [{"id": "whole", "state": "met"}],
+        }
+        for row in scope_rows
+    ]
+    original = copy.deepcopy(rows)
+    for row in original:
+        row["state"] = row["parts"][0]["state"] = "unverified"
+        row["parts"][0]["reason"] = (
+            "The whole original includes later TASK-002/Epic and post-acceptance gates; current member judgment is separate."
+        )
+    for composition_basis in [current, *value["plan_compositions"].values()]:
+        composition_basis.update(
+            criteria=copy.deepcopy(rows), member_scope=copy.deepcopy(scope)
+        )
+        for reference in composition_basis["assessments"]:
+            report = json.loads(Path(reference["path"]).read_bytes())
+            report["target"]["member_scope"] = copy.deepcopy(scope)
+            report.update(
+                criteria=copy.deepcopy(original),
+                verdict="evidence-needed",
+                checkpoint_result="pass",
+                checkpoint_assessment={
+                    "phase": reference["scope"],
+                    "state": "met",
+                    "basis": "Actual independent full plan/source and current due-clause judgment",
+                    "criteria": copy.deepcopy(rows),
+                    "due_unmet": 0,
+                    "due_unverified": 0,
+                },
+            )
+            reference.update(
+                write_artifact(
+                    repo,
+                    reference["id"] + "-" + composition_basis["phase"] + "-member",
+                    report,
+                )
+            )
+    assignment["target"]["squad"]["compositions"] = copy.deepcopy(
+        value["plan_compositions"]
+    )
+    if prepared:
+        assignment["target"]["prepared_definition"] = {
+            "coverage_plan": {
+                "criteria": requirements(repo, assignment),
+                "member_scope": copy.deepcopy(scope),
+            }
+        }
+    return value
+
+
+@pytest.mark.parametrize("prepared", [False, True])
+def test_actual_whole_markdown_member_ready_retains_future_global_unknowns(
+    basis, prepared
+):
+    value = whole_member_case(basis, prepared=prepared)
+    result = composition(*basis)
+    assert result["status"] == "ready"
+    assert result["native_values"]["composition-unmet"] == 0
+    assert result["native_values"]["composition-unverified"] == 0
+    assert result["native_values"]["composition-goal-outcome"] == "achieved"
+    assert set(result["original_verdicts"].values()) == {"evidence-needed"}
+    assert all(
+        part["state"] == "unverified"
+        for rows in result["original_criteria"].values()
+        for row in rows
+        for part in row["parts"]
+    )
+    assert commit_handoff(basis[0], value)["accepted_target"] == "candidate1"
+    if not prepared:
+        assert "prepared_definition" not in basis[1]["target"]
+        assert basis[1]["procedure"] is None
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "current-unmet",
+        "current-unknown",
+        "milestone",
+        "required-finding",
+        "negative-verdict",
+        "failed-check",
+        "missing-check",
+        "missing-part",
+        "unsupported-id",
+        "wrong-phase",
+        "contradictory-count",
+        "stale-candidate",
+        "scope-drift",
+        "missing-plan",
+        "missing-panel",
+        "author",
+        "old-conservative",
+        "missing-checkpoint",
+        "missing-plan-judgment",
+        "report-scope",
+        "source-drift",
+        "no-future-basis",
+    ],
+)
+def test_member_scope_does_not_erase_actual_current_gaps(basis, fault):
+    whole_member_case(basis)
+    assert composition(*basis)["status"] == "ready"
+    repo, assignment, current = basis
+    ref = current["assessments"][0]
+    report = json.loads(Path(ref["path"]).read_bytes())
+    if fault in {"current-unmet", "current-unknown", "milestone"}:
+        state = "unmet" if fault == "current-unmet" else "unverified"
+        report["checkpoint_assessment"]["criteria"][0]["parts"][0]["state"] = state
+        report["checkpoint_assessment"]["criteria"][0]["state"] = state
+        report["checkpoint_assessment"]["basis"] = (
+            "Core is present; CLI/help/docs and complete member evidence are still missing"
+            if fault == "milestone"
+            else "Actual current due clause is not established"
+        )
+    elif fault == "required-finding":
+        report["findings"] = [
+            {
+                "id": "current-cli",
+                "state": "unmet",
+                "required": True,
+                "basis": "Current CLI is incomplete",
+            }
+        ]
+    elif fault == "negative-verdict":
+        report["verdict"] = "rework"
+    elif fault == "failed-check":
+        check = json.loads(Path(current["checks"][0]["path"]).read_bytes())
+        check["outcome"] = "fail"
+        current["checks"][0].update(write_artifact(repo, "member-failed-check", check))
+    elif fault == "missing-check":
+        current["checks"] = []
+    elif fault == "missing-part":
+        report["criteria"].pop()
+    elif fault == "unsupported-id":
+        report["checkpoint_assessment"]["criteria"][0]["id"] = "T1-undeclared-detail"
+    elif fault == "wrong-phase":
+        report["checkpoint_assessment"]["phase"] = "epic-contribution"
+    elif fault == "contradictory-count":
+        report["checkpoint_assessment"]["due_unverified"] = 2
+    elif fault == "stale-candidate":
+        report["target"]["candidate"] = "older-candidate"
+    elif fault == "scope-drift":
+        assignment["target"]["procedure_plan"]["member_scope"]["criteria"][0]["due"][0][
+            "basis"
+        ] = "Changed unassessed meaning"
+    elif fault == "missing-plan":
+        assignment["target"]["squad"]["compositions"].pop("epic-plan")
+    elif fault == "missing-panel":
+        current["assessments"].pop()
+    elif fault == "author":
+        assignment["target"]["squad"]["authors"].append(ref["producer"])
+    elif fault == "missing-checkpoint":
+        report.pop("checkpoint_assessment")
+    elif fault == "missing-plan-judgment":
+        plan = assignment["target"]["squad"]["compositions"]["epic-plan"]
+        plan_ref = plan["assessments"][0]
+        plan_report = json.loads(Path(plan_ref["path"]).read_bytes())
+        plan_report["checkpoint_result"] = "inconclusive"
+        plan_ref.update(write_artifact(repo, "unassessed-member-plan", plan_report))
+    elif fault == "report-scope":
+        report["target"].pop("member_scope")
+    elif fault == "source-drift":
+        (repo / "dossier.md").write_text("Changed original")
+    elif fault == "no-future-basis":
+        report["criteria"][0]["parts"][0].pop("reason")
+    else:
+        for row in current["criteria"]:
+            row["state"] = row["parts"][0]["state"] = "unverified"
+        for row in report["checkpoint_assessment"]["criteria"]:
+            row["state"] = row["parts"][0]["state"] = "unverified"
+        report["checkpoint_assessment"].update(state="unverified", due_unverified=2)
+        report["checkpoint_result"] = "inconclusive"
+    ref.update(write_artifact(repo, "member-negative-" + fault, report))
+    try:
+        result = composition(*basis)
+    except BundleError:
+        return
+    assert result["status"] == "unresolved"
+    assert result["native_values"]["composition-goal-outcome"] == "not-achieved"
+
+
+@pytest.mark.parametrize("role", ["Task Evaluator", "Task Operator", "Epic Evaluator"])
+@pytest.mark.parametrize("state", ["unmet", "unverified"])
+def test_member_current_negative_uses_same_due_basis_for_each_role(basis, role, state):
+    whole_member_case(basis)
+    assert composition(*basis)["status"] == "ready"
+    repo, _assignment, current = basis
+    ref = next(r for r in current["assessments"] if r["role"] == role)
+    report = json.loads(Path(ref["path"]).read_bytes())
+    for rows in [
+        report["criteria"],
+        report["checkpoint_assessment"]["criteria"],
+        current["criteria"],
+    ]:
+        rows[0]["state"] = rows[0]["parts"][0]["state"] = state
+    report["checkpoint_result"] = "fail" if state == "unmet" else "inconclusive"
+    report["checkpoint_assessment"].update(
+        state=state,
+        due_unmet=int(state == "unmet"),
+        due_unverified=int(state == "unverified"),
+    )
+    report["verdict"] = "rework" if state == "unmet" else "evidence-needed"
+    ref.update(write_artifact(repo, "member-due-" + ref["id"] + state, report))
+    result = composition(*basis)
+    assert result["status"] == "unresolved"
+    assert result["native_values"]["composition-unmet"] == int(state == "unmet")
+    assert result["native_values"]["composition-unverified"] == int(
+        state == "unverified"
+    )
+    assert result["native_values"]["composition-goal-outcome"] == "not-achieved"
+
+
+@pytest.mark.parametrize("fault", ["acceptance", "grant", "product-review", "plan"])
+def test_member_scope_commit_retains_every_actual_gate(basis, fault):
+    value = whole_member_case(basis)
+    assert commit_handoff(basis[0], value)["accepted_target"] == "candidate1"
+    if fault == "acceptance":
+        value["acceptance"]["target"] = "stale"
+    elif fault == "grant":
+        value["grant"]["consumed"] = True
+    elif fault == "product-review":
+        value["acceptance"].pop("product_review")
+    else:
+        value["plan_compositions"].pop("epic-plan")
+    with pytest.raises(BundleError):
+        commit_handoff(basis[0], value)
+
+
+@pytest.mark.parametrize("phase", ["integration", "epic-closeout", "correction-group"])
+def test_member_scope_cannot_waive_global_integration_or_closeout(basis, phase):
+    whole_member_case(basis)
+    assert composition(*basis)["status"] == "ready"
+    repo, assignment, current = basis
+    integration_basis(repo, current)
+    current["phase"] = phase
+    for ref in current["assessments"]:
+        report = json.loads(Path(ref["path"]).read_bytes())
+        report["checkpoint_assessment"]["phase"] = "integration"
+        ref.update(write_artifact(repo, "whole-integration-" + ref["id"], report))
+    current["criteria"] = copy.deepcopy(report["criteria"])
+    if phase == "epic-closeout":
+        ee = next(
+            ref for ref in current["assessments"] if ref["role"] == "Epic Evaluator"
+        )
+        report = json.loads(Path(ee["path"]).read_bytes())
+        report["work"]["assignment_scope"] = "affected-epic"
+        report["checkpoint_result"] = "inconclusive"
+        report["checkpoint_assessment"].update(
+            phase="affected-epic",
+            state="unverified",
+            criteria=copy.deepcopy(report["criteria"]),
+            due_unverified=2,
+        )
+        ordinary_closeout_assignment(repo, assignment, report, "inline")
+        current["assessments"].append(
+            {
+                **copy.deepcopy(ee),
+                **write_artifact(repo, "whole-first-closeout", report),
+                "id": "whole-first-closeout",
+                "scope": "affected-epic",
+            }
+        )
+    result = composition(*basis)
+    assert result["status"] == "unresolved"
+    assert result["native_values"]["composition-unmet"] == 0
+    assert result["native_values"]["composition-unverified"] == 2
+    assert result["native_values"]["composition-goal-outcome"] == "not-achieved"
+    assert set(result["original_verdicts"].values()) == {"evidence-needed"}
+    assert all(
+        part["state"] == "unverified"
+        for rows in result["original_criteria"].values()
+        for row in rows
+        for part in row["parts"]
+    )
+
+
+def test_member_assessed_preparation_scope_cannot_drift(basis):
+    whole_member_case(basis, prepared=True)
+    assert composition(*basis)["status"] == "ready"
+    basis[1]["target"]["prepared_definition"]["coverage_plan"]["member_scope"][
+        "task"
+    ] = "TASK-002"
+    with pytest.raises(BundleError) as error:
+        composition(*basis)
+    assert error.value.code == "source-drift"
+
+
+def member_lifecycle_case(
+    basis, *, native=False, other_source=None, other_change=None, recover_other=False
+):
+    value = whole_member_case(basis, prepared=native, other_source=other_source)
+    repo, assignment, current = basis
+    assert composition(*basis)["status"] == "ready"
+    roadmap = repo / "roadmap.md"
+    original = roadmap.read_bytes()
+    capture = repo / ".captures/roadmap.md"
+    capture.parent.mkdir()
+    capture.write_bytes(original)
+    roadmap.write_bytes(
+        original.replace(b"| Planned | None |", b"| Completed | None |")
+    )
+    proposal = {
+        "diff": "Apply the exact approved TASK-001 Planned to Completed lifecycle output.",
+        "targets": {
+            "roadmap.md": {
+                "before": sha256(original),
+                "after": sha256(roadmap.read_bytes()),
+            }
+        },
+    }
+    context = {
+        "work": copy.deepcopy(assignment["work"]),
+        "sources": [{"path": "roadmap.md", "capture": ".captures/roadmap.md"}],
+        "proposal": proposal,
+        "approval": {
+            "source": "epic-delegation",
+            "decision": "approved",
+            "proposal": copy.deepcopy(proposal),
+            "reference": "Actual fixture approval for this exact lifecycle postimage",
+        },
+    }
+    if other_change:
+        dossier = repo / "dossier.md"
+        other_original = dossier.read_bytes()
+        other_current = other_original
+        if other_change == "outside":
+            other_current = other_current.replace(
+                b"Original note.", b"Changed outside original basis."
+            )
+        elif other_change == "inside":
+            other_current = other_current.replace(
+                b"TASK-001 adds", b"Changed current Task adds"
+            )
+        elif other_change == "identity":
+            other_current = other_current.replace(
+                b"# Selected" if other_source == "markdown" else b'"id": "whole"',
+                b"# Renamed" if other_source == "markdown" else b'"id": "renamed"',
+            )
+        if other_change == "missing":
+            dossier.unlink()
+        else:
+            assert other_current != other_original
+            dossier.write_bytes(other_current)
+        if recover_other:
+            (repo / ".captures/dossier.md").write_bytes(other_original)
+            context["sources"].append(
+                {"path": "dossier.md", "capture": ".captures/dossier.md"}
+            )
+            proposal["targets"]["dossier.md"] = {
+                "before": sha256(other_original),
+                "after": None if other_change == "missing" else sha256(other_current),
+            }
+            context["approval"]["proposal"] = copy.deepcopy(proposal)
+    # Lifecycle output belongs to the current candidate too. Supply new exact
+    # current assessments/checks/acceptance rather than exempting stale inputs.
+    assignment["target"]["squad"]["candidate"] = current["target"] = "candidate2"
+    for reference in current["assessments"]:
+        report = json.loads(Path(reference["path"]).read_bytes())
+        report["target"]["candidate"] = "candidate2"
+        reference.update(
+            write_artifact(repo, "lifecycle-current-" + reference["id"], report),
+            target="candidate2",
+        )
+    for reference in current["checks"]:
+        check = json.loads(Path(reference["path"]).read_bytes())
+        check["target"] = "candidate2"
+        reference.update(write_artifact(repo, "lifecycle-current-check", check))
+    value["acceptance"]["target"] = "candidate2"
+    review = json.loads(
+        Path(value["acceptance"]["product_review"]["path"]).read_bytes()
+    )
+    review["target"] = "candidate2"
+    value["acceptance"]["product_review"] = write_artifact(
+        repo, "lifecycle-current-product-review", review
+    )
+    if native:
+        _document, binding = reusable()
+        status = {
+            "procedure": binding["procedure"],
+            "session": {"id": "member-source", "revision": 9, "lifecycle": "running"},
+            "goal_revision": 1,
+            "current": {
+                "node": {"graph_node_id": "current-composition"},
+                "attempt": {"attempt_id": "member-active", "attempt_number": 1},
+            },
+            "current_trace_history": {
+                "entries": [
+                    {
+                        "graph_node_id": "current-composition",
+                        "attempt_id": "member-active",
+                        "attempt_number": 1,
+                        "goal_revision": 1,
+                        "validity": "valid",
+                        "lifecycle": "active",
+                    }
+                ]
+            },
+        }
+        observation = {
+            "status": status,
+            "guidance": {"node": {"graph_node_id": "current-composition"}},
+            "active_items": [],
+            "mutation_templates": [],
+        }
+        context["checkpoint"] = {
+            "schema": "aquarium.orchestration-checkpoint/v3",
+            "work": copy.deepcopy(assignment["work"]),
+            "procedure": copy.deepcopy(status),
+        }
+        assignment["procedure"] = {"native": copy.deepcopy(status)}
+        value["observation"] = observation
+    return value, context
+
+
+@pytest.mark.parametrize("native", [False, True])
+def test_member_lifecycle_commit_revalidates_approved_originals_and_current_candidate(
+    basis, native
+):
+    from adaptive_preparation import requirements
+
+    value, context = member_lifecycle_case(basis, native=native)
+    repo, assignment, _current = basis
+    with pytest.raises(BundleError):
+        requirements(repo, assignment)
+    with pytest.raises(BundleError):
+        commit_handoff(repo, value)
+    if native:
+        from adaptive_finalization import approved_sources
+
+        _reader, context = approved_sources(
+            repo, assignment, context, value.pop("observation"), continuation=True
+        )
+        assert "checkpoint" not in context
+        assert context["work"] == assignment["work"]
+    assignment["target"]["applied_source_context"] = context
+    before = {
+        str(p.relative_to(repo)): p.read_bytes() for p in repo.rglob("*") if p.is_file()
+    }
+    result = commit_handoff(repo, value)
+    assert result["accepted_target"] == "candidate2"
+    assert (
+        result["applied_source_context"]["sources"][0]["sha256"]
+        == assignment["work"]["requirement_sources"][0]["sha256"]
+    )
+    assert result["applied_source_context"]["sources"][0]["applied"]["after"] == sha256(
+        (repo / "roadmap.md").read_bytes()
+    )
+    assert {
+        str(p.relative_to(repo)): p.read_bytes() for p in repo.rglob("*") if p.is_file()
+    } == before
+
+
+@pytest.mark.parametrize("native", [False, True])
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "no-approval",
+        "before",
+        "postimage",
+        "work",
+        "capture",
+        "unsafe",
+        "approval-source",
+        "chain",
+        "earlier-path",
+        "stale-scope",
+        "stale-candidate",
+        "acceptance",
+        "grant",
+        "current-negative",
+    ],
+)
+def test_member_lifecycle_context_cannot_bypass_source_or_completion_guards(
+    basis, native, fault
+):
+    value, context = member_lifecycle_case(basis, native=native)
+    repo, assignment, current = basis
+    assignment["target"]["applied_source_context"] = context
+    assert commit_handoff(repo, value)["accepted_target"] == "candidate2"
+    if fault == "no-approval":
+        context.pop("approval")
+    elif fault == "before":
+        context["proposal"]["targets"]["roadmap.md"]["before"] = "sha256:" + "0" * 64
+        context["approval"]["proposal"] = copy.deepcopy(context["proposal"])
+    elif fault == "postimage":
+        (repo / "roadmap.md").write_text("Unapproved after image")
+    elif fault == "work":
+        context["work"]["task"] = "TASK-002"
+        if native:
+            context["checkpoint"]["work"]["task"] = "TASK-002"
+    elif fault == "capture":
+        (repo / ".captures/roadmap.md").unlink()
+    elif fault == "unsafe":
+        capture = repo / ".captures/roadmap.md"
+        capture.unlink()
+        capture.symlink_to(repo / "roadmap.md")
+    elif fault == "approval-source":
+        context["approval"]["source"] = "provider"
+    elif fault == "chain":
+        first = {
+            "proposal": copy.deepcopy(context["proposal"]),
+            "approval": copy.deepcopy(context["approval"]),
+        }
+        second = copy.deepcopy(first)
+        second["proposal"]["targets"]["roadmap.md"]["before"] = "sha256:" + "1" * 64
+        second["approval"]["proposal"] = copy.deepcopy(second["proposal"])
+        context["changes"] = [first, second]
+        context.pop("proposal")
+        context.pop("approval")
+    elif fault == "earlier-path":
+        dossier = repo / "dossier.md"
+        old = dossier.read_bytes()
+        dossier.write_bytes(old + b"\nApproved current record.\n")
+        context["proposal"]["targets"]["dossier.md"] = {
+            "before": sha256(old),
+            "after": sha256(dossier.read_bytes()),
+        }
+        context["approval"]["proposal"] = copy.deepcopy(context["proposal"])
+    elif fault == "stale-scope":
+        assignment["target"]["procedure_plan"]["member_scope"]["criteria"][0]["due"][0][
+            "basis"
+        ] = "Unassessed current scope"
+    elif fault == "stale-candidate":
+        current["target"] = "candidate1"
+    elif fault == "acceptance":
+        value["acceptance"]["target"] = "candidate1"
+    elif fault == "grant":
+        value["grant"]["consumed"] = True
+    else:
+        reference = current["assessments"][0]
+        report = json.loads(Path(reference["path"]).read_bytes())
+        report["findings"] = [
+            {
+                "id": "current-negative",
+                "state": "unmet",
+                "required": True,
+                "basis": "Actual current issue",
+            }
+        ]
+        reference.update(write_artifact(repo, "lifecycle-current-negative", report))
+    with pytest.raises(BundleError):
+        commit_handoff(repo, value)
+
+
+@pytest.mark.parametrize(
+    "threaded,fault",
+    [(False, None), (True, None)]
+    + [
+        (True, fault)
+        for fault in (
+            "trace",
+            "goal",
+            "session",
+            "definition",
+            "attempt",
+            "final-session",
+            "final-postimage",
+        )
+    ],
+)
+def test_member_native_composition_uses_approved_original_reader_after_lifecycle(
+    basis, monkeypatch, threaded, fault
+):
+    import adaptive_squad
+    from adaptive_preparation import requirements
+
+    value, context = member_lifecycle_case(basis, native=True)
+    repo, assignment, current = basis
+    document, binding = reusable()
+    (repo / "procedure.yaml").write_bytes(yaml.safe_dump(document).encode())
+    (repo / "binding.json").write_text(json.dumps(binding))
+    assignment["target"]["squad"]["compositions"]["current-composition"] = current
+    original = assignment["target"]["prepared_definition"]["coverage_plan"]["criteria"]
+
+    def resume(*args, **kwargs):
+        assert (
+            requirements(
+                repo,
+                assignment,
+                verify_sources=False,
+                source_reader=kwargs["source_reader"],
+            )
+            == original
+        )
+        return {
+            "binding": binding,
+            "source": (repo / "procedure.yaml").read_bytes(),
+            "path": str(repo),
+            "bundle_id": "fixture",
+            "qualification": {},
+        }
+
+    monkeypatch.setattr(execution, "resume_selected", resume)
+    if not threaded:
+        original_record = adaptive_squad.composition_record
+
+        def omit_reader(*args, **kwargs):
+            assert callable(kwargs.pop("source_reader"))
+            return original_record(*args, **kwargs)
+
+        monkeypatch.setattr(adaptive_squad, "composition_record", omit_reader)
+    observation = value["observation"]
+    status = observation["status"]
+    if fault == "trace":
+        status["current_trace_history"]["entries"][0]["validity"] = "invalidated"
+    elif fault == "goal":
+        status["goal_revision"] += 1
+    elif fault == "session":
+        status["session"]["revision"] += 1
+    elif fault == "definition":
+        status["procedure"] = {**status["procedure"], "digest": "sha256:" + "0" * 64}
+    elif fault == "attempt":
+        status["current"]["attempt"]["attempt_id"] = "different"
+    reads = []
+
+    def read(*args):
+        reads.append(args)
+        current = copy.deepcopy(status)
+        if len(reads) == 2:
+            if fault == "final-session":
+                current["session"]["revision"] += 1
+            elif fault == "final-postimage":
+                (repo / "roadmap.md").write_text("Unapproved final source drift")
+        return current
+
+    client = SimpleNamespace(
+        health=lambda: observation,
+        read=read,
+    )
+
+    def consume():
+        return execution.execution_context(
+            repo,
+            roots=["definitions"],
+            entrypoint="epic-squad",
+            qualification={
+                "assignment": assignment,
+                "applied_source_recovery": context,
+            },
+            client=client,
+        )
+
+    if fault:
+        with pytest.raises(BundleError):
+            consume()
+        return
+    result = consume()
+    if threaded:
+        assert result["composition"]["status"] == "ready"
+        assert result["composition"]["native_values"]["composition-unverified"] == 0
+    else:
+        assert (
+            result["composition_error"]["native_values"]["composition-evidence"]
+            == "unavailable"
+        )
+        assert (
+            result["composition_error"]["native_values"]["composition-goal-outcome"]
+            == "not-achieved"
+        )
+
+
+def test_member_scope_cannot_repin_similar_sources_under_an_old_plan(basis):
+    whole_member_case(basis)
+    assert composition(*basis)["status"] == "ready"
+    repo, assignment, _current = basis
+    dossier = repo / "dossier.md"
+    dossier.write_bytes(
+        dossier.read_bytes() + b"\nAdditional changed future source context.\n"
+    )
+    assignment["work"]["requirement_sources"][1]["sha256"] = sha256(
+        dossier.read_bytes()
+    )
+    with pytest.raises(BundleError) as error:
+        composition(*basis)
+    assert error.value.code == "source-drift"
+
+
+def test_member_scope_cannot_label_current_cli_future_without_due_plan_passage(basis):
+    whole_member_case(basis)
+    assert composition(*basis)["status"] == "ready"
+    repo, assignment, current = basis
+    scope = assignment["target"]["procedure_plan"]["member_scope"]
+    clause = scope["criteria"][1]["due"].pop(0)
+    scope["criteria"][1]["later"].append(clause)
+    bases = [current, *assignment["target"]["squad"]["compositions"].values()]
+    for item in bases:
+        item["member_scope"] = copy.deepcopy(scope)
+        for ref in item["assessments"]:
+            report = json.loads(Path(ref["path"]).read_bytes())
+            report["target"]["member_scope"] = copy.deepcopy(scope)
+            if item["phase"] == "epic-plan":
+                report["checkpoint_assessment"]["basis"] = (
+                    "Full original source still requires current uppercase CLI/help/docs; the new later attribution omits current member work."
+                )
+                report["checkpoint_result"] = "inconclusive"
+                report["checkpoint_assessment"]["state"] = "unverified"
+            ref.update(
+                write_artifact(
+                    repo, "incomplete-current-" + item["phase"] + ref["id"], report
+                )
+            )
+    with pytest.raises(BundleError):
+        composition(*basis)
+
+
+@pytest.mark.parametrize("native", [False, True])
+@pytest.mark.parametrize("omit_earlier", [False, True])
+def test_member_lifecycle_preserves_entire_ordered_original_change_chain(
+    basis, native, omit_earlier
+):
+    value, context = member_lifecycle_case(basis, native=native)
+    repo, assignment, _current = basis
+    dossier = repo / "dossier.md"
+    original = dossier.read_bytes()
+    (repo / ".captures/dossier.md").write_bytes(original)
+    dossier.write_bytes(original + b"\nApproved current delivery record.\n")
+    second = {
+        "diff": "Apply the separately approved current dossier record",
+        "targets": {
+            "dossier.md": {
+                "before": sha256(original),
+                "after": sha256(dossier.read_bytes()),
+            }
+        },
+    }
+    context["changes"] = [
+        {"proposal": context.pop("proposal"), "approval": context.pop("approval")},
+        {
+            "proposal": second,
+            "approval": {
+                "source": "epic-delegation",
+                "decision": "approved",
+                "proposal": copy.deepcopy(second),
+                "reference": "Exact second approved fixture image",
+            },
+        },
+    ]
+    context["sources"].append({"path": "dossier.md", "capture": ".captures/dossier.md"})
+    assignment["target"]["applied_source_context"] = context
+    result = commit_handoff(repo, value)
+    assert result["accepted_target"] == "candidate2"
+    assert len(result["applied_source_context"]["changes"]) == 2
+    assert {row["path"] for row in result["applied_source_context"]["sources"]} == {
+        "roadmap.md",
+        "dossier.md",
+    }
+    if omit_earlier:
+        context["sources"].pop(0)
+        with pytest.raises(BundleError):
+            commit_handoff(repo, value)
+
+
+@pytest.mark.parametrize("detailed", [False, True])
+def test_original_whole_member_rejections_are_not_automatically_upgraded(
+    basis, detailed
+):
+    whole_member_case(basis)
+    repo, assignment, current = basis
+    assignment["target"]["procedure_plan"].pop("member_scope")
+    for row in current["criteria"]:
+        row["state"] = row["parts"][0]["state"] = "unverified"
+    for ref in current["assessments"]:
+        if ref["scope"] != "task-result":
+            continue
+        report = json.loads(Path(ref["path"]).read_bytes())
+        if detailed:
+            report["checkpoint_assessment"]["criteria"][0]["id"] = (
+                "T1-default-uppercase"
+            )
+        else:
+            for row in report["checkpoint_assessment"]["criteria"]:
+                row["state"] = row["parts"][0]["state"] = "unverified"
+            report["checkpoint_assessment"].update(state="unverified", due_unverified=2)
+            report["checkpoint_result"] = "inconclusive"
+        ref.update(write_artifact(repo, "original-whole-negative-" + ref["id"], report))
+    result = composition_record(*basis)
+    if detailed:
+        assert result["composition_error"]["code"] == "not-established"
+        assert result["composition_error"]["criterion_counts"] is None
+        assert (
+            result["composition_error"]["native_values"]["composition-evidence"]
+            == "unavailable"
+        )
+    else:
+        current_result = result["composition"]
+        assert current_result["status"] == "unresolved"
+        assert current_result["native_values"]["composition-unmet"] == 0
+        assert current_result["native_values"]["composition-unverified"] == 2
+        assert len(current_result["gaps"]) == 6
+        assert current_result["new_evaluator_verdict"] is None
+
+
+@pytest.mark.parametrize("other_source", ["markdown", "json"])
+@pytest.mark.parametrize("prepared", [False, True])
+@pytest.mark.parametrize(
+    "change,recovered",
+    [
+        ("outside", False),
+        ("inside", False),
+        ("identity", False),
+        ("missing", False),
+        ("inside", True),
+    ],
+)
+def test_member_recovery_consumes_retained_other_basis_or_strict_original_pin(
+    basis, other_source, prepared, change, recovered
+):
+    from adaptive_finalization import approved_original_sources
+
+    value, context = member_lifecycle_case(
+        basis,
+        native=prepared,
+        other_source=other_source,
+        other_change=change,
+        recover_other=recovered,
+    )
+    repo, assignment, current = basis
+    assignment["target"]["applied_source_context"] = context
+    if not recovered and (not prepared or change != "outside"):
+        with pytest.raises(BundleError):
+            commit_handoff(repo, value)
+        return
+    reader, _context = approved_original_sources(repo, assignment, context)
+    assert (
+        composition(
+            repo,
+            assignment,
+            current,
+            source_reader=reader,
+            plan_compositions=value["plan_compositions"],
+        )["status"]
+        == "ready"
+    )
+    assert commit_handoff(repo, value)["accepted_target"] == "candidate2"
+    if recovered:
+        dossier = repo / "dossier.md"
+        dossier.write_bytes(dossier.read_bytes() + b" ")
+        with pytest.raises(BundleError) as error:
+            commit_handoff(repo, value)
+        assert error.value.code == "reapproval-required"
+
+
+@pytest.mark.parametrize("other_source", ["markdown", "json"])
+def test_member_recovery_checks_approved_uncaptured_other_postimage(
+    basis, other_source
+):
+    value, context = member_lifecycle_case(
+        basis, native=True, other_source=other_source, other_change="outside"
+    )
+    repo, assignment, _current = basis
+    dossier = repo / "dossier.md"
+    source = next(
+        row
+        for row in assignment["work"]["requirement_sources"]
+        if row["path"] == dossier.name
+    )
+    context["proposal"]["targets"][dossier.name] = {
+        "before": source["sha256"],
+        "after": sha256(dossier.read_bytes()),
+    }
+    context["approval"]["proposal"] = copy.deepcopy(context["proposal"])
+    assignment["target"]["applied_source_context"] = context
+    assert commit_handoff(repo, value)["accepted_target"] == "candidate2"
+    dossier.write_bytes(dossier.read_bytes() + b" ")
+    with pytest.raises(BundleError) as error:
+        commit_handoff(repo, value)
+    assert error.value.code == "reapproval-required"
+
+
+@pytest.mark.parametrize("other_source", ["markdown", "json"])
+def test_unprepared_member_rechecks_uncaptured_pin_after_product_review(
+    basis, monkeypatch, other_source
+):
+    import adaptive_squad
+
+    value, context = member_lifecycle_case(basis, other_source=other_source)
+    repo, assignment, _current = basis
+    assignment["target"]["applied_source_context"] = context
+    consume = adaptive_squad.artifact
+    changed = []
+
+    def late_source_change(repository, reference):
+        result = consume(repository, reference)
+        if reference == value["acceptance"]["product_review"] and not changed:
+            changed.append(True)
+            dossier = repo / "dossier.md"
+            dossier.write_bytes(
+                dossier.read_bytes().replace(
+                    b"Original note.", b"Unapproved late note."
+                )
+            )
+        return result
+
+    monkeypatch.setattr(adaptive_squad, "artifact", late_source_change)
+    with pytest.raises(BundleError) as error:
+        commit_handoff(repo, value)
+    assert changed == [True]
+    assert error.value.code == "source-drift"
+
+
+@pytest.mark.parametrize("future_field", ["later", "gates"])
+def test_member_reason_requires_actual_assessed_future_applicability(
+    basis, future_field
+):
+    whole_member_case(basis)
+    repo, assignment, current = basis
+    plans = assignment["target"]["squad"]["compositions"]
+    original = copy.deepcopy(assignment["target"]["procedure_plan"]["member_scope"])
+    first = current["assessments"][0]
+    reason = json.loads(Path(first["path"]).read_bytes())["criteria"][0]["parts"][0][
+        "reason"
+    ]
+
+    def install(applicable):
+        scope = copy.deepcopy(original)
+        scope["criteria"][0]["later"] = []
+        scope["criteria"][0]["gates"] = []
+        if applicable:
+            scope["criteria"][0][future_field] = copy.deepcopy(
+                original["criteria"][0][future_field]
+            )
+        assignment["target"]["procedure_plan"]["member_scope"] = copy.deepcopy(scope)
+        for basis_value in [current, *plans.values()]:
+            basis_value["member_scope"] = copy.deepcopy(scope)
+            for ref in basis_value["assessments"]:
+                report = json.loads(Path(ref["path"]).read_bytes())
+                report["target"]["member_scope"] = copy.deepcopy(scope)
+                assert report["criteria"][0]["parts"][0]["reason"] == reason
+                ref.update(
+                    write_artifact(
+                        repo,
+                        "future-applicability-"
+                        + basis_value["phase"]
+                        + "-"
+                        + ref["id"],
+                        report,
+                    )
+                )
+        for plan in plans.values():
+            assert composition(repo, assignment, plan)["status"] == "ready"
+
+    install(True)
+    assert composition(*basis)["status"] == "ready"
+    install(False)
+    with pytest.raises(BundleError) as error:
+        composition(*basis)
+    assert error.value.code == "not-established"
+    install(True)
+    assert composition(*basis)["status"] == "ready"

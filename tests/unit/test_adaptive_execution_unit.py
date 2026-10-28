@@ -2438,7 +2438,9 @@ def test_public_resume_separates_managed_origin_currency_from_new_adoption(
     assert {p: p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()} == before
 
 
-def applied_source_case(repository, family="task", kind="known", originals="capture"):
+def applied_source_case(
+    repository, family="task", kind="known", originals="capture", other_source=None
+):
     """Exact original inputs and synthetic active native attempts; no real actors."""
     from unittest.mock import Mock
 
@@ -2466,11 +2468,38 @@ def applied_source_case(repository, family="task", kind="known", originals="capt
             "# Original dossier\nKeep every original requirement and independent assessment.\n",
         ),
     ):
+        if name == "dossier.md" and other_source:
+            if other_source == "markdown":
+                text = (
+                    "# Original dossier\n\n## Selected\n"
+                    "Keep every original requirement and independent assessment.\n"
+                    "\n## Notes\nOriginal note.\n"
+                )
+            else:
+                import json
+
+                text = json.dumps(
+                    {
+                        "criteria": [
+                            {
+                                "id": "selected",
+                                "text": "Keep every original requirement and independent assessment.",
+                                "parts": [{"id": "first", "text": "Original part"}],
+                            }
+                        ],
+                        "notes": "Original note.",
+                    }
+                )
         path = repository / name
         path.write_text(text)
-        value["work"]["requirement_sources"].append(
-            {"id": name, "path": name, "sha256": sha256(path.read_bytes())}
-        )
+        source = {"id": name, "path": name, "sha256": sha256(path.read_bytes())}
+        if name == "dossier.md" and other_source:
+            source.update(
+                {"section": "Selected"}
+                if other_source == "markdown"
+                else {"format": "json"}
+            )
+        value["work"]["requirement_sources"].append(source)
     criteria = requirements(repository, value)
     value["success_criteria"] = list(criteria)
     plan = value["target"]["procedure_plan"]
@@ -3572,3 +3601,213 @@ def test_approved_source_chain_can_recreate_an_approved_absence(tmp_path):
     )
     pending_source_node(case, "evaluator-documentation")
     assert continue_applied(case)["status"] == "dispatch-ready"
+
+
+@pytest.mark.parametrize("other_source", ["markdown", "json"])
+@pytest.mark.parametrize(
+    "change,approved,captured,recovery,ready",
+    [
+        ("outside", False, False, True, True),
+        ("inside", False, False, True, False),
+        ("identity", False, False, True, False),
+        ("missing", False, False, True, False),
+        ("outside", True, False, True, True),
+        ("inside", True, False, True, False),
+        ("inside", True, True, True, True),
+        ("outside", False, False, False, True),
+        ("inside", False, False, False, False),
+    ],
+)
+def test_applied_source_recovery_preserves_other_selected_basis(
+    tmp_path, other_source, change, approved, captured, recovery, ready
+):
+    from adaptive_preparation import requirements
+
+    case = applied_source_case(tmp_path, other_source=other_source)
+    repository, qualification, _, _, _ = case
+    assignment = qualification["assignment"]
+    context = qualification["applied_source_recovery"]
+    context["sources"] = [
+        row for row in context["sources"] if row["path"] == "roadmap.md"
+    ]
+    context["proposal"]["targets"].pop("dossier.md")
+    dossier = repository / "dossier.md"
+    original = (repository / ".captures/dossier.md").read_bytes()
+    current = original
+    if change == "outside":
+        current = current.replace(b"Original note.", b"Changed outside selected basis.")
+    elif change == "inside":
+        current = current.replace(b"Keep every", b"Change the actual")
+    elif change == "identity":
+        current = current.replace(
+            b"## Selected" if other_source == "markdown" else b'"first"',
+            b"## Renamed" if other_source == "markdown" else b'"renamed"',
+        )
+    if change == "missing":
+        assert not dossier.exists()
+    else:
+        dossier.write_bytes(current)
+        assert current != original
+    if approved:
+        context["proposal"]["targets"]["dossier.md"] = {
+            "before": sha256(original),
+            "after": sha256(current),
+        }
+    context["approval"]["proposal"] = copy.deepcopy(context["proposal"])
+    if captured:
+        context["sources"].append(
+            {"path": "dossier.md", "capture": ".captures/dossier.md"}
+        )
+    if change in {"outside", "inside"}:
+        only_b = copy.deepcopy(assignment)
+        only_b["work"]["requirement_sources"] = [
+            row
+            for row in only_b["work"]["requirement_sources"]
+            if row["path"] == "dossier.md"
+        ]
+        original_b = {
+            key: row
+            for key, row in assignment["target"]["prepared_definition"][
+                "coverage_plan"
+            ]["criteria"].items()
+            if row["source"] == "dossier.md"
+        }
+        only_b["success_criteria"] = list(original_b)
+        assert (
+            requirements(repository, only_b, verify_sources=False) == original_b
+        ) == (change == "outside")
+    pending_source_node(case, "document")
+    if not recovery:
+        (repository / "roadmap.md").write_bytes(
+            (repository / ".captures/roadmap.md").read_bytes()
+        )
+        qualification.pop("applied_source_recovery")
+    if not ready:
+        with pytest.raises(BundleError):
+            continue_applied(case)
+        return
+    result = continue_applied(case)
+    assert result["status"] == "dispatch-ready"
+    assert result["dispatch"]["work"] == assignment["work"]
+    if approved:
+        dossier.write_bytes(current + b" ")
+        with pytest.raises(BundleError) as error:
+            continue_applied(case)
+        assert error.value.code == "reapproval-required"
+
+
+def other_selected_recovery_case(repository, family, other_source, mode):
+    case = applied_source_case(repository, family, other_source=other_source)
+    context = case[1]["applied_source_recovery"]
+    context["sources"] = [
+        row for row in context["sources"] if row["path"] == "roadmap.md"
+    ]
+    context["proposal"]["targets"].pop("dossier.md")
+    context["approval"]["proposal"] = copy.deepcopy(context["proposal"])
+    (repository / "dossier.md").write_bytes(
+        (repository / ".captures/dossier.md").read_bytes()
+    )
+    if mode == "finalization":
+        settle_applied_sources(case)
+    else:
+        pending_source_node(
+            case,
+            {"task": "document", "goal": "complete-work", "design": "apply-documents"}[
+                family
+            ],
+        )
+    return case
+
+
+def retained_reassessment_route(case):
+    import yaml
+    from adaptive_suitability import reassessment_route
+
+    retained = case[4]
+    source = Path(retained["retention"]["path"]) / "procedure.yaml"
+    return reassessment_route(yaml.safe_load(source.read_bytes()), retained["binding"])
+
+
+@pytest.mark.parametrize("family", ["task", "goal", "design"])
+@pytest.mark.parametrize("other_source", ["markdown", "json"])
+@pytest.mark.parametrize("mode", ["applied", "finalization"])
+def test_native_recovered_basis_change_returns_existing_qualified_route(
+    tmp_path, family, other_source, mode
+):
+    case = other_selected_recovery_case(tmp_path, family, other_source, mode)
+    baseline = continue_applied(case)
+    assert baseline["status"] == (
+        "finalization-resolved" if mode == "finalization" else "dispatch-ready"
+    )
+    expected = retained_reassessment_route(case)
+    if family == "task":
+        assert expected["status"] == "existing-planning-evaluator"
+        assert expected["nodes"] == ["evaluator-plan"]
+    elif family == "goal":
+        assert expected["status"] == "missing-topology"
+        assert expected["nodes"] == []
+    path = tmp_path / "dossier.md"
+    original = path.read_bytes()
+    path.write_bytes(original.replace(b"Keep every", b"Changed actual"))
+    assert path.read_bytes() != original
+    with pytest.raises(BundleError) as error:
+        continue_applied(case)
+    assert error.value.code == "reassessment-required"
+    assert error.value.details == expected
+
+
+@pytest.mark.parametrize("family", ["task", "goal", "design"])
+@pytest.mark.parametrize("other_source", ["markdown", "json"])
+@pytest.mark.parametrize("mode", ["applied", "finalization"])
+def test_native_final_recovered_basis_change_retains_qualified_route(
+    tmp_path, family, other_source, mode
+):
+    case = other_selected_recovery_case(tmp_path, family, other_source, mode)
+    assert continue_applied(case)["status"] == (
+        "finalization-resolved" if mode == "finalization" else "dispatch-ready"
+    )
+    expected = retained_reassessment_route(case)
+    original_read = case[2].read
+    reads = []
+
+    def changed(argv, command, schemas):
+        if command == "session.status":
+            reads.append(command)
+            if len(reads) == 2:
+                path = tmp_path / "dossier.md"
+                original = path.read_bytes()
+                path.write_bytes(original.replace(b"Keep every", b"Changed actual"))
+                assert path.read_bytes() != original
+        return original_read(argv, command, schemas)
+
+    case[2].read = changed
+    with pytest.raises(BundleError) as error:
+        continue_applied(case)
+    assert reads == ["session.status", "session.status"]
+    assert error.value.code == "reassessment-required"
+    assert error.value.details == expected
+
+
+@pytest.mark.parametrize("fence", ["session", "work", "attempt", "invalidated"])
+def test_native_recovery_fence_is_not_relabelled_as_a_planning_route(tmp_path, fence):
+    case = other_selected_recovery_case(tmp_path, "task", "json", "applied")
+    context = case[1]["applied_source_recovery"]
+    if fence == "session":
+        context["checkpoint"]["procedure"]["session"]["revision"] += 1
+    elif fence == "work":
+        context["checkpoint"]["work"]["epic"] = "EPIC-OTHER"
+    elif fence == "attempt":
+        context["checkpoint"]["procedure"]["current"]["attempt"]["attempt_id"] = "stale"
+    else:
+        case[3]["status"]["current_trace_history"]["entries"][0]["validity"] = (
+            "invalidated"
+        )
+    with pytest.raises(BundleError) as baseline:
+        continue_applied(case)
+    assert "status" not in baseline.value.details
+    path = tmp_path / "dossier.md"
+    path.write_bytes(path.read_bytes().replace(b"Keep every", b"Changed actual"))
+    with pytest.raises(BundleError) as changed:
+        continue_applied(case)
+    assert changed.value.code == baseline.value.code
+    assert changed.value.details == baseline.value.details

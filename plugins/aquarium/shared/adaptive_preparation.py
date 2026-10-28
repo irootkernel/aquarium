@@ -208,6 +208,74 @@ def read_basis(repository, reference):
     return raw
 
 
+def member_scope(assignment, criteria):
+    """Validate an optional member projection without repartitioning its sources."""
+    plan = assignment["target"]["procedure_plan"]
+    if "member_scope" not in plan:
+        return None
+    scope = object_value(plan["member_scope"], "member_scope")
+    if (
+        plan["entrypoint"] != "epic-squad"
+        or not usable_reason(scope.get("task"))
+        or scope["task"] != assignment["work"].get("task")
+    ):
+        raise BundleError(
+            "incompatible", "Member scope must identify the actual Squad Task"
+        )
+    expected = {
+        (identifier, part["id"]): part.get("text")
+        for identifier, row in criteria.items()
+        for part in row["parts"]
+    }
+    if any(not usable_reason(text) for text in expected.values()):
+        raise BundleError(
+            "not-established", "Member scope needs readable original part text"
+        )
+    observed = set()
+    for row in object_rows(scope.get("criteria"), "member_scope.criteria"):
+        key = (row.get("criterion"), row.get("part"))
+        if (
+            any(not isinstance(value, str) for value in key)
+            or key not in expected
+            or key in observed
+        ):
+            raise BundleError(
+                "not-established", "Member scope needs every original pair exactly once"
+            )
+        original = criteria[key[0]]
+        if (
+            row.get("source") != original["source"]
+            or row.get("source_sha256") != original["source_sha256"]
+        ):
+            raise BundleError(
+                "source-drift", "Member scope original source identity changed"
+            )
+        observed.add(key)
+        count = 0
+        for category in ("due", "later", "gates"):
+            clauses = object_rows(row.get(category), "Member " + category + " clauses")
+            count += len(clauses)
+            for clause in clauses:
+                if (
+                    not usable_reason(clause.get("clause"))
+                    or clause["clause"] not in expected[key]
+                    or not usable_reason(clause.get("basis"))
+                ):
+                    raise BundleError(
+                        "not-established",
+                        "Member applicability needs original clause text and a basis",
+                    )
+        if not count:
+            raise BundleError(
+                "not-established", "An original pair lacks member applicability"
+            )
+    if observed != set(expected):
+        raise BundleError(
+            "not-established", "Member scope omits original criterion parts"
+        )
+    return copy.deepcopy(scope)
+
+
 def requirements(repository, assignment, *, verify_sources=True, source_reader=None):
     if source_reader is not None and verify_sources:
         raise BundleError(
@@ -299,6 +367,7 @@ def requirements(repository, assignment, *, verify_sources=True, source_reader=N
                 "Assigned criterion lacks original-source trace",
                 {"criterion": criterion},
             )
+    member_scope(assignment, result)
     return result
 
 
@@ -552,7 +621,7 @@ def fit(assignment, criteria, document, mapping, coverage):
     from adaptive_execution import validate_phase_mappings
 
     validate_phase_mappings(document, mapping, assignment)
-    return {
+    result = {
         "criteria": criteria,
         "coverage": coverage,
         "effects": plan["effects"],
@@ -561,6 +630,10 @@ def fit(assignment, criteria, document, mapping, coverage):
         "customization_disposition": plan.get("customization_disposition"),
         "semantic_completeness": "requires-independent-original-source-assessment",
     }
+    scope = member_scope(assignment, criteria)
+    if scope is not None:
+        result["member_scope"] = scope
+    return result
 
 
 def select(repository, assignment, *, client=None):

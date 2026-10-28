@@ -7,7 +7,7 @@ from pathlib import Path
 from adaptive_bundles import BundleError, contained, git, read_regular, sha256
 from adaptive_definitions import definition_id
 from adaptive_design import approved_targets, current_targets
-from adaptive_preparation import object_rows, object_value, read_basis
+from adaptive_preparation import object_rows, object_value, read_basis, requirements
 
 
 def identity(value):
@@ -146,6 +146,40 @@ def approved_sources(
         )
     if continuation:
         current_attempt(observation)
+    if "work" in recovery:
+        same_work(repository, assignment["work"], recovery["work"])
+    return _approved_original_reader(
+        repository, assignment, {**recovery, "work": checkpoint["work"]}
+    )
+
+
+def approved_original_sources(repository, assignment, recovery):
+    """Verify ordinary approved postimages and recover the exact original bytes."""
+    source_reader, context = _approved_original_reader(repository, assignment, recovery)
+    prepared = (
+        assignment["target"]
+        .get("prepared_definition", {})
+        .get("coverage_plan", {})
+        .get("criteria")
+    )
+    if (
+        prepared is not None
+        and requirements(
+            repository, assignment, verify_sources=False, source_reader=source_reader
+        )
+        != prepared
+    ):
+        raise BundleError(
+            "reassessment-required",
+            "Current extracted original requirements differ from the approved basis",
+        )
+    return source_reader, context
+
+
+def _approved_original_reader(repository, assignment, recovery):
+    """Keep source and approval checks separate from prepared-basis consumption."""
+    recovery = object_value(recovery, "Approved source recovery")
+    same_work(repository, assignment["work"], recovery.get("work"))
     family = assignment["target"]["procedure_plan"]["family"]
     approval_sources = (
         ("user",) if family in {"design", "diagnosis"} else ("user", "epic-delegation")
@@ -204,6 +238,8 @@ def approved_sources(
             or path in recovered
             or images is None
             or first_targets[path]["before"] != original["sha256"]
+            or ("sha256" in row and row["sha256"] != original["sha256"])
+            or ("applied" in row and row["applied"] != images)
         ):
             raise BundleError(
                 "not-established",
@@ -284,13 +320,26 @@ def approved_sources(
         raise BundleError(
             "invalid-input", "No approved affected original source was supplied"
         )
+    prepared = (
+        assignment["target"]
+        .get("prepared_definition", {})
+        .get("coverage_plan", {})
+        .get("criteria")
+    )
 
     def source_reader(reference):
         if reference["path"] in recovered:
             return recovered[reference["path"]]
+        if prepared is None:
+            return read_basis(repository, reference)
         return read_regular(repository, Path(reference["path"]))
 
-    context = {"sources": readable}
+    if prepared is None:
+        requirements(
+            repository, assignment, verify_sources=False, source_reader=source_reader
+        )
+
+    context = {"sources": readable, "work": copy.deepcopy(assignment["work"])}
     if "changes" in recovery:
         context.update(changes=copy.deepcopy(changes), targets=copy.deepcopy(targets))
     else:
