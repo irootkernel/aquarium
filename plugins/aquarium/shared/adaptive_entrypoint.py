@@ -1,8 +1,8 @@
-"""Choose Design Podway applicability before importing native or source helpers."""
+"""Choose Podway applicability before importing native or source helpers."""
 
 from pathlib import Path
 
-ENTRYPOINTS = {"new-feature", "new-project", "refactor"}
+ENTRYPOINTS = {"new-feature", "new-project", "refactor", "epic-squad"}
 
 
 class EntryPointError(ValueError):
@@ -18,6 +18,22 @@ def branch(repository, entrypoint, *, opt_out=False):
             )
         return None
     scope = Path(repository).expanduser().resolve()
+    if entrypoint == "epic-squad":
+        if not opt_out:
+            return None
+        return {
+            "status": "podway-inapplicable",
+            "reason": "explicit-opt-out",
+            "entrypoint": entrypoint,
+            "dispatch": None,
+            "next_owner": "Coordinator",
+            "requirements": [
+                "Original Epic/Task criteria, both independent plan scopes and first result coverage",
+                "One Active Writer, current evidence composition and unresolved obligations",
+                "Exact delegated member/correction acceptance and separate unconsumed commit grants",
+                "Independent assembled-Epic validation and actual user acceptance before final closeout",
+            ],
+        }
     git_backed = any((parent / ".git").exists() for parent in (scope, *scope.parents))
     if opt_out or (entrypoint == "new-project" and not git_backed):
         return {

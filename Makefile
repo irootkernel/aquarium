@@ -34,6 +34,8 @@ PYTHON_FILES := \
 	tests/unit/test_adaptive_supersede_unit.py \
 	plugins/aquarium/shared/adaptive_entrypoint.py \
 	plugins/aquarium/shared/adaptive_design.py \
+	plugins/aquarium/shared/adaptive_squad.py \
+	tests/unit/test_adaptive_squad_unit.py \
 	tests/unit/test_adaptive_design_unit.py \
 	plugins/aquarium/shared/adaptive_execution.py \
 	plugins/aquarium/shared/adaptive_finalization.py \

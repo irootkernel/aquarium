@@ -1,0 +1,1786 @@
+schema: podway.procedure/v2
+id: aquarium-squad-goal
+version: "2"
+name: Squad goal collaboration
+purpose: Explicit Squad collaboration boundaries; original requirements, independent suitability, actual evidence and authority remain due.
+goal_tracking: true
+node_definitions:
+  baseline:
+    type: action
+    title: Record original Squad work and authority
+    intent: Record original Squad work and authority
+    instructions:
+      - Preserve actual reports, exact target, current authority and negative results. Coordinator alone advances the native workflow.
+    items:
+      - id: context-brief
+        type: artifact
+        prompt: context brief
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: goal-kind
+        type: choice
+        prompt: goal kind
+        required: true
+        choices:
+          - member-task
+          - pre-validation-remediation
+      - id: workflow-owner
+        type: choice
+        prompt: workflow owner
+        required: true
+        choices:
+          - epic-squad
+      - id: review-route
+        type: choice
+        prompt: review route
+        required: true
+        choices:
+          - not-required
+          - mulgae
+          - herdr
+          - subagent-review
+          - waived
+      - id: authority-reference
+        type: text
+        prompt: authority reference
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: plan-handoff-artifact
+        type: artifact
+        prompt: plan handoff artifact
+        required: false
+        allowed_media_types:
+          - text/markdown
+  prepare-plan:
+    type: action
+    title: Produce the bounded Task plan
+    intent: Produce the bounded Task plan
+    instructions:
+      - Produce only the Task plan, original requirements, dependency handoffs, risk, necessary support work and checks. No implementation authority before both plan scopes and Coordinator Writer assignment.
+    items:
+      - id: executor-handoff
+        type: artifact
+        prompt: executor handoff
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: plan-summary
+        type: text
+        prompt: plan summary
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  assess-task-plan:
+    type: action
+    title: Collect independent Task plan first assessments
+    intent: Collect independent Task plan first assessments
+    instructions:
+      - For first coverage, directly assign TE plus one independent TO for standard risk, or TE plus two complementary TOs for elevated risk. On an actual native plan re-entry, use the current correction classification and original assessment references for only the due affected judgments. Preserve all first reports, original owners and negative results; original coverage is never replaced.
+    items:
+      - id: evaluator-assessment
+        type: artifact
+        prompt: evaluator assessment
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: evaluator-verdict
+        type: choice
+        prompt: evaluator verdict
+        required: true
+        choices:
+          - pass
+          - rework
+          - evidence-needed
+      - id: evaluator-unmet-criteria
+        type: integer
+        prompt: evaluator unmet criteria
+        required: true
+        minimum: 0
+      - id: evaluator-unverified-criteria
+        type: integer
+        prompt: evaluator unverified criteria
+        required: true
+        minimum: 0
+      - id: evaluator-applicability
+        type: check_result
+        prompt: evaluator applicability
+        help: Verify complete actual original scoped assessment delivery, candidate applicability and due criterion states. Record negative verdicts faithfully; a completed Action is not a passing result.
+        required: true
+        operation_id: aquarium-goal-evaluator-applicability
+        operation_digest: sha256:30875a32b0d497c2026cee789403bf23d8aa9d4ee4883760086fb8fdd06e53c8
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: evaluator-checkpoint-result
+        type: check_result
+        prompt: evaluator checkpoint result
+        help: Verify complete actual original scoped assessment delivery, candidate applicability and due criterion states. Record negative verdicts faithfully; a completed Action is not a passing result.
+        required: true
+        operation_id: aquarium-goal-phase-checkpoint
+        operation_digest: sha256:c203fbcc30155d059c21daa3bb51af8f91e723b417fefcdb94ae1aca89938c09
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+  task-plan-basis:
+    type: action
+    title: Record current task-plan evidence composition
+    intent: Record current task-plan evidence composition
+    instructions:
+      - Use adaptive current-composition consumption with target.squad.compositions for this exact placement. Preserve all actual TE, independent Task Operator and EE source reports and original verdicts; a summary is not a substitute.
+      - Reconcile original criteria, direct checks, finite authorized closures, outstanding judgments and current target. Record fail/inconclusive or nonzero counts truthfully. Eligible local closure does not request a fresh TE/EE pass.
+    items:
+      - id: composition-basis
+        type: artifact
+        prompt: composition basis
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: composition-current
+        type: check_result
+        prompt: composition current
+        help: Verify original Task/Epic criteria and all due independent first assessment scopes from actual readable reports, exact reviewed target, preserved original verdicts, permitted finite delta, current direct checks and closure owners. Reject missing, stale, unreadable or unknown evidence and unresolved mandatory judgments. This is Coordinator current-composition verification, never a new Evaluator verdict. Re-record applicable originals after native invalidation under fresh fences. No authority is granted.
+        required: true
+        operation_id: aquarium-squad-composition-current
+        operation_digest: sha256:ee61f218a109ecac00f3c7cb75d81ad5e4ab215db59a17f65521813181d6a9b0
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: composition-scope
+        type: choice
+        prompt: composition scope
+        required: true
+        choices:
+          - task-plan
+          - epic-plan
+          - task-result
+          - integration
+          - epic-closeout
+      - id: composition-goal-outcome
+        type: choice
+        prompt: composition goal outcome
+        required: true
+        choices:
+          - achieved
+          - not-achieved
+      - id: composition-unmet
+        type: integer
+        prompt: composition unmet
+        required: true
+        minimum: 0
+      - id: composition-unverified
+        type: integer
+        prompt: composition unverified
+        required: true
+        minimum: 0
+      - id: pending-local
+        type: integer
+        prompt: pending local
+        required: true
+        minimum: 0
+      - id: pending-low
+        type: integer
+        prompt: pending low
+        required: true
+        minimum: 0
+      - id: current-blockers
+        type: integer
+        prompt: current blockers
+        required: true
+        minimum: 0
+      - id: pending-judgment
+        type: integer
+        prompt: pending judgment
+        required: true
+        minimum: 0
+  decide-task-plan:
+    type: decision
+    title: Decide task-plan readiness
+    objective: Decide task-plan readiness
+    prompt: Decide task-plan readiness?
+    options:
+      - id: ready
+        label: ready
+        criteria: Both due original coverage and current verified composition are satisfied.
+        guards:
+          - evidence:
+              node: task-plan-basis
+              item: composition-current
+            field: outcome
+            equals: pass
+          - evidence:
+              node: task-plan-basis
+              item: composition-scope
+            equals: task-plan
+          - evidence:
+              node: task-plan-basis
+              item: composition-unmet
+            equals: 0
+          - evidence:
+              node: task-plan-basis
+              item: composition-unverified
+            equals: 0
+      - id: rework
+        label: rework
+        criteria: Restore only affected work/assessment under existing authority.
+      - id: evidence-needed
+        label: evidence needed
+        criteria: Recover missing evidence from the same operation or perform due checks.
+      - id: blocked
+        label: blocked
+        criteria: A mandatory obligation or required authority remains unavailable.
+    reason:
+      required: true
+      prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
+  assess-epic-plan:
+    type: action
+    title: Assess scoped Epic direction and handoffs
+    intent: Assess scoped Epic direction and handoffs
+    instructions:
+      - The continuous EE first assesses the ready exact Task plan, original Epic direction, verified prior outputs and downstream handoffs. First scoped plan coverage is always due. On actual native plan re-entry, request only classified affected judgment from the original assessor or its supported replacement and due reviewers; preserve original reports. Future Task implementation is not due here.
+    items:
+      - id: evaluator-assessment
+        type: artifact
+        prompt: evaluator assessment
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: evaluator-verdict
+        type: choice
+        prompt: evaluator verdict
+        required: true
+        choices:
+          - pass
+          - rework
+          - evidence-needed
+      - id: evaluator-unmet-criteria
+        type: integer
+        prompt: evaluator unmet criteria
+        required: true
+        minimum: 0
+      - id: evaluator-unverified-criteria
+        type: integer
+        prompt: evaluator unverified criteria
+        required: true
+        minimum: 0
+      - id: evaluator-applicability
+        type: check_result
+        prompt: evaluator applicability
+        help: Verify complete actual original scoped assessment delivery, candidate applicability and due criterion states. Record negative verdicts faithfully; a completed Action is not a passing result.
+        required: true
+        operation_id: aquarium-goal-evaluator-applicability
+        operation_digest: sha256:30875a32b0d497c2026cee789403bf23d8aa9d4ee4883760086fb8fdd06e53c8
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: evaluator-checkpoint-result
+        type: check_result
+        prompt: evaluator checkpoint result
+        help: Verify complete actual original scoped assessment delivery, candidate applicability and due criterion states. Record negative verdicts faithfully; a completed Action is not a passing result.
+        required: true
+        operation_id: aquarium-goal-phase-checkpoint
+        operation_digest: sha256:c203fbcc30155d059c21daa3bb51af8f91e723b417fefcdb94ae1aca89938c09
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+  epic-plan-basis:
+    type: action
+    title: Record current epic-plan evidence composition
+    intent: Record current epic-plan evidence composition
+    instructions:
+      - Use adaptive current-composition consumption with target.squad.compositions for this exact placement. Preserve all actual TE, independent Task Operator and EE source reports and original verdicts; a summary is not a substitute.
+      - Reconcile original criteria, direct checks, finite authorized closures, outstanding judgments and current target. Record fail/inconclusive or nonzero counts truthfully. Eligible local closure does not request a fresh TE/EE pass.
+    items:
+      - id: composition-basis
+        type: artifact
+        prompt: composition basis
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: composition-current
+        type: check_result
+        prompt: composition current
+        help: Verify original Task/Epic criteria and all due independent first assessment scopes from actual readable reports, exact reviewed target, preserved original verdicts, permitted finite delta, current direct checks and closure owners. Reject missing, stale, unreadable or unknown evidence and unresolved mandatory judgments. This is Coordinator current-composition verification, never a new Evaluator verdict. Re-record applicable originals after native invalidation under fresh fences. No authority is granted.
+        required: true
+        operation_id: aquarium-squad-composition-current
+        operation_digest: sha256:ee61f218a109ecac00f3c7cb75d81ad5e4ab215db59a17f65521813181d6a9b0
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: composition-scope
+        type: choice
+        prompt: composition scope
+        required: true
+        choices:
+          - task-plan
+          - epic-plan
+          - task-result
+          - integration
+          - epic-closeout
+      - id: composition-goal-outcome
+        type: choice
+        prompt: composition goal outcome
+        required: true
+        choices:
+          - achieved
+          - not-achieved
+      - id: composition-unmet
+        type: integer
+        prompt: composition unmet
+        required: true
+        minimum: 0
+      - id: composition-unverified
+        type: integer
+        prompt: composition unverified
+        required: true
+        minimum: 0
+      - id: pending-local
+        type: integer
+        prompt: pending local
+        required: true
+        minimum: 0
+      - id: pending-low
+        type: integer
+        prompt: pending low
+        required: true
+        minimum: 0
+      - id: current-blockers
+        type: integer
+        prompt: current blockers
+        required: true
+        minimum: 0
+      - id: pending-judgment
+        type: integer
+        prompt: pending judgment
+        required: true
+        minimum: 0
+  decide-epic-plan:
+    type: decision
+    title: Decide epic-plan readiness
+    objective: Decide epic-plan readiness
+    prompt: Decide epic-plan readiness?
+    options:
+      - id: ready
+        label: ready
+        criteria: Both due original coverage and current verified composition are satisfied.
+        guards:
+          - evidence:
+              node: epic-plan-basis
+              item: composition-current
+            field: outcome
+            equals: pass
+          - evidence:
+              node: epic-plan-basis
+              item: composition-scope
+            equals: epic-plan
+          - evidence:
+              node: epic-plan-basis
+              item: composition-unmet
+            equals: 0
+          - evidence:
+              node: epic-plan-basis
+              item: composition-unverified
+            equals: 0
+      - id: rework
+        label: rework
+        criteria: Restore only affected work/assessment under existing authority.
+      - id: evidence-needed
+        label: evidence needed
+        criteria: Recover missing evidence from the same operation or perform due checks.
+      - id: blocked
+        label: blocked
+        criteria: A mandatory obligation or required authority remains unavailable.
+    reason:
+      required: true
+      prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
+  deliver-work:
+    type: action
+    title: Deliver the authorized work or assembled Epic audit
+    intent: Deliver the authorized work or assembled Epic audit
+    instructions:
+      - Only the Coordinator grants the settled Writer assignment. Deliver current artifacts and due checks; retain original findings and exact candidate. Validation independently audits the assembled Epic and cannot infer integration from member passes.
+    items:
+      - id: executor-handoff
+        type: artifact
+        prompt: executor handoff
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: work-summary
+        type: text
+        prompt: work summary
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  assess-candidate:
+    type: action
+    title: Collect independent current task-result coverage
+    intent: Collect independent current task-result coverage
+    instructions:
+      - Collect the actual TE and risk-based first Task panel plus the scoped EE Task contribution. Preserve each original report and meaningful disagreement. Coordinator product review and nonconflicting due checks join the same frozen candidate.
+    items:
+      - id: evaluator-assessment
+        type: artifact
+        prompt: evaluator assessment
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: evaluator-verdict
+        type: choice
+        prompt: evaluator verdict
+        required: true
+        choices:
+          - pass
+          - rework
+          - evidence-needed
+      - id: evaluator-unmet-criteria
+        type: integer
+        prompt: evaluator unmet criteria
+        required: true
+        minimum: 0
+      - id: evaluator-unverified-criteria
+        type: integer
+        prompt: evaluator unverified criteria
+        required: true
+        minimum: 0
+      - id: evaluator-applicability
+        type: check_result
+        prompt: evaluator applicability
+        help: Verify complete actual original scoped assessment delivery, candidate applicability and due criterion states. Record negative verdicts faithfully; a completed Action is not a passing result.
+        required: true
+        operation_id: aquarium-goal-evaluator-applicability
+        operation_digest: sha256:30875a32b0d497c2026cee789403bf23d8aa9d4ee4883760086fb8fdd06e53c8
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: evaluator-checkpoint-result
+        type: check_result
+        prompt: evaluator checkpoint result
+        help: Verify complete actual original scoped assessment delivery, candidate applicability and due criterion states. Record negative verdicts faithfully; a completed Action is not a passing result.
+        required: true
+        operation_id: aquarium-goal-phase-checkpoint
+        operation_digest: sha256:c203fbcc30155d059c21daa3bb51af8f91e723b417fefcdb94ae1aca89938c09
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+  classify-corrections:
+    type: action
+    title: Classify the complete current issue set
+    intent: Classify the complete current issue set
+    instructions:
+      - Preserve actual reports, exact target, current authority and negative results. Coordinator alone advances the native workflow.
+    items:
+      - id: correction-basis
+        type: artifact
+        prompt: correction basis
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: correction-route
+        type: choice
+        prompt: correction route
+        required: true
+        choices:
+          - ready
+          - local
+          - affected
+          - plan
+          - evidence
+          - blocked
+      - id: correction-summary
+        type: text
+        prompt: correction summary
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  decide-corrections:
+    type: decision
+    title: Select the affected correction route
+    objective: Select the affected correction route
+    prompt: Select the affected correction route?
+    options:
+      - id: ready
+        label: ready
+        criteria: No current correction or missing judgment remains.
+        guards:
+          - evidence:
+              node: classify-corrections
+              item: correction-route
+            equals: ready
+      - id: local
+        label: local
+        criteria: Every current obligation admits finite direct verification without new independent judgment.
+        guards:
+          - evidence:
+              node: classify-corrections
+              item: correction-route
+            equals: local
+      - id: affected
+        label: affected
+        criteria: At least one required affected behavioral or contract judgment remains.
+        guards:
+          - evidence:
+              node: classify-corrections
+              item: correction-route
+            equals: affected
+      - id: plan
+        label: plan
+        criteria: Changed premises invalidate one or both plan scopes.
+        guards:
+          - evidence:
+              node: classify-corrections
+              item: correction-route
+            equals: plan
+      - id: evidence
+        label: evidence
+        criteria: Missing execution or original evidence needs same-operation recovery.
+        guards:
+          - evidence:
+              node: classify-corrections
+              item: correction-route
+            equals: evidence
+      - id: blocked
+        label: blocked
+        criteria: Required effect, capability or authority is unavailable.
+        guards:
+          - evidence:
+              node: classify-corrections
+              item: correction-route
+            equals: blocked
+    reason:
+      required: true
+      prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
+  local-correction:
+    type: action
+    title: Perform only local-correction
+    intent: Perform only local-correction
+    instructions:
+      - Restore only the admitted obligations under the Coordinator Writer grant. Separate test and review scope. Retain original priorities/verdicts and current direct proof. Local eligibility requires complete first coverage and no new unresolved judgment; mixed nonlocal work keeps its affected route.
+    items:
+      - id: executor-handoff
+        type: artifact
+        prompt: executor handoff
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: correction-summary
+        type: text
+        prompt: correction summary
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  affected-correction:
+    type: action
+    title: Perform only affected-correction
+    intent: Perform only affected-correction
+    instructions:
+      - Restore only the admitted obligations under the Coordinator Writer grant. Separate test and review scope. Retain original priorities/verdicts and current direct proof. Local eligibility requires complete first coverage and no new unresolved judgment; mixed nonlocal work keeps its affected route.
+    items:
+      - id: executor-handoff
+        type: artifact
+        prompt: executor handoff
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: correction-summary
+        type: text
+        prompt: correction summary
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  assess-affected:
+    type: action
+    title: Assess only due affected judgments
+    intent: Assess only due affected judgments
+    instructions:
+      - Request only due affected judgments from the classified primary, correction reviewers and unresolved original assessors or supported replacements. Preserve applicable first reports and the exact cumulative delta; do not relabel an affected assessment as a whole-candidate pass.
+    items:
+      - id: evaluator-assessment
+        type: artifact
+        prompt: evaluator assessment
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: evaluator-verdict
+        type: choice
+        prompt: evaluator verdict
+        required: true
+        choices:
+          - pass
+          - rework
+          - evidence-needed
+      - id: evaluator-unmet-criteria
+        type: integer
+        prompt: evaluator unmet criteria
+        required: true
+        minimum: 0
+      - id: evaluator-unverified-criteria
+        type: integer
+        prompt: evaluator unverified criteria
+        required: true
+        minimum: 0
+      - id: evaluator-applicability
+        type: check_result
+        prompt: evaluator applicability
+        help: Verify complete actual original scoped assessment delivery, candidate applicability and due criterion states. Record negative verdicts faithfully; a completed Action is not a passing result.
+        required: true
+        operation_id: aquarium-goal-evaluator-applicability
+        operation_digest: sha256:30875a32b0d497c2026cee789403bf23d8aa9d4ee4883760086fb8fdd06e53c8
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: evaluator-checkpoint-result
+        type: check_result
+        prompt: evaluator checkpoint result
+        help: Verify complete actual original scoped assessment delivery, candidate applicability and due criterion states. Record negative verdicts faithfully; a completed Action is not a passing result.
+        required: true
+        operation_id: aquarium-goal-phase-checkpoint
+        operation_digest: sha256:c203fbcc30155d059c21daa3bb51af8f91e723b417fefcdb94ae1aca89938c09
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+  recover-evidence:
+    type: action
+    title: Recover the same original operation evidence
+    intent: Recover the same original operation evidence
+    instructions:
+      - Preserve actual reports, exact target, current authority and negative results. Coordinator alone advances the native workflow.
+    items:
+      - id: recovered-evidence
+        type: artifact
+        prompt: recovered evidence
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: recovery-summary
+        type: text
+        prompt: recovery summary
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  current-composition:
+    type: action
+    title: Record current task-result evidence composition
+    intent: Record current task-result evidence composition
+    instructions:
+      - Use adaptive current-composition consumption with target.squad.compositions for this exact placement. Preserve all actual TE, independent Task Operator and EE source reports and original verdicts; a summary is not a substitute.
+      - Reconcile original criteria, direct checks, finite authorized closures, outstanding judgments and current target. Record fail/inconclusive or nonzero counts truthfully. Eligible local closure does not request a fresh TE/EE pass.
+    items:
+      - id: composition-basis
+        type: artifact
+        prompt: composition basis
+        required: true
+        allowed_media_types:
+          - application/json
+      - id: composition-current
+        type: check_result
+        prompt: composition current
+        help: Verify original Task/Epic criteria and all due independent first assessment scopes from actual readable reports, exact reviewed target, preserved original verdicts, permitted finite delta, current direct checks and closure owners. Reject missing, stale, unreadable or unknown evidence and unresolved mandatory judgments. This is Coordinator current-composition verification, never a new Evaluator verdict. Re-record applicable originals after native invalidation under fresh fences. No authority is granted.
+        required: true
+        operation_id: aquarium-squad-composition-current
+        operation_digest: sha256:ee61f218a109ecac00f3c7cb75d81ad5e4ab215db59a17f65521813181d6a9b0
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+      - id: composition-scope
+        type: choice
+        prompt: composition scope
+        required: true
+        choices:
+          - task-plan
+          - epic-plan
+          - task-result
+          - integration
+          - epic-closeout
+      - id: composition-goal-outcome
+        type: choice
+        prompt: composition goal outcome
+        required: true
+        choices:
+          - achieved
+          - not-achieved
+      - id: composition-unmet
+        type: integer
+        prompt: composition unmet
+        required: true
+        minimum: 0
+      - id: composition-unverified
+        type: integer
+        prompt: composition unverified
+        required: true
+        minimum: 0
+      - id: pending-local
+        type: integer
+        prompt: pending local
+        required: true
+        minimum: 0
+      - id: pending-low
+        type: integer
+        prompt: pending low
+        required: true
+        minimum: 0
+      - id: current-blockers
+        type: integer
+        prompt: current blockers
+        required: true
+        minimum: 0
+      - id: pending-judgment
+        type: integer
+        prompt: pending judgment
+        required: true
+        minimum: 0
+  check-current-criteria:
+    type: decision
+    title: Check current composition obligations
+    objective: Check current composition obligations
+    prompt: Check current composition obligations?
+    options:
+      - id: current
+        label: current
+        criteria: All due original obligations are settled.
+        guards:
+          - evidence:
+              node: current-composition
+              item: composition-unmet
+            equals: 0
+          - evidence:
+              node: current-composition
+              item: composition-unverified
+            equals: 0
+          - evidence:
+              node: current-composition
+              item: current-blockers
+            equals: 0
+      - id: rework
+        label: rework
+        criteria: Retain and resolve the exact current obligations.
+    reason:
+      required: true
+      prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
+  check-current-pending:
+    type: decision
+    title: Check current composition obligations
+    objective: Check current composition obligations
+    prompt: Check current composition obligations?
+    options:
+      - id: current
+        label: current
+        criteria: All due original obligations are settled.
+        guards:
+          - evidence:
+              node: current-composition
+              item: pending-local
+            equals: 0
+          - evidence:
+              node: current-composition
+              item: pending-low
+            equals: 0
+          - evidence:
+              node: current-composition
+              item: pending-judgment
+            equals: 0
+      - id: rework
+        label: rework
+        criteria: Retain and resolve the exact current obligations.
+    reason:
+      required: true
+      prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
+  assess-goal:
+    type: decision
+    title: Assess original Squad work-unit outcome
+    objective: Assess original Squad work-unit outcome
+    prompt: Assess original Squad work-unit outcome?
+    options:
+      - id: achieved
+        label: achieved
+        criteria: Every original current obligation is covered by actual first reports and permitted verified deltas.
+        guards:
+          - evidence:
+              node: current-composition
+              item: composition-current
+            field: outcome
+            equals: pass
+          - evidence:
+              node: current-composition
+              item: composition-goal-outcome
+            equals: achieved
+          - evidence:
+              node: current-composition
+              item: composition-scope
+            equals: task-result
+      - id: not-achieved
+        label: not achieved
+        criteria: Required current work or independent judgment remains.
+      - id: stopped
+        label: stopped
+        criteria: Stop with original gaps and pending effects visible.
+      - id: superseded
+        label: superseded
+        criteria: The separately reconciled goal is superseded.
+    reason:
+      required: true
+      prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
+    assessment:
+      target: session_goal
+      outcomes:
+        achieved: achieved
+        not-achieved: not_achieved
+        stopped: not_achieved
+        superseded: superseded
+  record-acceptance:
+    type: action
+    title: Record exact candidate acceptance and distinct grant
+    intent: Record exact candidate acceptance and distinct grant
+    instructions:
+      - Preserve actual reports, exact target, current authority and negative results. Coordinator alone advances the native workflow.
+    items:
+      - id: acceptance-source
+        type: choice
+        prompt: acceptance source
+        required: true
+        choices:
+          - user
+          - epic-delegation
+      - id: acceptance-authority
+        type: text
+        prompt: acceptance authority
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: accepted-target
+        type: text
+        prompt: accepted target
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: grant-kind
+        type: choice
+        prompt: grant kind
+        required: true
+        choices:
+          - member
+          - correction
+          - conditional-closeout
+      - id: grant-reference
+        type: text
+        prompt: grant reference
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+      - id: grant-current
+        type: check_result
+        prompt: grant current
+        help: Verify actual exact accepted candidate, original authority and distinct unconsumed member/correction/conditional-closeout grant. Final closeout needs actual user acceptance. This check grants no effects.
+        required: true
+        operation_id: aquarium-squad-grant-current
+        operation_digest: sha256:70ca0fe7d53bd6b851ff7702535cd0b14911c535f7fab8ff6ef78b4452d5853a
+        accepted_outcomes:
+          - pass
+          - fail
+          - inconclusive
+  approve-closeout:
+    type: decision
+    title: Accept exact scoped Squad result
+    objective: Accept exact scoped Squad result
+    prompt: Accept exact scoped Squad result?
+    options:
+      - id: approved
+        label: approved
+        criteria: Actual user accepts this exact candidate and applicable grant.
+        guards:
+          - evidence:
+              node: record-acceptance
+              item: acceptance-source
+            equals: user
+          - evidence:
+              node: record-acceptance
+              item: grant-current
+            field: outcome
+            equals: pass
+      - id: delegated
+        label: delegated
+        criteria: Coordinator accepts exact member/correction or continuing internal validation under the envelope.
+        guards:
+          - evidence:
+              node: record-acceptance
+              item: acceptance-source
+            equals: epic-delegation
+          - evidence:
+              node: record-acceptance
+              item: grant-current
+            field: outcome
+            equals: pass
+          - evidence:
+              node: baseline
+              item: workflow-owner
+            equals: epic-squad
+      - id: changes-requested
+        label: changes requested
+        criteria: Renew only affected work and evidence; never reuse exact acceptance after target change.
+    reason:
+      required: true
+      prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
+  closeout:
+    type: action
+    title: Commit through required tooling and verify native finalization
+    intent: Commit through required tooling and verify native finalization
+    instructions:
+      - The Coordinator alone invokes task-commit as aquarium:epic-squad under the exact unconsumed grant. Preserve original reports, current composition, lifecycle/record/release-note decisions and post-hook identity. Recover a successful commit without replay; complete native finalization separately. No push or installation is implied.
+    items:
+      - id: closeout-summary
+        type: text
+        prompt: closeout summary
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  record-stop:
+    type: action
+    title: Record actual stopped boundary
+    intent: Record actual stopped boundary
+    instructions:
+      - Preserve actual reports, exact target, current authority and negative results. Coordinator alone advances the native workflow.
+    items:
+      - id: stop-boundary
+        type: choice
+        prompt: stop boundary
+        required: true
+        choices:
+          - stopped
+          - not-stopped
+      - id: stop-summary
+        type: text
+        prompt: stop summary
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  confirm-stop:
+    type: decision
+    title: Confirm the actual stopped boundary
+    objective: Confirm the actual stopped boundary
+    prompt: Confirm the actual stopped boundary?
+    options:
+      - id: stopped
+        label: stopped
+        criteria: The explicit current stop preserves incomplete obligations.
+        guards:
+          - evidence:
+              node: record-stop
+              item: stop-boundary
+            equals: stopped
+      - id: continue
+        label: continue
+        criteria: No stopped boundary exists; recover current work first.
+    reason:
+      required: true
+      prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
+  stopped-outcome:
+    type: decision
+    title: Record stopped original outcome
+    objective: Record stopped original outcome
+    prompt: Record stopped original outcome?
+    options:
+      - id: invalid-not-stopped
+        label: invalid not stopped
+        criteria: Structurally required achieved outcome is unavailable after confirmed stopped boundary.
+        guards:
+          - evidence:
+              node: record-stop
+              item: stop-boundary
+            equals: not-stopped
+      - id: stopped
+        label: stopped
+        criteria: Preserve actual stopped original outcome and pending effects.
+      - id: not-achieved
+        label: not achieved
+        criteria: Preserve actual not-achieved original outcome and pending effects.
+      - id: superseded
+        label: superseded
+        criteria: Preserve actual superseded original outcome and pending effects.
+    reason:
+      required: true
+      prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
+    assessment:
+      target: session_goal
+      outcomes:
+        invalid-not-stopped: achieved
+        stopped: not_achieved
+        not-achieved: not_achieved
+        superseded: superseded
+  not-achieved-closeout:
+    type: action
+    title: Report unachieved or superseded work
+    intent: Report unachieved or superseded work
+    instructions:
+      - Preserve actual reports, exact target, current authority and negative results. Coordinator alone advances the native workflow.
+    items:
+      - id: closeout-summary
+        type: text
+        prompt: closeout summary
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  stopped-closeout:
+    type: action
+    title: Report the stopped boundary
+    intent: Report the stopped boundary
+    instructions:
+      - Retain exact original criteria, actual reports, unknown guarantees, pending operations and authority. Stopping neither accepts work nor grants commit or restart.
+    items:
+      - id: closeout-summary
+        type: text
+        prompt: closeout summary
+        required: true
+        min_length: 1
+        max_length: 4000
+        multiline: true
+  decide-task-plan-current-1:
+    type: decision
+    title: Check remaining current readiness facts
+    objective: Check remaining current readiness facts
+    prompt: Check remaining current readiness facts?
+    options:
+      - id: current
+        label: current
+        criteria: Remaining original readiness facts are established.
+        guards:
+          - evidence:
+              node: task-plan-basis
+              item: pending-local
+            equals: 0
+          - evidence:
+              node: task-plan-basis
+              item: pending-low
+            equals: 0
+          - evidence:
+              node: task-plan-basis
+              item: current-blockers
+            equals: 0
+          - evidence:
+              node: task-plan-basis
+              item: pending-judgment
+            equals: 0
+      - id: rework
+        label: rework
+        criteria: Return only affected obligations.
+    reason:
+      required: true
+      prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
+  decide-epic-plan-current-1:
+    type: decision
+    title: Check remaining current readiness facts
+    objective: Check remaining current readiness facts
+    prompt: Check remaining current readiness facts?
+    options:
+      - id: current
+        label: current
+        criteria: Remaining original readiness facts are established.
+        guards:
+          - evidence:
+              node: epic-plan-basis
+              item: pending-local
+            equals: 0
+          - evidence:
+              node: epic-plan-basis
+              item: pending-low
+            equals: 0
+          - evidence:
+              node: epic-plan-basis
+              item: current-blockers
+            equals: 0
+          - evidence:
+              node: epic-plan-basis
+              item: pending-judgment
+            equals: 0
+      - id: rework
+        label: rework
+        criteria: Return only affected obligations.
+    reason:
+      required: true
+      prompt: Cite original evidence, exact current target, unresolved obligations and current authority.
+graph:
+  entry: baseline
+  nodes:
+    - id: baseline
+      use: baseline
+      next: prepare-plan
+    - id: prepare-plan
+      use: prepare-plan
+      evidence_from:
+        - node: baseline
+          required: true
+          items:
+            - context-brief
+            - goal-kind
+            - workflow-owner
+            - review-route
+            - authority-reference
+            - plan-handoff-artifact
+      next: assess-task-plan
+    - id: assess-task-plan
+      use: assess-task-plan
+      evidence_from:
+        - node: prepare-plan
+          required: true
+          items:
+            - executor-handoff
+            - plan-summary
+      next: task-plan-basis
+    - id: task-plan-basis
+      use: task-plan-basis
+      evidence_from:
+        - node: prepare-plan
+          required: true
+          items:
+            - executor-handoff
+            - plan-summary
+        - node: assess-task-plan
+          required: true
+          items:
+            - evaluator-assessment
+            - evaluator-verdict
+            - evaluator-unmet-criteria
+            - evaluator-unverified-criteria
+            - evaluator-applicability
+            - evaluator-checkpoint-result
+      next: decide-task-plan
+    - id: decide-task-plan
+      use: decide-task-plan
+      evidence_from:
+        - node: task-plan-basis
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      routes:
+        ready:
+          to: decide-task-plan-current-1
+          effect: advance
+        rework:
+          to: prepare-plan
+          effect: rework
+        evidence-needed:
+          to: task-plan-basis
+          effect: rework
+        blocked:
+          to: record-stop
+          effect: advance
+    - id: assess-epic-plan
+      use: assess-epic-plan
+      evidence_from:
+        - node: prepare-plan
+          required: true
+          items:
+            - executor-handoff
+            - plan-summary
+        - node: task-plan-basis
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      next: epic-plan-basis
+    - id: epic-plan-basis
+      use: epic-plan-basis
+      evidence_from:
+        - node: prepare-plan
+          required: true
+          items:
+            - executor-handoff
+            - plan-summary
+        - node: assess-epic-plan
+          required: true
+          items:
+            - evaluator-assessment
+            - evaluator-verdict
+            - evaluator-unmet-criteria
+            - evaluator-unverified-criteria
+            - evaluator-applicability
+            - evaluator-checkpoint-result
+        - node: task-plan-basis
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      next: decide-epic-plan
+    - id: decide-epic-plan
+      use: decide-epic-plan
+      evidence_from:
+        - node: epic-plan-basis
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      routes:
+        ready:
+          to: decide-epic-plan-current-1
+          effect: advance
+        rework:
+          to: prepare-plan
+          effect: rework
+        evidence-needed:
+          to: epic-plan-basis
+          effect: rework
+        blocked:
+          to: record-stop
+          effect: advance
+    - id: deliver-work
+      use: deliver-work
+      evidence_from:
+        - node: baseline
+          required: true
+          items:
+            - context-brief
+            - goal-kind
+            - workflow-owner
+            - review-route
+            - authority-reference
+            - plan-handoff-artifact
+        - node: prepare-plan
+          required: true
+          items:
+            - executor-handoff
+            - plan-summary
+        - node: task-plan-basis
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+        - node: epic-plan-basis
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      next: assess-candidate
+    - id: assess-candidate
+      use: assess-candidate
+      evidence_from:
+        - node: deliver-work
+          required: true
+          items:
+            - executor-handoff
+            - work-summary
+      next: classify-corrections
+    - id: classify-corrections
+      use: classify-corrections
+      evidence_from:
+        - node: deliver-work
+          required: true
+          items:
+            - executor-handoff
+            - work-summary
+        - node: assess-candidate
+          required: true
+          items:
+            - evaluator-assessment
+            - evaluator-verdict
+            - evaluator-unmet-criteria
+            - evaluator-unverified-criteria
+            - evaluator-applicability
+            - evaluator-checkpoint-result
+      next: decide-corrections
+    - id: decide-corrections
+      use: decide-corrections
+      evidence_from:
+        - node: classify-corrections
+          required: true
+          items:
+            - correction-basis
+            - correction-route
+            - correction-summary
+      routes:
+        ready:
+          to: current-composition
+          effect: advance
+        local:
+          to: local-correction
+          effect: advance
+        affected:
+          to: affected-correction
+          effect: advance
+        plan:
+          to: prepare-plan
+          effect: rework
+        evidence:
+          to: recover-evidence
+          effect: advance
+        blocked:
+          to: record-stop
+          effect: advance
+    - id: local-correction
+      use: local-correction
+      evidence_from:
+        - node: classify-corrections
+          required: true
+          items:
+            - correction-basis
+            - correction-route
+            - correction-summary
+      next: current-composition
+    - id: affected-correction
+      use: affected-correction
+      evidence_from:
+        - node: classify-corrections
+          required: true
+          items:
+            - correction-basis
+            - correction-route
+            - correction-summary
+      next: assess-affected
+    - id: assess-affected
+      use: assess-affected
+      evidence_from:
+        - node: affected-correction
+          required: true
+          items:
+            - executor-handoff
+            - correction-summary
+        - node: classify-corrections
+          required: true
+          items:
+            - correction-basis
+            - correction-route
+            - correction-summary
+      next: current-composition
+    - id: recover-evidence
+      use: recover-evidence
+      evidence_from:
+        - node: classify-corrections
+          required: true
+          items:
+            - correction-basis
+            - correction-route
+            - correction-summary
+      next: current-composition
+    - id: current-composition
+      use: current-composition
+      evidence_from:
+        - node: deliver-work
+          required: true
+          items:
+            - executor-handoff
+            - work-summary
+        - node: assess-candidate
+          required: true
+          items:
+            - evaluator-assessment
+            - evaluator-verdict
+            - evaluator-unmet-criteria
+            - evaluator-unverified-criteria
+            - evaluator-applicability
+            - evaluator-checkpoint-result
+        - node: task-plan-basis
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+        - node: epic-plan-basis
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+        - node: local-correction
+          required: false
+          items:
+            - executor-handoff
+            - correction-summary
+        - node: affected-correction
+          required: false
+          items:
+            - executor-handoff
+            - correction-summary
+        - node: assess-affected
+          required: false
+          items:
+            - evaluator-assessment
+            - evaluator-verdict
+            - evaluator-unmet-criteria
+            - evaluator-unverified-criteria
+            - evaluator-applicability
+            - evaluator-checkpoint-result
+        - node: recover-evidence
+          required: false
+          items:
+            - recovered-evidence
+            - recovery-summary
+      next: check-current-criteria
+    - id: check-current-criteria
+      use: check-current-criteria
+      evidence_from:
+        - node: current-composition
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      routes:
+        current:
+          to: check-current-pending
+          effect: advance
+        rework:
+          to: classify-corrections
+          effect: rework
+    - id: check-current-pending
+      use: check-current-pending
+      evidence_from:
+        - node: current-composition
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      routes:
+        current:
+          to: assess-goal
+          effect: advance
+        rework:
+          to: classify-corrections
+          effect: rework
+    - id: assess-goal
+      use: assess-goal
+      evidence_from:
+        - node: current-composition
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      routes:
+        achieved:
+          to: record-acceptance
+          effect: advance
+        not-achieved:
+          to: classify-corrections
+          effect: rework
+        stopped:
+          to: not-achieved-closeout
+          effect: advance
+        superseded:
+          to: not-achieved-closeout
+          effect: advance
+    - id: record-acceptance
+      use: record-acceptance
+      evidence_from:
+        - node: baseline
+          required: true
+          items:
+            - context-brief
+            - goal-kind
+            - workflow-owner
+            - review-route
+            - authority-reference
+            - plan-handoff-artifact
+        - node: current-composition
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      next: approve-closeout
+    - id: approve-closeout
+      use: approve-closeout
+      evidence_from:
+        - node: baseline
+          required: true
+          items:
+            - context-brief
+            - goal-kind
+            - workflow-owner
+            - review-route
+            - authority-reference
+            - plan-handoff-artifact
+        - node: record-acceptance
+          required: true
+          items:
+            - acceptance-source
+            - acceptance-authority
+            - accepted-target
+            - grant-kind
+            - grant-reference
+            - grant-current
+        - node: current-composition
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      routes:
+        approved:
+          to: closeout
+          effect: advance
+        delegated:
+          to: delegated-closeout
+          effect: advance
+        changes-requested:
+          to: classify-corrections
+          effect: rework
+    - id: closeout
+      use: closeout
+      evidence_from:
+        - node: record-acceptance
+          required: true
+          items:
+            - acceptance-source
+            - acceptance-authority
+            - accepted-target
+            - grant-kind
+            - grant-reference
+            - grant-current
+        - node: current-composition
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      terminal: true
+    - id: delegated-closeout
+      use: closeout
+      evidence_from:
+        - node: record-acceptance
+          required: true
+          items:
+            - acceptance-source
+            - acceptance-authority
+            - accepted-target
+            - grant-kind
+            - grant-reference
+            - grant-current
+        - node: current-composition
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      terminal: true
+    - id: record-stop
+      use: record-stop
+      next: confirm-stop
+    - id: confirm-stop
+      use: confirm-stop
+      evidence_from:
+        - node: record-stop
+          required: true
+          items:
+            - stop-boundary
+            - stop-summary
+      routes:
+        stopped:
+          to: stopped-outcome
+          effect: advance
+        continue:
+          to: prepare-plan
+          effect: rework
+    - id: stopped-outcome
+      use: stopped-outcome
+      evidence_from:
+        - node: record-stop
+          required: true
+          items:
+            - stop-boundary
+            - stop-summary
+      routes:
+        invalid-not-stopped:
+          to: stopped-closeout
+          effect: advance
+        stopped:
+          to: stopped-closeout
+          effect: advance
+        not-achieved:
+          to: stopped-closeout
+          effect: advance
+        superseded:
+          to: stopped-closeout
+          effect: advance
+    - id: not-achieved-closeout
+      use: not-achieved-closeout
+      terminal: true
+    - id: stopped-closeout
+      use: stopped-closeout
+      terminal: true
+    - id: decide-task-plan-current-1
+      use: decide-task-plan-current-1
+      evidence_from:
+        - node: task-plan-basis
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      routes:
+        current:
+          to: assess-epic-plan
+          effect: advance
+        rework:
+          to: prepare-plan
+          effect: rework
+    - id: decide-epic-plan-current-1
+      use: decide-epic-plan-current-1
+      evidence_from:
+        - node: epic-plan-basis
+          required: true
+          items:
+            - composition-basis
+            - composition-current
+            - composition-scope
+            - composition-goal-outcome
+            - composition-unmet
+            - composition-unverified
+            - pending-local
+            - pending-low
+            - current-blockers
+            - pending-judgment
+      routes:
+        current:
+          to: deliver-work
+          effect: advance
+        rework:
+          to: prepare-plan
+          effect: rework
+manual_rework:
+  allowed_targets:
+    - prepare-plan
+    - deliver-work
+    - classify-corrections

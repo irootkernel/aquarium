@@ -9,8 +9,8 @@ from jsonschema import Draft202012Validator
 ASSETS = Path(__file__).resolve().parents[1] / "assets"
 FAMILY_ENTRYPOINTS = {
     "task": {"task-handler"},
-    "goal": {"epic-handler"},
-    "validation": {"epic-validator", "epic-handler"},
+    "goal": {"epic-handler", "epic-squad"},
+    "validation": {"epic-validator", "epic-handler", "epic-squad"},
     "design": {"new-feature", "new-project", "refactor"},
     "diagnosis": {"war-room"},
 }

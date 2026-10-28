@@ -4,9 +4,9 @@
 
 The [epic-squad entrypoint](../skills/epic-squad/SKILL.md) and
 [native coordination instructions](epic-squad-native.md) define the native
-collaboration assignments. Delivery activation remains blocked until TASK-149
-connects qualified definitions, admission, assessment and commit consumers and
-TASK-150 completes integration and recovery. TASK-151 verifies installed native
+collaboration assignments. The [execution contract](epic-squad-execution.md) connects qualified definitions,
+admission, current evidence and commit/design consumers. Delivery activation
+remains blocked until TASK-150 completes integration and recovery. TASK-151 verifies installed native
 delivery. Entrypoint discovery or agent launch alone does not enable delivery.
 Herdr and mixed role execution remain unavailable until their execution, commit
 and recovery integration under EPIC-028 is complete.

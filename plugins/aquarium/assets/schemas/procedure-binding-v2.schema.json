@@ -25,6 +25,7 @@
         "enum": [
           "task-handler",
           "epic-handler",
+          "epic-squad",
           "epic-validator",
           "new-feature",
           "new-project",
@@ -765,7 +766,8 @@
           "entrypoints": {
             "items": {
               "enum": [
-                "epic-handler"
+                "epic-handler",
+                "epic-squad"
               ]
             }
           },
@@ -802,7 +804,8 @@
             "items": {
               "enum": [
                 "epic-validator",
-                "epic-handler"
+                "epic-handler",
+                "epic-squad"
               ]
             }
           },

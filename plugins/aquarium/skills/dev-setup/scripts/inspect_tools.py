@@ -5701,6 +5701,7 @@ def parse_arguments() -> argparse.Namespace:
         choices=(
             "task-handler",
             "epic-handler",
+            "epic-squad",
             "epic-validator",
             "new-feature",
             "new-project",
@@ -5710,7 +5711,7 @@ def parse_arguments() -> argparse.Namespace:
     )
     parser.add_argument(
         "--podway-review-route",
-        choices=("mulgae", "herdr", "subagent-review", "waived"),
+        choices=("mulgae", "herdr", "subagent-review", "waived", "not-required"),
     )
     parser.add_argument(
         "--podway-bootstrap",

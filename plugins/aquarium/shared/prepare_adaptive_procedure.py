@@ -27,7 +27,7 @@ def main():
     parser.add_argument(
         "--podway-opt-out",
         action="store_true",
-        help="Continue ordinary Design without native or source preparation",
+        help="Continue opted-out Design or Squad without native or source preparation",
     )
     args = parser.parse_args()
     try:

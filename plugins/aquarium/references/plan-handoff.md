@@ -1,6 +1,6 @@
 # Plan Handoff
 
-Read this reference only when `task-handler` or `epic-handler` selects `plan-handoff` or resumes a session that carries a plan handoff. No other Aquarium workflow owns this mode.
+Read this reference only when `task-handler`, `epic-handler` or `epic-squad` selects `plan-handoff` or resumes a session that carries a plan handoff. Other Aquarium workflows do not own this mode.
 
 ## Select the Mode Explicitly
 
@@ -31,6 +31,8 @@ After approval in an execution-capable turn:
 For an admitted adaptive Task, Goal or internal Validation, follow the approved attachment endpoint and first-work mappings in [adaptive execution](adaptive-execution.md#mapped-handoff-and-recovery). Verify the selected exact artifact at that boundary and stop before dispatching work. The following literal placements describe canonical and admitted legacy sessions.
 
 For `task-handler`, attach the artifact while `record-plan` is current, then complete that action. At `prepare-implementation`, read the selected plan and artifact metadata, verify the complete file digest and byte size, and record the approved first-entry basis. Advance to `implement`, verify its selected artifact metadata and running node, and stop before loading `$aquarium:task-implement`. For `epic-handler`, attach the plan at the active `complete-work` node and leave its required work evidence unrecorded. Every later member-task, validation, remediation, and closeout session in that epic execution must attach and verify the same initial plan path and digest before work so the current session remains independently resumable.
+
+For `epic-squad`, use its exact qualified Goal/Validation mapping. The packaged Goal template attaches at `baseline` and stops before its mapped first planning work; the Validation template attaches at its baseline before audit work. Bind every actual first-work placement through the adaptive handoff contract. Preserve the Squad owner, profiles and omissions, the same original plan identity and all remaining grants across successor sessions.
 
 The handoff file is temporary Aquarium execution context, not roadmap authority, project documentation, Podway evidence bytes, a Git artifact, or proof that any work is complete. Keep it untracked and never stage or commit it.
 

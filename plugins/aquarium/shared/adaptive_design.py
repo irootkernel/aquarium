@@ -193,4 +193,14 @@ def context(repository, assignment, phase):
                 assignment["authority"].get("document_approval"),
                 applied=value.get("applied") is True,
             )
+    if "caller" in value:
+        from adaptive_squad import design_return
+
+        if assignment["target"]["procedure_plan"]["entrypoint"] != "new-feature":
+            raise BundleError(
+                "incompatible", "A collaboration caller returns through new-feature"
+            )
+        result["collaboration_return"] = design_return(
+            assignment, value, result.get("application", {})
+        )
     return result

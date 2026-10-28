@@ -43,8 +43,10 @@ The [Squad entrypoint](../plugins/aquarium/skills/epic-squad/SKILL.md),
 [native coordination instructions](../plugins/aquarium/references/epic-squad-native.md)
 and [collaboration contract](../plugins/aquarium/references/epic-squad-collaboration.md)
 define native role assignments, readiness, first assessments and correction
-semantics. Delivery remains blocked pending TASK-149 execution/commit integration
-and TASK-150 integration/recovery; installed behavior remains unverified.
+semantics. The [Squad execution and current-composition consumer](../plugins/aquarium/references/epic-squad-execution.md)
+connects qualified source preparation, evidence and commit/design handoffs.
+Delivery remains blocked pending TASK-150 integration/recovery; installed
+behavior remains unverified.
 
 The [Epic collaboration dossier](todo/TODO-EPIC-COLLABORATION.md) defines planned
 `epic-squad` delivery of correct, maintainable, extensible and responsive software.

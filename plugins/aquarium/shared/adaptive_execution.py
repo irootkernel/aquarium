@@ -18,6 +18,7 @@ from adaptive_definitions import (
 ACTIVATED = {
     "task-handler": {"task"},
     "epic-handler": {"goal", "validation"},
+    "epic-squad": {"goal", "validation"},
     "epic-validator": {"validation"},
     "new-feature": {"design"},
     "new-project": {"design"},
@@ -220,6 +221,10 @@ def diagnosis_phase(document, binding, assignment, node):
 
 def validate_phase_mappings(document, binding, assignment):
     """Check every configured placement before admission, including future work."""
+    if assignment["target"]["procedure_plan"]["entrypoint"] == "epic-squad":
+        from adaptive_squad import validate_mappings
+
+        validate_mappings(binding, assignment)
     family = binding["family"]
     if family not in {"task", "design", "diagnosis"}:
         return
@@ -268,6 +273,8 @@ def execution_context(
     review = assignment["authority"]["review"]
     approved_route = review.get("route")
     routes = {"herdr", "mulgae", "subagent-review", "waived"}
+    if entrypoint == "epic-squad":
+        routes.add("not-required")
     if entrypoint in {"new-feature", "new-project", "refactor", "war-room"}:
         routes.add("not-applicable")
     if approved_route not in routes or (route is not None and route != approved_route):
@@ -347,6 +354,8 @@ def execution_context(
     ):
         raise BundleError("corrupt", "Native readback differs from retained definition")
     document = yaml.safe_load(resolved["source"])
+    if entrypoint == "epic-squad":
+        validate_phase_mappings(document, binding, assignment)
     selection_contract(
         resolved["source"],
         binding,
@@ -453,6 +462,25 @@ def execution_context(
         selected_evidence=placement.get("evidence_from", []),
         phase_skills=phase_skills(document, binding, assignment, node),
     )
+    if entrypoint == "epic-squad":
+        from adaptive_squad import composition
+
+        values = assignment["target"].get("squad", {}).get("compositions", {})
+        if node in values:
+            result["composition"] = composition(repository, assignment, values[node])
+        elif any(
+            capability["signature"]
+            in {
+                "aquarium.squad.current-composition/v2",
+                "aquarium.squad.plan-composition/v2",
+            }
+            for capability in declaration["capabilities"]
+        ):
+            result.update(
+                status="composition-required",
+                next_owner="Coordinator current original-evidence composition",
+            )
+            return checked(result)
     if binding["family"] == "design":
         from adaptive_design import context as design_context
 
@@ -554,7 +582,7 @@ def execution_context(
         ):
             dispatched["authority"]["effects"] = []
             dispatched["authority"]["excluded"].append("Document application")
-    if declaration["role"] == "evaluator":
+    if declaration["role"] == "evaluator" and entrypoint != "epic-squad":
         dispatched["authority"]["effects"] = []
         dispatched["authority"]["allowed"] = [
             "Independent report-only assessment of the assigned due checkpoint"
@@ -568,6 +596,93 @@ def execution_context(
             "Commit",
             "Nested dispatch",
         ]
+    if entrypoint == "epic-squad":
+        from adaptive_squad import assignments
+
+        current = status["current"]["attempt"]
+        scopes = assignments(
+            assignment,
+            node,
+            declaration["role"],
+            declaration["effects"],
+            reentry=current["attempt_number"] > 1,
+        )
+        reentry = assignment["target"].get("squad", {}).get("reentry")
+        if current["attempt_number"] > 1:
+            if (
+                not isinstance(reentry, dict)
+                or reentry.get("attempt_id") != current["attempt_id"]
+                or not reentry.get("basis")
+            ):
+                raise BundleError(
+                    "not-established",
+                    "Restore current invalidation and affected assignment scope before re-entry",
+                )
+            requested = reentry.get("assessments")
+            if not isinstance(requested, list) or any(
+                tuple(row) not in scopes for row in requested
+            ):
+                raise BundleError(
+                    "incompatible",
+                    "Re-entry may request only due current assignment scopes",
+                )
+            scopes = [tuple(row) for row in requested]
+            if not scopes and not reentry.get("original_evidence"):
+                raise BundleError(
+                    "not-established",
+                    "Re-recording needs applicable original evidence, never an invented assessment",
+                )
+        dispatches = []
+        for display_role, scope in scopes:
+            scoped = copy.deepcopy(dispatched)
+            scoped["role"] = (
+                "evaluator"
+                if display_role in {"Task Evaluator", "Epic Evaluator"}
+                else "executor"
+            )
+            scoped["work"].update(display_role=display_role, assignment_scope=scope)
+            scoped["authority"]["effects"] = (
+                []
+                if display_role != "Task Operator" or declaration["role"] == "evaluator"
+                else scoped["authority"]["effects"]
+            )
+            scoped["instructions"] += (
+                "\nUse this explicit Squad role/scope. Preserve machine/report IDs. Independent reviews keep project files read-only, retain original reports and withhold peer conclusions until first views form. No assignment grants Writer, index, native progression, acceptance or commit authority."
+            )
+            if scoped["role"] == "evaluator" or declaration["role"] == "evaluator":
+                scoped["authority"]["allowed"] = [
+                    "Independent scoped assessment; explicitly assigned non-mutating checks or supported native assistance only"
+                ]
+                scoped["authority"]["excluded"] += [
+                    "Product mutation",
+                    "Writer transfer",
+                    "Index changes",
+                    "Native progression",
+                    "Acceptance",
+                    "Commit",
+                ]
+            if display_role == "Support Operator":
+                scoped["authority"]["allowed"] = [
+                    "Assigned factual investigation, non-mutating checks or supported observation only"
+                ]
+                scoped["authority"]["excluded"] += [
+                    "Product mutation",
+                    "Verdicts",
+                    "Finding closure",
+                    "Writer transfer",
+                    "Index changes",
+                    "Native progression",
+                    "Acceptance",
+                    "Commit",
+                ]
+            dispatches.append(ordinary(scoped))
+        result.update(
+            status="dispatch-ready" if dispatches else "coordinator-owned",
+            dispatch=None,
+            dispatches=dispatches,
+            next_owner="Coordinator dispatch and evidence join",
+        )
+        return checked(result)
     result.update(
         status="dispatch-ready",
         dispatch=ordinary(dispatched),

@@ -669,3 +669,22 @@ UTM VM under its separate authority, using committed matching verification tools
 | ADAPT-28 | Positive canonical and composed controls pass. Native-invalid, proven incompatible and valid-but-not-established cases remain distinct; test infeasible guarded paths and practical analysis cost without exhaustive-path assumptions or matching skill prose. | TASK-141; TASK-146 |
 | ADAPT-29 | Preserve applicable adopted-customization obligations and disclose a justified replacement in the existing envelope. Optional reusable templates and historic local files do not become mandatory policies merely by existing. | TASK-138; TASK-139; TASK-145 |
 | ADAPT-30 | Known unmodified reuse keeps existing assessment boundaries, including Goal without a plan Evaluator. New/changed candidates receive exact-target pre-start suitability and truthful bootstrap import; changed basis on re-entry cannot replay an old pass as a fresh assessment. | TASK-139; TASK-141; TASK-142 |
+
+## Squad execution consumer checks
+
+`tests/unit/test_adaptive_squad_unit.py` covers owner-specific Goal/Validation
+source qualification, both plan gates, preserved legacy binding bytes, explicit
+Podway opt-out without discovery, current original-report composition, negative
+and stale evidence, scoped native assignment groups, distinct commit grants and
+Design caller/return identity. Disposable fixtures exercise the existing
+prepare/suitability/retention flow without managed Squad copies. Synthetic reports
+and semantic proofs verify helper behavior only; they establish no actual agent
+suitability, skill decision or installed end-to-end result.
+
+The optional Squad templates and their bindings stay in
+`plugins/aquarium/assets/adaptive/reusable/`. Runtime use still requires exact
+ordinary suitability and local retention under the approved preparation grant.
+Read-only native source previews retain their exact source and native version;
+a v0.2.14 preview does not establish the candidate's v0.2.15 installed/runtime
+contract. TASK-151 and Master's separate functional observations retain that
+verification scope under the dedicated UTM policy.

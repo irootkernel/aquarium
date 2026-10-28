@@ -7,20 +7,22 @@ description: "Coordinate one explicitly named roadmap Epic with native Task Oper
 
 Read the [collaboration contract](../../references/epic-squad-collaboration.md)
 and [native coordination instructions](../../references/epic-squad-native.md).
-They own role scope, first assessments, Writer control, correction triage,
+Read the [execution and exact-composition contract](../../references/epic-squad-execution.md)
+for qualified source selection, mapped groups, current evidence and commit/design
+consumers. These references own role scope, first assessments, Writer control, correction triage,
 evidence reuse and supervision. Use the existing ordinary v3 machine roles and
 report identifiers. Do not invoke `epic-handler` or Task-handler phase skills.
 
 ## Current delivery boundary
 
-The native collaboration instructions and this entrypoint are present in the
-development source. TASK-149 still owns Squad admission, qualified definitions,
-assessment consumption and commit handoffs; TASK-150 owns integration and
-recovery. Until those required consumers are implemented, report this missing
-integration alongside the invocation/profile blockers found during read-only
-intake below. Stop before affected delivery agents or a managed-session mutation.
-Read-only preparation may describe the remaining work. Entrypoint
-discovery alone establishes no operational or installed result.
+The native collaboration instructions, real-owner Goal/Validation admission,
+qualified source preparation and exact composition/commit/design consumers are
+present in development source. TASK-150 still owns integration and recovery
+completion; until those consumers are integrated, report the remaining boundary
+alongside invocation/profile blockers and stop before affected delivery or managed
+session mutation. TASK-151 owns actual installed observations. Read-only
+preparation may inspect the packaged optional Squad templates without assuming
+managed copies or prior suitability.
 
 ## Resolve the invocation
 
@@ -34,9 +36,8 @@ Read applicable instructions, documentation adoption coverage, original Epic and
 member requirements, architecture and existing implementation. Inspect Git state,
 separate owned changes and preserve unrelated work. Resolve the execution SOT
 through [epic-execution-sot.md](../../references/epic-execution-sot.md). Missing
-semantic meaning stays open. The native caller/return integration for a bounded
-`new-feature` continuation belongs to TASK-149; do not pretend the existing
-Handler caller supplies it.
+semantic meaning stays open. Carry a bounded `new-feature` continuation through the Squad execution contract,
+preserving its original owner, mode, supplied profiles and omitted roles.
 
 Resolve profiles before affected delivery or design continuation. Omitted whole
 profiles select native agents of the current Coordinator's harness, model and
@@ -57,7 +58,7 @@ retain their own route and authority.
 
 ## Establish the execution envelope
 
-Once the required integration is available, resolve the original requirements,
+Once integration is available, resolve the original requirements,
 dependency DAG and exact committed prerequisite evidence. Prepare the Context
 Brief, delivery order, native configuration and limitations, Task risk and first
 panels, documentation and checks, correction routes and commit boundaries.
@@ -73,7 +74,7 @@ Material departures need their own authority. No agent verdict grants effects.
 
 Podway remains the default, with an explicit pre-session opt-out and the existing
 in-progress stop/recovery contract. An opt-out performs no Podway discovery.
-Use the actual Squad owner and qualified Goal/Validation mappings once connected;
+Use the actual Squad owner and exact qualified Goal/Validation mappings;
 never impersonate Handler, nest Task sessions or rewrite admitted snapshots.
 One Action may join several native assignments while the Coordinator alone
 records Decisions. A workflow invocation or Podway goal supplies no Codex goal
@@ -82,7 +83,7 @@ creation authority.
 `plan-only` creates no files, goals, sessions or provider requests. An
 approved `plan-handoff` stops at the declared first-work boundary with the exact
 approved plan and remaining authority. Read the [plan handoff contract](../../references/plan-handoff.md)
-when that mode applies; its Squad consumer must be connected before execution.
+when that mode applies; its actual qualified Squad mapping keeps the same session-bound artifact.
 
 ## Deliver and assess
 
@@ -112,8 +113,8 @@ The Coordinator accepts the exact current composition only when all due criteria
 checks, assessments and material disagreements are resolved. Keep Task-level
 contribution passage separate from whole-Epic passage. The Coordinator alone
 stages and invokes required commit tooling under the actual
-`aquarium:epic-squad` owner and its applicable unconsumed grant. Missing Squad
-commit integration blocks that effect; a Handler handoff is not a substitute.
+`aquarium:epic-squad` owner and its applicable unconsumed grant. Use the pure current-composition and grant consumer before the exact
+`task-commit` handoff; a Handler handoff is not a substitute.
 
 Keep useful same-Task context through corrections and post-commit inspection.
 Start a new Task team only after the preceding Task's required commit and native

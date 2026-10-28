@@ -3,8 +3,9 @@
 Use this reference only from an explicitly invoked
 [epic-squad](../skills/epic-squad/SKILL.md). The
 [collaboration contract](epic-squad-collaboration.md) owns shared semantics.
-Current source still requires TASK-149's execution/commit connections and
-TASK-150's integration/recovery before delivery activation. These assignments
+The [execution consumer](epic-squad-execution.md) connects qualified definitions,
+current evidence and commit/design handoffs. TASK-150's integration/recovery
+completion still precedes delivery activation. These assignments
 do not bypass that boundary or establish an installed execution result.
 
 ## Assign native roles

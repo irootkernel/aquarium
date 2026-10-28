@@ -412,7 +412,10 @@ def endpoint(document, reference):
 
 def review_fit(document, mapping, review):
     """Check declared route choices without inferring capabilities from item names."""
-    signatures = capability_signatures()
+    signatures = {
+        **capability_signatures(),
+        **mapping.get("capability_definitions", {}),
+    }
     placements = {node["id"]: node for node in document["graph"]["nodes"]}
     checked = []
     for identifier, node in mapping["nodes"].items():

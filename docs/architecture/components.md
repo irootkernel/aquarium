@@ -34,10 +34,11 @@ apply the [collaboration contract](../../plugins/aquarium/references/epic-squad-
 Aquarium owns role assignments, assessment joins and semantic decisions; the native harness owns agent lifecycle
 and Podway retains one current attempt with qualified source/binding identity.
 The required owner is `aquarium:epic-squad`, independent of `epic-handler`; its
-execution and commit admission remain pending integration.
+execution and commit admission use its owner-specific qualified bindings and
+[current-composition consumer](../../plugins/aquarium/references/epic-squad-execution.md).
 Existing ordinary report schemas and Handler/Validator responsibilities remain
-unchanged. New-owner execution, commit consumption and recovery must be connected
-before a discovered entrypoint can perform delivery.
+unchanged. Integration/recovery completion remains due before delivery activation; source
+checks establish no installed behavior.
 
 ## Directory documentation flow
 

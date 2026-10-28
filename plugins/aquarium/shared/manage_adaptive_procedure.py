@@ -43,7 +43,7 @@ def main():
     parser.add_argument(
         "--podway-opt-out",
         action="store_true",
-        help="Use the approved ordinary Design path without Podway discovery or rendering",
+        help="Use the approved opted-out Design or Squad path without Podway discovery or rendering",
     )
     parser.add_argument("--bootstrap")
     parser.add_argument("--session", help="Exact continuation session ID")

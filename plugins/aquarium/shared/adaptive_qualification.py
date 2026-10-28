@@ -80,6 +80,31 @@ def guarantee_minima(signature):
                 if name == "evaluator-goal-outcome"
                 else {"type": "check_result", "required": True}
             )
+    elif kind in {"current-composition", "plan-composition"}:
+        fields = {
+            "composition-basis": {
+                "type": "artifact",
+                "required": True,
+                "allowed_media_types": ["application/json"],
+            },
+            "composition-current": {"type": "check_result", "required": True},
+            "composition-scope": {"type": "choice", "required": True},
+            "composition-goal-outcome": {"type": "choice", "required": True},
+        }
+        counts = [
+            "composition-unmet",
+            "composition-unverified",
+            "pending-local",
+            "pending-low",
+            "current-blockers",
+            "pending-judgment",
+        ]
+        fields.update(
+            {
+                name: {"type": "integer", "required": True, "minimum": 0}
+                for name in counts
+            }
+        )
     elif kind == "approval":
         return [{"kind": "decision", "options": ["approved", "changes-requested"]}]
     elif kind == "review-control":
@@ -328,6 +353,13 @@ class Qualification:
                     if checked["status"] == "incompatible" or signature is None:
                         continue
                 kind = guarantee(signature)
+                if kind in {"current-composition", "plan-composition"} and (
+                    self.binding["entrypoints"] != ["epic-squad"]
+                    or declaration["role"] != "coordinator"
+                ):
+                    self.issues.append(
+                        issue("incompatible", "squad-composition-owner", node)
+                    )
                 floors = guarantee_minima(signature)
                 floor_checks = [
                     check_capability(
@@ -393,7 +425,7 @@ class Qualification:
     def inspect_context(self):
         domains = {
             "goal_kind": {"member-task", "pre-validation-remediation", "epic-closeout"},
-            "workflow_owner": {"epic-handler", "epic-validator"},
+            "workflow_owner": {"epic-handler", "epic-validator", "epic-squad"},
         }
         for meaning, values in domains.items():
             if meaning in self.context and (
@@ -768,6 +800,31 @@ class Qualification:
         return self.routes.get((node, aliases.get(logical, logical)), 0)
 
     def final_facts(self, node, fields):
+        if any(
+            owner == node for owner, _, _ in self.capabilities["current-composition"]
+        ):
+            return self.logic.all(
+                self.conditions[node],
+                self.equal(node, fields, "composition-current", "pass"),
+                self.equal(node, fields, "composition-goal-outcome", "achieved"),
+                self.logic.any(
+                    *(
+                        self.equal(node, fields, "composition-scope", scope)
+                        for scope in ("task-result", "integration", "epic-closeout")
+                    )
+                ),
+                *(
+                    self.equal(node, fields, name, 0)
+                    for name in (
+                        "composition-unmet",
+                        "composition-unverified",
+                        "pending-local",
+                        "pending-low",
+                        "current-blockers",
+                        "pending-judgment",
+                    )
+                ),
+            )
         return self.logic.all(
             self.conditions[node],
             *(
@@ -1075,7 +1132,7 @@ class Qualification:
                     "pre-validation-remediation",
                     "epic-closeout",
                 },
-                "workflow_owner": {"epic-handler", "epic-validator"},
+                "workflow_owner": {"epic-handler", "epic-validator", "epic-squad"},
             }
             return all(
                 items.get(field, {}).get("type") == "choice"
@@ -1128,7 +1185,10 @@ class Qualification:
         }
         if self.document.get("goal_tracking") is not True or native != bound:
             self.issues.append(issue("incompatible", "native-goal-mappings", "graph"))
-        finals = self.capabilities["final-assessment"]
+        finals = (
+            self.capabilities["final-assessment"]
+            + self.capabilities["current-composition"]
+        )
         final_conditions = {
             node: self.final_facts(node, fields) for node, fields, _ in finals
         }
@@ -1225,6 +1285,7 @@ class Qualification:
                 issue("incompatible", "feasible-expected-continuation", "graph")
             )
         self.inspect_reentry()
+        self.inspect_squad_plans()
         self.inspect_obligations()
         self.inspect_acceptance()
         self.inspect_application()
@@ -1256,6 +1317,52 @@ class Qualification:
                     required,
                 )
 
+    def inspect_squad_plans(self):
+        if (
+            self.binding["entrypoints"] != ["epic-squad"]
+            or self.binding["family"] != "goal"
+        ):
+            return
+        for work in self.nodes:
+            if (
+                self.effect(work) != "work"
+                or "task-plan"
+                in self.operation_cache.get(work, {}).get("output_scopes", {}).values()
+            ):
+                continue
+            for scope in ("task-plan", "epic-plan"):
+                ready = []
+                for node, fields, _ in self.capabilities["plan-composition"]:
+                    ready.append(
+                        self.logic.all(
+                            self.conditions[node],
+                            self.equal(node, fields, "composition-scope", scope),
+                            self.equal(node, fields, "composition-current", "pass"),
+                            *(
+                                self.equal(node, fields, name, 0)
+                                for name in (
+                                    "composition-unmet",
+                                    "composition-unverified",
+                                    "pending-local",
+                                    "pending-low",
+                                    "current-blockers",
+                                    "pending-judgment",
+                                )
+                            ),
+                            self.evidence_reaches(
+                                node,
+                                work,
+                                fields.get("composition-basis", "composition-basis"),
+                            ),
+                        )
+                    )
+                self.require(
+                    self.conditions[work],
+                    self.logic.any(*ready),
+                    "squad-plan-before-work",
+                    work + ":" + scope,
+                )
+
     def inspect_reentry(self):
         """Check retained gates against actual native target-and-later invalidation."""
         logic = self.logic
@@ -1263,6 +1370,10 @@ class Qualification:
         gates = [
             (node, "final-assessment")
             for node, _, _ in self.capabilities["final-assessment"]
+        ]
+        gates += [
+            (node, "current-composition")
+            for node, _, _ in self.capabilities["current-composition"]
         ]
         gates += [(node, "approval") for node, _, _ in self.capabilities["approval"]]
         gates += [
@@ -1496,6 +1607,10 @@ class Qualification:
                 assessor == row[0]
                 for kind, values in self.capabilities.items()
                 if "assessment" in kind
+                or (
+                    kind == "current-composition"
+                    and self.binding["entrypoints"] == ["epic-squad"]
+                )
                 for row in values
             ):
                 self.issues.append(
@@ -1619,6 +1734,23 @@ class Qualification:
         } and not self.context.get("review_required"):
             return
         route = self.context.get("review", {}).get("route")
+        if route == "not-required" and self.binding["entrypoints"] == ["epic-squad"]:
+            valid = self.logic.any(
+                *(
+                    self.logic.all(
+                        self.conditions[node],
+                        self.equal(node, fields, "composition-current", "pass"),
+                    )
+                    for node, fields, _ in self.capabilities["current-composition"]
+                )
+            )
+            self.require(
+                condition,
+                valid,
+                "squad-collaboration-without-additional-review",
+                location,
+            )
+            return
         if route is not None and route not in {
             "herdr",
             "mulgae",
@@ -1789,7 +1921,12 @@ class Qualification:
                     policy = (
                         self.predicate(source, field, not_equals="epic-closeout")
                         if family == "goal"
-                        else self.predicate(source, field, equals="epic-handler")
+                        else logic.any(
+                            self.predicate(source, field, equals="epic-handler"),
+                            self.predicate(source, field, equals="epic-squad")
+                            if self.binding["entrypoints"] == ["epic-squad"]
+                            else 0,
+                        )
                     )
                     eligible.append(
                         logic.all(

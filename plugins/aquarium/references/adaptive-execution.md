@@ -57,7 +57,7 @@ After start and on every recovery boundary, run:
 ```bash
 python3 <installed-shared>/manage_adaptive_procedure.py context \
   --repository <worktree> --root <approved-root> \
-  --entrypoint <task-handler|epic-handler|epic-validator|new-feature|new-project|refactor|war-room> \
+  --entrypoint <task-handler|epic-handler|epic-squad|epic-validator|new-feature|new-project|refactor|war-room> \
   --qualification <ordinary-context.json> --session <native-session-id> \
   --podway <supported-executable>
 ```
@@ -106,6 +106,19 @@ They use the same leaf and application-boundary checks as
 runtime dispatch. Defaults, valid grouped ownership and inert maps for other
 families keep their existing behavior. Invalid applicable maps stop before
 source authoring or adoption.
+
+## Squad composition and assignments
+
+The real `epic-squad` caller uses its owner-specific qualified Goal/Validation
+bindings and [current-composition consumer](epic-squad-execution.md). Preserve
+legacy reference mapping bytes. Squad dispatches direct scoped assignment groups
+at one cursor, exposes both plan gates and consumes original first reports plus
+permitted verified deltas without fabricating fresh Evaluator passage. Its explicit
+`not-required` additional-review state is neither a provider operation nor waiver;
+existing callers keep their original review and final-Evaluator gates.
+
+An explicit pre-session Squad opt-out takes the dependency-free branch before
+native discovery; ordinary collaboration and effect/acceptance obligations remain.
 
 ## Mapped handoff and recovery
 

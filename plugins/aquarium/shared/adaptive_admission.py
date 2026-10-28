@@ -17,7 +17,6 @@ from adaptive_bundles import (
 )
 from adaptive_definitions import (
     ASSETS,
-    FAMILY_ENTRYPOINTS,
     canonical_json,
     capability_signatures,
     definition_id,
@@ -363,7 +362,13 @@ def reference_mapping(source):
         "schema": f"aquarium.procedure-binding/v{version}",
         "compatibility": f"aquarium.adaptive/v{version}",
         "family": family,
-        "entrypoints": sorted(FAMILY_ENTRYPOINTS[family]),
+        "entrypoints": {
+            "task": ["task-handler"],
+            "goal": ["epic-handler"],
+            "validation": ["epic-handler", "epic-validator"],
+            "design": ["new-feature", "new-project", "refactor"],
+            "diagnosis": ["war-room"],
+        }[family],
         "nodes": nodes,
         "parameters": {},
         "obligations": obligations,
@@ -433,6 +438,8 @@ def selection_contract(
                 "Selected route differs from the exact suitability authority",
             )
         supported = {"mulgae", "herdr", "subagent-review", "waived"}
+        if entrypoint == "epic-squad" and binding["family"] in {"goal", "validation"}:
+            supported.add("not-required")
         if binding["family"] in {"design", "diagnosis"}:
             supported.add("not-applicable")
         if approved_route not in supported:
@@ -448,9 +455,15 @@ def selection_contract(
         binding["family"] in {"task", "goal", "validation"}
         and not adaptive
         and route not in {"mulgae", "herdr", "subagent-review", "waived"}
+        and not (entrypoint == "epic-squad" and route == "not-required")
     ):
         raise BundleError("route-unavailable", "A selected review route is required")
-    if route is not None and route != "not-applicable":
+    if route == "not-required":
+        if entrypoint != "epic-squad" or binding["entrypoints"] != ["epic-squad"]:
+            raise BundleError(
+                "route-unavailable", "Only Squad may omit additional technical review"
+            )
+    elif route is not None and route != "not-applicable":
         if route not in {"mulgae", "herdr", "subagent-review", "waived"}:
             raise BundleError(
                 "route-unavailable", "Selected review route is unsupported"
