@@ -4767,10 +4767,17 @@ def whole_member_case(basis, *, prepared=False, other_source=None):
 
 
 @pytest.mark.parametrize("prepared", [False, True])
+@pytest.mark.parametrize(
+    "work_kind,grant_kind",
+    [("member-task", "member"), ("pre-validation-remediation", "correction")],
+)
 def test_actual_whole_markdown_member_ready_retains_future_global_unknowns(
-    basis, prepared
+    basis, prepared, work_kind, grant_kind
 ):
     value = whole_member_case(basis, prepared=prepared)
+    value["assignment"]["target"]["squad"]["work_unit_kind"] = work_kind
+    value["grant"]["kind"] = grant_kind
+    value["assignment"]["authority"]["commit_grants"] = [copy.deepcopy(value["grant"])]
     result = composition(*basis)
     assert result["status"] == "ready"
     assert result["native_values"]["composition-unmet"] == 0
@@ -4816,8 +4823,10 @@ def test_actual_whole_markdown_member_ready_retains_future_global_unknowns(
         "no-future-basis",
     ],
 )
-def test_member_scope_does_not_erase_actual_current_gaps(basis, fault):
+@pytest.mark.parametrize("work_kind", ["member-task", "pre-validation-remediation"])
+def test_member_scope_does_not_erase_actual_current_gaps(basis, fault, work_kind):
     whole_member_case(basis)
+    basis[1]["target"]["squad"]["work_unit_kind"] = work_kind
     assert composition(*basis)["status"] == "ready"
     repo, assignment, current = basis
     ref = current["assessments"][0]
@@ -4929,14 +4938,33 @@ def test_member_current_negative_uses_same_due_basis_for_each_role(basis, role, 
     assert result["native_values"]["composition-goal-outcome"] == "not-achieved"
 
 
-@pytest.mark.parametrize("fault", ["acceptance", "grant", "product-review", "plan"])
-def test_member_scope_commit_retains_every_actual_gate(basis, fault):
+@pytest.mark.parametrize(
+    "fault", ["acceptance", "grant", "wrong-grant-kind", "product-review", "plan"]
+)
+@pytest.mark.parametrize("work_kind", ["member-task", "pre-validation-remediation"])
+def test_member_scope_commit_retains_every_actual_gate(basis, fault, work_kind):
     value = whole_member_case(basis)
+    value["assignment"]["target"]["squad"]["work_unit_kind"] = work_kind
+    if work_kind == "pre-validation-remediation":
+        value["grant"]["kind"] = "correction"
+        value["assignment"]["authority"]["commit_grants"] = [
+            copy.deepcopy(value["grant"])
+        ]
     assert commit_handoff(basis[0], value)["accepted_target"] == "candidate1"
     if fault == "acceptance":
         value["acceptance"]["target"] = "stale"
     elif fault == "grant":
         value["grant"]["consumed"] = True
+        value["assignment"]["authority"]["commit_grants"] = [
+            copy.deepcopy(value["grant"])
+        ]
+    elif fault == "wrong-grant-kind":
+        value["grant"]["kind"] = (
+            "member" if work_kind != "member-task" else "correction"
+        )
+        value["assignment"]["authority"]["commit_grants"] = [
+            copy.deepcopy(value["grant"])
+        ]
     elif fault == "product-review":
         value["acceptance"].pop("product_review")
     else:
@@ -4946,8 +4974,12 @@ def test_member_scope_commit_retains_every_actual_gate(basis, fault):
 
 
 @pytest.mark.parametrize("phase", ["integration", "epic-closeout", "correction-group"])
-def test_member_scope_cannot_waive_global_integration_or_closeout(basis, phase):
+@pytest.mark.parametrize("work_kind", ["member-task", "pre-validation-remediation"])
+def test_member_scope_cannot_waive_global_integration_or_closeout(
+    basis, phase, work_kind
+):
     whole_member_case(basis)
+    basis[1]["target"]["squad"]["work_unit_kind"] = work_kind
     assert composition(*basis)["status"] == "ready"
     repo, assignment, current = basis
     integration_basis(repo, current)

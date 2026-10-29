@@ -650,7 +650,7 @@ def composition(
         )
     member = (
         scoped
-        if squad.get("work_unit_kind") == "member-task"
+        if squad.get("work_unit_kind") in {"member-task", "pre-validation-remediation"}
         and assignment["target"]["procedure_plan"]["family"] == "goal"
         and phase in {"task-plan", "epic-plan", "task-result"}
         else None

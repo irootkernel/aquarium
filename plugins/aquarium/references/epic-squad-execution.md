@@ -165,17 +165,19 @@ Native callers retain those bases in `target.squad.compositions`; the pure
 commit caller supplies its existing `plan_compositions`. Ordinary opt-out needs
 the same plan judgments, without a native or prepared-definition prerequisite.
 
-For this matching `member-task` only, each plan/result report's ordinary target
-and each composition carry the same `member_scope`. Actual newly reconciled
-TE/TO Task-result and EE contribution checkpoints retain the original canonical
-criterion/part pairs. They assess all duties due for this member while the
-reports retain their original global criteria and verdicts. An original
+For a matching `member-task` or Task-owned `pre-validation-remediation` Goal,
+each plan/result report's ordinary target and each composition carry the same
+`member_scope`. Task-owned remediation keeps its distinct correction grant.
+Actual newly reconciled TE/TO Task-result and EE contribution checkpoints retain
+the original canonical criterion/part pairs. They assess all duties due for this
+member while the reports retain their original global criteria and verdicts. An original
 `unverified` part may be met for the current member only when its original
 assessment explains the future applicability and the map includes matching
 later or gated duties. An original unmet obligation still follows its exact
 closure/affected-assessment route. Current due unknowns, failed checks, required
-findings and unidentified negative verdicts remain blocking. A core-only milestone or an unchanged
-inconclusive conservative projection cannot become member completion.
+findings and unidentified negative verdicts remain blocking. A core-only milestone
+or an unchanged inconclusive conservative projection cannot become member
+completion.
 
 The returned member basis identifies the scope of current counts and member Goal
 achievement; `original_criteria` and `original_verdicts` preserve global states.
