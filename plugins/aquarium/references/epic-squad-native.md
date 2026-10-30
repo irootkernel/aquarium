@@ -39,6 +39,12 @@ the exact plan or candidate and relevant inputs. Supply original requirements,
 current evidence, allowed/excluded effects, configuration limits, Writer status,
 result channel and the required deliverable. No schema migration is needed.
 
+For output-producing Task and Support Operators, include
+[artifact cleanup](artifact-cleanup.md) scope and ownership in that assignment.
+Operators clean their disposable outputs after the last consumer; the
+Coordinator verifies shared outputs and any retained-output handoff before
+retiring a role, starting the next Task or completing the workflow.
+
 | Assignment | Machine role and actual work |
 | --- | --- |
 | Task Operator | `executor`: bounded investigation, plan, implementation, verification, documentation or independent review. A plan/implementation author cannot provide its independent result review. |

@@ -142,6 +142,32 @@ complete report, native operation outcome, criterion assessment and Master's
 manual result separate. Missing observations remain unverified; a fixture
 receipt or passing Make gate cannot substitute for them.
 
+## Build and test artifact cleanup verification
+
+The [artifact cleanup contract](plugins/aquarium/references/artifact-cleanup.md)
+defines the instruction behavior below. Package validation checks structure and
+links. Actual cleanup behavior remains unverified until Master supplies
+candidate-bound observations from these manual scenarios. No prose-matching test,
+automated LLM gate or new helper schema is added.
+
+Use disposable fixtures under an authorized temporary root, with known existing
+files and separate producer outputs. Installation-dependent observations follow
+the existing dedicated UTM VM policy and require their own execution authority.
+This scenario list authorizes no installation, deletion or VM Job by itself.
+
+| Scenario | Required observation |
+| --- | --- |
+| Direct Task phase and Task-handler delivery | Implementation/verification assigns an owned output location and cleanup owner. After the last consumer, disposable outputs are removed, existing files survive, and Task closeout checks the actual paths separately from Git status. |
+| Repeated checks within one Task | An applicable build is reused while needed. The agent avoids per-check full cleans and unnecessary cache copies, then removes disposable outputs when their last consumer finishes. |
+| Phase and downstream retention | Only needed files remain, with path, reason, receiving owner and retention end condition. A temporary report remains readable until recipient readback. The receiving owner cleans retained outputs when the condition ends. |
+| Failure investigation | Preserve original diagnostics, candidate binding and required reproducer inputs. Remove unrelated disposable build contents without erasing the failed check or inventing a passing result. |
+| Epic Handler and Squad Task transition | Task/Support Operators return cleanup results; the Coordinator verifies shared and retiring-agent outputs. Unexplained residue or deletion failure prevents the next Task and successful completion even when tests and reviews pass. A justified retained-output handoff permits continuation. |
+| Cleanup failure and recovery | Report the actual failed path, uncertainty and next owner in existing results/gaps. Keep the command verdict separate; after recovery, recheck ownership and active consumers without rerunning unaffected tests or reviews merely for cleanup. |
+| Active use, changed paths and context restoration | An active consumer, changed ownership or a symlink outside the declared scope prevents deletion. Resume rechecks current paths and users; it does not trust an old cleanup instruction alone. |
+| Validation, diagnosis and test setup | Authorized validation checks, War Room reproductions including no-work outcomes, and disposable test-setup copies return cleanup or justified retention. Report-only Evaluators gain no deletion permission. |
+| Release QA and publication inputs | Remove only disposable fixture/build paths after their consumers finish. Preserve the frozen full-pass record, claims, admissions, cluster results and every referenced evidence file for confirmation/recovery, plus release payloads and VM Job collection inputs until their native owners permit cleanup. Unresolved cleanup keeps workflow completion pending without changing calculated scenario verdicts. |
+| Shared state and explicit stops | Shared caches, pre-existing files, producer runtime state and installed generations survive routine cleanup. An emergency stop preserves current state and reports outstanding cleanup; ordinary authorized cleanup waits for producers and consumers to settle. |
+
 ## Manual VM release acceptance
 
 Complete development functional verification before release preparation.

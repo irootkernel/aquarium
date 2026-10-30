@@ -5,6 +5,12 @@ description: "Cold-validate one completed roadmap epic through three bounded wor
 
 # Epic Validator
 
+Read [artifact cleanup](../../references/artifact-cleanup.md) before producing
+validation or remediation outputs. The executing Coordinator or authorized
+Executor owns cleanup; report-only Evaluators gain no deletion authority. Verify
+cleanup or justified retained-output handoffs before successful completion,
+keeping unresolved cleanup distinct from the audit and check results.
+
 Read [commit-attribution.md](../../references/commit-attribution.md) for message formatting and change origins, within this skill's existing effect boundaries.
 
 Read [review-result-handoff.md](../../references/review-result-handoff.md) for producer/consumer checks and same-operation result recovery. Read [review-routing-contract.md](../../references/review-routing-contract.md) for route selection, route-specific readiness, evidence combinations, recovery, and assessment ordinals. Read [review-intent-contract.md](../../references/review-intent-contract.md) for the shared Review Brief and criterion-level completion assessment. Read [mulgae-review-contract.md](../../references/mulgae-review-contract.md) only when the selected review route is `mulgae`.

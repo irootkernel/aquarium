@@ -35,6 +35,7 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 - Read the [accepted decisions](architecture-decision-records/README.md) for durable rationale behind current boundaries.
 - Follow the [implementation tips](implementation-tips/README.md) when changing skills, Procedures, inspectors, tests, or releases.
 - Use the [operations runbooks](ops/README.md) for environment setup, deployment, recurring failures, recovery, and other operator-facing first aid.
+- Use the [artifact lifecycle](specs/workflow-contracts.md#disposable-build-and-test-outputs) for disposable build/test cleanup ownership, retention handoffs and Task-transition checks.
 - Use the [roadmap](roadmap/README.md) for delivery identity and state, its linked [TODO and work dossiers](todo/README.md) for detailed planned scope and acceptance, and [deferred feedback](deferred-feedback/README.md) for smaller postponed findings rather than adding future behavior to current specifications.
 
 ## Native Epic collaboration source

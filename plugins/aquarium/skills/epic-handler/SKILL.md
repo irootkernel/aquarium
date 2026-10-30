@@ -46,6 +46,13 @@ Use the final-closeout validation substitute only for unchanged successfully val
 
 ## Establish and Approve the Epic
 
+Read [artifact cleanup](../../references/artifact-cleanup.md). Include creation
+and removal of disposable build/test outputs in the execution envelope and each
+output-producing assignment. Task Operators own their outputs; the Coordinator
+verifies cleanup or justified retention before the next Task and final completion,
+including outputs from correction and integration checks. Keep cleanup gaps
+separate from test results and carry retained paths to their next owner.
+
 Require one mutable Git repository, one canonical roadmap path inside that repository, and exactly one epic ID present in that roadmap. Reject task-only requests, multiple epics, requests without one canonical roadmap epic identity, and external roadmap authorities. Inspect another repository read-only only when the roadmap explicitly names it; never mutate or create a goal for it.
 
 Before requesting approval:

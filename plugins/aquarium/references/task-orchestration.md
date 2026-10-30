@@ -107,6 +107,12 @@ Podway acceptance and progression.
 
 ## Verification limits
 
+Apply [artifact cleanup](artifact-cleanup.md) to implementation and check outputs,
+including direct phase invocations. The Coordinator carries scope and ownership
+through phase assignments, verifies cleanup or justified retention at handoffs,
+and keeps cleanup gaps separate from command results. Resolve outstanding
+cleanup before successful Task-handler completion.
+
 Structural and synthetic tests do not prove installed native execution. Verify
 actual startup, failure, rework and public-handle recovery separately; every
 installation-dependent check follows the target repository's verification

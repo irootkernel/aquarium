@@ -10,6 +10,27 @@ Change-producing workflows retain a verified `change-origin` in their result and
 
 Task commits identify their canonical parent Epic, including standing groups, while native IDs and scope qualification remain unchanged. `none` records an established absence. Attribution creates no commit or extra authority for report-only, global-only, or no-change execution. Tool-generated commits keep their native message contract.
 
+## Disposable build and test outputs
+
+The [artifact cleanup contract](../../plugins/aquarium/references/artifact-cleanup.md)
+owns cleanup scope, timing and retained-output handoffs. Plans and assignments
+include creation and removal of work-owned disposable outputs. Their creators
+clean them after the last consumer; Coordinators verify cleanup and shared-output
+ownership at handoffs, Task transitions and closeout. A clean Git status does not
+prove that ignored build directories were removed.
+
+Task phases, Epic Handler and Squad, independent validation, release checks,
+War Room reproductions and test-setup verification apply this contract within
+their existing authority. Retained paths need a reason, responsible next owner
+and retention end condition. Unresolved cleanup blocks the next Task and
+successful workflow completion while command, audit and review outcomes keep
+their actual results. No new report schema or Procedure node is introduced.
+
+Runtime evidence remains under its producer's retention contract. QA confirmation,
+VM collection and recovery, release payloads and temporary report readback retain
+their existing consumers. Shared caches, installed generations, pre-existing work
+and unrelated repositories are outside routine disposable-output cleanup.
+
 ## Shape Work
 
 `new-project`, `new-feature`, `refactor`, and `war-room` use the shared Ouroboros integration contract and an exact-diff approval boundary. They capture current authority before provider work, treat provider output as draft evidence, route typed quality findings through fresh phase-owned rework, and apply repository documents only after the user approves the complete diff. Podway guards operational quality results, not design truth, diagnostic cause or scope, or user approval.

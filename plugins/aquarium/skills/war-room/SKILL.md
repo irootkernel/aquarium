@@ -25,6 +25,12 @@ End with the classification, local evidence references, applied documents, unres
 
 ## Own Diagnostic Records and No-work Outcomes
 
+Use [artifact cleanup](../../references/artifact-cleanup.md) for authorized
+reproduction builds and fixtures. Preserve only the named diagnostic or recovery
+inputs still needed, with their next owner and retention end condition. Verify
+cleanup or that handoff before completion, including a no-work outcome. This
+does not authorize a source fix or deletion outside the reproduction scope.
+
 Before drafting, choose an existing canonical owner from the repository role map:
 specifications for durable requirements, ADRs for decisions, and operations
 documentation for repeatable diagnosis or recovery. Propose an exact missing owner

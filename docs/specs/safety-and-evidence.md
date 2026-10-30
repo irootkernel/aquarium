@@ -25,6 +25,12 @@ Provider selection and an exact review target authorize only the disclosed sourc
 
 An approved implementation envelope covers routine bounded decisions inside its stated requirements and checks. It does not widen repository scope, add new product requirements, authorize another repository, or permit destructive or publication effects.
 
+Plans may include creation and removal of work-owned disposable build and test
+outputs under the [artifact cleanup contract](../../plugins/aquarium/references/artifact-cleanup.md).
+That bounded cleanup does not authorize deletion of pre-existing files, shared
+caches or producer-owned runtime evidence. Report-only roles retain their
+existing limits, and an emergency stop also stops cleanup.
+
 ## Evidence Classes
 
 - **Canonical evidence** is current code, tests, specifications, roadmap state, Git history, release metadata, and other repository-owned durable authority.

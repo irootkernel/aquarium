@@ -11,6 +11,11 @@ Read this reference whenever an Aquarium workflow consumes evidence from Mulgae,
 
 Never use a runtime path or runtime identity as authoritative evidence in tracked documentation, roadmap entries, generated documents, commit messages, or other durable repository material. Literal runtime paths may still appear where needed to document configuration, privacy, ignore policy, cleanup, or tool behavior; those descriptions are not evidence references.
 
+Before creating disposable build outputs, fixtures or reproduction copies, read
+[artifact cleanup](artifact-cleanup.md). It governs owned output cleanup and
+retained-output handoffs without changing the producing tool's evidence retention
+or authorizing deletion of its runtime state.
+
 ## Keep Canonical Documents Current
 
 Upstream PM documents and seed handoff files remain disposable draft evidence until Aquarium applies their accepted content to approved canonical paths. Use the approved draft location outside the repository and the cleanup scope in the [PM contract](ouroboros-integration.md#pm-files-and-clipboard). Do not stage generated drafts or copy their runtime paths into canonical documents as evidence. PM clipboard replacement requires separate authority in the execution envelope; it is not evidence promotion or document approval.

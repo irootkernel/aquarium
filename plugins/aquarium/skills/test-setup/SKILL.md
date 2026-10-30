@@ -65,6 +65,12 @@ Use structured ask/answer when available to request `Apply exactly this diff`, `
 
 ## Apply and Verify
 
+Follow [artifact cleanup](../../references/artifact-cleanup.md) for disposable
+verification copies, fixture builds and check outputs. Include their creation
+and removal in the proposed scope, then return verified cleanup or retained paths
+with their reason, owner and end condition. Unresolved cleanup prevents successful
+workflow completion; it does not rewrite the test-contract inspection result.
+
 Apply only the approved diff. Do not stage or modify unrelated files.
 
 Run the inspector again first. Then run focused static checks for the changed test infrastructure. `test-prepare` intentionally applies meaning-preserving formatting; when unrelated dirty files fall within its formatter scope, do not run it in the original worktree. Use a faithful disposable copy when feasible or report the unresolved verification gap without touching that work.

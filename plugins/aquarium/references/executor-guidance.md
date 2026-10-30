@@ -45,6 +45,11 @@ only authorized checks; retain exact inputs, outputs, candidate bindings, and
 material limits. A missing required check remains a gap. Do not mark it passed
 from a declaration, another candidate, or a summary.
 
+Before producing disposable build or test outputs, read
+[artifact cleanup](artifact-cleanup.md). Own their cleanup after the last consumer
+and return removed outputs, justified retention and cleanup failures in the
+existing handoff. Report-only assignments gain no write or deletion authority.
+
 Do not execute Coordinator Decisions, accept a native result, issue a Podway receipt,
 or complete a Procedure placement. Staging, commits, publication, installation,
 configuration changes, and provider operations require their own applicable

@@ -67,6 +67,13 @@ coverage. They do not select routes, transfer Writer, modify the index or advanc
 Podway. Assigned reports and isolated check outputs remain within their bounded
 permissions; no permanent support team or support approval node is required.
 
+Output-producing TOs and SOs follow [artifact cleanup](artifact-cleanup.md).
+The creator owns disposable build/test outputs, and the Coordinator verifies
+shared outputs, cleanup results and retained-output handoffs before role
+retirement or the next Task. Unresolved cleanup blocks successor Tasks and
+successful completion separately from test and assessment results. Read-only
+roles retain their assigned limits.
+
 Retain machine roles `coordinator`, `executor` and `evaluator` and ordinary
 identifiers such as `aquarium.assignment/v3`, `aquarium.executor-handoff/v3` and
 `aquarium.evaluator-assessment/v3`. TO assignments use executor semantics; SO

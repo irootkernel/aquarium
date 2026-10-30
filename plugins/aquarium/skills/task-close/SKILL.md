@@ -13,6 +13,12 @@ Close only the reviewed task established by `$aquarium:task-handler`. When invok
 
 ## Assemble Existing Evidence
 
+Apply [artifact cleanup](../../references/artifact-cleanup.md) before successful
+closeout. Require verified removal of disposable outputs or a justified retained
+path, receiving owner and retention end condition. Return unresolved cleanup to
+its owner and keep closeout pending; a clean Git status or passing tests do not
+resolve it. Do not rerun tests solely to confirm cleanup.
+
 Determine whether repository authority makes an authorized commit, publication, merge, or other lifecycle evidence part of completion. Keep the task in review when required evidence is missing or its action is unauthorized.
 
 Assemble evidence already produced by the agent and explicitly supplied by the user. Do not rerun user-confirmed tests or documentation checks solely to mark the task complete or prepare a commit. Repository-required hooks, generators, and synchronization commands still apply when they cannot be waived; disclose and report them separately.

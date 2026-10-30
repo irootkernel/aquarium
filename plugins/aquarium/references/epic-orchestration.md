@@ -31,6 +31,12 @@ guides.
 
 ## Goal checkpoints
 
+Use [artifact cleanup](artifact-cleanup.md) in member, correction, validation and
+closeout work. Each output-producing assignment carries its cleanup scope and
+owner; the Coordinator verifies returned cleanup or retained-output handoffs
+before the next Task and successful completion. Goal-centered work applies this
+directly without invoking Task phase skills or changing machine reports.
+
 | Work or Coordinator evidence record | Independent assessment (EE for Handler) | Coordinator progression |
 | --- | --- | --- |
 | `complete-work` | `evaluator-work` | `decide-work-assessment` then `record-evidence` |

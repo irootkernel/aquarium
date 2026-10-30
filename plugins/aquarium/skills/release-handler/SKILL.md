@@ -13,6 +13,13 @@ Explicit invocation authorizes read-only release discovery against the configure
 
 ## Establish the Release
 
+Read [artifact cleanup](../../references/artifact-cleanup.md) before creating
+disposable release-check outputs. Include their cleanup in the authorized work,
+and verify removal or justified retention before publication and final completion.
+Keep release payloads, QA confirmation evidence and VM collection/recovery inputs
+until their actual consumers finish; those owners define retention. Unresolved
+disposable-output cleanup blocks progression separately from a passing gate.
+
 1. Resolve one Git root and inspect the worktree, conflicts, branch, `HEAD`, local and remote `main`, upstream, tags, hosted Releases, version authority, release-notes declaration, and repository release policy. Reconcile tags, hosted Releases, and completed release notes to establish the latest published stable version; stop on conflicting baseline evidence. When none exists, obtain explicit confirmation of the first release and intended version; do not fabricate a previous tag or commit.
    Never fetch, merge, switch, stash, clean, or repair state while establishing the candidate. When a conforming target release commit or any matching publication object already exists, read [publication-recovery.md](references/publication-recovery.md) and classify it before applying ordinary pre-release stop rules.
 2. Require one intended stable SemVer version greater than the established latest stable version, or the explicitly confirmed first-release version. When the request is only to retarget the open cycle, verify that the target remains greater than that latest stable version and that no tag or Release exists for either target, show the exact changelog heading edit, obtain approval, apply only that edit, and run the release-notes inspector and documentation checks.

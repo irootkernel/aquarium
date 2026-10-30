@@ -34,6 +34,11 @@ Classify the complete current issue set first. Local settlement is available onl
 
 ## Establish the Task Contract
 
+Read [artifact cleanup](../../references/artifact-cleanup.md). Include disposable
+build/test output scope, cleanup ownership and necessary retention in the approved
+plan and phase assignments. Verify returned cleanup or retained-output handoffs
+at phase boundaries; unresolved cleanup prevents successful handler completion.
+
 Require one mutable Git repository or a working directory inside it, one canonical roadmap path inside that repository, and exactly one task ID present in that roadmap. Reject epic-level requests, multiple tasks, requests without one canonical roadmap task identity, non-Git work, and external roadmap paths. Normalize an ID only when repository instructions define the rule.
 
 1. Resolve the Git root and read every applicable instruction file.
@@ -53,7 +58,7 @@ When repository guidance selects Gaori, read [gaori-integration.md](../../refere
 
 For `mulgae`, record whether `$use-mulgae`, the supported configured CLI, and the attached project MCP are available; route a missing or invalid skill or CLI to `$aquarium:dev-setup-global`, and a required repository config or project MCP gap to `$aquarium:dev-setup`. For `herdr`, require `$aquarium:herdr-review`, the separately installed upstream `$herdr` skill, the explicit reviewer kind and requested native model/effort, a complete isolated staged Task target, and selected-route caller readiness under [herdr-supervision.md](../../references/herdr-supervision.md). Check `HERDR_ENV=1` before session inspection or control; a missing context blocks Herdr only and does not create a replacement session. For `subagent-review`, require `$aquarium:subagent-review`, the expected fresh host reviewer team, and support for any explicitly selected model and effort. For `waived`, require explicit delegated-review waiver authority and no backend readiness. A prerequisite gap blocks only its selected route and returns to route selection; it never starts another route automatically.
 
-Repository and system instructions override this workflow. Invocation plus plan approval authorizes only the selected task-scoped review route, shared-policy finding remediation within the approved task, affected checks, task-owned staging, exact restaging of already staged affected paths, and an approved lifecycle edit. It excludes an automatic route change or waiver, commit, amend, push, PR changes, destructive commands, undisclosed source transmission, unplanned files, and unrelated staging. Hand an authorized commit to `$aquarium:task-commit`.
+Repository and system instructions override this workflow. Invocation plus plan approval authorizes only the selected task-scoped review route, shared-policy finding remediation within the approved task, affected checks, declared disposable-output cleanup, task-owned staging, exact restaging of already staged affected paths, and an approved lifecycle edit. It excludes an automatic route change or waiver, commit, amend, push, PR changes, destructive commands outside that cleanup scope, undisclosed source transmission, unplanned files, and unrelated staging. Hand an authorized commit to `$aquarium:task-commit`.
 
 Do not start or mutate Podway before plan approval. The plan discloses the selected review route, target scope, route-specific reviewer or waiver authority, session start or resume, the separate fenced `begin`, evidence, decisions, route recovery, rework, goal assessment, completion, and supported disposition. The selected route remains effective until an explicit bounded change. The plan also names any downstream consumer and approved `repository-required` or `external-handoff` promotion; otherwise task promotion is unavailable. `plan-only` stops without mutation. `plan-handoff` additionally discloses the temporary plan, attachment, session stop, successor propagation, resume report, and cleanup.
 

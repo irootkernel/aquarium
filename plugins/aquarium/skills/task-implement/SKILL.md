@@ -17,6 +17,11 @@ Before editing, re-read applicable instructions, the task entry, approved plan, 
 
 ## Implement the Approved Scope
 
+Follow [artifact cleanup](../../references/artifact-cleanup.md) for disposable
+build and focused-check outputs. Clean after their last consumer and return
+retained paths with their reason, next owner and retention end condition, plus
+any cleanup failure. Preserve outputs still needed by verification or review.
+
 Implement the smallest maintainable change that satisfies the approved requirements:
 
 - follow local architecture, naming, error, data, and dependency patterns;

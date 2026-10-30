@@ -57,6 +57,11 @@ retain their own route and authority.
 
 ## Establish the execution envelope
 
+Read [artifact cleanup](../../references/artifact-cleanup.md). Carry disposable
+output creation/removal scope and ownership in the envelope and Task/Support
+Operator assignments. The Coordinator verifies shared outputs and retained-output
+handoffs before retiring producers, advancing Tasks or completing the Epic.
+
 Resolve the original requirements,
 dependency DAG and exact committed prerequisite evidence. Prepare the Context
 Brief, delivery order, native configuration and limitations, Task risk and first
@@ -116,8 +121,10 @@ stages and invokes required commit tooling under the actual
 `task-commit` handoff; a Handler handoff is not a substitute.
 
 Keep useful same-Task context through corrections and post-commit inspection.
-Start a new Task team only after the preceding Task's required commit and native
-finalization are verified. Recover a successful commit without replaying it.
+Start a new Task team only after verifying the preceding Task's required commit
+and native finalization, plus cleanup or a justified handoff for retained outputs.
+Unresolved cleanup blocks that transition even when tests pass. Recover a
+successful commit without replaying it.
 Final integration independently assesses the assembled original Epic with EE
 and at least two fresh non-authoring Task Operators, alongside the Coordinator's
 product review. Internal validation uses Squad's own owner and does not invoke

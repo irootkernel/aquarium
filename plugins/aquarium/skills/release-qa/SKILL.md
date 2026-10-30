@@ -112,12 +112,20 @@ Do not run existing automated tests, `make test`, test runners, test scripts, li
 
 ## Exercise Disposable Projects
 
-1. Create one evidence root with `mktemp -d /tmp/release-qa.XXXXXX`, immediately resolve that directory with `pwd -P`, and use only the resulting physical absolute path for fixtures and candidate commands. Create a separate fixture directory for each scenario, record the physical root, and retain it for user inspection.
+1. Create one evidence root with `mktemp -d /tmp/release-qa.XXXXXX`, immediately resolve that directory with `pwd -P`, and use only the resulting physical absolute path for fixtures and candidate commands. Create a separate fixture directory for each scenario and record the physical root. Retain required scenario evidence for user inspection; disposable fixture and build contents follow the cleanup contract below.
 2. Use the current repository's candidate binaries, source entrypoints, scripts, skills, documentation, and other resources by exact path. Do not clone or execute the previous release. Keep the source repository read-only and confirm its Git status is unchanged after every scenario group.
 3. Redirect `HOME`, XDG directories, temporary state, build outputs, and language or tool caches into the evidence root wherever applicable. Never write user-global state or rely on ambient credentials.
 4. Prefer an existing candidate artifact. When execution requires a build, run only the smallest non-test build whose outputs and caches can be isolated under `/tmp`; do not permit network access or global installation. Record an evidence gap when a safe isolated build is impossible.
 5. Keep scenarios offline and local by default. Do not contact live services, authenticate, start a persistent daemon, or send repository content externally. Record the blocked scenario as an evidence gap unless the user separately authorizes the exact external action.
 6. Capture the command, working directory, controlled environment, exit status, output, and material resulting files. Stop local background processes before completing the scenario.
+
+Read [artifact cleanup](../../references/artifact-cleanup.md) and distinguish
+disposable fixture/build paths from retained evidence. Executors clean only their
+owned outputs after the last consumer and return cleanup or retained-output
+handoffs through the existing report. The Coordinator verifies those results
+before completion. Preserve frozen records, claims, admissions, cluster results
+and every referenced evidence file through confirmation and recovery; do not
+delete a referenced fixture as disposable or add fields to closed helper schemas.
 
 ## Dispatch Fresh Scenario Agents
 
@@ -138,6 +146,10 @@ Choose one overall result in this order across both matrices:
 1. `INCOMPLETE` when any required release fact, active-gate execution or evidence, delta scenario, fresh-executor result, or safe execution prerequisite is missing, even when verified findings also exist.
 2. `FINDINGS` when both applicable matrices are complete and at least one verified active-gate or release-delta defect remains.
 3. `PASS` only when the active Design Gate matrix, when enrolled, and the release-delta matrix are both complete and no verified defect remains.
+
+Unresolved disposable-output cleanup makes the workflow `INCOMPLETE`. Report it
+separately from scenario outcomes and the helper's calculated record verdict;
+cleanup does not authorize another QA pass.
 
 In `full` mode, store beneath the retained evidence root and return an authoritative frozen confirmation record containing the exact cluster decomposition and every stable cluster and scenario identifier, source matrix, procedure, controlled environment, expected and observed outcomes, and retained evidence location. This record, not a later reconstruction, is the inventory authority for any permitted confirmation pass.
 

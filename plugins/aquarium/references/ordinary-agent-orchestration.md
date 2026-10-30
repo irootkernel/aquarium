@@ -101,6 +101,12 @@ below and retain source provenance. Runtime documents follow
 [evidence residency](evidence-residency.md), without a tracked execution log,
 central state file, collector, scheduler, provider allowlist or retry quota.
 
+For output-producing work, include the [artifact cleanup](artifact-cleanup.md)
+scope and owner in existing assignment instructions and success criteria.
+Executors return cleanup and retention in ordinary results, evidence and gaps;
+the Coordinator verifies them before successor-Task admission or successful
+completion. Report-only role permissions remain unchanged.
+
 Every document carries these common fields:
 
 | Field | Required meaning |
