@@ -1028,3 +1028,22 @@ The [Squad scenario](recipes/scenarios/epic-squad.md) defines future execution,
 consumer restoration and collection. Required source checks, agent-executed
 installed functional verification and Master's actual overall Epic acceptance
 retain their separate boundaries.
+
+### Disposition of earlier execution incidents
+
+The Handler fixture left its parent Epic in the roadmap's not-started state
+while both member Tasks were Completed. The observed cause was the omitted
+parent record update. The reviewed base and candidate Handler instructions both
+lack an explicit Epic-start reconciliation step; this is a preexisting guidance
+gap, with no new role-mapping regression established. The followup repaired the
+fixture record only. [DF-005](../../docs/deferred-feedback/README.md#df-005-reconcile-the-parent-epic-lifecycle-at-handler-work-start)
+owns the independent preventive clarification.
+
+The failed cold fixture took broad manual rework from record-outcome at revision
+47 to prepare-validation-pass at revision 48, although revision 47 advertised a
+narrower prepare-validation-assessment target. The selected pass-preparation
+route could not truthfully represent record-only re-entry. This was an operator
+routing error; it does not establish a new current-source defect. The original
+NOT_ACCEPTED result remains. Before rework, select a currently advertised target
+that supports the actual record-handling purpose. The separate fresh cold
+fixture and later requested-record-change case do not change this failed result.

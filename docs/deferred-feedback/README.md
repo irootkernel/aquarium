@@ -23,3 +23,19 @@ This index owns small actionable findings intentionally postponed from current w
 - Owner: workflow documentation for Epic Handler, Procedure node contracts and Epic orchestration.
 - Reason for deferral: the descriptive drift predates TASK-148 and is independent of its collaboration instructions and display-role changes; no current TASK-148 runtime behavior defect is established by this wording mismatch.
 - Re-entry condition: at the next maintenance of Goal-version guidance, reconcile the descriptions against current canonical Procedure sources while preserving admitted historical definitions, source identities and snapshots.
+
+## DF-005: Reconcile the parent Epic lifecycle at Handler work start
+
+- Actionable issue: a Handler fixture completed both member Tasks while its parent Epic remained in the target roadmap's not-started state. The parent record update was omitted, and both the reviewed base and candidate Handler instructions lack an explicit Epic-start reconciliation step.
+- Owner: [Epic Handler](../../plugins/aquarium/skills/epic-handler/SKILL.md) lifecycle guidance, using each target repository's canonical roadmap vocabulary.
+- Source: EPIC-027 whole-Epic review 1, F-4 (requirements review REQ-4 and verification review VER-3); original failed fixture and later record-only correction remain separate results.
+- Reason for deferral: this is an independent preventive clarification of preexisting Handler guidance. EPIC-027 changes its role wording; no new display-role regression was established. The fixture correction repaired only its parent record.
+- Re-entry condition: before the next applicable Handler lifecycle maintenance or use, define and verify parent-Epic reconciliation when actual work starts, preserving the target repository's allowed lifecycle transitions and terminal member records.
+
+## DF-006: Review Squad composition boundaries before external-role extension
+
+- Actionable issue: the composition and commit-handoff consumers in [adaptive_squad.py](../../plugins/aquarium/shared/adaptive_squad.py) combine evidence applicability, finding classification, acceptance and commit eligibility. Extending these consumers can make their contract boundaries harder to audit.
+- Owner: Squad composition/commit maintenance before EPIC-028 TASK-154 and TASK-155 extend those concerns.
+- Source: EPIC-027 whole-Epic review 1, F-7 (code review CODE-2).
+- Reason for deferral: this is an independent maintainability improvement, with no additional current behavior defect established. The current unresolved-finding defect was repaired separately; broad decomposition is unnecessary for that correction.
+- Re-entry condition: before TASK-154 or TASK-155 changes composition or commit eligibility, evaluate small extractions by concern and verify preserved contracts with the existing affected suite. The finding imposes no line-count limit, mandatory large refactor or new framework.
