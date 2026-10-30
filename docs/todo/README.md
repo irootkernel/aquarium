@@ -10,8 +10,6 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 
 ## Adopted Roadmap Work Dossiers
 
-- [Podway v0.2.15 adoption](TODO-PODWAY-0215.md) owns EPIC-034 and TASK-177 through TASK-180, including the generation-2 transition and exact installed-upgrade acceptance.
-
 - [Aquarium development environment dossier](TODO-AQUARIUM-DEV.md) preserves EPIC-002's completed history and withdrawn expansion. EPIC-033 is its sole active retirement consumer and settles its historical references before approved deletion; it authorizes no new legacy integration.
 - [Astra skill modernization dossier](TODO-ASTRA-SKILLS.md) defines the scope and
   acceptance for `EPIC-012`, `TASK-043` through `TASK-046`, and the local producer

@@ -843,7 +843,24 @@ collection results alongside any independently verified native evidence.
 
 ## Podway v0.2.15 adoption suite
 
-The [Podway upgrade scenario](recipes/scenarios/podway-upgrade.md) owns the explicit manual `podway-upgrade` suite, its exact external release input, seven original-evidence cases and consumer restoration. The bundle retains stable v0.2.14 and creates a separate sealed v0.2.15 candidate profile. This is preparation for EPIC-034; it establishes no installed result before native manual completion and actual functional observation. Existing qualification records retain their original identities and limits.
+The [Podway upgrade scenario](recipes/scenarios/podway-upgrade.md) owns the explicit manual `podway-upgrade` suite, its exact external release input, seven original-evidence cases and consumer restoration. The bundle retains stable v0.2.14 and creates a separate sealed v0.2.15 candidate profile. Preparation alone establishes no installed result; native manual completion and actual functional observation are required.
+
+EPIC-034's installed qualification passed on Aquarium candidate
+`fd1e40e5304ff9f4bde6920bf0188a6a7c3b7268` with the official Podway v0.2.15 CLI
+and complete release-pinned skill. All seven cases passed: released baseline,
+writer refusal, approved runtime reset, fresh skill discovery, actual Task and
+Epic startup with initial Executor/Evaluator progression, and consumer
+restoration. Native evidence collection was complete, consumer and Job cleanup
+were verified, and the shared resource was released. The earlier failed run
+remains a separate failed result.
+
+Master accepted the overall Podway adoption after this qualification and the
+complete local test gate. The later test-fixture formatting correction preserves
+Python semantics; it and the closeout documentation do not constitute another
+installed run. This result retains its exact candidate binding and covers the
+observed Codex paths. Each release still requires its own exact-candidate
+release-acceptance result; existing qualification records keep their original
+identities and limits.
 
 
 ## Native Squad installed cases

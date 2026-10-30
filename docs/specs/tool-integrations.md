@@ -71,7 +71,7 @@ The exact official v0.2.15 compatibility gate runs one CLI in disposable Git fix
 
 Legacy and incompatible writer state remains unchanged on refusal. The [upgrade contract](../../plugins/aquarium/references/tool-catalog.md#upgrade-from-older-writers) owns the original-writer, separate service-retirement and explicit destructive-reset boundaries. Reset establishes fresh runtime history; it does not convert or preserve old sessions.
 
-The `podway-upgrade` manual VM suite seals official v0.2.15 payload and complete skill files into a separate candidate profile, preserving the qualified v0.2.14 baseline. Its preparation checks identity and restoration only; actual installed generation-2 acceptance remains pending under EPIC-034 until the required native manual cases and functional observations are complete.
+The `podway-upgrade` manual VM suite seals official v0.2.15 payload and complete skill files into a separate candidate profile, preserving the qualified v0.2.14 baseline. The [installed qualification](../../tests/vm/README.md#podway-v0215-adoption-suite) records EPIC-034's observed generation-2 upgrade and Task/Epic startup coverage. Preparation checks alone do not establish installed acceptance; each release retains its separate exact-candidate gate.
 
 Installed qualification for the v0.2.14 adoption covers explicit skill-path execution through authenticated Codex, fresh private Codex discovery and session-scoped Claude discovery. Authenticated private-plugin namespace dispatch, Claude provider execution and complete managed Worker/Judge runs remain unqualified for the combined v0.1.19 release.
 

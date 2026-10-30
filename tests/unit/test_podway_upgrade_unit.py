@@ -293,8 +293,10 @@ def test_failed_cache_observation_survives_repair_and_native_finish(
     [
         b"not JSON\n",
         b'{"failed_cleanup_observations": false}\n',
-        b'{"schema":"aquarium.vm-suite-inventories/v1",'
-        b'"inventories":{},"failed_cleanup_observations":false}\n',
+        (
+            b'{"schema":"aquarium.vm-suite-inventories/v1",'
+            b'"inventories":{},"failed_cleanup_observations":false}\n'
+        ),
     ],
 )
 @pytest.mark.parametrize("restoration", ["restored", "wrong-cli", "wrong-skills"])
