@@ -58,7 +58,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-025 | Align review strategies with delivery goals | Completed |
 | EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | Completed |
 | EPIC-027 | Add native Epic Squad collaboration | Completed |
-| EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | Planned |
+| EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | In Progress |
 | EPIC-029 | Add directory AGENTS.md documentation indexes | Completed |
 | EPIC-030 | Unify Aquarium delivery across five agent hosts | Planned |
 | EPIC-031 | Adopt Coordinator, Evaluator and Executor roles in release workflows | Planned |
@@ -828,7 +828,7 @@ delivery while the extension develops.
 
 ## EPIC-028: Extend Epic Squad with Herdr and mixed collaboration
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Extend the existing `epic-squad` skill and workflow owner after EPIC-027 is
 complete. Resolve each role independently: omitted profiles use the Coordinator's
@@ -852,7 +852,7 @@ Do not add a second skill or owner.
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-152 | Resolve Squad profiles and capabilities | Resolve omitted/explicit profiles, common/scoped Evaluators, Task Operator and optional Support Operator pools, and native CLI/model/effort controls; preserve requested inputs and report unsupported settings without probe frameworks. | Planned | EPIC-027 |
+| TASK-152 | Resolve Squad profiles and capabilities | Resolve omitted/explicit profiles, common/scoped Evaluators, Task Operator and optional Support Operator pools, and native CLI/model/effort controls; preserve requested inputs and report unsupported settings without probe frameworks. | Completed | EPIC-027 |
 | TASK-153 | Implement Squad Herdr and mixed execution | Extend the same entrypoint with verified helper allocation, distinct Evaluators, optional support and same/cross-CLI combinations; retrieve independent original results and verify supported launch/resume/Writer controls. | Planned | TASK-152 |
 | TASK-154 | Extend Squad delivery and commit flow | Reuse Squad's owner, shared role names, first assessments, correction closure, bounded support, deferred work and evidence applicability for mixed roles; preserve Writer/commit authority, native-only bindings and no additional technical review. | Planned | TASK-153 |
 | TASK-155 | Complete Squad mixed recovery and configuration reporting | Recover native/external operations and settled correction evidence without replay, settle modifying descendants, retain role routes and observed configuration limits, and clean up only owned helpers without host-wide audits. | Planned | TASK-154 |

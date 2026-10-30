@@ -20,7 +20,112 @@ from adaptive_definitions import ASSETS, canonical_json, validate_definition
 from adaptive_design import context as design_context
 from adaptive_preparation import prepare
 from adaptive_qualification import qualify
-from adaptive_squad import assignments, commit_handoff, composition, composition_record
+from adaptive_squad import (
+    assignments,
+    commit_handoff,
+    composition,
+    composition_record,
+    resolve_profiles,
+)
+
+
+def test_profiles_preserve_opaque_inputs_and_distinguish_defaults():
+    requested = {
+        "Task Evaluator": {"cli": "codex", "model": "opaque/model/high"},
+        "Task Operator": {"cli": "custom cli", "model": "some/model", "effort": "max"},
+        "Support Operators": [],
+    }
+    result = resolve_profiles(requested)
+    assert result["requested"] == requested
+    assert result["roles"]["Epic Evaluator"] == {
+        "route": "native",
+        "configuration": "current-coordinator",
+    }
+    assert result["roles"]["Task Evaluator"] == {
+        "route": "herdr",
+        "cli": "codex",
+        "model": "opaque/model/high",
+        "effort": "high",
+    }
+    assert result["roles"]["Task Operators"][0]["effort"] == "max"
+    assert result["roles"]["Support Operators"] == []
+    result["requested"]["Task Evaluator"]["model"] = "changed"
+    assert requested["Task Evaluator"]["model"] == "opaque/model/high"
+
+
+def test_common_profile_is_configuration_for_two_distinct_roles():
+    profile = {"cli": "claude", "model": "example", "effort": "extra high"}
+    roles = resolve_profiles({"Evaluator": profile})["roles"]
+    assert roles["Epic Evaluator"] == roles["Task Evaluator"]
+    assert roles["Epic Evaluator"] is not roles["Task Evaluator"]
+    assert roles["Task Operators"] == [
+        {"route": "native", "configuration": "current-coordinator"}
+    ]
+    assert roles["Support Operators"] == []
+
+
+@pytest.mark.parametrize(
+    "requested",
+    [
+        None,
+        [],
+        {"Evaluator": {}},
+        {"Task Evaluator": {"model": "x"}},
+        {"Task Evaluator": {"cli": "codex", "model": " "}},
+        {"Task Evaluator": {"cli": "codex", "model": "x", "effort": None}},
+        {"Evaluator": {"cli": "codex", "model": "x"}, "Epic Evaluator": {}},
+        {"Task Operator": {}, "Task Operators": []},
+        {"Task Operators": []},
+        {"Task Operators": {}},
+        {"Support Operators": [{}]},
+        {"Unknown": {}},
+    ],
+)
+def test_invalid_profiles_require_resolution(requested):
+    with pytest.raises(BundleError):
+        resolve_profiles(requested)
+
+
+def test_operator_and_support_pools_remain_separate():
+    profiles = [
+        {"cli": "one", "model": "a"},
+        {"cli": "two", "model": "b", "effort": "low"},
+    ]
+    result = resolve_profiles(
+        {"Task Operators": profiles, "Support Operators": profiles[:1]}
+    )
+    assert len(result["roles"]["Task Operators"]) == 2
+    assert len(result["roles"]["Support Operators"]) == 1
+    assert result["requested"]["Task Operators"] == profiles
+
+
+def test_explicit_profiles_cannot_dispatch_before_mixed_integration(basis):
+    assignment = basis[1]
+    assignment["target"]["squad"]["profiles"] = {
+        "Task Evaluator": {"cli": "codex", "model": "x"}
+    }
+    with pytest.raises(BundleError, match="pending Herdr"):
+        assignments(assignment, "assess-task-plan", "evaluator")
+
+
+@pytest.mark.parametrize(
+    "cli,model,effort",
+    [
+        ("codex", "gpt 6.1 sol", "high"),
+        ("claude", "opus 5.5", "extra high"),
+        ("agy", "gemini 4 argon", "high"),
+        ("agy", "opus 5.5", "high"),
+        ("grok", "grok 4.7", "high"),
+        ("cursor agent", "grok 4.7", "high"),
+        ("opencode", "glm 5.3", "max"),
+    ],
+)
+def test_example_profiles_are_inputs_without_availability_claims(cli, model, effort):
+    profile = {"cli": cli, "model": model, "effort": effort}
+    assert resolve_profiles({"Task Operator": profile})["roles"]["Task Operators"] == [
+        {"route": "herdr", **profile}
+    ]
+
 
 LEGACY_MAPPINGS = {
     "goal": "sha256:f885c7f6b0da1086c582dbae3bb683f8e2089ab6d43fdf467d98149adbe4fc16",

@@ -48,6 +48,11 @@ explicit profile means `high`. Common and scoped Evaluator entries conflict;
 partial/empty profiles and an empty explicit Task Operator pool need resolution.
 Keep model IDs opaque. Do not guess missing input.
 
+Use the existing consumer's structured profile resolution described in the
+[profile contract](../../references/epic-squad-collaboration.md#profiles-and-native-readiness).
+Retain the original request separately from resolved roles and observed native
+capabilities. Resolution itself supplies no model access or launch evidence.
+
 Herdr/mixed role execution remains unimplemented until EPIC-028's execution,
 commit and recovery integration is complete. Report affected roles and this
 blocker without launching them natively or substituting a profile. Unaffected

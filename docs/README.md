@@ -82,6 +82,12 @@ The Handler role wording is implemented in current source and mapped assignments
 TASK-151 owns installed verification and its documentation; the dossier remains
 in use by EPIC-028.
 
+The Squad consumer resolves structured role profiles, including common/scoped
+Evaluators and separate Task/Support Operator pools, while preserving requested
+inputs and omissions. This preparation does not enable Herdr delivery or prove
+model availability. EPIC-028 retains the pending execution, commit and recovery
+integration and installed mixed verification.
+
 ## Planned multi-host unification
 
 [EPIC-030](roadmap/README.md#epic-030-unify-aquarium-delivery-across-five-agent-hosts)

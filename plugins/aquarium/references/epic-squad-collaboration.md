@@ -153,6 +153,32 @@ coverage. Disclose unavailable optional support before reassigning its obligatio
 to an authorized existing role; user-required participation remains required.
 Profiles do not configure separately selected technical-review operations.
 
+The existing Squad consumer's `resolve_profiles` reads structured profiles from
+`target.squad.profiles`. Use the role keys above without trailing colons, with
+`cli`, `model` and optional `effort` strings in each profile. Plural Operator
+keys contain lists; the singular Task Operator key contains one profile. Resolve
+ambiguous free-text input before constructing this object. Do not split model IDs
+or infer missing fields. Unknown roles or profile fields require input correction.
+
+The resolver returns the unchanged requested object and independently resolved
+role configuration. Native configuration refers to the current Coordinator;
+resolve it again on resume and retain earlier observations separately. Common
+Evaluator configuration expands to separate EE and TE entries without creating
+agents. Profile resolution runs before Squad source preparation and dispatch,
+and validates supplied Squad profiles on Design return. It performs no CLI
+inspection, authentication, launch or availability check. Explicit Herdr profiles
+still block delivery until execution, commit and recovery integration is complete.
+
+Before an affected role launches, the Coordinator reads the applicable installed
+paired tool contract and native model, effort and permission controls. Resolve
+display names to the actual CLI model ID without changing the requested model.
+On launch, resume and Writer transfer, distinguish requested configuration,
+applied controls, public confirmation and unconfirmed values. Unsupported effort,
+an unavailable model or a mismatch needs an explicit disposition and proposed
+alternative; changing the profile or route needs user direction. Assignment-only
+read-only instructions establish no OS isolation. These checks do not authorize
+host-default edits, probe frameworks or an automatic fallback.
+
 Discover native creation, result retrieval, continuation, termination, context,
 configuration and permission controls through current public tools, paired
 skills, complete relevant help and startup observations. Use a bounded smoke

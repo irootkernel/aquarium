@@ -16,8 +16,78 @@ ASSESSMENT_PHASES = {
 }
 
 
+def resolve_profiles(profiles):
+    """Resolve supplied role configuration without inspecting or launching a CLI."""
+    profiles = object_value(profiles, "Squad profiles")
+    keys = {
+        "Evaluator",
+        "Epic Evaluator",
+        "Task Evaluator",
+        "Task Operator",
+        "Task Operators",
+        "Support Operators",
+    }
+    if set(profiles) - keys:
+        raise BundleError("invalid-input", "Unknown Squad profile role")
+    if "Evaluator" in profiles and any(
+        key in profiles for key in ("Epic Evaluator", "Task Evaluator")
+    ):
+        raise BundleError(
+            "invalid-input", "Common and scoped Evaluator profiles conflict"
+        )
+    if "Task Operator" in profiles and "Task Operators" in profiles:
+        raise BundleError(
+            "invalid-input", "Singular and plural Task Operator profiles conflict"
+        )
+
+    def explicit(value):
+        value = object_value(value, "Explicit Squad profile")
+        if set(value) - {"cli", "model", "effort"} or any(
+            not isinstance(value.get(key), str) or not value[key].strip()
+            for key in ("cli", "model")
+        ):
+            raise BundleError("invalid-input", "Explicit profiles need CLI and model")
+        if "effort" in value and (
+            not isinstance(value["effort"], str) or not value["effort"].strip()
+        ):
+            raise BundleError("invalid-input", "Explicit effort must be nonempty text")
+        return {
+            "route": "herdr",
+            **copy.deepcopy(value),
+            "effort": value.get("effort", "high"),
+        }
+
+    def native():
+        return {"route": "native", "configuration": "current-coordinator"}
+
+    def pool(key):
+        values = profiles[key]
+        if not isinstance(values, list) or (key == "Task Operators" and not values):
+            raise BundleError(
+                "invalid-input", "A Task Operator pool needs at least one profile"
+            )
+        return [explicit(value) for value in values]
+
+    roles = {}
+    for role in ("Epic Evaluator", "Task Evaluator"):
+        key = "Evaluator" if "Evaluator" in profiles else role
+        roles[role] = explicit(profiles[key]) if key in profiles else native()
+    roles["Task Operators"] = (
+        pool("Task Operators")
+        if "Task Operators" in profiles
+        else [explicit(profiles["Task Operator"])]
+        if "Task Operator" in profiles
+        else [native()]
+    )
+    roles["Support Operators"] = (
+        pool("Support Operators") if "Support Operators" in profiles else []
+    )
+    return {"requested": copy.deepcopy(profiles), "roles": roles}
+
+
 def validate_mappings(binding, assignment):
     """Check custom placement scopes before source preparation or dispatch."""
+    resolve_profiles(assignment["target"].get("squad", {}).get("profiles", {}))
     configured = assignment["target"]["procedure_plan"].get("squad_phases", {})
     scopes = set(ASSESSMENT_PHASES.values())
     if not isinstance(configured, dict) or any(
@@ -1383,6 +1453,16 @@ def composition_record(
 def assignments(assignment, node, role, effects=(), *, reentry=False):
     """Return direct assignment scopes; the Coordinator launches and joins them."""
     squad = object_value(assignment["target"].get("squad"), "target.squad")
+    resolved = resolve_profiles(squad.get("profiles", {}))
+    if any(
+        profile["route"] == "herdr"
+        for value in resolved["roles"].values()
+        for profile in (value if isinstance(value, list) else [value])
+    ):
+        raise BundleError(
+            "not-established",
+            "Explicit Squad profiles require the pending Herdr execution, commit and recovery integration; preserve the request and obtain user direction for any alternative",
+        )
     support = squad.get("support_assignments", {})
     if node in support:
         if (
@@ -1734,6 +1814,8 @@ def design_return(assignment, design, application):
             "invalid-input",
             "Preserve supplied profile fields and omissions as an object",
         )
+    if caller["workflow_owner"] == "aquarium:epic-squad":
+        resolve_profiles(caller.get("profiles", {}))
     if application.get("status") != "verified-applied":
         state = "design-delivery-pending"
     elif type(design.get("commit_required")) is not bool:

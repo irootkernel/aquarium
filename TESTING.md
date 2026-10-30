@@ -698,6 +698,13 @@ UTM VM under its separate authority, using committed matching verification tools
 
 ## Squad execution consumer checks
 
+Profile controls cover omitted native configuration, explicit Herdr routing,
+common/scoped Evaluators, separate Task/Support Operator pools, opaque model IDs,
+effort defaults and invalid inputs. The seven dossier examples are static inputs,
+not availability checks. Dispatch rejects explicit profiles while the mixed
+execution, commit and recovery integration remains pending. Existing Design-return
+tests retain the original supplied profiles and omissions.
+
 `tests/unit/test_adaptive_squad_unit.py` covers owner-specific Goal/Validation
 source qualification, both plan gates, preserved legacy binding bytes, explicit
 Podway opt-out without discovery, current original-report composition, negative
