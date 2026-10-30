@@ -2,18 +2,23 @@
 
 ## Purpose and authority
 
-This dossier defines planned `epic-squad` delivery for Aquarium maintainers and
-workflow authors. Its consumers are
+This dossier defines the shared `epic-squad` requirements for Aquarium maintainers
+and workflow authors. Its consumers are
 [EPIC-027](../roadmap/README.md#epic-027-add-native-epic-squad-collaboration) and
 [EPIC-028](../roadmap/README.md#epic-028-extend-epic-squad-with-herdr-and-mixed-collaboration).
 The roadmap alone owns IDs, ordering, dependencies and lifecycle state. This
-file owns the detailed requirements, implementation boundaries and acceptance
-contract until each consumer promotes its implemented outcomes.
+file retains the shared requirements and EPIC-028's remaining execution scope.
+The [native collaboration specification](../specs/agent-orchestration.md#native-epic-squad-collaboration-source)
+owns the promoted native outcomes and their implemented contract links.
 
 The original planning baseline is Aquarium v0.1.20. The 2026-10-27 revision
 uses the current ordinary/adaptive contracts and the product-first delivery
-requirements below. This skill remains unimplemented. This documentation change
-authorizes no implementation, workflow execution, candidate installation or commit.
+requirements below. Native collaboration and its execution, commit and recovery
+consumers are implemented in development source. The
+[installed observations](../../tests/vm/README.md#task-151-candidate-observations)
+record exact candidates, results and verification limits. Herdr/mixed role
+execution remains planned under EPIC-028. This dossier grants no execution,
+installation, commit or publication authority.
 
 The design incorporates the agreed Epic Solo and Epic Harmony workflows with
 five role names: Coordinator, Epic Evaluator, Task Evaluator, Task Operator and
@@ -67,10 +72,10 @@ the evaluator contract with explicit work scope. Do not add a schema migration,
 Podway change or rewrite of an admitted snapshot just to change display names.
 
 EPIC-027 owns the bounded epic-handler terminology update alongside native Squad.
-Implement it at the skill, Epic orchestration references, relevant assignment
-wording and affected documentation/guidance. Shared contracts retain their generic
-machine meanings and other callers' behavior. This dossier plans that update;
-it does not claim the installed handler already uses the new labels.
+The skill, Epic orchestration references, mapped assignment wording and affected
+documentation implement that source update. Shared contracts retain their generic
+machine meanings and other callers' behavior. Installed observations and their
+limits remain separate from source implementation and roadmap acceptance.
 
 ## Product outcome and preserved behavior
 
