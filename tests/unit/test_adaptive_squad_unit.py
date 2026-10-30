@@ -2725,6 +2725,70 @@ def test_original_nonblocking_marker_preserves_mandatory_evidence(basis):
     assert composition(*basis)["status"] == "unresolved"
 
 
+@pytest.mark.parametrize("role", ["Task Evaluator", "Task Operator", "Epic Evaluator"])
+@pytest.mark.parametrize(
+    "finding",
+    [
+        {"required": True},
+        {"required": True, "state": "needs-fix"},
+        {"blocking": True},
+        {"blocking": True, "state": "needs-fix"},
+        {},
+        {"state": "needs-fix"},
+        {"priority": "Low"},
+        {"required": True, "priority": "optional", "blocking": False},
+        {"blocking": True, "state": "optional"},
+        {"required": True, "state": "nonblocking"},
+    ],
+)
+def test_passing_original_with_unsettled_finding_cannot_enable_commit(
+    basis, role, finding
+):
+    value = commit_input(basis)
+    repo, _, current = basis
+    assert commit_handoff(repo, value)["accepted_target"] == "candidate1"
+    ref = next(row for row in current["assessments"] if row["role"] == role)
+    report = json.loads(Path(ref["path"]).read_bytes())
+    report["findings"] = [{"id": "current-finding", **finding}]
+    ref.update(write_artifact(repo, "unsettled-pass-finding", report))
+
+    result = composition(*basis)
+    assert result["status"] == "unresolved"
+    assert result["native_values"]["composition-goal-outcome"] == "not-achieved"
+    assert result["original_findings"][ref["id"]] == report["findings"]
+    with pytest.raises(BundleError):
+        commit_handoff(repo, value)
+
+
+@pytest.mark.parametrize(
+    "finding",
+    [
+        {"priority": "optional"},
+        {"state": "optional"},
+        {"state": "nonblocking"},
+        {"blocking": False},
+        {"required": True, "state": "resolved", "basis": "Original settlement"},
+        {"scope": "future", "applicability": "An independent later Epic"},
+    ],
+)
+def test_passing_original_with_supported_finding_disposition_preserves_commit(
+    basis, finding
+):
+    value = commit_input(basis)
+    repo, _, current = basis
+    ref = current["assessments"][0]
+    report = json.loads(Path(ref["path"]).read_bytes())
+    report["findings"] = [{"id": "current-finding", **finding}]
+    ref.update(write_artifact(repo, "supported-pass-finding", report))
+    if finding.get("scope") == "future":
+        ref["future_findings"] = ["current-finding"]
+
+    result = composition(*basis)
+    assert result["status"] == "ready"
+    assert result["original_findings"][ref["id"]] == report["findings"]
+    assert commit_handoff(repo, value)["accepted_target"] == "candidate1"
+
+
 @pytest.mark.parametrize("fault", ["missing-original", "different-original"])
 def test_affected_classification_must_identify_the_closed_source(basis, fault):
     _, proof = affected_case(basis, "task-result", "bounded")

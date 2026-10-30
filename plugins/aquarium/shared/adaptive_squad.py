@@ -263,15 +263,8 @@ def finding_states(report, reference):
                     "not-established", "Finding settlement needs its original basis"
                 )
             result[identifier] = "met"
-        elif report["verdict"] != "pass" or status in {
-            "unmet",
-            "unverified",
-            "unresolved",
-            "open",
-        }:
-            result[identifier] = "unmet"
         else:
-            result[identifier] = "informational"
+            result[identifier] = "unmet"
     if not set(future) <= set(result):
         raise BundleError(
             "not-established", "Future finding attribution lacks original IDs"

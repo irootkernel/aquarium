@@ -260,6 +260,9 @@ reviewer can mark it with `priority=optional`, `state=optional` or
 marker. Explicit required/blocking findings, negative criterion parts and
 unidentified mandatory judgments remain open until their actual obligations are
 settled; optional advice needs no fabricated closure or future-scope label.
+Named current findings without a supported settlement or explicit optional
+marker remain open even when the report passes or the finding state is absent
+or unrecognized. Required/blocking flags override conflicting optional markers.
 
 Record `pending.local`, `low`, `blocking` and `judgment` independently. Ready
 composition requires every current mandatory part met or justifiably
