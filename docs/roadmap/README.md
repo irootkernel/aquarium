@@ -57,7 +57,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-024 | Restore native agent workflows and add manual VM release acceptance | Completed |
 | EPIC-025 | Align review strategies with delivery goals | Completed |
 | EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | Completed |
-| EPIC-027 | Add native Epic Squad collaboration | In Progress |
+| EPIC-027 | Add native Epic Squad collaboration | Completed |
 | EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | Planned |
 | EPIC-029 | Add directory AGENTS.md documentation indexes | Completed |
 | EPIC-030 | Unify Aquarium delivery across five agent hosts | Planned |
@@ -759,7 +759,7 @@ preservation does not require new native authentication or extra routine review.
 
 ## EPIC-027: Add native Epic Squad collaboration
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Add explicitly invoked `epic-squad` delivery through the current Coordinator's
 native subagents as the first phase of one role-configurable workflow. Deliver
@@ -816,7 +816,7 @@ Herdr/mixed execution, commit and recovery integration from EPIC-028 is complete
 Changing the selected route requires user direction. Preserve native-only
 delivery while the extension develops.
 
-**Detailed SOT:** [Epic collaboration dossier](../todo/TODO-EPIC-COLLABORATION.md)
+**Detailed SOT:** [Native Epic Squad collaboration](../specs/agent-orchestration.md#native-epic-squad-collaboration-source)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
