@@ -66,6 +66,14 @@ inheritance. Record requested, applied, observed and unknown controls separately
 including replacements and descendants. A missing harness/capability remains
 unverified. A Codex observation supplies no Claude pass.
 
+For a goal-tracking Procedure, define criteria for the result observable at its
+goal-assessment node. Keep actual acceptance, commit and terminal disposition as
+later required workflow postconditions. A readiness criterion can require the
+exact candidate, original evidence and proposed no-change or commit scope to be
+prepared for the operator decision. Preserve a contradictory Goal and its
+incomplete result; the Goal contract does not permit revision merely to turn a
+failed assessment into a pass.
+
 - `native-multitask` covers both independent plan scopes before Writer assignment,
   first result panels and EE contribution, fresh Task teams, same-Task continuity,
   sequential capacity where needed and exact accepted commits.
@@ -205,10 +213,11 @@ includes that receipt, `consumer-cleanup.json` and the actual `inventories.json`
 in `evidence/consumer-restoration.tar`. It includes baseline/candidate identity
 receipts in their respective case archives. Every case directory's regular files
 travel in its fixed-name `evidence/<case-id>.tar` with a content manifest, including
-available originals from partial cases. Missing inventories/files, unsafe paths,
-links or exceeded bounds keep staging incomplete. Each staging attempt is persisted before archive work, including partial
-progress and known errors; retries preserve earlier attempts. A prior complete
-archive remains until its replacement is ready. Earlier staging failures stay
+available originals from partial cases. Missing inventories/files, unsafe paths
+or links keep staging incomplete. Each staging attempt is persisted before
+archive work, including partial progress and known errors; retries preserve
+earlier attempts. A prior complete archive remains until its replacement is
+ready. Earlier staging failures stay
 in the staging summary's attempt history. The current aggregate `result.json`
 then records restoration/evidence completeness; functional cases remain a
 separate manual judgment.
@@ -226,18 +235,18 @@ manual `evidence_references` do not expand that inventory. Use those references
 only to name the collected archives/manifests and summary, without embedding
 original reports into bounded manual metadata.
 
-The existing archive limits are 32 MiB per case and 256 MiB across archives.
+Haepari owns the collection limits. Squad staging preserves complete originals
+without imposing the separate release-acceptance recipe's archive limits.
 The [native v0.1.0 artifact contract](https://github.com/irootkernel/haepari/blob/v0.1.0/docs/contracts/artifact-and-profile.md#implemented-delivery-and-retention-task-012)
 allows at most 1000 collected files and 1 GiB; each Job's immutable accepted
 bytes/count pin can be lower. Before submission, inspect the selected controller's
 accepted artifact limits; retain the actual admission's immutable configuration
 revision and limits. Before manual completion, check the total size
 of all 28 outputs, including manifests/JSON and staging history, against that
-saved pin. The archive limit alone does not establish that fit. Staging reports
-an exceeded archive bound as incomplete but keeps the complete declared archive;
-it does not delete or truncate the original payload to fit. An existing output
-that cannot fit the native pin stays protected. A positively absent output can
-instead finish as partial-evidence INCOMPLETE and release the resource under the
+saved pin. Successful staging alone does not establish that fit. Preserve the
+original payload in full. An existing output that cannot fit the native pin
+stays protected. A positively absent output can instead finish as partial-evidence
+INCOMPLETE and release the resource under the
 native v2 absence policy. Do not rely on absence to preserve uncollected source
 files. Repair missing originals before completion and recover the same Job;
 never substitute another Job or a successful manual status for that guarantee.
@@ -248,8 +257,10 @@ native collected/exported file set includes all 28 outputs, compare every archiv
 and member digest with its manifest, and verify native cleanup for the same Job.
 A successful manual scenario status cannot replace complete collected originals.
 
-Master's separate functional result remains a TASK-151 criterion. Record it only
-when actually supplied; earlier approval, agent verdicts and the native Job
-result cannot supply it. An otherwise completed Job need not stay held solely
-for an external confirmation. Any later installed work needs its own concrete
-VM authority and occupancy.
+TASK-151 requires separate functional verification by the coordinating agent
+through SSH in the dedicated UTM VM, using version-matched tools and the exact
+committed Aquarium candidate. Retain actual behavior and original results;
+source checks, setup and a native Job verdict alone cannot establish them.
+Master's overall Epic acceptance remains separate. An otherwise completed Job
+need not stay held solely for that external acceptance. Any later installed
+work needs its own concrete VM authority and occupancy.

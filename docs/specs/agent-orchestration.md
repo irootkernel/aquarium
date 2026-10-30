@@ -64,6 +64,15 @@ Explicit CLI/model role execution stays unavailable
 until EPIC-028's Herdr/mixed integration is complete. These source definitions
 establish no installed native functional result.
 
+Member delivery and Task-owned pre-validation remediation carry the same
+approved original basis through Task Evaluator, Task Operator and Epic
+Evaluator assignments and reports, composition and commit. The basis identifies due work without splitting or replacing original
+source clauses. Full original verdicts and future obligations remain available
+to later members and whole-Epic assessment; a scoped member result does not
+establish Epic completion. Task-owned remediation uses its separate correction
+grant; integration and Validation correction groups retain their whole original
+assessment scope.
+
 For `epic-handler`, Task Operator names its existing Worker/Executor and Epic
 Evaluator names its existing single logical Evaluator. Mapped ordinary assignments
 carry that display role in `work.display_role`; `executor`/`evaluator`, report IDs,

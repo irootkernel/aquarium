@@ -197,6 +197,30 @@ def test_staging_collects_complete_originals_and_actual_restoration_receipt(stag
     )
 
 
+def test_staging_preserves_large_originals_for_native_collection(staging, monkeypatch):
+    import hashlib
+    import tarfile
+
+    context, results, index = staging
+    case = "native-multitask"
+    original = results / f"originals/{case}/large-original.bin"
+    with original.open("wb") as stream:
+        stream.truncate(33 * 1024 * 1024)
+    index["cases"][case]["required"].append(original.name)
+    upgrade.lib.write_document(results / "case-evidence.json", index)
+    # Release-acceptance limits do not own Squad's native collection budget.
+    monkeypatch.setattr(upgrade.lib, "EVIDENCE_TOTAL_BYTES_BOUND", 32 * 1024 * 1024)
+    assert upgrade.stage_squad_evidence(context, results) == 0
+    summary = json.loads((results / "stage-evidence.json").read_bytes())
+    assert summary["ok"] is True
+    assert len(summary["archives"]) == 10
+    with tarfile.open(results / f"evidence/{case}.tar") as reader:
+        member = reader.getmember(f"originals/{case}/{original.name}")
+        assert member.size == original.stat().st_size
+        digest = hashlib.file_digest(reader.extractfile(member), "sha256").hexdigest()
+        assert digest == upgrade.lib.sha256_file(original)
+
+
 @pytest.mark.parametrize(
     "fault",
     [
@@ -208,12 +232,10 @@ def test_staging_collects_complete_originals_and_actual_restoration_receipt(stag
         "candidate",
         "receipt",
         "wrong-receipt",
-        "bound",
-        "total-bound",
     ],
 )
 def test_staging_failure_preserves_every_other_case_and_never_claims_pass(
-    staging, monkeypatch, fault
+    staging, fault
 ):
     context, results, index = staging
     case = "native-multitask"
@@ -242,24 +264,16 @@ def test_staging_failure_preserves_every_other_case_and_never_claims_pass(
                 "candidate": {"git_sha": "b" * 40},
             },
         )
-    elif fault == "total-bound":
-        monkeypatch.setattr(upgrade.lib, "EVIDENCE_TOTAL_BYTES_BOUND", 10240)
-    else:
-        monkeypatch.setattr(upgrade.lib, "EVIDENCE_ARCHIVE_BYTES_BOUND", 1)
     upgrade.lib.write_document(results / "case-evidence.json", index)
     assert upgrade.stage_squad_evidence(context, results) == 2
     summary = json.loads((results / "stage-evidence.json").read_bytes())
     assert summary["ok"] is False
     assert len(summary["archives"]) == 10
     assert json.loads((results / "result.json").read_bytes())["outcome"] == "incomplete"
-    if fault not in {"bound", "total-bound"}:
-        assert (results / "evidence/handler-continuity.tar").is_file()
-    else:
-        assert all(row["archive_present"] is True for row in summary["archives"])
-        assert all(
-            (results / "evidence" / row["archive"]).is_file()
-            for row in summary["archives"]
-        )
+    assert all(row["archive_present"] is True for row in summary["archives"])
+    assert all(
+        (results / "evidence" / row["archive"]).is_file() for row in summary["archives"]
+    )
     assert (
         results / f"originals/{case}/native.jsonl"
     ).read_bytes() == b'{"actual":"public capture"}\n'

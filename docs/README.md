@@ -45,11 +45,13 @@ and [collaboration contract](../plugins/aquarium/references/epic-squad-collabora
 define native role assignments, readiness, first assessments and correction
 semantics. The [Squad execution and current-composition consumer](../plugins/aquarium/references/epic-squad-execution.md)
 connects qualified source preparation, evidence and commit/design handoffs.
-Integration and recovery are implemented in source; installed behavior remains
-unverified pending TASK-151's actual observations.
+Integration and recovery are implemented in source. The
+[installed observations](../tests/vm/README.md#task-151-candidate-observations)
+retain exact candidates, scoped results and remaining verification gaps.
 
-The [Epic collaboration dossier](todo/TODO-EPIC-COLLABORATION.md) defines planned
-`epic-squad` delivery of correct, maintainable, extensible and responsive software.
+The [Epic collaboration dossier](todo/TODO-EPIC-COLLABORATION.md) defines shared
+native collaboration requirements and the planned Herdr/mixed extension, with
+correct, maintainable, extensible and responsive software as the delivery goal.
 Its shared role names are Coordinator, Epic Evaluator, Task Evaluator, Task
 Operator and Support Operator. Task Operators deliver or independently review
 assigned work; distinct Task/Epic Evaluators provide risk-based assessments and
@@ -76,8 +78,8 @@ Evaluator is called Epic Evaluator and its Worker/Executor is called Task Operat
 No separate Task Evaluator or mandatory Support Operator is added to Handler.
 Existing Handler/Validator behavior and machine report contracts remain unchanged.
 The Handler role wording is implemented in current source and mapped assignments.
-Squad integration and recovery are present in source; installed verification
-retains its TASK-151 owner.
+TASK-151 owns installed verification and its documentation; the dossier remains
+in use by EPIC-028.
 
 ## Planned multi-host unification
 

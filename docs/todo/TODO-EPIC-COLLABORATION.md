@@ -1513,8 +1513,10 @@ what each Task must deliver and demonstrate; they do not record lifecycle state.
   their original schemas. Do not turn terminology checks into prose-pinning tests.
 - Require actual installed end-to-end observation for at least one named supported
   native harness; unobserved harnesses do not acquire a passing result.
-- Complete Master's separate functional verification, keeping source checks,
-  installed observations and actual Epic acceptance distinct.
+- Complete separate agent-executed functional verification in the dedicated UTM
+  VM via SSH, using version-matched tools and the exact committed Aquarium
+  candidate. Keep actual results, source checks and overall Epic acceptance
+  distinct.
 - Promote implemented contracts to capabilities, workflow/orchestration specs,
   architecture, testing and public guidance as affected. Preserve this shared
   dossier for EPIC-028's remaining Herdr and mixed-execution requirements.

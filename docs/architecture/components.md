@@ -42,6 +42,16 @@ feature counts. Validation keeps correction commits inside one session and
 requires actual user acceptance for final closeout. Source checks establish no
 installed behavior.
 
+Preparation, native recovery and pure composition/commit share the
+original-source reader. Prepared recovery compares the complete extracted
+requirement inventory while retaining original source identities; sources
+outside approved recovery retain strict byte pins for ordinary callers. Existing
+native source qualification and final fences preserve their reassessment route
+on changed requirements. Member delivery and Task-owned pre-validation remediation
+carry the approved basis and its member-scope projection. The full assessment
+remains intact for later consumers. Correction commits retain
+their distinct grants.
+
 ## Directory documentation flow
 
 Canonical specifications and architecture remain the source of durable meaning.

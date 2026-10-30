@@ -297,6 +297,7 @@ def stage_squad_evidence(context: Any, results: Path) -> int:
         "ok": False,
         "state": "in-progress",
         "candidate_sha": candidate,
+        "collection_limits_owner": "haepari",
         "archives": [],
         "problems": problems,
     }
@@ -363,11 +364,6 @@ def stage_squad_evidence(context: Any, results: Path) -> int:
                 temporary, results, members + automatic, required
             )
             size = temporary.stat().st_size
-            if (
-                size > lib.EVIDENCE_ARCHIVE_BYTES_BOUND
-                or total + size > lib.EVIDENCE_TOTAL_BYTES_BOUND
-            ):
-                gaps.append("evidence exceeds the existing archive collection bounds")
             document["gaps"] = gaps
             pending_manifest = archive.with_suffix(".manifest.json.partial")
             lib.write_document(pending_manifest, document)
@@ -400,10 +396,6 @@ def stage_squad_evidence(context: Any, results: Path) -> int:
         case_index_sha256=lib.sha256_file(results / "case-evidence.json")
         if (results / "case-evidence.json").is_file()
         else None,
-        bounds={
-            "per_archive": lib.EVIDENCE_ARCHIVE_BYTES_BOUND,
-            "total_archives": lib.EVIDENCE_TOTAL_BYTES_BOUND,
-        },
     )
     persist()
     if invalid_inventory:

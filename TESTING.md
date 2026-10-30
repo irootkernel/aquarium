@@ -686,8 +686,18 @@ The optional Squad templates and their bindings stay in
 ordinary suitability and local retention under the approved preparation grant.
 Read-only native source previews retain their exact source and native version;
 a v0.2.14 preview does not establish the candidate's v0.2.15 installed/runtime
-contract. TASK-151 and Master's separate functional observations retain that
+contract. TASK-151's separate agent-executed functional observations retain that
 verification scope under the dedicated UTM policy.
+
+Current-member controls retain a complete Markdown requirement source across
+both plan scopes, role assignments, composition and commit. They distinguish due
+member work from later obligations and acceptance gates without changing global
+verdicts. Negative controls cover coherent plan changes, missing reason or
+obligation fields, current defects and incomplete original integration panels.
+Source-recovery controls exercise changed Task, Goal and Design requirements in
+Markdown and JSON through initial and final native qualification, preserving the
+existing reassessment route and independent stale-fence failures. Pure callers
+retain their existing contract. These checks establish helper behavior only.
 
 
 ## Squad integration and recovery verification
@@ -702,15 +712,17 @@ official Podway profile and consumer-restoration path while preserving old suite
 The [installed scenario](tests/vm/recipes/scenarios/epic-squad.md) and
 [original-row inventory](tests/vm/fixtures/squad/cases.json) own reusable methods
 for TASK-151. Unit/source checks prove no actual role assessment, native runtime
-progression, installed behavior or Master functional acceptance. Those remain
-candidate/harness-specific observations under explicit dedicated-VM authority.
+progression, installed functional behavior or overall user acceptance. Those
+remain candidate/harness-specific observations under explicit dedicated-VM
+authority.
 
 Squad VM evidence controls verify fixed declared archives/manifests, exact raw
 member hashes, inclusion of the actual post-restoration receipt/inventory,
-missing and unsafe source failures, existing archive bounds and preserved failed
-staging history. These controls prove collection wiring only; manual scenario
-verdicts, actual pinned capacity, export completeness and installed behavior
-retain their separate observation requirements.
+missing and unsafe source failures, and preserved failed staging history. A
+33 MiB original is retained in full without applying the release-acceptance
+recipe's archive limits to Squad staging. These controls verify archive
+construction. Manual scenario verdicts, actual pinned capacity, export
+completeness and installed behavior require separate observations.
 
 TASK-150 correction controls cover malformed Squad evidence through the actual
 context CLI consumer, declared capability field mapping, exact final-candidate
@@ -728,3 +740,37 @@ They also preserve malformed restoration inventories through staging and refusal
 The affected VM selection runs on an isolated owned projection with the index
 fixture; earlier working-fixture receipts retain their original scope. These
 checks establish neither installed behavior nor native artifact collection.
+
+### Installed work and assurance comparison
+
+TASK-151 compares existing operation receipts and original role reports. Count
+actual test executions, independent first assessments and affected confirmations;
+copies of a receipt or report are not extra executions. A provider turn used only
+to recover or deliver an existing report still counts as provider work, even when
+it adds no technical assessment or review ordinal. Keep setup, source intake,
+native bookkeeping, evidence retrieval and support work visible alongside product
+delivery. Record actual counts, clocks and provenance in local workflow evidence.
+
+Compare avoided whole-suite runs and evaluator recalls with missed defects,
+detection delay and mistaken recovery. A local correction with no product-test
+rerun or evaluator recall establishes that reuse path. A green gate that misses
+a real contract defect limits its assurance. An unverified runtime baseline can
+require a new current check. Invalid fixture setup is a harness failure and must
+remain distinct from a product defect or a successful functional case.
+
+Use available command clocks and native aggregate usage with their original
+scope. Invocation lifetime can include tool and role waits. Native usage can be
+cumulative, so successive values must not be summed into billed cost. Named
+supervision snapshots measure only their retained reads and output bytes;
+completion-to-intake delay does not measure every missed incident or first
+perception. Different candidates, fixtures and review obligations prevent a
+controlled performance comparison. No net efficiency improvement has been
+established by the current observations.
+
+Keep original negative reports and incomplete runs alongside current scoped
+results. A stopped Goal remains negative; later scenario guidance receives no
+functional pass from an earlier run. Source checks, fixture-operator decisions,
+agent-executed installed functional verification and actual Epic acceptance
+remain separate. The [installed verification status](tests/vm/README.md#task-151-candidate-observations)
+identifies current assurance and revalidation limits; detailed native evidence
+retains its producer-owned residency.

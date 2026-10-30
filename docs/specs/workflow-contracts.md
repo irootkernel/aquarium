@@ -88,6 +88,15 @@ CLI/model roles remain unavailable until EPIC-028; omission selects native
 configuration without a Herdr prerequisite. Source instructions establish no
 installed observation, and existing Handler/Validator behavior remains intact.
 
+Member completion and Task-owned pre-validation remediation preserve the complete
+original requirements and assessments.
+A source-bound `member_scope`, assessed under both plan scopes, identifies the
+current Task's obligations and retains later obligations and acceptance gates.
+Composition and commit use that same basis; future unverified work cannot become
+a current Task defect, and current defects cannot be assigned to future work.
+Task-owned remediation retains its distinct correction grant. Integration,
+Validation correction groups and closeout still assess their full original scope.
+
 ## Cold-Validate a Completed Epic
 
 `epic-validator` reconstructs a completed epic from roadmap, Git, current tests, canonical documentation, and independently verifiable evidence. It runs a direct audit and up to three `work-unit` assessments of the named Epic, groups confirmed gaps by owner, implements bounded remediation, and uses ordinal four only to confirm the frozen correction set and direct regression surface. It stops early on a clean or locally settled result.

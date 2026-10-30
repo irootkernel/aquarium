@@ -853,16 +853,20 @@ authorized manual `epic-squad` suite. It uses the existing sealed official Podwa
 dependency and baseline/candidate/restoration recipe, retaining the ordinary
 profiles and suites. Its [inventory](fixtures/squad/cases.json) maps every original
 native/shared scenario to finite grouped cases while keeping each observation
-separately due. Actual Codex/Claude results, multi-Task and Handler continuity,
-negative evidence and genuine same-operation/finalization recovery remain
-unverified until performed on the exact installed candidate.
+separately due. Record actual Codex/Claude results and the observed candidate for
+multi-Task delivery, Handler continuity, negative evidence and recovery. Reuse of
+earlier originals requires an explicit unchanged-branch applicability basis and
+its limits; changed behavior requires its own installed observation. Source
+checks do not establish those results.
 
 `native_observation.py` captures an existing Codex operation and its public
 descendants without another provider turn; it reuses the adaptive product-image
 collector. Capture files establish neither semantic passage nor settlement. Keep
 original reports/configuration and actual available counts/durations, with
-unobserved harnesses and costs explicit. Master's separate functional result
-cannot be inferred from setup, scenario records or a native Job verdict.
+unobserved harnesses and costs explicit. Separate functional verification records
+actual installed behavior under the executor Master selects. TASK-151 assigns
+that SSH/UTM verification to the coordinating agent. Setup, source checks and
+a native Job verdict alone do not establish the functional result.
 
 The suite declares 28 collected outputs, including fixed per-case archives and
 content manifests. After actual consumer restoration and its receipt/inventory
@@ -877,5 +881,90 @@ INCOMPLETE while preserving available originals. Cleanup seals its pass receipt
 immediately; final staging adds that receipt and the actual inventory. A failed
 or interrupted staging attempt retains its progress and the last complete
 archives for same-Job retry. The six-hour window and cleanup reserve are planning
-assumptions, with actual timing, pin fit and collected snapshot coverage still
-to be observed in installed verification.
+assumptions. Actual collection timing and capacity apply only to the collected
+output set described below.
+
+### TASK-151 candidate observations
+
+Campaign records attribute the historical member and Master observations to the
+`536a53dbc83306a436f7dde3b31e3219b2609255` source line. The two later campaigns
+installed `a545c2b3065e981d8db003fbcfe1dbe9408e2a7f` with Codex and official
+Podway `0.2.15`, after observing the released Aquarium `0.1.21` / Podway `0.2.14`
+baseline. The historical Master interaction's candidate binding comes from its
+campaign records; its public turn does not identify an installed Git commit.
+
+The `536a53d` to `a545c2b` production change adds Task-owned pre-validation
+remediation to the existing assessed member-scope predicate. Ordinary member
+and Validation paths are unchanged. Earlier observations apply only to those
+unchanged guarantees. Historical Squad Evaluator continuity includes a logical
+replacement and inherited conversation context; physically uninterrupted
+execution was not established. Imported product baselines do not restore the
+historical commits or sessions.
+
+Runtime identifiers and original records for the historical and both
+`a545c2b` campaigns remain with the producing tools and workflow handoff, under
+the evidence-residency contract.
+
+| Area | Observed candidate and campaign | Established scope and remaining limit |
+| --- | --- | --- |
+| Native Squad delivery | Historical `536a53d` member campaign; first `a545c2b` campaign | The historical campaign supplied both member plans, independent assessments, checks, accepted commits and native handoffs. The first `a545c2b` campaign completed a Task-owned pre-validation correction and assembled integration, including a correction inside the same Validation, whole-fixture review and fixture-operator-accepted closeout. |
+| Contract defects and local closure | Historical `536a53d` closures; first and followup `a545c2b` campaigns | Historical editorial and display-expectation repairs retain their original scope. In the first `a545c2b` campaign, a repeat cap and empty-name fallback survived green tests; direct probes and independent judgments exposed them and repairs added regressions. The followup's false numeric expectation retained its false green. Restoring the oracle produced a strict red at an intermediate Milestone before product repair; the final 17 direct CLI cases and full Make gate each ran once. |
+| Handler continuity | First `a545c2b` campaign; followup parent-record correction | Two committed member deliveries retained one logical Epic Evaluator, Task Operator assignments and original schemas, with no separate Task Evaluator or mandatory support. The original lifecycle result failed: both Tasks were Completed while their parent Epic remained Planned. The followup corrected only the parent record and completed its commit and native handoff. Its actual dirty review target and the earlier review-ordering incident remain assurance limits. |
+| Cold validation | First and followup `a545c2b` campaigns | The first cold case stopped on a Goal that required later acceptance and terminal effects too early. The followup retained a failed record-only re-entry as a separate failure. A distinct fresh cold fixture then used a fresh Coordinator, Evaluator and three technical views on unchanged imported product bytes; actual fixture-user acceptance preceded achieved completion and not_required finalization, with no empty commit. |
+| Requested record changes | Followup `a545c2b` campaign | A genuine fixture-user request followed the normal changes-requested route into a local record clarification. Renewed exact-content acceptance preceded one authorized correction commit and native handoff, reusing applicable product checks and technical review. The original inconclusive EE result, original TO's targeted result-representation recovery and Coordinator's finite closure remain separate. |
+| Design continuation | Followup `a545c2b` campaign | The missing dossier triggered Design. An actual Seed and one QA pass preceded separate Design, document-diff and result approvals. The predecessor produced the canonical input commit. After its missing final-assessment route was disclosed, an approved qualified successor refreshed the original criteria and recorded handoff without another commit, QA run or technical team. A genuinely new Squad conversation produced an initial plan before an execution envelope or product work; its first capacity failure and same-thread recovery remain recorded. |
+| Input resolution and opt-out | Followup `a545c2b` campaign | Four invalid profile/input classes were rejected before affected-role or Design dispatch; the inputs remained unresolved. A separate fresh pre-session Podway opt-out produced ordinary native first-plan responses and stopped before product work. Explicit-profile execution remains outside these observations and belongs to EPIC-028. |
+| Harness coverage | Both `a545c2b` campaigns | Codex observations remain bounded by the applicable cases. Guest-native Claude cases remain unverified; its observed guest CLI was logged out. Host static review supplies no guest functional result. Public controls establish neither private backend identity nor technical isolation. |
+| Master functional result | Historical `536a53d` status/ownership interaction | The completed read-only interaction and the response Master supplied are retained. Master's own assessment of whether it worked remains unverified. The unchanged Validation behavior permits bounded historical applicability, but an agent judgment or approval to continue cannot supply that human outcome or overall Epic acceptance. |
+
+TASK-151's current functional verification is agent-executed in UTM through SSH,
+using the exact committed Aquarium candidate and version-matched tools. Retain
+the missing historical personal appraisal separately from that actual installed
+result and Master's later overall Epic acceptance.
+
+The first and followup `a545c2b` campaigns used disclosed host-only harness
+snapshots, separately from the clean committed plugin payload. Their harness
+content identities and effective phase budgets were:
+
+| Campaign | Harness tree SHA-256 | Prepare / manual / collect / cleanup budgets (seconds) |
+| --- | --- | --- |
+| First `a545c2b` campaign | `4c469880a02df72c003555b0d2eada0090bf6c44866aaddd8f0ba3799eb02da0` | 900 / 21600 / 900 / 1800 |
+| Followup `a545c2b` campaign | `f78b68ee4afe594b478fe21279c42be044ad8e4575c9ee405c2c274983c4bd85` | 1800 / 21600 / 900 / 1800 |
+
+Both used a 26100-second queue budget. The followup actually ran scenario guide
+SHA-256 `845db2901fc3cba015eeeaddb4d7e46c5b99a6689db8804e749a71dff609fa1f`;
+the first campaign used an earlier guide. Their collection phases took 726.894
+and 725.183 seconds respectively, within the declared 900 seconds. The committed
+suite's former 600-second collection default was below both observations. It
+now declares 900 seconds; the campaign-specific prepare and cleanup overrides
+remain distinct from the suite's unchanged defaults. These observations bind the
+recorded snapshots and effective budgets, not every later harness revision.
+
+The versioned [inventory](fixtures/squad/cases.json) declares 68 cases with
+`observed: false`. Actual observations, current applicability and per-harness
+outcomes remain in the workflow's 68-row evidence projection with the producing
+tools. Conditional variants, unavailable measurements and unobserved Claude
+cases remain explicit. No all-scenarios or all-harness pass was established.
+
+The followup exercised the revised cold-scenario Goal guidance: decision
+readiness was assessed before acceptance and terminal effects, which remained
+mandatory later postconditions. The original contradictory Goal and failed
+paths remain unchanged. The superseded Design session's archive renders its
+criteria unassessed; original pre-transition outputs retain those assessments.
+The successor freshly assessed the unchanged criteria, so the archive view is
+not proof that earlier statuses were preserved.
+
+Both native campaign results remain `INCOMPLETE`, with failed workloads and
+partial functional evidence. The followup's actual manual form records baseline
+and consumer restoration as pass, integration closeout as fail, and seven other
+groups as unobserved. These group outcomes remain separate from the bounded
+positive paths above. All 28 declared outputs and the empty native log were
+exported, with 10 opaque TARs containing 3,216 regular members in total. The
+largest TAR contains 1,388 members; native whole-file collection limits do not
+apply that count to opaque TAR contents. Native collection and cleanup were
+verified, and the Job released its resource.
+
+The [Squad scenario](recipes/scenarios/epic-squad.md) defines future execution,
+consumer restoration and collection. Required source checks, agent-executed
+installed functional verification and Master's actual overall Epic acceptance
+retain their separate boundaries.
