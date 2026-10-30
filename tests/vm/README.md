@@ -913,7 +913,8 @@ the evidence-residency contract.
 | Cold validation | First and followup `a545c2b` campaigns | The first cold case stopped on a Goal that required later acceptance and terminal effects too early. The followup retained a failed record-only re-entry as a separate failure. A distinct fresh cold fixture then used a fresh Coordinator, Evaluator and three technical views on unchanged imported product bytes; actual fixture-user acceptance preceded achieved completion and not_required finalization, with no empty commit. |
 | Requested record changes | Followup `a545c2b` campaign | A genuine fixture-user request followed the normal changes-requested route into a local record clarification. Renewed exact-content acceptance preceded one authorized correction commit and native handoff, reusing applicable product checks and technical review. The original inconclusive EE result, original TO's targeted result-representation recovery and Coordinator's finite closure remain separate. |
 | Design continuation | Followup `a545c2b` campaign | The missing dossier triggered Design. An actual Seed and one QA pass preceded separate Design, document-diff and result approvals. The predecessor produced the canonical input commit. After its missing final-assessment route was disclosed, an approved qualified successor refreshed the original criteria and recorded handoff without another commit, QA run or technical team. A genuinely new Squad conversation produced an initial plan before an execution envelope or product work; its first capacity failure and same-thread recovery remain recorded. |
-| Input resolution and opt-out | Followup `a545c2b` campaign | Four invalid profile/input classes were rejected before affected-role or Design dispatch; the inputs remained unresolved. A separate fresh pre-session Podway opt-out produced ordinary native first-plan responses and stopped before product work. Explicit-profile execution remains outside these observations and belongs to EPIC-028. |
+| Input resolution and opt-out | Followup `a545c2b` campaign | Four invalid profile/input classes were rejected before affected-role or Design dispatch; the inputs remained unresolved. A separate fresh pre-session Podway opt-out produced ordinary native first-plan responses and stopped before product work. These cases do not establish refusal of a valid explicit profile or supplied-profile preservation through Design return. Both are required native-phase EPIC-027 observations; external role execution belongs to EPIC-028. |
+| Retained Goal and Validation sources | Followup `a545c2b` campaign | Goal 37 and Validation 36 fixtures were admitted under released Aquarium with the supported Podway `0.2.15` writer. After the caller update, native session, source, binding and pending duties were preserved, and the installed candidate helper returned `dispatch-ready` for each retained source. This proves that bounded caller update and recovery; the earlier failed engine-Store migration and admission-order incident remain separate. |
 | Harness coverage | Both `a545c2b` campaigns | Codex observations remain bounded by the applicable cases. Guest-native Claude cases remain unverified; its observed guest CLI was logged out. Host static review supplies no guest functional result. Public controls establish neither private backend identity nor technical isolation. |
 | Master functional result | Historical `536a53d` status/ownership interaction | The completed read-only interaction and the response Master supplied are retained. Master's own assessment of whether it worked remains unverified. The unchanged Validation behavior permits bounded historical applicability, but an agent judgment or approval to continue cannot supply that human outcome or overall Epic acceptance. |
 
@@ -963,6 +964,65 @@ exported, with 10 opaque TARs containing 3,216 regular members in total. The
 largest TAR contains 1,388 members; native whole-file collection limits do not
 apply that count to opaque TAR contents. Native collection and cleanup were
 verified, and the Job released its resource.
+
+#### Corrected findings and profile-bearing Design return
+
+A later campaign installed Aquarium candidate
+`92d3d3d05545d181412ecf75548ba7dd9714c9ce` with Codex `0.164.0` and the official
+Podway `0.2.15` binary and complete paired skill. It first observed released
+Aquarium `0.1.21` / Podway `0.2.14` and saved fresh consumer preimages. The full
+installed payload matched the sealed candidate artifact.
+
+Fifteen controlled calls used the installed composition consumer. Ten cases with
+unresolved named findings blocked readiness, including missing or unknown states,
+required/blocking markers, conflicting optional labels and Task Operator or Epic
+Evaluator findings. Five positive controls retained readiness: the original Task
+and Epic plans, a supported settlement, explicit optional advice and attributed
+future scope. Every plan outcome remained `not-achieved`. These observations
+cover the installed pure consumer; source regressions separately cover result
+assessment and commit eligibility.
+
+A fresh native invocation supplied the complete Task Evaluator profile
+`codex / gpt-6.1-terra / low`, leaving other profiles omitted. It identified the
+unsupported Herdr role before launch, preserved the profile and selected the
+authorized unaffected Design continuation for the missing dossier. Current
+fixture-user Design and document approvals preceded the exact document addition;
+all 15 original files remained unchanged. The installed Design consumer retained
+the caller, profile, omissions and pending commit boundary. An independent
+ordinary application Evaluator passed all six current application criteria.
+
+The fixture user accepted the applied result before one nonempty Design input
+commit.
+The installed consumer then emitted `new-conversation-required` with
+`automatic_delivery=false`. A genuinely new native conversation received only
+that exact request and retained the supplied profile and external-role blocker,
+without Task delivery or native substitution. This was a bounded application
+and return probe using unchanged historical Design content and quality evidence;
+it established no fresh whole Design cycle or whole-fixture delivery.
+
+The campaign used the clean committed harness, SHA-256
+`445a30e00fc45caa68d61e5c63910daf15503a0d54df5ddc349d6d7b95ee8653`,
+with effective prepare/manual/collect/cleanup budgets of
+1800/21600/900/1800 seconds and a 26100-second queue budget. After all owned
+actors settled, restoration preserved all 5,757 entries across the nine declared
+consumer roots, including the released plugin and Podway binary/paired skill.
+Native collection took 125.863 seconds and cleanup took 6.310 seconds; both
+completed and the resource was released.
+
+The native aggregate remains `INCOMPLETE`, with an inconclusive workload,
+partial functional evidence and verified cleanup. Its manual form records nine
+full groups as unobserved and consumer restoration as pass. The case index
+separately records the selected observations above and earlier evidence's bounded
+applicability. All 28 declared outputs and the empty log were exported; all 216
+regular members of the ten case archives matched their manifests. This supplies
+no all-scenarios or all-harness pass.
+
+Checkpoint originals were delivered to the host during execution. The first
+canonical evidence-staging phase ran after restoration, omitting the required
+earlier staging checkpoints. The export preserves the final case originals;
+the earlier caller-receipt version and operator records remain
+separate host originals. That receipt's sole change appended verified precommit
+activity; its original caller, profile and response fields remained unchanged.
 
 The [Squad scenario](recipes/scenarios/epic-squad.md) defines future execution,
 consumer restoration and collection. Required source checks, agent-executed

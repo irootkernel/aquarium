@@ -706,6 +706,11 @@ The Squad helper/source tests cover recordable negative consumption without
 invented criterion counts, conditional count presence with guarded success,
 scoped correction commits within one Validation session, and actual-user final
 closeout boundaries. Pure composition/commit still rejects missing evidence.
+Controls with pass verdicts keep unresolved named findings blocking composition
+and commit, including absent or unrecognized states and conflicting optional
+markers.
+Explicit optional advice, supported settlements and attributed future findings
+remain usable.
 VM adapter tests keep the new manual `epic-squad` suite on the existing sealed
 official Podway profile and consumer-restoration path while preserving old suites.
 
@@ -737,9 +742,11 @@ closure carry across group, integration and record-only closeout; real negative
 closeout intake; supported replacement identity errors; independent final EE
 instances; and eligible local applicability after actual first closeout coverage.
 They also preserve malformed restoration inventories through staging and refusal.
-The affected VM selection runs on an isolated owned projection with the index
-fixture; earlier working-fixture receipts retain their original scope. These
-checks establish neither installed behavior nor native artifact collection.
+The earlier affected VM selection ran in the shared worktree and imported a
+modified Podway test fixture. Its receipts retain that worktree scope. Current
+isolated checks record complete source and fixture inventories, including Git
+context when a check requires it. These checks establish neither installed
+behavior nor native artifact collection.
 
 ### Installed work and assurance comparison
 
