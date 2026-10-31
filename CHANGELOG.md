@@ -13,6 +13,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Support explicit CLI/model profiles for `epic-squad` roles through Herdr, including same-CLI and mixed native teams, with original assessment settings preserved through recovery and commit handoffs.
 - Require cleanup ownership and handoffs for retained disposable build/test artifacts across Task, Epic, Squad, validation, diagnosis, release checks and test setup; unresolved cleanup blocks the next Task and successful workflow completion while preserving native evidence and shared caches.
 - Require Podway v0.2.15 or newer and its release-pinned skill, adopt contract generation 2 and observation v6, and require an explicitly approved fresh-runtime reset for incompatible v0.2.14 workspaces.
 

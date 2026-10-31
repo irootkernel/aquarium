@@ -426,7 +426,9 @@
         "results/epic-squad/evidence/mixed-delivery.tar",
         "results/epic-squad/evidence/mixed-delivery.manifest.json",
         "results/epic-squad/evidence/mixed-correction-commit.tar",
-        "results/epic-squad/evidence/mixed-correction-commit.manifest.json"
+        "results/epic-squad/evidence/mixed-correction-commit.manifest.json",
+        "results/epic-squad/evidence/mixed-recovery.tar",
+        "results/epic-squad/evidence/mixed-recovery.manifest.json"
       ],
       "manual": {
         "scenario_document": "harness/tests/vm/recipes/scenarios/epic-squad.md",
@@ -442,7 +444,8 @@
           "handler-continuity",
           "consumer-restoration",
           "mixed-delivery",
-          "mixed-correction-commit"
+          "mixed-correction-commit",
+          "mixed-recovery"
         ]
       },
       "effects_mode": "live",

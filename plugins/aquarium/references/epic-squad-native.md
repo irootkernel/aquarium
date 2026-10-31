@@ -5,8 +5,7 @@ Use this reference only from an explicitly invoked
 [collaboration contract](epic-squad-collaboration.md) owns shared semantics.
 The [execution consumer](epic-squad-execution.md) connects qualified definitions,
 current evidence, scoped integration corrections and commit/design recovery.
-These source contracts establish no installed execution result; TASK-151 owns
-actual native observations.
+These source contracts establish no installed execution result.
 
 ## Execute resolved roles
 
@@ -39,9 +38,11 @@ Inspect the installed CLI's actual kind, model, effort and permission controls.
 Start it only in the verified available shell pane, using the requested model
 and effort through that native contract. Preserve scoped permissions and check
 available public confirmation before work. On resume and Writer transfer, reapply
-supported controls as needed and verify their effects again. A changed default,
-unsupported control or mismatch stays visible and blocks an affected required
-action; changing a requested/defaulted profile or route needs user direction.
+supported controls as needed and verify their effects again. Report changed
+defaults, unsupported controls and mismatches. A profile mismatch
+or unmet required safety control blocks its affected action; missing private
+model/effort telemetry remains unconfirmed. Changing a requested/defaulted profile
+or route needs user direction.
 Do not change host defaults or invent CLI flags, enforcement helpers or probes.
 
 Use the same known agent for prompt submission, waiting and complete output
@@ -60,9 +61,46 @@ direct Evaluators with nested assistance. Recover truncated output through the
 same operation, using only the installed skill's supported result fallback.
 No result or question may be injected into the Coordinator's interactive input.
 
-This assignment wiring does not enable public mixed delivery while the existing
-commit/recovery integration remains pending. Preserve that guard until the
-remaining consumers are complete; source tests establish no installed result.
+### Recover operations and retain configuration
+
+Use existing runtime assignments, pending-operation records and actual native
+handles. For Herdr, retain the returned session, pane and agent identity so output
+is recoverable after the agent exits. A newly generated dispatch describes due
+scope; it is not permission to replay a known submission. Resume the existing
+operation with its original assignment and selected profile, retrieve its complete
+result, then decide whether any new assignment is needed. Reconcile requests and
+next owners fairly across routes. Inspect enough current screen or unwrapped
+output to identify a partially detected approval/question dialog; an unchanged
+state or short tail cannot rule one out. Follow the installed permission contract
+and wait for a required user answer without broadening access or queuing another
+work prompt.
+
+Before replacing a participant, preserve original sources, candidate, findings,
+checks, closures, selected profile, actual observations and remaining authority.
+Use the same authorized route/profile unless the user directs a team change;
+another approved TO pool entry remains available for suitable new work. Omitted
+roles resolve against the current Coordinator on resume, with changed inheritance
+disclosed and earlier records retained. Recheck supported model/effort/permission
+controls without rewriting the old result or treating unavailable telemetry as a
+new mandatory gate.
+
+Pane loss is not termination evidence. Establish settlement of modifying native
+and Herdr commands, descendants, background work and pending writes before Writer
+transfer, candidate freeze or destructive cleanup. If termination cannot be
+established, preserve the restriction and report the uncertain operation/owner.
+A delayed pane cleanup alone does not invalidate an already verified Task.
+
+Collect minimal available settings before exact owned cleanup, including the
+Coordinator, delivery/review roles, support, descendants, replacements and closeout
+helpers. Record role, Task/Epic scope, instance count, route/CLI, requested profile
+or default, applied model/effort/permission controls, observed confirmation and
+unconfirmed values. Matching records may be grouped only with scope/count intact.
+Keep them with the existing result/handoff and update them for later participants;
+do not audit unrelated home settings or copy credentials. Close only verified
+owned helpers after result readback and supported lifecycle settlement. Preserve
+the Coordinator, continuous EE and tabs still used by other helpers or the user.
+Verify disposable/shared output cleanup or its retained-output handoff under the
+[cleanup contract](artifact-cleanup.md) before advancing the Task.
 
 ## Assign native roles
 

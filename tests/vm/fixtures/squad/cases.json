@@ -12,7 +12,8 @@
     "handler-continuity": "Exercise the retained installed Handler through later checkpoints and at least a subsequent Task plus real same-session recovery. Observe one logical continuous Epic Evaluator, Task Operator labels, no added mandatory TE/support, and original machine/report identities.",
     "consumer-restoration": "Settle all run-owned handles and restore exact original CLI, upstream paired skill, plugin registration/configuration/rules and consumer bytes before native collection/cleanup.",
     "mixed-delivery": "Execute named installed mixed configurations: external Task Operators with native Evaluators, external Evaluators with native Task Operators, and native Epic Evaluator with an explicit same-CLI external Task Evaluator. Preserve distinct direct EE/TE, original requested profiles, actual route/configuration observations, both plan scopes, first panels, sole Writer and exact Task commits. Report unavailable CLIs and unconfirmed controls separately.",
-    "mixed-correction-commit": "Use the configured mixed roles for an eligible local correction and a contract correction requiring affected EE judgment. Preserve original assessments, assignment-bound routes/settings, verified deltas and deferred work through an exact Coordinator-owned member/correction commit. Exercise explicit no-additional-review without a fake waiver; keep selected technical reviews separate and final actual user acceptance distinct."
+    "mixed-correction-commit": "Use the configured mixed roles for an eligible local correction and a contract correction requiring affected EE judgment. Preserve original assessments, assignment-bound routes/settings, verified deltas and deferred work through an exact Coordinator-owned member/correction commit. Exercise explicit no-additional-review without a fake waiver; keep selected technical reviews separate and final actual user acceptance distinct.",
+    "mixed-recovery": "Recover actual mixed native/Herdr handles and uncertain submissions without replay. Inspect a partially detected approval/question UI under its installed permission contract, service peer requests fairly, and recover complete original results. Preserve route/profile selection, findings, consumed grants and requested/applied/observed/unconfirmed settings across resumed controls and supported replacement. Settle modifying descendants/background work before Writer transfer and owned cleanup; pane loss is not termination. Preserve retained native-only sessions and report unavailable controls and unobserved routes honestly."
   },
   "harnesses": [
     "Codex",
@@ -583,7 +584,111 @@
       "implementation_and_applicability": "TASK-150 / TASK-154; both",
       "observed": false,
       "case": "mixed-correction-commit"
+    },
+    {
+      "scenario": "Dependency and supervision starvation",
+      "required_observation": "Requests needing Coordinator action reach it without an in-turn circular wait; one pending participant does not hide a peer's blocked or completed state. Supported safe native interactions remain usable.",
+      "implementation_and_applicability": "TASK-148, TASK-150 / TASK-153, TASK-155; both",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Uncertain progress or missed dialog",
+      "required_observation": "An overrun, hung tool or partially detected UI triggers enough inspection to choose continued observation, supported recovery or a reported gap without duplicate dispatch or an endless unexplained wait.",
+      "implementation_and_applicability": "TASK-148, TASK-150 / TASK-153, TASK-155; both",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Active-turn input and stale report",
+      "required_observation": "No terminal status prompt queues unintended work; complete reports match the current assignment and revision even after stalled submission or an older visible pass.",
+      "implementation_and_applicability": "TASK-148, TASK-150 / TASK-153, TASK-155; both",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Coordinator context recovery",
+      "required_observation": "Pending handles, requests, candidate and next owners survive recovery through existing runtime records without a new state store or transcript import.",
+      "implementation_and_applicability": "TASK-148, TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "One-shot/replaced Task or Epic role",
+      "required_observation": "Original sources, candidate, findings and remaining authority survive; restored reports do not create fresh approval.",
+      "implementation_and_applicability": "TASK-148 / TASK-155; both",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Uncertain Writer/background work",
+      "required_observation": "No Writer transfer or candidate freeze occurs until modifying activity, including descendants and background commands, is settled; a settled parent turn, vanished pane, stable diff or absent Git lock alone is insufficient. Recheck the exact candidate before admitting assessments.",
+      "implementation_and_applicability": "TASK-148 / TASK-155; both",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Truncated output or uncertain submission",
+      "required_observation": "Existing output/operation is inspected first, without duplicate implementation or a disguised new review.",
+      "implementation_and_applicability": "TASK-148 / TASK-155; both",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Hook change or pending finalization",
+      "required_observation": "Classify post-review bytes by their actual effects; use eligible local closure or affected reassessment and preserve a successful commit without replay.",
+      "implementation_and_applicability": "TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Configuration replacement/descendants",
+      "required_observation": "Final reporting includes actual applied controls and available confirmation, with unknown values retained.",
+      "implementation_and_applicability": "TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Unavailable route and resume",
+      "required_observation": "Preserve selected roles, pending findings and actual route-specific handles; route/profile changes need user direction. Omitted roles match the current Coordinator, with inheritance changes disclosed and prior records retained.",
+      "implementation_and_applicability": "TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Blocked external permission/question UI",
+      "required_observation": "Inspect and preserve the same operation, apply the installed Herdr permission contract, obtain a required user answer and retain the Writer restriction while modifying activity is uncertain.",
+      "implementation_and_applicability": "TASK-153 / TASK-155; Herdr/mixed",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Native-only retained Squad session",
+      "required_observation": "The Herdr extension preserves the original Squad owner, binding identity, grants and pending operations; no in-place route change or effect replay occurs.",
+      "implementation_and_applicability": "TASK-154 / TASK-155; Herdr/mixed",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Recovery after local closure",
+      "required_observation": "Restored original verdicts, verified deltas and pending obligations avoid repeating settled reviews/tests; missing or changed evidence receives focused recovery rather than assumed success.",
+      "implementation_and_applicability": "TASK-150 / TASK-155; both",
+      "observed": false,
+      "case": "mixed-recovery"
+    },
+    {
+      "scenario": "Resume changes effective controls",
+      "required_observation": "Supported model/effort/permission settings are rechecked; mismatch or unavailable enforcement is disclosed and required unsafe work stops. No copied version-specific workaround or host-default edit is invented.",
+      "implementation_and_applicability": "TASK-153, TASK-155; Herdr/mixed",
+      "observed": false,
+      "case": "mixed-recovery"
     }
   ],
-  "source": "docs/todo/TODO-EPIC-COLLABORATION.md#verification-scenarios"
+  "source": "tests/vm/recipes/scenarios/epic-squad.md#actual-role-cases",
+  "original_source": {
+    "commit": "1b38bd04ae458876673c1b5865351b8254894edb",
+    "path": "docs/todo/TODO-EPIC-COLLABORATION.md",
+    "section": "Verification scenarios",
+    "sha256": "sha256:800f6006cf662d7af0753a4c34217d8e1a80aea2caf2f04b7748d36ae1cb0a80"
+  }
 }

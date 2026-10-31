@@ -3,8 +3,11 @@
 The manual `epic-squad` suite retains EPIC-027's native cases and adds EPIC-028's
 candidate-bound mixed cases.
 Its [case inventory](../../fixtures/squad/cases.json) retains every applicable
-native/shared row from the collaboration dossier. Grouped cases pass only when
-all their original observations have actually been made. Keep per-row gaps when
+native/shared row with immutable original Git provenance. The installed
+[collaboration contract](../../../../plugins/aquarium/references/epic-squad-collaboration.md)
+owns current role semantics; the temporary dossier is not a runtime dependency.
+Grouped cases pass only when all their original observations have actually been
+made. Keep per-row gaps when
 one interaction covers only part of a case. Preserve historical native results;
 they establish no mixed-route observation.
 
@@ -84,10 +87,39 @@ review's team and authority. Observe the real scoped Coordinator-owned Task or
 correction commit, consumed grant, post-hook identity and native handoff. Final
 Epic acceptance remains an actual user decision.
 
-These observations extend the same held manual Job, original case-evidence index,
-fixed archives and consumer restoration path. TASK-155 owns the additional mixed
-operation/configuration recovery cases before TASK-156 starts. No automated LLM
-evaluation or separate VM framework is introduced.
+### Mixed recovery and configuration
+
+For `mixed-recovery`, preserve real native/Herdr session, pane, agent and operation
+handles plus the original assignment. Exercise interrupted/truncated output and
+uncertain submission through the same operation before any replacement. Include
+an actual blocked or partially detected permission/question UI, inspect its full
+request and follow the installed permission contract; a required user answer is
+not supplied by the execution envelope. While one role waits, service another
+role's dependency request or completed report without queuing terminal status
+prompts into an active turn.
+
+Observe a supported replacement with original findings, closures, profile
+selection and remaining authority intact. On resume and Writer transfer, inspect
+supported model/effort/permission effects and retain changed defaults, actual
+mismatches and unavailable observations honestly. If a profile-set change is
+actually user-directed, retain that direction and applicability beside the
+original assignments; do not relabel earlier Herdr results as native. Keep a
+retained native-only Squad owner/binding and successful commit pending native
+finalization usable without replay. Record an unavailable route as a gap, not
+an implicit alternative launch.
+
+Establish settlement of modifying native/Herdr descendants and background work
+before Writer transfer or candidate freeze. A vanished pane or finished parent
+alone supplies no termination proof. Collect complete results and minimal public
+settings before exact owned cleanup; preserve unknown controls, scopes/counts,
+Coordinator, support, descendants, replacements and closeout participants.
+Document native detection/enforcement limits rather than building a supervisor,
+probe framework or private telemetry gate. Unsupported concrete interactions
+remain unverified.
+
+These observations use the same held manual Job, original case-evidence index,
+fixed archives and consumer restoration path. No automated LLM evaluation or
+separate VM framework is introduced.
 
 ### Preserved native observations
 
@@ -218,7 +250,11 @@ The declared six-hour manual window is a planning assumption. Plan case work
 with a reserve for incremental staging, authorized restoration, final restaging
 and native collection/cleanup; neither six hours nor that reserve has measured
 sufficiency for these scenarios. Observe actual progress and remaining time in
-TASK-151. Do not assume an extension or replace the Job to obtain more time.
+each current campaign, including TASK-156. Historical TASK-151 observations
+retain their original scope; they do not establish timing sufficiency for the
+expanded mixed cases. Do not assume an extension or replace the Job to obtain
+more time.
+
 At an authorized early stop, stage available originals before cancellation or
 deadline action, restore consumers when the supported held-Job lifecycle allows
 it, and restage the actual receipt/inventory before terminal collection. If
@@ -268,10 +304,11 @@ in the consumer-restoration archive. The current result stays INCOMPLETE; stagin
 cannot erase failed restoration history by replacing the aggregate. Retain and
 resolve that evidence on the same authorized recovery path.
 
-All ten archives, their manifests, `stage-evidence.json` and
-`consumer-result.json` are required outputs fixed before admission, giving 28
-collected files in total. Haepari collects declared whole files; JSON paths and
-manual `evidence_references` do not expand that inventory. Use those references
+The current suite declares thirteen case archives, thirteen manifests and eight
+JSON outputs, including `stage-evidence.json` and `consumer-result.json`: 34
+collected files fixed before admission. Use `suites.epic-squad.required_outputs`
+in `tests/vm/host_suites.json` as the complete declared inventory. Haepari collects
+declared whole files; JSON paths and manual `evidence_references` do not expand that inventory. Use those references
 only to name the collected archives/manifests and summary, without embedding
 original reports into bounded manual metadata.
 
@@ -282,7 +319,7 @@ allows at most 1000 collected files and 1 GiB; each Job's immutable accepted
 bytes/count pin can be lower. Before submission, inspect the selected controller's
 accepted artifact limits; retain the actual admission's immutable configuration
 revision and limits. Before manual completion, check the total size
-of all 28 outputs, including manifests/JSON and staging history, against that
+of all 34 outputs, including manifests/JSON and staging history, against that
 saved pin. Successful staging alone does not establish that fit. Preserve the
 original payload in full. An existing output that cannot fit the native pin
 stays protected. A positively absent output can instead finish as partial-evidence
@@ -293,14 +330,17 @@ never substitute another Job or a successful manual status for that guarantee.
 
 Require current successful staging, actual scenario results and verified
 restoration before revision-fenced native manual completion. Then verify the
-native collected/exported file set includes all 28 outputs, compare every archive
+native collected/exported file set includes all 34 outputs, compare every archive
 and member digest with its manifest, and verify native cleanup for the same Job.
 A successful manual scenario status cannot replace complete collected originals.
 
-TASK-151 requires separate functional verification by the coordinating agent
-through SSH in the dedicated UTM VM, using version-matched tools and the exact
-committed Aquarium candidate. Retain actual behavior and original results;
-source checks, setup and a native Job verdict alone cannot establish them.
+TASK-156 requires functional verification of the current mixed candidate by the
+coordinating agent through SSH in the dedicated UTM VM, using version-matched
+tools and the exact committed Aquarium candidate with its matching harness.
+Historical TASK-151 native observations retain their recorded candidate and scope;
+they do not establish current mixed-route behavior. Retain actual behavior and
+original results; source checks, setup and a native Job verdict alone cannot
+establish them.
 Master's overall Epic acceptance remains separate. An otherwise completed Job
 need not stay held solely for that external acceptance. Any later installed
 work needs its own concrete VM authority and occupancy.

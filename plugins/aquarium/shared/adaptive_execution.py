@@ -717,6 +717,7 @@ def execution_context(
             scoped["instructions"] += (
                 "\nUse this explicit Squad role/scope. Preserve machine/report IDs. Independent reviews keep project files read-only, retain original reports and withhold peer conclusions until first views form. No assignment grants Writer, index, native progression, acceptance or commit authority."
                 " Keep target.role_execution as requested configuration, not proof of a launch, applied controls or actual producer identity. Follow the Squad role-coordination contract for the selected route and original result intake."
+                " Before launching, reconcile existing pending operations and public handles through the Coordinator. Resume an existing operation with its original assignment/configuration and retrieve its complete result before redispatch; a regenerated dispatch is not evidence of a new obligation. Preserve blocked UI requests and settle modifying descendants before Writer transfer or cleanup."
             )
             if scoped["role"] == "evaluator" or declaration["role"] == "evaluator":
                 scoped["authority"]["allowed"] = [

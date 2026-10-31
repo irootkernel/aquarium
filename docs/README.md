@@ -38,59 +38,45 @@ The plugin manifest owns the current package version, the root CHANGELOG owns re
 - Use the [artifact lifecycle](specs/workflow-contracts.md#disposable-build-and-test-outputs) for disposable build/test cleanup ownership, retention handoffs and Task-transition checks.
 - Use the [roadmap](roadmap/README.md) for delivery identity and state, its linked [TODO and work dossiers](todo/README.md) for detailed planned scope and acceptance, and [deferred feedback](deferred-feedback/README.md) for smaller postponed findings rather than adding future behavior to current specifications.
 
-## Native Epic collaboration source
+## Epic Squad collaboration
 
 The [Squad entrypoint](../plugins/aquarium/skills/epic-squad/SKILL.md),
-[native coordination instructions](../plugins/aquarium/references/epic-squad-native.md)
+[role coordination instructions](../plugins/aquarium/references/epic-squad-native.md)
 and [collaboration contract](../plugins/aquarium/references/epic-squad-collaboration.md)
-define native role assignments, readiness, first assessments and correction
-semantics. The [Squad execution and current-composition consumer](../plugins/aquarium/references/epic-squad-execution.md)
-connects qualified source preparation, evidence and commit/design handoffs.
-Integration and recovery are implemented in source. The
-[installed observations](../tests/vm/README.md#task-151-candidate-observations)
-retain exact candidates, scoped results and remaining verification gaps.
+own native, Herdr and mixed role execution, readiness, first assessments,
+correction and recovery. The [execution consumer](../plugins/aquarium/references/epic-squad-execution.md)
+connects qualified Goal/Validation sources, original evidence and commit/design
+handoffs. The original Epic/Task requirements still come from the target
+repository's execution SOT; the temporary [development dossier](todo/TODO-EPIC-COLLABORATION.md)
+retains adoption and acceptance history while its consumers remain active.
 
-The [Epic collaboration dossier](todo/TODO-EPIC-COLLABORATION.md) defines shared
-native collaboration requirements and the planned Herdr/mixed extension, with
-correct, maintainable, extensible and responsive software as the delivery goal.
-Its shared role names are Coordinator, Epic Evaluator, Task Evaluator, Task
-Operator and Support Operator. Task Operators deliver or independently review
-assigned work; distinct Task/Epic Evaluators provide risk-based assessments and
-the Coordinator owns product review. Every Task retains its first scoped
-assessments; subsequent corrections use focused checks, eligible local closure
-and affected review rather than automatic full tests and TE/EE reapproval.
-Current defects and mandatory evidence gaps remain blocking. Independent future
-improvements go to the canonical deferred-work owner.
+The shared roles are Coordinator, Epic Evaluator, Task Evaluator, Task Operator
+and optional factual Support Operator. Distinct direct EE/TE and author/reviewer
+instances follow their assigned native or Herdr routes. Omitted profiles inherit
+the current Coordinator's native configuration; explicit CLI/model profiles use
+Herdr, including same-CLI sessions, with default effort `high` only when effort
+is omitted. Operator pools remain separate from optional support. Profile input
+resolution establishes no account/model availability or actual launch.
 
-The dossier separates roadmap Tasks, Podway boundaries and agent assignments.
-Aquarium owns the Squad Procedure/binding changes, role dispatch and semantic
-scope decisions; no Podway engine extension is required. Optional Support
-Operators supply facts or assigned execution results, not verdicts. All roles,
-including the Coordinator, must justify material support tooling by a current
-need. Existing helpers and verification are preferred to new harnesses.
+Each Task retains both plan scopes, its independent first panels and scoped EE
+contribution. Corrections use direct checks, eligible local closure and affected
+judgment while preserving original findings and evidence applicability. The
+Coordinator owns product review, sole Writer transfers, delegated acceptance and
+exact commit grants. Fresh Task contexts, continuous EE, fair same-operation
+supervision, complete result intake and settled descendants preserve those
+boundaries through recovery. Original assignments retain their selected profiles
+and requested/applied/observed/unconfirmed settings across directed team changes.
+No new native telemetry gate or host configuration audit is added.
 
-Each Task starts fresh delivery/review and Task Evaluator contexts where supported;
-the Epic Evaluator retains continuity. The
-[roadmap](roadmap/README.md#epic-027-add-native-epic-squad-collaboration) keeps the
-native foundation before Herdr/mixed execution in the same skill. Selected lessons
-from the Pilot v0.0.4 proposal inform the design without adopting its runtime or
-fixed quotas. EPIC-027 also aligns epic-handler's role wording: its single logical
-Evaluator is called Epic Evaluator and its Worker/Executor is called Task Operator.
-No separate Task Evaluator or mandatory Support Operator is added to Handler.
-Existing Handler/Validator behavior and machine report contracts remain unchanged.
-The Handler role wording is implemented in current source and mapped assignments.
-TASK-151 owns installed verification and its documentation; the dossier remains
-in use by EPIC-028.
-
-The Squad consumer resolves structured role profiles, including common/scoped
-Evaluators and separate Task/Support Operator pools, while preserving requested
-inputs and omissions. This preparation does not enable Herdr delivery or prove
-model availability. Direct assignments now carry role/scope configuration and
-Coordinator-selected Operator pool entries, with native and Herdr execution
-instructions. Composition and commit consumers now bind mixed reports to their
-original assignments and execution observations while retaining native-only
-compatibility. EPIC-028 retains pending recovery integration and installed mixed
-verification; public mixed delivery remains blocked.
+Existing Handler/Validator behavior, machine report identities and retained
+bindings remain intact. Handler keeps one logical Epic Evaluator and Task
+Operator wording without a separate TE or mandatory support pool. The
+[roadmap](roadmap/README.md) owns delivery status. The
+[installed native observations](../tests/vm/README.md#task-151-candidate-observations)
+retain their exact scope; source checks and the
+[mixed manual scenario](../tests/vm/recipes/scenarios/epic-squad.md) supply no
+installed mixed result. TASK-156 will observe the exact committed TASK-155 plugin
+and matching harness. Actual user functional verification remains separate.
 
 ## Planned multi-host unification
 

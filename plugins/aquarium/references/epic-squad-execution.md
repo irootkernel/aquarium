@@ -4,7 +4,8 @@ Use this contract from an explicitly invoked [Epic Squad](../skills/epic-squad/S
 The [collaboration contract](epic-squad-collaboration.md) owns role independence,
 correction depth and authority. Squad uses its actual `aquarium:epic-squad` owner.
 Its Goal and Validation consumers include integration, recovery and scoped
-correction/closeout routing in source. TASK-151 owns installed observations.
+correction/closeout routing for native, Herdr and mixed roles. Source verification
+is distinct from actual installed observations.
 
 ## Select an exact definition before work
 
@@ -145,12 +146,19 @@ never relabels the report's global verdict as an Epic pass.
 
 For a mixed invocation, each original report retains its actual ordinary
 `assignment`, embedded or as the existing path/hash/size artifact reference.
-Its original Squad owner, role/scope, target, approved profile pool and selected
+Its original Squad owner, role/scope, target, originally approved profile pool and selected
 instance bind `target.role_execution`. The report carries that same requested
 configuration and its real `native.public_handle`. The consumer uses the original
 assignment's selector, so a later correction assignment cannot rewrite earlier
-profile choices. Existing native-only reports and retained bindings need no new
-fields or migration.
+profile choices. The current profile set may differ after user-directed changes;
+it does not replace the original pool or erase historical Herdr records when the
+current team is native. The Coordinator retains the actual user direction and
+current evidence applicability through existing records; the pure consumer does
+not authenticate that authority. It validates each supplied original assignment
+and execution record independently of the current pool. Existing native-only
+reports and retained bindings need no new fields or migration. A retained native
+assignment without configuration fields remains usable with its original owner,
+role, target and read-only authority; it does not claim external execution.
 
 Record the actual transport in `native.execution.route`, its original requested
 `role_execution` in `requested`, a concise native-observation `basis`, and
@@ -167,8 +175,9 @@ contract, control effects and truthful limitations.
 Composition and commit handoffs retain these original execution records alongside
 first assessments, closures and selected technical-review evidence. Profile
 configuration supplies neither Writer nor commit authority. Support reports
-remain factual evidence and cannot fill the independent assessment panel. The
-public mixed-delivery guard remains until recovery integration is complete.
+remain factual evidence and cannot fill the independent assessment panel.
+Current requested settings and historical applied/observed settings retain their
+separate meanings through configuration changes and recovery.
 
 For Task-plan, Epic-plan, scoped contribution and affected assessments, the
 report may retain future global states within the same original criterion. Its
@@ -408,12 +417,14 @@ actual zero counts and a passing current check. The strict composition and commi
 consumers continue to reject the underlying error. No provider/global row counts
 are inferred from it.
 
-On resume, use the existing native session and public role/operation handles.
+On resume, use the existing native session and native/Herdr role/operation handles.
 Recover complete missing output from that operation before replacement or
 redispatch. Preserve original reports, classification, closure verification,
 check execution/applicability, deferred-work reasons, source/binding, exact
-candidate, configuration and consumed/remaining grants. Reconcile each pending
-request with its current owner; a role waiting for Coordinator action returns
+candidate, original assignment/profile selection, configuration and
+consumed/remaining grants. A regenerated mapped dispatch does not replace a pending operation or
+its original requested settings. Reconcile each pending request with its current
+owner; a role waiting for Coordinator action returns
 the actionable request instead of holding an in-turn circular wait. An overrun
 needs a concrete observation and next owner, not automatic cancellation.
 
@@ -422,6 +433,9 @@ Before reopening work, distinguish the actual remaining effect:
 | Remaining work | Recovery boundary |
 | --- | --- |
 | Missing/truncated report or uncertain submission | Retrieve the same operation and retain failed/partial output; perform only missing due evidence. |
+| Blocked or partially detected approval/question UI | Inspect the same known operation under the installed permission contract; obtain its required user answer and preserve uncertain Writer restrictions. |
+| Lost pane or uncertain background writes | Recover the actual operation/descendant state through supported controls; do not transfer Writer, freeze or clean up while modifying activity is uncertain. |
+| Resumed role or directed profile change | Recheck supported controls, retain original assignments/observations and disclose changed native inheritance. Preserve honest unknowns; only actual mismatches or required control gaps block the affected action. |
 | Changed candidate or hook bytes | Classify the cumulative delta, invalidate affected acceptance/checks and refresh only due guarantees; unknown impact stays open. |
 | Completed Task's implementation/completion changes | Follow the true-reopen sequence below; preserve the integration audit and other settled Tasks. |
 | Record-only final closeout changes | Retain substantive first closeout EE coverage through eligible verified applicability, or obtain the due affected EE judgment. Complete current Coordinator product review before actual user acceptance. |

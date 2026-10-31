@@ -700,29 +700,30 @@ UTM VM under its separate authority, using committed matching verification tools
 
 Profile controls cover omitted native configuration, explicit Herdr routing,
 common/scoped Evaluators, separate Task/Support Operator pools, opaque model IDs,
-effort defaults and invalid inputs. The seven dossier examples are static inputs,
-not availability checks. Dispatch rejects explicit profiles while the mixed
-execution, commit and recovery integration remains pending. Existing Design-return
-tests retain the original supplied profiles and omissions.
+effort defaults and invalid inputs. Static example profiles are inputs, not
+availability checks. Production mapped dispatch tests exercise native and mixed
+groups, selected Operator pool entries and distinct role/scope/instance metadata.
+Design-return tests retain the original supplied profiles and omissions.
 
-Role-assignment controls check native metadata, distinct scoped Evaluators and
-Operator instances, explicit same-CLI Herdr resolution and Coordinator-selected
-pool entries. Requested execution configuration remains separate from actual
-producer provenance. The pending mixed-delivery guard remains active; synthetic
-configuration tests prove no allocator, permission UI or launch/resume effect.
+Requested configuration remains separate from actual producer provenance.
+Pending-operation records survive dispatch without authorizing replay. Mixed
+composition/commit controls bind reports to their original assignments, routes,
+profiles and selectors even after a directed profile-set change to a native team.
+They retain unknown telemetry and reject wrong routes, profile mismatches,
+mandatory control gaps and writing assessment assignments. Retained native-only
+reports need no new fields. Replacement tests preserve original findings and
+execution records; affected Task/Epic plan tests bind the actual assigned plan.
+Existing first-assessment, closure, grant, opt-out and retained-binding checks
+remain applicable to their unchanged boundaries.
 
-Mixed composition/commit controls bind each original report to its original
-ordinary assignment, route and requested profile, preserving earlier selectors
-and unknown telemetry. Wrong routes, mismatches, mandatory control gaps and
-writing assessment assignments remain blocked. Native-only retained reports
-need no new metadata. Existing first-assessment, closure, grant, opt-out and
-no-additional-review tests remain applicable to unchanged boundaries.
-
-The existing manual VM suite now declares mixed delivery and mixed
-correction/commit cases with their original scenario rows and fixed outputs.
-Inventory/staging tests cover declaration and archive coverage only. TASK-155
-prepares mixed recovery before TASK-156 observes the committed product and
-matching harness. No source or synthetic fixture result is installed acceptance.
+The existing manual VM suite declares mixed delivery, correction/commit and
+recovery cases with original scenario rows and fixed outputs. Inventory/staging
+tests cover declaration and archive coverage only. The final TASK-155 plugin and
+matching harness must be committed before TASK-156 installation; later outcome
+documents do not alter tested payload/harness bytes. Synthetic reports prove no
+native/Herdr launch, permission UI, actual resume controls, background settlement
+or installed acceptance. Those observations and Master's functional verification
+remain separate required evidence.
 
 `tests/unit/test_adaptive_squad_unit.py` covers owner-specific Goal/Validation
 source qualification, both plan gates, preserved legacy binding bytes, explicit

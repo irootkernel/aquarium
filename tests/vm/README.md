@@ -881,12 +881,17 @@ descendants without another provider turn; it reuses the adaptive product-image
 collector. Capture files establish neither semantic passage nor settlement. Keep
 original reports/configuration and actual available counts/durations, with
 unobserved harnesses and costs explicit. Separate functional verification records
-actual installed behavior under the executor Master selects. TASK-151 assigns
-that SSH/UTM verification to the coordinating agent. Setup, source checks and
-a native Job verdict alone do not establish the functional result.
+actual installed behavior under the executor Master selects. TASK-151 assigned
+the historical SSH/UTM verification to the coordinating agent. TASK-156 assigns
+current mixed verification to that agent using the exact committed candidate and
+matching harness. Historical TASK-151 observations retain their recorded candidate
+and scope. Setup, source checks and a native Job verdict alone do not establish
+the current functional result.
 
-The suite declares 28 collected outputs, including fixed per-case archives and
-content manifests. After actual consumer restoration and its receipt/inventory
+The current thirteen-case suite declares 34 collected outputs: thirteen fixed
+case archives, thirteen content manifests and eight JSON files. The complete
+output set is `suites.epic-squad.required_outputs` in `host_suites.json`. After
+actual consumer restoration and its receipt/inventory
 capture, the same held Job runs `--phase stage-evidence`; no candidate reinstall
 is needed. Original role/capture/check bytes live in the case archives rather
 than only in metadata references. Partial or unsafe evidence keeps staging
@@ -898,8 +903,9 @@ INCOMPLETE while preserving available originals. Cleanup seals its pass receipt
 immediately; final staging adds that receipt and the actual inventory. A failed
 or interrupted staging attempt retains its progress and the last complete
 archives for same-Job retry. The six-hour window and cleanup reserve are planning
-assumptions. Actual collection timing and capacity apply only to the collected
-output set described below.
+assumptions. Historical collection timing and capacity observations below apply
+only to their recorded candidates and collected output sets; current TASK-156
+fit remains to be observed.
 
 ### TASK-151 candidate observations
 

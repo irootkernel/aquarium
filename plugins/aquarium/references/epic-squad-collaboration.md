@@ -2,19 +2,18 @@
 
 ## Status and authority
 
-The [epic-squad entrypoint](../skills/epic-squad/SKILL.md) and
-[native coordination instructions](epic-squad-native.md) define the native
-collaboration assignments. The [execution contract](epic-squad-execution.md) connects qualified definitions,
-admission, current evidence, integration and recovery through commit/design
-consumers. TASK-151 verifies installed native delivery. Entrypoint discovery or agent launch alone does not enable delivery.
-Herdr and mixed role execution remain unavailable until their execution, commit
-and recovery integration under EPIC-028 is complete.
+The [epic-squad entrypoint](../skills/epic-squad/SKILL.md),
+[role coordination instructions](epic-squad-native.md) and this contract define
+native, Herdr and mixed collaboration. The [execution contract](epic-squad-execution.md)
+connects qualified definitions, admission, original evidence and recovery through
+commit/design consumers. Actual installed observations remain separate from
+source checks or agent launch.
 
-The roadmap (`docs/roadmap/README.md`) owns work identity, dependencies and
-lifecycle. The shared dossier (`docs/todo/TODO-EPIC-COLLABORATION.md`) owns the
-remaining detailed execution requirements for EPIC-027 and EPIC-028.
-This contract defines their shared collaboration semantics without changing
-existing Handler or Validator behavior, report schemas or admitted sessions.
+The target repository's canonical roadmap owns work identity, dependencies and
+lifecycle. Its original execution SOT supplies Epic/Task requirements. These
+plugin references own the Squad collaboration contract; a temporary development
+dossier is not required to interpret it. Existing Handler and Validator behavior,
+report schemas and admitted sessions retain their contracts.
 
 ## Product quality and scope
 
@@ -132,10 +131,9 @@ the current Coordinator's native harness, model and effort. Keep configuration
 inheritance separate from conversation inheritance. A native default needs no
 Herdr installation or inspection. Explicit CLI plus model selects Herdr even
 when they match the Coordinator; omitted effort in that explicit profile means
-`high`. An explicit effort remains unchanged. These external inputs must be
-recognized and reported unavailable during the native-only implementation,
-before affected delivery or design continuation. Never silently run them natively.
-Unaffected authorized design work may continue with the blocker visible.
+`high`. An explicit effort remains unchanged. Never silently run an explicit profile
+natively. If its requested route is unavailable, finish unaffected authorized
+preparation with the blocker visible.
 
 Accept `Epic Evaluator:` and `Task Evaluator:` profiles or the common
 `Evaluator:` shorthand for both. Common and scoped entries together conflict;
@@ -166,8 +164,8 @@ resolve it again on resume and retain earlier observations separately. Common
 Evaluator configuration expands to separate EE and TE entries without creating
 agents. Profile resolution runs before Squad source preparation and dispatch,
 and validates supplied Squad profiles on Design return. It performs no CLI
-inspection, authentication, launch or availability check. Explicit Herdr profiles
-still block delivery until execution, commit and recovery integration is complete.
+inspection, authentication, launch or availability check. Actual role execution
+uses the selected native/Herdr contract and original-assignment evidence below.
 
 Before an affected role launches, the Coordinator reads the applicable installed
 paired tool contract and native model, effort and permission controls. Resolve
@@ -207,7 +205,11 @@ verification. Schedule within actual concurrency, thread and depth limits,
 including sequential review waves without reducing required coverage. Before
 release or replacement, collect results, configuration, findings, candidate and
 pending operations; settle modifying activity and descendants. Restore those
-inputs to a replacement on the same route. Restored reports are not fresh passes.
+inputs to a replacement on the same authorized route/profile. Another approved
+TO profile may handle suitable work; changing the required team configuration
+needs user direction. Preserve the original assignment and observations across
+that change rather than rewriting earlier results under the current profile pool.
+Restored reports are not fresh passes.
 
 ## Plan and result assessments
 
@@ -361,6 +363,17 @@ truncation from the same operation; an allowed temporary-file fallback re-emits
 the existing report and needs complete receiver readback. Never inject output or
 permission requests into C's interactive user input. A notification, idle/done
 status, report path or old visible pass does not establish the current result.
+
+Before retiring a participant, collect available configuration with its original
+result: role and Task/Epic scope, route/CLI, requested profile or native default,
+applied model/effort and permission controls, public confirmation and unconfirmed
+values. Include the Coordinator, support, descendants, replacements and closeout
+helpers; do not infer that children matched parents. Group matching settings only
+while retaining scope/count. Recheck resume and Writer-transfer effects through
+supported controls. Optional unavailable telemetry is a limitation; an actual
+profile mismatch or unmet required safety control blocks its affected action.
+Use existing runtime handoffs, not a profile registry or home-configuration audit.
+Record no credentials and update the final table for later closeout participants.
 
 ## Procedure and handoff boundaries
 

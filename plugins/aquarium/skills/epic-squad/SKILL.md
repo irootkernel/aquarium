@@ -1,6 +1,6 @@
 ---
 name: epic-squad
-description: "Coordinate one explicitly named roadmap Epic with native Task Operators, a distinct Task Evaluator and a continuous Epic Evaluator. Use only for an explicit $aquarium:epic-squad request with one repository, canonical roadmap and Epic. Supports execute, plan-only, plan-handoff and resume; explicit CLI/model role profiles remain unavailable until the Herdr/mixed integration is complete."
+description: "Coordinate one explicitly named roadmap Epic with native or explicitly profiled Herdr Task Operators, a distinct Task Evaluator and a continuous Epic Evaluator. Use only for an explicit $aquarium:epic-squad request with one repository, canonical roadmap and Epic. Supports execute, plan-only, plan-handoff and resume, including mixed native/Herdr roles and same-CLI explicit profiles."
 ---
 
 # Epic Squad
@@ -13,13 +13,13 @@ consumers. These references own role scope, first assessments, Writer control, c
 evidence reuse and supervision. Use the existing ordinary v3 machine roles and
 report identifiers. Do not invoke `epic-handler` or Task-handler phase skills.
 
-## Current delivery boundary
+## Delivery and evidence
 
-The native collaboration instructions, real-owner Goal/Validation admission,
+The native/Herdr collaboration instructions, real-owner Goal/Validation admission,
 qualified source preparation and exact composition/commit/design consumers are
 integrated in development source, including negative evidence, scoped Validation
-correction commits and exact recovery. TASK-151 owns actual installed observations;
-source completion supplies no installed functional result. Read-only
+correction commits and exact recovery. Actual installed observations remain
+separate evidence; source completion supplies no functional result. Read-only
 preparation may inspect the packaged optional Squad templates without assuming
 managed copies or prior suitability.
 
@@ -53,16 +53,12 @@ Use the existing consumer's structured profile resolution described in the
 Retain the original request separately from resolved roles and observed native
 capabilities. Resolution itself supplies no model access or launch evidence.
 
-Herdr/mixed role execution remains unimplemented until EPIC-028's execution,
-commit and recovery integration is complete. Report affected roles and this
-blocker without launching them natively or substituting a profile. Unaffected
-authorized design work may continue with the blocker visible. Omitted native
-profiles require no Herdr readiness check. Separately selected technical reviews
-retain their own route and authority.
-
-Role-specific assignment wiring and [Herdr execution instructions](../../references/epic-squad-native.md#execute-resolved-roles)
-are present in source. The pending commit/recovery integration still blocks
-public mixed delivery; assignment metadata establishes no installed behavior.
+Use [role-specific assignments and native/Herdr execution](../../references/epic-squad-native.md#execute-resolved-roles)
+for each resolved route. Omitted native profiles require no Herdr readiness check.
+If a required route, model or control is unavailable, preserve the request and
+finish unaffected work; changing an explicit profile or route needs user
+direction. Separately selected technical reviews retain their own authority.
+Assignment metadata supplies no actual launch or permission evidence.
 
 ## Establish the execution envelope
 
@@ -100,8 +96,8 @@ when that mode applies; its actual qualified Squad mapping keeps the same sessio
 
 ## Deliver and assess
 
-Use direct native Epic and Task Evaluators and separate authoring/review Task
-Operators. Verify supported inheritance and native lifecycle controls, disclose
+Use direct Epic and Task Evaluators on their resolved native/Herdr routes, with
+separate authoring/review Task Operators. Verify supported controls, disclose
 assignment-only permissions and preserve actual configuration evidence. Follow
 the [native assignment and intake sequence](../../references/epic-squad-native.md)
 for every Task and meaningful Milestone.
@@ -162,4 +158,7 @@ settings and relevant permission limits, Support Operators, implementation and
 review helpers, descendants, replacements, configuration changes and closeout
 participants. Collect their available records before retiring sessions. Report
 applied inheritance or matching controls without assuming children matched their
-parents; do not infer private telemetry or include credentials.
+parents; do not infer private telemetry or include credentials. Group matching
+settings only with their role, scope and instance count retained. Recover the
+same pending operation and complete reports before replacement; settle modifying
+descendants and verify owned cleanup before releasing their sessions.

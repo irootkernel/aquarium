@@ -48,21 +48,20 @@ outcomes.
 The [epic-squad entrypoint](../../plugins/aquarium/skills/epic-squad/SKILL.md),
 [native coordination instructions](../../plugins/aquarium/references/epic-squad-native.md)
 and [collaboration contract](../../plugins/aquarium/references/epic-squad-collaboration.md)
-define the native collaboration instruction layer: shared role names,
-native readiness and profile defaults, independent Task/Epic plan scopes,
+define the native/Herdr collaboration instruction layer: shared role names,
+route readiness and profile defaults, independent Task/Epic plan scopes,
 risk-based first assessments, Writer control, scoped correction and evidence
 reuse, and Procedure/assignment ownership. These instructions preserve existing
 Handler and Validator behavior and machine report identities.
 
-The [shared dossier](../todo/TODO-EPIC-COLLABORATION.md) retains detailed execution
-criteria. Native role assignments and Handler display wording are implemented
-in current source. The [Squad execution consumer](../../plugins/aquarium/references/epic-squad-execution.md)
+The [Squad execution consumer](../../plugins/aquarium/references/epic-squad-execution.md)
 connects the actual owner, qualified Goal/Validation bindings, direct assignment
 groups, current evidence, scoped Validation correction commits and exact
-commit/design recovery. TASK-151 verifies installed delivery.
-Explicit CLI/model role execution stays unavailable
-until EPIC-028's Herdr/mixed integration is complete. These source definitions
-establish no installed native functional result.
+commit/design recovery. Explicit CLI/model profiles use Herdr; omitted roles
+remain native. Original assignments and route/configuration observations survive
+replacement and directed team changes without reinterpreting history under the
+current profile pool. Existing native-only reports and bindings need no migration.
+These source contracts establish no actual installed functional result.
 
 Member delivery and Task-owned pre-validation remediation carry the same
 approved original basis through Task Evaluator, Task Operator and Epic

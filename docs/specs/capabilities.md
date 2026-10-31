@@ -27,13 +27,14 @@ These workflows use Ouroboros only for their explicitly approved discovery or QA
 | `$aquarium:task-close` | Delegated or explicit resume | Selects the terminal task state, obtains final approval, and hands off any commit | Does not infer commit or publication authority |
 | `$aquarium:task-commit` | Commit request or delegated handoff | Reconciles roadmap lifecycle, roadmap-scoped or native Git identity, exact staging scope, Lore context, Sanho checks, and one authorized commit | A commit never authorizes amend, push, merge, or release |
 | `$aquarium:epic-handler` | Explicit | Orders one epic's tasks, completes task goals and commits, then audits and hardens the integrated epic | External prerequisites require exact committed revisions and independent evidence |
-| `$aquarium:epic-squad` | Explicit | Delivers one Epic with separate Task and Epic Evaluators, Task Operators, one active Writer and scoped corrections | Uses native roles; explicit CLI/model role profiles await the Herdr/mixed extension |
+| `$aquarium:epic-squad` | Explicit | Delivers one Epic with separate Task and Epic Evaluators, Task Operators, one active Writer and scoped corrections | Omitted roles inherit native settings; explicit CLI/model profiles select Herdr, including same-CLI and mixed teams |
 
-Native [Squad collaboration instructions](../../plugins/aquarium/skills/epic-squad/SKILL.md)
-define direct native roles, both plan scopes, independent first result intake
+[Squad collaboration instructions](../../plugins/aquarium/skills/epic-squad/SKILL.md)
+define direct native/Herdr roles, both plan scopes, independent first result intake
 and focused corrections. [Squad Goal/Validation and exact-composition consumers](../../plugins/aquarium/references/epic-squad-execution.md)
 connect source preparation, evidence, scoped integration corrections and
-commit/design recovery. Explicit external role profiles remain unimplemented.
+commit/design recovery. Original assignments retain their selected profiles and
+execution observations across directed team changes.
 [Installed observations](../../tests/vm/README.md#task-151-candidate-observations)
 keep scoped results and unverified obligations separate. Handler display roles are
 Task Operator and Epic Evaluator, preserving its existing single-Evaluator

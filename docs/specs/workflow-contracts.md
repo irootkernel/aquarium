@@ -90,7 +90,7 @@ permission question. Requested changes return to the owning work and affected
 validation while preserving review budgets. The handler never calls the independent
 `epic-validator` implicitly. Progress reports do not pause execution for approval.
 
-## Native Squad collaboration source
+## Squad collaboration
 
 The [epic-squad entrypoint](../../plugins/aquarium/skills/epic-squad/SKILL.md) and
 [native coordination instructions](../../plugins/aquarium/references/epic-squad-native.md)
@@ -104,10 +104,14 @@ commits. Optional Support Operators supply facts and assigned execution only.
 Squad's [execution and current-composition contract](../../plugins/aquarium/references/epic-squad-execution.md)
 connects qualified source preparation, both plan gates, negative-result routing,
 verified closures, scoped integration correction commits and exact recovery.
-Explicit
-CLI/model roles remain unavailable until EPIC-028; omission selects native
-configuration without a Herdr prerequisite. Source instructions establish no
-installed observation, and existing Handler/Validator behavior remains intact.
+Explicit CLI/model profiles select Herdr, including same-CLI sessions; omitted
+roles inherit the current Coordinator's native configuration without a Herdr
+prerequisite. Recovery preserves original assignments, settings and pending
+operations across user-directed profile changes. Actual profile mismatches and
+unmet required safety controls block their affected actions; unavailable private
+telemetry remains unconfirmed.
+Source instructions establish no installed observation, and existing
+Handler/Validator behavior remains intact.
 
 Member completion and Task-owned pre-validation remediation preserve the complete
 original requirements and assessments.

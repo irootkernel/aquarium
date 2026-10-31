@@ -142,26 +142,71 @@ def execution_profile(assignment, display_role, scope, instance=0):
 def assessment_execution(repository, assignment, report, reference, phase):
     """Bind mixed evidence to its original assignment and declared observations."""
     profiles = assignment["target"]["squad"].get("profiles", {})
-    if not any(
+    mixed = any(
         value["route"] == "herdr"
         for role in resolve_profiles(profiles)["roles"].values()
         for value in (role if isinstance(role, list) else [role])
+    )
+    report_target = object_value(report.get("target"), "Original report target")
+    requested_hint = report_target.get("role_execution")
+    if (
+        not mixed
+        and (
+            requested_hint is None
+            or (
+                isinstance(requested_hint, dict)
+                and requested_hint.get("route") == "native"
+            )
+        )
+        and report["native"].get("execution") is None
     ):
-        return None
+        available = original_assignment(repository, report.get("assignment"))
+        available_target = (
+            available.get("target") if isinstance(available, dict) else None
+        )
+        external = False
+        if isinstance(available_target, dict):
+            available_request = available_target.get("role_execution")
+            external = (
+                isinstance(available_request, dict)
+                and available_request.get("route") == "herdr"
+            )
+            available_squad = available_target.get("squad")
+            if isinstance(available_squad, dict):
+                external = external or any(
+                    value["route"] == "herdr"
+                    for role in resolve_profiles(available_squad.get("profiles", {}))[
+                        "roles"
+                    ].values()
+                    for value in (role if isinstance(role, list) else [role])
+                )
+        if not external:
+            return None
     original = object_value(report.get("assignment"), "Original mixed assignment")
     if original.get("schema") != "aquarium.assignment/v3":
         original = artifact(repository, original)
     work = object_value(original.get("work"), "Original assignment work")
     target = object_value(original.get("target"), "Original assignment target")
     original_squad = object_value(target.get("squad"), "Original Squad assignment")
+    original_profiles = resolve_profiles(original_squad.get("profiles", {}))
+    legacy_native = (
+        not any(
+            value["route"] == "herdr"
+            for role in original_profiles["roles"].values()
+            for value in (role if isinstance(role, list) else [role])
+        )
+        and target.get("role_execution") is None
+        and report_target.get("role_execution") is None
+        and report["native"].get("execution") is None
+    )
     requested = object_value(
-        target.get("role_execution"), "Original role configuration"
+        {} if legacy_native else target.get("role_execution"),
+        "Original role configuration",
     )
     original_authority = object_value(
         original.get("authority"), "Original assignment authority"
     )
     report_work = object_value(report.get("work"), "Original report work")
-    report_target = object_value(report.get("target"), "Original report target")
     target_field = "plan" if phase.endswith("plan") else "candidate"
     if (
         original.get("schema") != "aquarium.assignment/v3"
@@ -180,20 +225,29 @@ def assessment_execution(repository, assignment, report, reference, phase):
         or work.get("repository") != assignment["work"].get("repository")
         or work.get("epic") != assignment["work"].get("epic")
         or original_squad.get(target_field) != report_target.get(target_field)
-        or original_squad.get("profiles", {}) != profiles
         or original_authority.get("effects") != []
-        or type(requested.get("instance")) is not int
-        or requested["instance"] < 0
-        or requested
-        != execution_profile(
-            original, reference["role"], reference["scope"], requested["instance"]
+        or (
+            not legacy_native
+            and (
+                type(requested.get("instance")) is not int
+                or requested["instance"] < 0
+                or requested
+                != execution_profile(
+                    original,
+                    reference["role"],
+                    reference["scope"],
+                    requested["instance"],
+                )
+                or report_target.get("role_execution") != requested
+            )
         )
-        or report_target.get("role_execution") != requested
     ):
         raise BundleError(
             "not-established",
             "Mixed assessment configuration differs from its original scoped assignment",
         )
+    if legacy_native:
+        return None
     observed = object_value(
         report["native"].get("execution"), "Original execution observations"
     )
@@ -663,13 +717,8 @@ def assessment_rows(report, scope, expected, *, member=None):
     return original, rows
 
 
-def closeout_scope(repository, report, *, moved=False):
-    """Resolve original purpose; generic affected-Epic metadata is not closeout."""
-    target = object_value(report.get("target"), "Original assessment target")
-    contexts = []
-    if "squad" in target:
-        contexts.append(target["squad"])
-    assigned = report.get("assignment")
+def original_assignment(repository, assigned):
+    """Read available ordinary assignment provenance without requiring new fields."""
     if (
         isinstance(assigned, dict)
         and assigned.get("schema") != "aquarium.assignment/v3"
@@ -710,6 +759,16 @@ def closeout_scope(repository, report, *, moved=False):
                             "not-established", "Original assignment is unreadable"
                         ) from error
                     assigned = object_value(assigned, "Original ordinary assignment")
+    return assigned
+
+
+def closeout_scope(repository, report, *, moved=False):
+    """Resolve original purpose; generic affected-Epic metadata is not closeout."""
+    target = object_value(report.get("target"), "Original assessment target")
+    contexts = []
+    if "squad" in target:
+        contexts.append(target["squad"])
+    assigned = original_assignment(repository, report.get("assignment"))
     if (
         isinstance(assigned, dict)
         and assigned.get("schema") == "aquarium.assignment/v3"
@@ -1586,16 +1645,7 @@ def composition_record(
 def assignments(assignment, node, role, effects=(), *, reentry=False):
     """Return direct assignment scopes; the Coordinator launches and joins them."""
     squad = object_value(assignment["target"].get("squad"), "target.squad")
-    resolved = resolve_profiles(squad.get("profiles", {}))
-    if any(
-        profile["route"] == "herdr"
-        for value in resolved["roles"].values()
-        for profile in (value if isinstance(value, list) else [value])
-    ):
-        raise BundleError(
-            "not-established",
-            "Explicit Squad profiles require the pending Herdr execution, commit and recovery integration; preserve the request and obtain user direction for any alternative",
-        )
+    resolve_profiles(squad.get("profiles", {}))
     support = squad.get("support_assignments", {})
     if node in support:
         if (

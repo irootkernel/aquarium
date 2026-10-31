@@ -100,13 +100,21 @@ def test_operator_and_support_pools_remain_separate():
     assert result["requested"]["Task Operators"] == profiles
 
 
-def test_explicit_profiles_cannot_dispatch_before_mixed_integration(basis):
+def test_explicit_profiles_dispatch_with_omitted_native_roles(basis):
     assignment = basis[1]
     assignment["target"]["squad"]["profiles"] = {
         "Task Evaluator": {"cli": "codex", "model": "x"}
     }
-    with pytest.raises(BundleError, match="pending Herdr"):
-        assignments(assignment, "assess-task-plan", "evaluator")
+    assert assignments(assignment, "assess-task-plan", "evaluator") == [
+        ("Task Evaluator", "task-plan"),
+        ("Task Operator", "task-plan"),
+    ]
+    assert (
+        execution_profile(assignment, "Task Evaluator", "task-plan")["route"] == "herdr"
+    )
+    assert (
+        execution_profile(assignment, "Task Operator", "task-plan")["route"] == "native"
+    )
 
 
 def test_direct_evaluators_keep_requested_profile_separate_from_native_provenance(
@@ -746,8 +754,9 @@ def test_exact_accepted_composition_reaches_commit_without_provider_identity(bas
     assert value["grant"]["consumed"] is False
 
 
-def mixed_commit_input(basis, *, assignment_artifact=False):
-    value = commit_input(basis)
+def mixed_commit_input(basis, *, assignment_artifact=False, value=None):
+    if value is None:
+        value = commit_input(basis)
     assignment = value["assignment"]
     squad = assignment["target"]["squad"]
     squad["profiles"] = {
@@ -758,9 +767,15 @@ def mixed_commit_input(basis, *, assignment_artifact=False):
         ],
     }
     squad["profile_selections"] = {
-        "Task Operator": {"task-plan": [0], "task-result": [0]}
+        "Task Operator": {
+            "task-plan": [0],
+            "task-result": [0],
+            "integration": [0, 1],
+            "affected-result": [0, 1],
+        }
     }
     for current in [value["composition"], *value["plan_compositions"].values()]:
+        instances = {}
         for ref in current["assessments"]:
             report = json.loads(Path(ref["path"]).read_text())
             original = copy.deepcopy(assignment)
@@ -771,7 +786,12 @@ def mixed_commit_input(basis, *, assignment_artifact=False):
                 display_role=ref["role"], assignment_scope=ref["scope"]
             )
             original["authority"]["effects"] = []
-            requested = execution_profile(original, ref["role"], ref["scope"])
+            field = "plan" if current["phase"].endswith("plan") else "candidate"
+            original["target"]["squad"][field] = report["target"][field]
+            identity = ref["role"], ref["scope"]
+            instance = instances.get(identity, 0)
+            instances[identity] = instance + 1
+            requested = execution_profile(original, *identity, instance)
             original["target"]["role_execution"] = requested
             report["assignment"] = (
                 write_artifact(
@@ -868,6 +888,145 @@ def test_mixed_composition_rejects_wrong_route_profile_or_original_assignment(
 
 
 @pytest.mark.parametrize(
+    "current_profiles", [{}, {"Task Evaluator": {"cli": "other", "model": "new/model"}}]
+)
+@pytest.mark.parametrize(
+    "fault",
+    [
+        None,
+        "route",
+        "profile",
+        "controls",
+        "original-pool",
+        "original-selector",
+        "missing-assignment",
+    ],
+)
+def test_profile_change_retains_and_checks_original_execution(
+    basis, current_profiles, fault
+):
+    value = mixed_commit_input(basis)
+    value["assignment"]["target"]["squad"]["profiles"] = current_profiles
+    if fault is not None:
+        ref = value["composition"]["assessments"][
+            1 if fault == "original-selector" else 0
+        ]
+        report = json.loads(Path(ref["path"]).read_text())
+        observed = report["native"]["execution"]
+        if fault == "route":
+            observed["route"] = "native"
+        elif fault == "profile":
+            observed["profile_status"] = "mismatch"
+        elif fault == "controls":
+            observed["required_control_gaps"] = ["Required scoped control unavailable"]
+        elif fault == "original-pool":
+            report["assignment"]["target"]["squad"]["profiles"]["Task Evaluator"][
+                "model"
+            ] = "unrequested"
+        elif fault == "original-selector":
+            report["assignment"]["target"]["squad"]["profile_selections"][
+                "Task Operator"
+            ]["task-result"] = [1]
+        else:
+            del report["assignment"]
+        ref.update(write_artifact(basis[0], "invalid-historical-execution", report))
+        with pytest.raises(BundleError):
+            commit_handoff(basis[0], value)
+        return
+    result = commit_handoff(basis[0], value)
+    assert result["role_profiles"] == current_profiles
+    assert result["role_execution"]["te"]["route"] == "herdr"
+    assert result["role_execution"]["te"]["requested"]["model"] == "opaque/model"
+    assert result["role_execution"]["reviewer"]["requested"]["profile_index"] == 0
+    assert result["role_execution"]["te"]["profile_status"] == "unconfirmed"
+
+
+@pytest.mark.parametrize("assignment_artifact", [False, True])
+@pytest.mark.parametrize("hint", ["absent", "native"])
+@pytest.mark.parametrize("consumer", ["composition", "commit"])
+def test_native_current_rejects_missing_execution_for_known_external_original(
+    basis, assignment_artifact, hint, consumer
+):
+    value = mixed_commit_input(basis, assignment_artifact=assignment_artifact)
+    assignment = value["assignment"]
+    assignment["target"]["squad"]["profiles"] = {}
+    current = value["composition"]
+    ref = current["assessments"][0]
+    report = json.loads(Path(ref["path"]).read_text())
+    original = report["assignment"]
+    if assignment_artifact:
+        original = json.loads(Path(original["path"]).read_text())
+    assert original["target"]["role_execution"]["route"] == "herdr"
+    del report["native"]["execution"]
+    if hint == "absent":
+        del report["target"]["role_execution"]
+    else:
+        report["target"]["role_execution"] = execution_profile(
+            assignment, ref["role"], ref["scope"]
+        )
+    ref.update(write_artifact(basis[0], "missing-external-execution", report))
+    with pytest.raises(BundleError):
+        if consumer == "composition":
+            composition(basis[0], assignment, current)
+        else:
+            commit_handoff(basis[0], value)
+
+
+@pytest.mark.parametrize("assignment_artifact", [False, True])
+def test_native_current_keeps_complete_external_original_execution(
+    basis, assignment_artifact
+):
+    value = mixed_commit_input(basis, assignment_artifact=assignment_artifact)
+    value["assignment"]["target"]["squad"]["profiles"] = {}
+    current = composition(basis[0], value["assignment"], value["composition"])
+    result = commit_handoff(basis[0], value)
+    assert result["role_execution"] == current["role_execution"]
+    assert result["role_execution"]["te"]["route"] == "herdr"
+    assert result["role_execution"]["te"]["profile_status"] == "unconfirmed"
+    assert result["role_execution"]["te"]["requested"]["model"] == "opaque/model"
+
+
+@pytest.mark.parametrize("requested_native", [False, True])
+def test_retained_native_assignments_need_no_new_configuration_fields(
+    basis, requested_native
+):
+    value = commit_input(basis)
+    if requested_native:
+        ref = value["composition"]["assessments"][0]
+        report = json.loads(Path(ref["path"]).read_text())
+        report["target"]["role_execution"] = execution_profile(
+            value["assignment"], ref["role"], ref["scope"]
+        )
+        ref.update(
+            write_artifact(basis[0], "native-request-without-observations", report)
+        )
+        assert commit_handoff(basis[0], value)["role_execution"] == {}
+        return
+    for current in [value["composition"], *value["plan_compositions"].values()]:
+        for ref in current["assessments"]:
+            report = json.loads(Path(ref["path"]).read_text())
+            original = copy.deepcopy(value["assignment"])
+            original["role"] = (
+                "executor" if ref["role"] == "Task Operator" else "evaluator"
+            )
+            original["work"].update(
+                display_role=ref["role"], assignment_scope=ref["scope"]
+            )
+            original["authority"]["effects"] = []
+            report["assignment"] = original
+            report["work"] = copy.deepcopy(original["work"])
+            ref.update(
+                write_artifact(
+                    basis[0], ref["id"] + ref["scope"] + "-native-original", report
+                )
+            )
+    value["assignment"]["target"]["squad"]["profiles"] = {
+        "Evaluator": {"cli": "codex", "model": "new/model"}
+    }
+    assert commit_handoff(basis[0], value)["role_execution"] == {}
+
+
+@pytest.mark.parametrize(
     "fault",
     [
         "target",
@@ -928,13 +1087,25 @@ def test_native_role_groups_keep_distinct_scopes(basis, risk, count):
 
 @pytest.mark.parametrize("member", [False, True])
 @pytest.mark.parametrize("risk", ["standard", "elevated"])
+@pytest.mark.parametrize("mixed", [False, True])
 def test_mapped_groups_preserve_machine_roles_and_no_implicit_writer(
-    basis, monkeypatch, member, risk
+    basis, monkeypatch, member, risk, mixed
 ):
     if member:
         whole_member_case(basis)
     tmp_path, assignment, _ = basis
     assignment["target"]["squad"]["risk"] = risk
+    if mixed:
+        assignment["target"]["squad"].update(
+            profiles={
+                "Task Evaluator": {"cli": "codex", "model": "same/cli"},
+                "Task Operators": [
+                    {"cli": "one", "model": "opaque/model"},
+                    {"cli": "two", "model": "other/model", "effort": "max"},
+                ],
+            },
+            profile_selections={"Task Operator": {"task-result": [1, 0]}},
+        )
     document, binding = reusable()
     monkeypatch.setattr(
         execution,
@@ -957,11 +1128,19 @@ def test_mapped_groups_preserve_machine_roles_and_no_implicit_writer(
         "active_items": [],
         "mutation_templates": [],
     }
+    pending = [
+        {
+            "kind": "existing-role",
+            "public_handle": "known-operation",
+            "state": "uncertain",
+        }
+    ]
+    qualification = {"assignment": assignment, "pending_operations": pending}
     result = execution.execution_context(
         tmp_path,
         roots=["definitions"],
         entrypoint="epic-squad",
-        qualification={"assignment": assignment},
+        qualification=qualification,
         client=SimpleNamespace(health=lambda: observation),
     )
     assert result["dispatch"] is None
@@ -973,9 +1152,20 @@ def test_mapped_groups_preserve_machine_roles_and_no_implicit_writer(
         "Task Evaluator"
     ] + ["Task Operator"] * count + ["Epic Evaluator"]
     configs = [row["target"]["role_execution"] for row in result["dispatches"]]
-    assert all(
-        value["route"] == "native" and value["requested"] is None for value in configs
-    )
+    assert result["pending_operations"] == pending
+    assert result["pending_operations"] is not pending
+    if mixed:
+        assert [value["route"] for value in configs] == ["herdr"] * (count + 1) + [
+            "native"
+        ]
+        assert [value["profile_index"] for value in configs[1:-1]] == [1, 0][:count]
+        assert configs[0]["effort"] == "high"
+        assert configs[1]["effort"] == "max"
+    else:
+        assert all(
+            value["route"] == "native" and value["requested"] is None
+            for value in configs
+        )
     assert [value["instance"] for value in configs[1:-1]] == list(range(count))
     assert all(
         row["native"]["public_handle"] == "unknown" for row in result["dispatches"]
@@ -3253,10 +3443,27 @@ def test_supported_replacement_retains_current_independence_and_scope(basis, fau
         composition(*basis)
 
 
-def owner_recovery_case(basis, role="Task Evaluator"):
-    repo, _, current = basis
+def owner_recovery_case(basis, role="Task Evaluator", *, mixed=False):
+    repo, assignment, current = basis
     phase = "integration" if role == "Epic Evaluator" else "task-result"
     _, proof = affected_case(basis, phase, "bounded")
+    if mixed:
+        mixed_commit_input(
+            basis,
+            value={
+                "assignment": assignment,
+                "composition": current,
+                "plan_compositions": {},
+            },
+        )
+        refs = {ref["id"]: ref for ref in current["assessments"]}
+        proof["correction"]["original_assessments"] = [
+            copy.deepcopy(refs[ref["id"]])
+            for ref in proof["correction"]["original_assessments"]
+        ]
+        current["closures"][0]["verification"] = write_artifact(
+            repo, "mixed-owner-proof", proof
+        )
     assert composition(*basis)["status"] == "ready"
     original = next(
         ref
@@ -3306,6 +3513,29 @@ def owner_recovery_case(basis, role="Task Evaluator"):
     for closure in current["closures"]:
         closure["verification"] = verification
     return proof, recovered, delta
+
+
+@pytest.mark.parametrize("fault", [None, "wrong-route", "wrong-profile"])
+def test_mixed_replacement_preserves_original_findings_and_configuration(basis, fault):
+    _, recovered, delta = owner_recovery_case(basis, mixed=True)
+    report = json.loads(Path(delta["path"]).read_text())
+    if fault == "wrong-route":
+        report["native"]["execution"]["route"] = "native"
+    elif fault == "wrong-profile":
+        report["assignment"]["target"]["role_execution"]["model"] = "unrequested"
+    if fault:
+        delta.update(write_artifact(basis[0], "bad-mixed-replacement", report))
+        with pytest.raises(BundleError):
+            composition(*basis)
+        return
+    # The current default can change without relabeling restored originals.
+    basis[1]["target"]["squad"]["profiles"] = {}
+    result = composition(*basis)
+    assert result["status"] == "ready"
+    assert result["original_verdicts"]["te"] == "rework"
+    assert result["original_verdicts"][recovered["id"]] == "rework"
+    assert result["role_execution"][recovered["id"]]["route"] == "herdr"
+    assert result["role_execution"][delta["id"]] == report["native"]["execution"]
 
 
 @pytest.mark.parametrize("boundary", ["dispatch", "settlement"])
