@@ -1,11 +1,12 @@
-# Native Squad installed verification
+# Squad installed verification
 
-The manual `epic-squad` suite owns EPIC-027's candidate-bound installed cases.
+The manual `epic-squad` suite retains EPIC-027's native cases and adds EPIC-028's
+candidate-bound mixed cases.
 Its [case inventory](../../fixtures/squad/cases.json) retains every applicable
 native/shared row from the collaboration dossier. Grouped cases pass only when
 all their original observations have actually been made. Keep per-row gaps when
-one interaction covers only part of a case. Herdr/mixed execution stays with
-EPIC-028.
+one interaction covers only part of a case. Preserve historical native results;
+they establish no mixed-route observation.
 
 ## One held Job and exact inputs
 
@@ -49,7 +50,46 @@ plugin payload change invalidates affected installed assurance and requires
 renewed verification. Outcome documentation outside the payload may retain
 observations without altering the tested skills, helpers or references.
 
-## Actual native cases
+## Actual role cases
+
+Before TASK-156, commit the complete Task-owned product and matching suite,
+inventory, scenarios and recipes through normal TASK-154/155 completion. Select
+that exact final TASK-155 SHA for installation. The bundle builds plugin bytes
+from the committed candidate, while sealing current Git-visible recipe bytes;
+verify those recipe/declaration inputs still match the committed harness.
+No checkpoint commit is needed. Promote later observation results outside the
+plugin and harness. A product correction requires its owning correction commit
+and renewed verification of the affected installed candidate, not a metadata-only
+claim that earlier observations cover changed bytes.
+
+### Mixed delivery and commits
+
+For `mixed-delivery`, retain the actual named Coordinator and role configuration
+for each supported combination in its inventory obligation. Use existing
+greeting/adaptive fixtures and two dependent Tasks. Cover common and scoped
+direct EE/TE, same-CLI explicit Herdr roles, external TO/native Evaluators and
+external Evaluators/native TO. Give distinct authors/reviewers their original
+requirements and withheld first views. Preserve requested profiles, actual
+native handles and applied/observed/unconfirmed settings with original reports.
+Unavailable CLIs or controls stay visible; no live availability is inferred from
+the seven static example profiles.
+
+For `mixed-correction-commit`, retain original mixed assignments and first
+assessments through an eligible local correction and a contract change requiring
+affected EE judgment. Verify the exact before/after candidates, necessary checks,
+closure owners and profile routes. Include factual optional support without
+counting it as a verdict. Exercise `not-required` additional review without a
+fake provider or waiver, and separately preserve any actually selected technical
+review's team and authority. Observe the real scoped Coordinator-owned Task or
+correction commit, consumed grant, post-hook identity and native handoff. Final
+Epic acceptance remains an actual user decision.
+
+These observations extend the same held manual Job, original case-evidence index,
+fixed archives and consumer restoration path. TASK-155 owns the additional mixed
+operation/configuration recovery cases before TASK-156 starts. No automated LLM
+evaluation or separate VM framework is introduced.
+
+### Preserved native observations
 
 Read each original observation in the inventory before execution. Use disposable
 Git fixtures based on the existing greeting/adaptive fixtures and their normal

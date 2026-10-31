@@ -87,8 +87,10 @@ Evaluators and separate Task/Support Operator pools, while preserving requested
 inputs and omissions. This preparation does not enable Herdr delivery or prove
 model availability. Direct assignments now carry role/scope configuration and
 Coordinator-selected Operator pool entries, with native and Herdr execution
-instructions. EPIC-028 retains the pending commit/recovery integration and
-installed mixed verification; public mixed delivery remains blocked.
+instructions. Composition and commit consumers now bind mixed reports to their
+original assignments and execution observations while retaining native-only
+compatibility. EPIC-028 retains pending recovery integration and installed mixed
+verification; public mixed delivery remains blocked.
 
 ## Planned multi-host unification
 

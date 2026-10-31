@@ -711,6 +711,19 @@ pool entries. Requested execution configuration remains separate from actual
 producer provenance. The pending mixed-delivery guard remains active; synthetic
 configuration tests prove no allocator, permission UI or launch/resume effect.
 
+Mixed composition/commit controls bind each original report to its original
+ordinary assignment, route and requested profile, preserving earlier selectors
+and unknown telemetry. Wrong routes, mismatches, mandatory control gaps and
+writing assessment assignments remain blocked. Native-only retained reports
+need no new metadata. Existing first-assessment, closure, grant, opt-out and
+no-additional-review tests remain applicable to unchanged boundaries.
+
+The existing manual VM suite now declares mixed delivery and mixed
+correction/commit cases with their original scenario rows and fixed outputs.
+Inventory/staging tests cover declaration and archive coverage only. TASK-155
+prepares mixed recovery before TASK-156 observes the committed product and
+matching harness. No source or synthetic fixture result is installed acceptance.
+
 `tests/unit/test_adaptive_squad_unit.py` covers owner-specific Goal/Validation
 source qualification, both plan gates, preserved legacy binding bytes, explicit
 Podway opt-out without discovery, current original-report composition, negative

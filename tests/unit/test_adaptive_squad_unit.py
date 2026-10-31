@@ -746,6 +746,127 @@ def test_exact_accepted_composition_reaches_commit_without_provider_identity(bas
     assert value["grant"]["consumed"] is False
 
 
+def mixed_commit_input(basis, *, assignment_artifact=False):
+    value = commit_input(basis)
+    assignment = value["assignment"]
+    squad = assignment["target"]["squad"]
+    squad["profiles"] = {
+        "Task Evaluator": {"cli": "codex", "model": "opaque/model"},
+        "Task Operators": [
+            {"cli": "codex", "model": "opaque/model"},
+            {"cli": "claude", "model": "other/model", "effort": "high"},
+        ],
+    }
+    squad["profile_selections"] = {
+        "Task Operator": {"task-plan": [0], "task-result": [0]}
+    }
+    for current in [value["composition"], *value["plan_compositions"].values()]:
+        for ref in current["assessments"]:
+            report = json.loads(Path(ref["path"]).read_text())
+            original = copy.deepcopy(assignment)
+            original["role"] = (
+                "executor" if ref["role"] == "Task Operator" else "evaluator"
+            )
+            original["work"].update(
+                display_role=ref["role"], assignment_scope=ref["scope"]
+            )
+            original["authority"]["effects"] = []
+            requested = execution_profile(original, ref["role"], ref["scope"])
+            original["target"]["role_execution"] = requested
+            report["assignment"] = (
+                write_artifact(
+                    basis[0], ref["id"] + ref["scope"] + "-assignment", original
+                )
+                if assignment_artifact
+                else original
+            )
+            report["work"] = copy.deepcopy(original["work"])
+            report["target"]["role_execution"] = copy.deepcopy(requested)
+            report["native"]["execution"] = {
+                "route": requested["route"],
+                "requested": copy.deepcopy(requested),
+                "profile_status": "unconfirmed",
+                "required_control_gaps": [],
+                "basis": "Supported requested controls applied; private effective model telemetry unavailable",
+                "configuration": {
+                    "unconfirmed": ["private model and effort telemetry"]
+                },
+            }
+            ref.update(
+                write_artifact(basis[0], ref["id"] + ref["scope"] + "-mixed", report)
+            )
+    return value
+
+
+@pytest.mark.parametrize("assignment_artifact", [False, True])
+def test_mixed_commit_preserves_original_routes_and_honest_unconfirmed_controls(
+    basis, assignment_artifact
+):
+    value = mixed_commit_input(basis, assignment_artifact=assignment_artifact)
+    # A later approved pool selection does not rewrite the original assessment.
+    value["assignment"]["target"]["squad"]["profile_selections"]["Task Operator"][
+        "task-result"
+    ] = [1]
+    result = commit_handoff(basis[0], value)
+    assert result["workflow_owner"] == "aquarium:epic-squad"
+    assert result["provider_operation"] == "not-required"
+    assert result["role_execution"]["reviewer"]["requested"]["profile_index"] == 0
+    assert result["role_execution"]["ee"]["route"] == "native"
+    assert result["role_execution"]["te"]["route"] == "herdr"
+    assert result["role_execution"]["te"]["profile_status"] == "unconfirmed"
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "route",
+        "profile",
+        "controls",
+        "missing-assignment",
+        "owner",
+        "writer",
+        "requested",
+        "target",
+        "instance",
+        "malformed-status",
+        "missing-target",
+    ],
+)
+def test_mixed_composition_rejects_wrong_route_profile_or_original_assignment(
+    basis, fault
+):
+    value = mixed_commit_input(basis)
+    ref = value["composition"]["assessments"][0]
+    report = json.loads(Path(ref["path"]).read_text())
+    if fault == "route":
+        report["native"]["execution"]["route"] = "native"
+    elif fault == "profile":
+        report["native"]["execution"]["profile_status"] = "mismatch"
+    elif fault == "controls":
+        report["native"]["execution"]["required_control_gaps"] = [
+            "Required read-only control unavailable"
+        ]
+    elif fault == "missing-assignment":
+        del report["assignment"]
+    elif fault == "owner":
+        report["assignment"]["target"]["procedure_plan"]["entrypoint"] = "epic-handler"
+    elif fault == "writer":
+        report["assignment"]["authority"]["effects"] = ["work"]
+    elif fault == "requested":
+        report["assignment"]["target"]["role_execution"]["model"] = "unrequested"
+    elif fault == "target":
+        report["assignment"]["target"]["squad"]["candidate"] = "other-candidate"
+    elif fault == "instance":
+        report["assignment"]["target"]["role_execution"]["instance"] = -1
+    elif fault == "malformed-status":
+        report["native"]["execution"]["profile_status"] = ["matched"]
+    else:
+        del report["target"]
+    ref.update(write_artifact(basis[0], "bad-mixed-original", report))
+    with pytest.raises(BundleError):
+        commit_handoff(basis[0], value)
+
+
 @pytest.mark.parametrize(
     "fault",
     [
@@ -2858,6 +2979,118 @@ def test_actual_plan_reentry_settles_preserved_first_report_at_current_depth(
     plan["assessments"].remove(primary)
     with pytest.raises(BundleError):
         composition(repo, assignment, plan)
+
+
+@pytest.mark.parametrize("scope", ["task-plan", "epic-plan"])
+@pytest.mark.parametrize("candidate_present", [False, True])
+@pytest.mark.parametrize("plan_mismatch", [False, True])
+def test_mixed_affected_plan_binds_original_plan_through_commit(
+    basis, scope, candidate_present, plan_mismatch
+):
+    repo, assignment, _ = basis
+    value = mixed_commit_input(basis)
+    plan = value["plan_compositions"][scope]
+    primary = plan["assessments"][0]
+    original = json.loads(Path(primary["path"]).read_text())
+    original.update(verdict="rework", criteria=report_rows("unmet"))
+    primary.update(write_artifact(repo, "mixed-negative-plan", original))
+    squad = assignment["target"]["squad"]
+    squad["plan"] = "plan2"
+    squad["profile_selections"]["Task Operator"]["affected-result"] = [0, 1]
+    for phase, current in value["plan_compositions"].items():
+        current["target"] = "plan2"
+        for ref in current["assessments"]:
+            ref["applicability"] = "preserved"
+            ref["applicability_evidence"] = write_artifact(
+                repo,
+                "mixed-preserved-" + phase + ref["id"],
+                {
+                    "before": "plan1",
+                    "after": "plan2",
+                    "outcome": "pass",
+                    "preserved_scope": phase,
+                    "checks": ["current plan delta applicability"],
+                    "unknown_impact": False,
+                },
+            )
+    classification = {
+        "id": "mixed-plan-repair",
+        "phase": scope,
+        "depth": "elevated",
+        "epic_scope_changed": False,
+        "basis": "Affected plan correction with original execution settings",
+        "original_assessments": [copy.deepcopy(primary)],
+    }
+    squad["correction"] = classification
+    roles = [
+        ("Task Evaluator", "affected-result")
+        if scope == "task-plan"
+        else ("Epic Evaluator", "affected-epic"),
+        ("Task Operator", "affected-result"),
+        ("Task Operator", "affected-result"),
+    ]
+    ids = []
+    for i, (role, assigned_scope) in enumerate(roles):
+        producer = primary["producer"] if i == 0 else "mixed-plan-reviewer-" + str(i)
+        ref = delta_report(repo, role, producer, assigned_scope)
+        report = json.loads(Path(ref["path"]).read_text())
+        assigned = copy.deepcopy(assignment)
+        assigned["role"] = "executor" if role == "Task Operator" else "evaluator"
+        assigned["work"].update(display_role=role, assignment_scope=assigned_scope)
+        assigned["authority"]["effects"] = []
+        if not candidate_present:
+            assigned["target"]["squad"].pop("candidate")
+        if plan_mismatch and i == 0:
+            assigned["target"]["squad"]["plan"] = "different-plan"
+        requested = execution_profile(assigned, role, assigned_scope, max(0, i - 1))
+        assigned["target"]["role_execution"] = requested
+        report["assignment"] = assigned
+        report["work"] = copy.deepcopy(assigned["work"])
+        report["target"] = {"plan": "plan2", "role_execution": requested}
+        report["native"]["execution"] = {
+            **copy.deepcopy(original["native"]["execution"]),
+            "route": requested["route"],
+            "requested": requested,
+        }
+        ref.update(write_artifact(repo, "mixed-affected-plan-" + str(i), report))
+        ref["target"] = "plan2"
+        plan["assessments"].append(ref)
+        ids.append(ref["id"])
+    plan["closures"] = [
+        {
+            "assessment": primary["id"],
+            "criterion": "original:behavior",
+            "part": "success",
+            "before": "plan1",
+            "after": "plan2",
+            "owner": roles[0][0],
+            "disposition": "affected-assessment",
+            "basis": "Original plan verdict preserved with scoped reassessment",
+            "verification": write_artifact(
+                repo,
+                "mixed-plan-proof",
+                {
+                    "before": "plan1",
+                    "after": "plan2",
+                    "outcome": "pass",
+                    "unresolved_judgment": False,
+                    "delta": "Exact scoped plan repair",
+                    "checks": ["plan contract check"],
+                    "correction": classification,
+                    "assessments": ids,
+                },
+            ),
+        }
+    ]
+    if plan_mismatch:
+        with pytest.raises(BundleError):
+            composition(repo, assignment, plan)
+        return
+    current = composition(repo, assignment, plan)
+    assert current["status"] == "ready"
+    assert current["original_verdicts"][primary["id"]] == "rework"
+    assert set(ids) <= current["role_execution"].keys()
+    assert commit_handoff(repo, value)["accepted_target"] == "candidate1"
 
 
 def test_explicit_original_future_marker_is_distinct_from_justification(basis):

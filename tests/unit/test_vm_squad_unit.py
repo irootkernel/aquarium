@@ -170,7 +170,9 @@ def test_staging_collects_complete_originals_and_actual_restoration_receipt(stag
     assert upgrade.stage_squad_evidence(context, results) == 0
     summary = json.loads((results / "stage-evidence.json").read_bytes())
     assert summary["ok"] is True
-    assert len(summary["archives"]) == 10
+    assert len(summary["archives"]) == len(
+        json.loads((VM / "fixtures/squad/cases.json").read_text())["cases"]
+    )
     for case in summary["archives"]:
         archive = results / "evidence" / case["archive"]
         assert case["sha256"] == hashlib.sha256(archive.read_bytes()).hexdigest()
@@ -213,7 +215,9 @@ def test_staging_preserves_large_originals_for_native_collection(staging, monkey
     assert upgrade.stage_squad_evidence(context, results) == 0
     summary = json.loads((results / "stage-evidence.json").read_bytes())
     assert summary["ok"] is True
-    assert len(summary["archives"]) == 10
+    assert len(summary["archives"]) == len(
+        json.loads((VM / "fixtures/squad/cases.json").read_text())["cases"]
+    )
     with tarfile.open(results / f"evidence/{case}.tar") as reader:
         member = reader.getmember(f"originals/{case}/{original.name}")
         assert member.size == original.stat().st_size
@@ -268,7 +272,9 @@ def test_staging_failure_preserves_every_other_case_and_never_claims_pass(
     assert upgrade.stage_squad_evidence(context, results) == 2
     summary = json.loads((results / "stage-evidence.json").read_bytes())
     assert summary["ok"] is False
-    assert len(summary["archives"]) == 10
+    assert len(summary["archives"]) == len(
+        json.loads((VM / "fixtures/squad/cases.json").read_text())["cases"]
+    )
     assert json.loads((results / "result.json").read_bytes())["outcome"] == "incomplete"
     assert all(row["archive_present"] is True for row in summary["archives"])
     assert all(
@@ -396,7 +402,9 @@ def test_incremental_checkpoint_stages_originals_before_cleanup_without_pass(sta
     assert upgrade.stage_squad_evidence(context, results) == 2
     checkpoint = json.loads((results / "stage-evidence.json").read_bytes())
     assert checkpoint["ok"] is False
-    assert len(checkpoint["archives"]) == 10
+    assert len(checkpoint["archives"]) == len(
+        json.loads((VM / "fixtures/squad/cases.json").read_text())["cases"]
+    )
     with tarfile.open(results / "evidence/native-multitask.tar") as archive:
         assert (
             archive.extractfile("originals/native-multitask/report.json").read()

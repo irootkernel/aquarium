@@ -139,6 +139,80 @@ def execution_profile(assignment, display_role, scope, instance=0):
     }
 
 
+def assessment_execution(repository, assignment, report, reference, phase):
+    """Bind mixed evidence to its original assignment and declared observations."""
+    profiles = assignment["target"]["squad"].get("profiles", {})
+    if not any(
+        value["route"] == "herdr"
+        for role in resolve_profiles(profiles)["roles"].values()
+        for value in (role if isinstance(role, list) else [role])
+    ):
+        return None
+    original = object_value(report.get("assignment"), "Original mixed assignment")
+    if original.get("schema") != "aquarium.assignment/v3":
+        original = artifact(repository, original)
+    work = object_value(original.get("work"), "Original assignment work")
+    target = object_value(original.get("target"), "Original assignment target")
+    original_squad = object_value(target.get("squad"), "Original Squad assignment")
+    requested = object_value(
+        target.get("role_execution"), "Original role configuration"
+    )
+    original_authority = object_value(
+        original.get("authority"), "Original assignment authority"
+    )
+    report_work = object_value(report.get("work"), "Original report work")
+    report_target = object_value(report.get("target"), "Original report target")
+    target_field = "plan" if phase.endswith("plan") else "candidate"
+    if (
+        original.get("schema") != "aquarium.assignment/v3"
+        or object_value(target.get("procedure_plan"), "Original assignment owner").get(
+            "entrypoint"
+        )
+        != "epic-squad"
+        or original.get("role")
+        != ("executor" if reference["role"] == "Task Operator" else "evaluator")
+        or work.get("display_role") != reference["role"]
+        or work.get("assignment_scope") != reference["scope"]
+        or any(
+            work.get(key) != report_work.get(key)
+            for key in ("repository", "roadmap", "epic", "task")
+        )
+        or work.get("repository") != assignment["work"].get("repository")
+        or work.get("epic") != assignment["work"].get("epic")
+        or original_squad.get(target_field) != report_target.get(target_field)
+        or original_squad.get("profiles", {}) != profiles
+        or original_authority.get("effects") != []
+        or type(requested.get("instance")) is not int
+        or requested["instance"] < 0
+        or requested
+        != execution_profile(
+            original, reference["role"], reference["scope"], requested["instance"]
+        )
+        or report_target.get("role_execution") != requested
+    ):
+        raise BundleError(
+            "not-established",
+            "Mixed assessment configuration differs from its original scoped assignment",
+        )
+    observed = object_value(
+        report["native"].get("execution"), "Original execution observations"
+    )
+    if (
+        observed.get("route") != requested["route"]
+        or observed.get("requested") != requested
+        or not isinstance(observed.get("profile_status"), str)
+        or observed.get("profile_status") not in {"matched", "unconfirmed"}
+        or observed.get("required_control_gaps") != []
+        or not isinstance(observed.get("basis"), str)
+        or not observed["basis"].strip()
+    ):
+        raise BundleError(
+            "not-established",
+            "Mixed assessment route, profile or required controls are unresolved",
+        )
+    return copy.deepcopy(observed)
+
+
 def validate_mappings(binding, assignment):
     """Check custom placement scopes before source preparation or dispatch."""
     resolve_profiles(assignment["target"].get("squad", {}).get("profiles", {}))
@@ -825,6 +899,7 @@ def composition(
             "not-established", "Original plan and implementation authors are required"
         )
     sources, producers, gaps = {}, {}, []
+    execution_records = {}
     for ref in refs:
         ref = object_value(ref, "Squad assessment")
         identity = ref.get("id")
@@ -870,6 +945,9 @@ def composition(
                 "invalid-input",
                 "Assessment needs scope, target and applicability strings",
             )
+        execution = assessment_execution(repository, assignment, report, ref, phase)
+        if execution is not None:
+            execution_records[identity] = execution
         source_target = object_value(
             report.get("target"), "Original assessment target"
         ).get("plan" if phase.endswith("plan") else "candidate")
@@ -1443,6 +1521,7 @@ def composition(
         "gaps": gaps,
         "new_evaluator_verdict": None,
         "additional_review": assignment["authority"]["review"]["route"],
+        "role_execution": execution_records,
         "native_values": {
             "composition-scope": phase,
             "composition-goal-outcome": "achieved"
@@ -1823,6 +1902,10 @@ def commit_handoff(repository, value):
         "acceptance": copy.deepcopy(acceptance),
         "grant": copy.deepcopy(grant),
         "current_composition": current,
+        "role_profiles": copy.deepcopy(
+            assignment["target"]["squad"].get("profiles", {})
+        ),
+        "role_execution": copy.deepcopy(current["role_execution"]),
         "review_route": assignment["authority"]["review"]["route"],
         "assessment_ordinal": None
         if route == "not-required" or not review_due

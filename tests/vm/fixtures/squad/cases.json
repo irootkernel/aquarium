@@ -10,7 +10,9 @@
     "candidate-finalization-recovery": "Change the candidate and observe invalidated applicability; exercise an actual authorized hook change and a successful commit interrupted before native finalization. Resume the same operation, retain consumed grant and actual post-hook identity, and prove no duplicate commit/effect.",
     "integration-closeout": "Obtain continuous EE plus two fresh nonauthoring TO first integration views and Coordinator product review. Resolve disagreement with original owners, perform a scoped correction commit inside the same Validation session with not-achieved/pending whole-Epic, re-record current integration, and keep actual user closeout acceptance distinct.",
     "handler-continuity": "Exercise the retained installed Handler through later checkpoints and at least a subsequent Task plus real same-session recovery. Observe one logical continuous Epic Evaluator, Task Operator labels, no added mandatory TE/support, and original machine/report identities.",
-    "consumer-restoration": "Settle all run-owned handles and restore exact original CLI, upstream paired skill, plugin registration/configuration/rules and consumer bytes before native collection/cleanup."
+    "consumer-restoration": "Settle all run-owned handles and restore exact original CLI, upstream paired skill, plugin registration/configuration/rules and consumer bytes before native collection/cleanup.",
+    "mixed-delivery": "Execute named installed mixed configurations: external Task Operators with native Evaluators, external Evaluators with native Task Operators, and native Epic Evaluator with an explicit same-CLI external Task Evaluator. Preserve distinct direct EE/TE, original requested profiles, actual route/configuration observations, both plan scopes, first panels, sole Writer and exact Task commits. Report unavailable CLIs and unconfirmed controls separately.",
+    "mixed-correction-commit": "Use the configured mixed roles for an eligible local correction and a contract correction requiring affected EE judgment. Preserve original assessments, assignment-bound routes/settings, verified deltas and deferred work through an exact Coordinator-owned member/correction commit. Exercise explicit no-additional-review without a fake waiver; keep selected technical reviews separate and final actual user acceptance distinct."
   },
   "harnesses": [
     "Codex",
@@ -497,6 +499,90 @@
       "implementation_and_applicability": "TASK-149, TASK-150 / TASK-155; both",
       "observed": false,
       "case": "candidate-finalization-recovery"
+    },
+    {
+      "scenario": "Same-CLI explicit profile",
+      "required_observation": "The explicitly configured role uses Herdr while omitted roles stay native and the Coordinator's session remains unchanged.",
+      "implementation_and_applicability": "TASK-153; Herdr/mixed",
+      "observed": false,
+      "case": "mixed-delivery"
+    },
+    {
+      "scenario": "Common/scoped explicit Evaluators",
+      "required_observation": "A common profile expands into two direct Herdr roles; scoped entries affect only their roles, and omissions stay native.",
+      "implementation_and_applicability": "TASK-152 / TASK-153; Herdr/mixed",
+      "observed": false,
+      "case": "mixed-delivery"
+    },
+    {
+      "scenario": "External Task Operators only",
+      "required_observation": "Native Epic/Task Evaluators assess Herdr Task Operator work; required independent Task Operator reviewers use distinct instances of the supplied pool.",
+      "implementation_and_applicability": "TASK-153 / TASK-154; Herdr/mixed",
+      "observed": false,
+      "case": "mixed-delivery"
+    },
+    {
+      "scenario": "External Evaluators only",
+      "required_observation": "Explicit Evaluators use distinct Herdr sessions while omitted Task Operator assignments stay native.",
+      "implementation_and_applicability": "TASK-153 / TASK-154; Herdr/mixed",
+      "observed": false,
+      "case": "mixed-delivery"
+    },
+    {
+      "scenario": "Native Epic and same-CLI external Task",
+      "required_observation": "An omitted Epic profile uses the Coordinator's native configuration; explicit Codex Task Evaluator and opencode Task Operator profiles use Herdr with their own resolved settings.",
+      "implementation_and_applicability": "TASK-153 / TASK-154; Herdr/mixed",
+      "observed": false,
+      "case": "mixed-delivery"
+    },
+    {
+      "scenario": "One Task Operator profile, several instances",
+      "required_observation": "A single approved profile supplies distinct authoring and non-authoring instances without an invented provider-diversity requirement.",
+      "implementation_and_applicability": "TASK-152 / TASK-153; Herdr/mixed",
+      "observed": false,
+      "case": "mixed-delivery"
+    },
+    {
+      "scenario": "Changed candidate",
+      "required_observation": "Classify the cumulative delta; retain unaffected evidence, close eligible local repairs and refresh only invalidated assessments/checks. Neither changed bytes nor a new hash alone triggers full reapproval.",
+      "implementation_and_applicability": "TASK-148, TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "mixed-correction-commit"
+    },
+    {
+      "scenario": "Editorial-only correction",
+      "required_observation": "An already assessed non-normative typo receives document/integrity checks and closure without product tests, full review or routine TE/EE recall. A missing optional helper does not start validator development.",
+      "implementation_and_applicability": "TASK-148, TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "mixed-correction-commit"
+    },
+    {
+      "scenario": "Contract/security correction",
+      "required_observation": "A small high-consequence change gets relevant consumer/failure checks and elevated delta review, with EE for cross-Task impact. A required full test gate does not automatically create a full review of unrelated work.",
+      "implementation_and_applicability": "TASK-148 / TASK-154; both",
+      "observed": false,
+      "case": "mixed-correction-commit"
+    },
+    {
+      "scenario": "Optional Support Operator",
+      "required_observation": "Assigned facts/checks match the fixed candidate, original results are inspected, and the SO supplies no verdict, Writer transfer, finding closure or extra approval stage.",
+      "implementation_and_applicability": "TASK-148 / TASK-153, TASK-154; both",
+      "observed": false,
+      "case": "mixed-correction-commit"
+    },
+    {
+      "scenario": "No additional technical review selected",
+      "required_observation": "New-owner definitions and consumers accept the explicit state without provider execution, a fake waiver or missing collaboration reviews.",
+      "implementation_and_applicability": "TASK-149 / TASK-154; both",
+      "observed": false,
+      "case": "mixed-correction-commit"
+    },
+    {
+      "scenario": "Final user acceptance",
+      "required_observation": "Only actual user acceptance unlocks the conditional closeout commit; delegated Task acceptance is attributed to the Coordinator.",
+      "implementation_and_applicability": "TASK-150 / TASK-154; both",
+      "observed": false,
+      "case": "mixed-correction-commit"
     }
   ],
   "source": "docs/todo/TODO-EPIC-COLLABORATION.md#verification-scenarios"

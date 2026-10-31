@@ -51,8 +51,9 @@ applicability checks and re-record them under fresh fences.
 Use `manage_adaptive_procedure.py context --entrypoint epic-squad` with the exact
 retained definition, ordinary qualification and current session. Squad returns
 `dispatches`, one ordinary v3 assignment per direct role/scope, while `dispatch`
-remains null. The Coordinator creates distinct native instances and joins their
-actual results at the one native cursor. TE, independent TO reviewers and EE
+remains null. The Coordinator creates distinct instances on each resolved native
+or Herdr route and joins their actual results at the one native cursor. TE,
+independent TO reviewers and EE
 never become one producer merely because they share an Action.
 
 Set `target.squad.risk` to the assessed `standard` or `elevated` scope. The default
@@ -141,6 +142,33 @@ and criterion rows. Current phases require the actual TE/panel and EE scopes.
 Distinct roles require distinct non-authoring instances. Explicit `future_criteria`
 retain global future rows outside the due Task basis; a passing scoped checkpoint
 never relabels the report's global verdict as an Epic pass.
+
+For a mixed invocation, each original report retains its actual ordinary
+`assignment`, embedded or as the existing path/hash/size artifact reference.
+Its original Squad owner, role/scope, target, approved profile pool and selected
+instance bind `target.role_execution`. The report carries that same requested
+configuration and its real `native.public_handle`. The consumer uses the original
+assignment's selector, so a later correction assignment cannot rewrite earlier
+profile choices. Existing native-only reports and retained bindings need no new
+fields or migration.
+
+Record the actual transport in `native.execution.route`, its original requested
+`role_execution` in `requested`, a concise native-observation `basis`, and
+`profile_status` as `matched`, `unconfirmed` or `mismatch`. Preserve available
+applied/observed settings and unknowns in its optional `configuration` object.
+Use `unconfirmed` for unavailable public model/effort telemetry; that limitation
+does not create a blocker. `required_control_gaps` lists only actual unresolved
+mandatory control obligations, so an accepted basis has an empty list. A wrong
+route, profile mismatch or mandatory gap blocks composition even beside a pass
+verdict. These are caller-observed facts, not native authentication or proof of
+private backend identity. The Coordinator still checks the original native
+contract, control effects and truthful limitations.
+
+Composition and commit handoffs retain these original execution records alongside
+first assessments, closures and selected technical-review evidence. Profile
+configuration supplies neither Writer nor commit authority. Support reports
+remain factual evidence and cannot fill the independent assessment panel. The
+public mixed-delivery guard remains until recovery integration is complete.
 
 For Task-plan, Epic-plan, scoped contribution and affected assessments, the
 report may retain future global states within the same original criterion. Its
