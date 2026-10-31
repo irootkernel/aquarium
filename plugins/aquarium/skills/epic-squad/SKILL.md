@@ -6,7 +6,7 @@ description: "Coordinate one explicitly named roadmap Epic with native Task Oper
 # Epic Squad
 
 Read the [collaboration contract](../../references/epic-squad-collaboration.md)
-and [native coordination instructions](../../references/epic-squad-native.md).
+and [role coordination instructions](../../references/epic-squad-native.md).
 Read the [execution and exact-composition contract](../../references/epic-squad-execution.md)
 for qualified source selection, mapped groups, current evidence and commit/design
 consumers. These references own role scope, first assessments, Writer control, correction triage,
@@ -59,6 +59,10 @@ blocker without launching them natively or substituting a profile. Unaffected
 authorized design work may continue with the blocker visible. Omitted native
 profiles require no Herdr readiness check. Separately selected technical reviews
 retain their own route and authority.
+
+Role-specific assignment wiring and [Herdr execution instructions](../../references/epic-squad-native.md#execute-resolved-roles)
+are present in source. The pending commit/recovery integration still blocks
+public mixed delivery; assignment metadata establishes no installed behavior.
 
 ## Establish the execution envelope
 

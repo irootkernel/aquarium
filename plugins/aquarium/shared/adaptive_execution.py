@@ -652,7 +652,7 @@ def execution_context(
             "Nested dispatch",
         ]
     if entrypoint == "epic-squad":
-        from adaptive_squad import assignments
+        from adaptive_squad import assignments, execution_profile
 
         current = status["current"]["attempt"]
         scopes = assignments(
@@ -688,6 +688,7 @@ def execution_context(
                     "Re-recording needs applicable original evidence, never an invented assessment",
                 )
         dispatches = []
+        instances = {}
         for display_role, scope in scopes:
             scoped = copy.deepcopy(dispatched)
             scoped["role"] = (
@@ -696,6 +697,12 @@ def execution_context(
                 else "executor"
             )
             scoped["work"].update(display_role=display_role, assignment_scope=scope)
+            identity = (display_role, scope)
+            instance = instances.get(identity, 0)
+            instances[identity] = instance + 1
+            scoped["target"]["role_execution"] = execution_profile(
+                assignment, display_role, scope, instance
+            )
             member = assignment["target"]["procedure_plan"].get("member_scope")
             if member is not None:
                 scoped["target"]["member_scope"] = copy.deepcopy(member)
@@ -709,6 +716,7 @@ def execution_context(
             )
             scoped["instructions"] += (
                 "\nUse this explicit Squad role/scope. Preserve machine/report IDs. Independent reviews keep project files read-only, retain original reports and withhold peer conclusions until first views form. No assignment grants Writer, index, native progression, acceptance or commit authority."
+                " Keep target.role_execution as requested configuration, not proof of a launch, applied controls or actual producer identity. Follow the Squad role-coordination contract for the selected route and original result intake."
             )
             if scoped["role"] == "evaluator" or declaration["role"] == "evaluator":
                 scoped["authority"]["allowed"] = [

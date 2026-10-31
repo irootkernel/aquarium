@@ -85,8 +85,10 @@ in use by EPIC-028.
 The Squad consumer resolves structured role profiles, including common/scoped
 Evaluators and separate Task/Support Operator pools, while preserving requested
 inputs and omissions. This preparation does not enable Herdr delivery or prove
-model availability. EPIC-028 retains the pending execution, commit and recovery
-integration and installed mixed verification.
+model availability. Direct assignments now carry role/scope configuration and
+Coordinator-selected Operator pool entries, with native and Herdr execution
+instructions. EPIC-028 retains the pending commit/recovery integration and
+installed mixed verification; public mixed delivery remains blocked.
 
 ## Planned multi-host unification
 

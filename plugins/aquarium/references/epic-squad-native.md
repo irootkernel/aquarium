@@ -1,4 +1,4 @@
-# Native Squad coordination
+# Squad role coordination
 
 Use this reference only from an explicitly invoked
 [epic-squad](../skills/epic-squad/SKILL.md). The
@@ -7,6 +7,62 @@ The [execution consumer](epic-squad-execution.md) connects qualified definitions
 current evidence, scoped integration corrections and commit/design recovery.
 These source contracts establish no installed execution result; TASK-151 owns
 actual native observations.
+
+## Execute resolved roles
+
+Resolve the complete role request before creating participants. Omitted roles
+follow the native instructions below; an explicit CLI/model profile uses Herdr
+even when it matches the Coordinator. The mapped consumer attaches requested
+configuration to each assignment's `target.role_execution`, identified by display
+role, scope and instance. This field records no launch, applied settings or
+permission isolation. Keep actual producer handles and observations in the
+existing runtime handoff after creation.
+
+For a multi-profile Operator pool, the Coordinator selects an approved profile
+for each assignment instance in `target.squad.profile_selections`. Its shape is
+`{display_role: {scope: [profile_index, ...]}}`, using zero-based indexes into the
+corresponding supplied pool and instance order within that role/scope. A single
+profile needs no selector. There is no rotation or implicit provider choice.
+Optional support with no configured pool uses an authorized native factual
+helper; it cannot replace an Evaluator or required independent TO. Profile
+selection chooses configuration, never a shared author/reviewer instance.
+
+For each explicit role, load the installed Herdr skill and applicable global
+Herdr instructions before control operations. Verify the supported caller context
+and allocate a helper through `dev-herdr --subagent-pane <name> --cwd "$PWD"`.
+Use its returned pane and session. Keep the main tab unsplit and direct EE/TE
+instances separate, including common-profile Evaluators. Caller verification
+failure uses the skill's separate identify-caller/probe recovery. Layout failure
+has no raw split, focus inference, inherited-ID or unapproved route fallback.
+
+Inspect the installed CLI's actual kind, model, effort and permission controls.
+Start it only in the verified available shell pane, using the requested model
+and effort through that native contract. Preserve scoped permissions and check
+available public confirmation before work. On resume and Writer transfer, reapply
+supported controls as needed and verify their effects again. A changed default,
+unsupported control or mismatch stays visible and blocks an affected required
+action; changing a requested/defaulted profile or route needs user direction.
+Do not change host defaults or invent CLI flags, enforcement helpers or probes.
+
+Use the same known agent for prompt submission, waiting and complete output
+retrieval under the installed Herdr contract. Acknowledged submission, idle or
+done is not a result. Inspect blocked startup, permission/question UI, uncertain
+submission and timeout through that operation before recovery. Obtain any user
+answer required by the installed skill; do not answer it with a normal work
+prompt, resubmit, or launch a replacement while state is uncertain. Preserve
+Writer restrictions until modifying activity and descendants are settled.
+
+Read the original top-level assessments and supporting descendant reports before
+admission. Match each to its assignment, exact target and scope. Record public
+handles, requested/applied/observed configuration and unconfirmed settings before
+retirement. Do not assume a descendant matched its parent or replace distinct
+direct Evaluators with nested assistance. Recover truncated output through the
+same operation, using only the installed skill's supported result fallback.
+No result or question may be injected into the Coordinator's interactive input.
+
+This assignment wiring does not enable public mixed delivery while the existing
+commit/recovery integration remains pending. Preserve that guard until the
+remaining consumers are complete; source tests establish no installed result.
 
 ## Assign native roles
 

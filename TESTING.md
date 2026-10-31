@@ -705,6 +705,12 @@ not availability checks. Dispatch rejects explicit profiles while the mixed
 execution, commit and recovery integration remains pending. Existing Design-return
 tests retain the original supplied profiles and omissions.
 
+Role-assignment controls check native metadata, distinct scoped Evaluators and
+Operator instances, explicit same-CLI Herdr resolution and Coordinator-selected
+pool entries. Requested execution configuration remains separate from actual
+producer provenance. The pending mixed-delivery guard remains active; synthetic
+configuration tests prove no allocator, permission UI or launch/resume effect.
+
 `tests/unit/test_adaptive_squad_unit.py` covers owner-specific Goal/Validation
 source qualification, both plan gates, preserved legacy binding bytes, explicit
 Podway opt-out without discovery, current original-report composition, negative

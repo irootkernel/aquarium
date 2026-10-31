@@ -25,6 +25,7 @@ from adaptive_squad import (
     commit_handoff,
     composition,
     composition_record,
+    execution_profile,
     resolve_profiles,
 )
 
@@ -106,6 +107,77 @@ def test_explicit_profiles_cannot_dispatch_before_mixed_integration(basis):
     }
     with pytest.raises(BundleError, match="pending Herdr"):
         assignments(assignment, "assess-task-plan", "evaluator")
+
+
+def test_direct_evaluators_keep_requested_profile_separate_from_native_provenance(
+    basis,
+):
+    assignment = basis[1]
+    profile = {"cli": "codex", "model": "same/cli/model"}
+    assignment["target"]["squad"]["profiles"] = {"Evaluator": profile}
+    before = copy.deepcopy(assignment)
+    ee = execution_profile(assignment, "Epic Evaluator", "epic-plan")
+    te = execution_profile(assignment, "Task Evaluator", "task-plan")
+    assert ee["route"] == te["route"] == "herdr"
+    assert ee["requested"] == te["requested"] == profile
+    assert ee["effort"] == te["effort"] == "high"
+    assert ee["display_role"] != te["display_role"]
+    assert assignment == before
+    assert "public_handle" not in ee
+    assert "applied" not in ee
+
+
+def test_operator_selection_is_from_approved_pool_for_each_direct_instance(basis):
+    assignment = basis[1]
+    profiles = [
+        {"cli": "one", "model": "a"},
+        {"cli": "two", "model": "b", "effort": "low"},
+    ]
+    squad = assignment["target"]["squad"]
+    squad["profiles"] = {"Task Operators": profiles}
+    with pytest.raises(BundleError):
+        execution_profile(assignment, "Task Operator", "task-result")
+    squad["profile_selections"] = {"Task Operator": {"task-result": [1, 0]}}
+    first = execution_profile(assignment, "Task Operator", "task-result", 0)
+    second = execution_profile(assignment, "Task Operator", "task-result", 1)
+    assert first["requested"] == profiles[1]
+    assert first["profile_index"] == 1
+    assert first["effort"] == "low"
+    assert second["requested"] == profiles[0]
+    assert second["instance"] == 1
+    with pytest.raises(BundleError):
+        execution_profile(assignment, "Task Operator", "task-result", 2)
+
+
+@pytest.mark.parametrize("chosen", [[], [True], [-1], [2], ["0"], "0"])
+def test_invalid_operator_selection_cannot_override_approved_profiles(basis, chosen):
+    assignment = basis[1]
+    squad = assignment["target"]["squad"]
+    squad["profiles"] = {
+        "Task Operators": [{"cli": "one", "model": "a"}, {"cli": "two", "model": "b"}]
+    }
+    squad["profile_selections"] = {"Task Operator": {"task-result": chosen}}
+    with pytest.raises(BundleError):
+        execution_profile(assignment, "Task Operator", "task-result")
+
+
+def test_optional_native_support_and_singular_operator_profile_do_not_cross_pools(
+    basis,
+):
+    assignment = basis[1]
+    profile = {"cli": "opencode", "model": "opaque/model", "effort": "max"}
+    assignment["target"]["squad"]["profiles"] = {"Task Operator": profile}
+    support = execution_profile(assignment, "Support Operator", "facts")
+    assert support["route"] == "native"
+    assert support["requested"] is None
+    assert (
+        execution_profile(assignment, "Task Operator", "implementation")["requested"]
+        == profile
+    )
+    assert (
+        execution_profile(assignment, "Epic Evaluator", "epic-plan")["route"]
+        == "native"
+    )
 
 
 @pytest.mark.parametrize(
@@ -734,12 +806,14 @@ def test_native_role_groups_keep_distinct_scopes(basis, risk, count):
 
 
 @pytest.mark.parametrize("member", [False, True])
+@pytest.mark.parametrize("risk", ["standard", "elevated"])
 def test_mapped_groups_preserve_machine_roles_and_no_implicit_writer(
-    basis, monkeypatch, member
+    basis, monkeypatch, member, risk
 ):
     if member:
         whole_member_case(basis)
     tmp_path, assignment, _ = basis
+    assignment["target"]["squad"]["risk"] = risk
     document, binding = reusable()
     monkeypatch.setattr(
         execution,
@@ -770,16 +844,21 @@ def test_mapped_groups_preserve_machine_roles_and_no_implicit_writer(
         client=SimpleNamespace(health=lambda: observation),
     )
     assert result["dispatch"] is None
-    assert [row["role"] for row in result["dispatches"]] == [
-        "evaluator",
-        "executor",
-        "evaluator",
-    ]
+    count = 2 if risk == "elevated" else 1
+    assert [row["role"] for row in result["dispatches"]] == ["evaluator"] + [
+        "executor"
+    ] * count + ["evaluator"]
     assert [row["work"]["display_role"] for row in result["dispatches"]] == [
-        "Task Evaluator",
-        "Task Operator",
-        "Epic Evaluator",
-    ]
+        "Task Evaluator"
+    ] + ["Task Operator"] * count + ["Epic Evaluator"]
+    configs = [row["target"]["role_execution"] for row in result["dispatches"]]
+    assert all(
+        value["route"] == "native" and value["requested"] is None for value in configs
+    )
+    assert [value["instance"] for value in configs[1:-1]] == list(range(count))
+    assert all(
+        row["native"]["public_handle"] == "unknown" for row in result["dispatches"]
+    )
     assert all(row["authority"]["effects"] == [] for row in result["dispatches"])
     if member:
         assert all(

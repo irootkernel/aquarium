@@ -85,6 +85,60 @@ def resolve_profiles(profiles):
     return {"requested": copy.deepcopy(profiles), "roles": roles}
 
 
+def execution_profile(assignment, display_role, scope, instance=0):
+    """Bind requested configuration to one direct assignment, without a launch."""
+    squad = object_value(assignment["target"].get("squad"), "target.squad")
+    profiles = squad.get("profiles", {})
+    resolved = resolve_profiles(profiles)["roles"]
+    result = {"display_role": display_role, "scope": scope, "instance": instance}
+    if display_role in {"Epic Evaluator", "Task Evaluator"}:
+        key = "Evaluator" if "Evaluator" in profiles else display_role
+        return {
+            **result,
+            **resolved[display_role],
+            "requested": copy.deepcopy(profiles.get(key)),
+        }
+    if display_role not in {"Task Operator", "Support Operator"}:
+        raise BundleError("invalid-input", "Unknown Squad assignment role")
+    pool = resolved[display_role + "s"]
+    if not pool:
+        # An omitted/empty support pool permits an optional native factual helper.
+        return {
+            **result,
+            "route": "native",
+            "configuration": "current-coordinator",
+            "requested": None,
+        }
+    selections = object_value(
+        squad.get("profile_selections", {}), "Squad profile selections"
+    )
+    scopes = object_value(selections.get(display_role, {}), "Operator profile scopes")
+    chosen = scopes.get(scope)
+    if chosen is None and len(pool) == 1:
+        index = 0
+    elif not isinstance(chosen, list) or instance >= len(chosen):
+        raise BundleError(
+            "not-established",
+            "The Coordinator must select an approved Operator profile for each assignment instance",
+        )
+    else:
+        index = chosen[instance]
+    if type(index) is not int or index < 0 or index >= len(pool):
+        raise BundleError(
+            "invalid-input", "Operator selection is outside its approved profile pool"
+        )
+    key = display_role + "s"
+    requested = profiles.get(key)
+    if display_role == "Task Operator" and "Task Operator" in profiles:
+        requested = [profiles["Task Operator"]]
+    return {
+        **result,
+        **copy.deepcopy(pool[index]),
+        "profile_index": index if requested is not None else None,
+        "requested": copy.deepcopy(requested[index]) if requested is not None else None,
+    }
+
+
 def validate_mappings(binding, assignment):
     """Check custom placement scopes before source preparation or dispatch."""
     resolve_profiles(assignment["target"].get("squad", {}).get("profiles", {}))
