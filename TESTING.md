@@ -722,8 +722,16 @@ tests cover declaration and archive coverage only. The final TASK-155 plugin and
 matching harness must be committed before TASK-156 installation; later outcome
 documents do not alter tested payload/harness bytes. Synthetic reports prove no
 native/Herdr launch, permission UI, actual resume controls, background settlement
-or installed acceptance. Those observations and Master's functional verification
-remain separate required evidence.
+or installed acceptance. The Coordinator verifies native-only Squad and existing
+Handler preservation through actual installed execution in UTM. Those results
+remain separate from Master's final overall Epic acceptance.
+
+The [TASK-156 installed observations](tests/vm/README.md#task-156-candidate-observations)
+record actual named mixed role configurations and their current recovery,
+correction and commit scope. Preserve original negative results, remaining
+scenario gaps and unobserved routes alongside the Coordinator's native-only
+Squad and existing Handler verification. Source checks and installed results
+retain their own scope; Master's final overall Epic acceptance remains separate.
 
 `tests/unit/test_adaptive_squad_unit.py` covers owner-specific Goal/Validation
 source qualification, both plan gates, preserved legacy binding bytes, explicit

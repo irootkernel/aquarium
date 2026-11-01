@@ -74,9 +74,13 @@ Operator wording without a separate TE or mandatory support pool. The
 [roadmap](roadmap/README.md) owns delivery status. The
 [installed native observations](../tests/vm/README.md#task-151-candidate-observations)
 retain their exact scope; source checks and the
-[mixed manual scenario](../tests/vm/recipes/scenarios/epic-squad.md) supply no
-installed mixed result. TASK-156 will observe the exact committed TASK-155 plugin
-and matching harness. Actual user functional verification remains separate.
+[mixed manual scenario](../tests/vm/recipes/scenarios/epic-squad.md) define checks
+and future execution. The [installed mixed observations](../tests/vm/README.md#task-156-candidate-observations)
+record named same-CLI role arrangements on the committed TASK-155 payload and
+matching harness, with original recovery and correction evidence. Unavailable
+CLIs and remaining scenario gaps stay explicit. The Coordinator's native-only
+Squad and existing Handler checks remain separate from Master's final overall
+Epic acceptance.
 
 ## Planned multi-host unification
 

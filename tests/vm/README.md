@@ -964,11 +964,13 @@ now declares 900 seconds; the campaign-specific prepare and cleanup overrides
 remain distinct from the suite's unchanged defaults. These observations bind the
 recorded snapshots and effective budgets, not every later harness revision.
 
-The versioned [inventory](fixtures/squad/cases.json) declares 68 cases with
-`observed: false`. Actual observations, current applicability and per-harness
-outcomes remain in the workflow's 68-row evidence projection with the producing
-tools. Conditional variants, unavailable measurements and unobserved Claude
-cases remain explicit. No all-scenarios or all-harness pass was established.
+The historical native-phase inventory contained 68 rows with `observed: false`.
+The current [inventory](fixtures/squad/cases.json) retains those rows and adds
+mixed scenarios, for 94 rows. Historical observations, applicability and
+per-harness outcomes remain in the workflow's 68-row evidence projection with
+the producing tools. Conditional variants, unavailable measurements and
+unobserved Claude cases remain explicit. No all-scenarios or all-harness pass
+was established.
 
 The followup exercised the revised cold-scenario Goal guidance: decision
 readiness was assessed before acceptance and terminal effects, which remained
@@ -1070,3 +1072,203 @@ routing error; it does not establish a new current-source defect. The original
 NOT_ACCEPTED result remains. Before rework, select a currently advertised target
 that supports the actual record-handling purpose. The separate fresh cold
 fixture and later requested-record-change case do not change this failed result.
+
+### TASK-156 candidate observations
+
+Installed observations used Aquarium candidate
+`d7b88d902099453c0a10a6a5ad6453533460ca5a`, official Podway `0.2.15`,
+Codex `0.164.0` and Herdr `0.9.5`. They cover named configurations using the
+same CLI. Guest Claude authentication was unavailable; Gemini and OpenCode were
+absent from the declared guest PATH. Cross-CLI delivery remains unverified.
+
+| Configuration | Actual observation |
+| --- | --- |
+| External Task Operators with native Evaluators | The first Task used separate Herdr authoring and independent reviewing Operators with native Task and Epic Evaluators. Actual member acceptance, commit and native handoff followed its required gates. |
+| Native Task Operators with external Evaluators | The dependent Task used distinct direct Herdr Epic and Task Evaluators with a common explicit profile. Both plan scopes and first full result assessments were observed. A later directed profile change retained these original assignments and reports. |
+| Native Epic Evaluator with explicit external Task Evaluator | The later phase retained native Operators and Epic evaluation with an explicit Herdr Task Evaluator. Original finding closure and current evidence composition preceded the dependent Task's actual member commit and native handoff. |
+
+In that campaign, the explicit Task Evaluator used
+`codex / gpt-6.1-sol / low`, a `read-only`
+sandbox and `on-request` approval. Public launch records and the UI confirmed
+the selected profile. Native inherited model and effort telemetry remained
+unconfirmed. Assignment read-only scope establishes no operating-system
+isolation, and public settings supply no private backend attestation.
+
+An exact README spelling repair used document and integrity checks without a
+Make rerun or product Evaluator recall. A separate controlled contract fault
+broke repeated uppercase output and eight integration checks. Strict composition
+rejected the old green candidate. The original affected producers retained their
+negative judgments and supplied current finding-ID coverage after restoration.
+Phase and report-binding corrections preserved original judgments, source
+priorities and future obligations. Before the dependent Task was accepted, its
+current composition had no outstanding finding or applicability gaps.
+
+Recovery reused original public Coordinator and Evaluator conversations after
+observations timed out or were truncated. It preserved all 23 tracked fixture files,
+Git references, accepted history and grant consumption. The earlier native
+database was absent. Supported preparation created a distinct physical Goal
+from the exact retained source and binding; the verified member commit then
+reached completed/achieved/handed-off in that new Goal. The absent historical
+session remains unfinished history.
+
+A controlled complete-name fault was assigned to the already completed first
+Task. Its owner reopened the Task through a disclosed new physical Goal. Two
+independent plan reviewers found that a combined Make invocation would stop
+before capturing the CLI failure after the expected unit failure. The author
+separated those commands before receiving Writer authority. The new guards
+then exposed the fault in the renderer and both CLI paths; exact renderer
+restoration passed the full serial Make gate with 41 tests. Four regression
+cases made the separate correction commit substantive. The original member
+grants remained consumed and were not reused. The owner Goal reached completed
+with an actual handed-off result before the Coordinator restored the Task's
+Completed status.
+
+A bounded native Support Operator inventoried the last dossier's live references,
+source captures and proposed file hashes. The Coordinator used those facts in
+the exact disposition proposal. Separate original Epic and Task judgments closed
+the integration findings, and a substantive Epic Evaluator assessment covered
+the final record proposal. The fixture operator then accepted that exact result
+and conditional proposal. This supplies no Master functional or production
+acceptance.
+
+The earlier campaign remains `INCOMPLETE`. Its unchanged cleanup check rejected
+a raw configuration digest mismatch even after all eight later consumer
+preimages matched. Its two missing recipe-owned cleanup receipts and transient
+system-skill differences retain their original meaning. A separately approved
+fresh baseline matched canonical preparation and exact consumer preimages before
+candidate installation.
+
+The exact final fixture records were committed once under the matured conditional
+grant. The same Validation reached completed/achieved with an actual handed-off
+result. All eight declared consumer roots then matched their saved preimages,
+including file modes. The unchanged consumer-cleanup recipe returned
+pass/verified and wrote both original cleanup receipts. Native collection and
+resource cleanup have separate receipts; those operational results establish no
+functional acceptance. At that campaign's close, Master's separate functional
+verification remained unverified. The 94 scenario rows retain their individual
+applicability and evidence gaps; these observations establish no all-scenarios or
+all-harness pass.
+
+A separately approved status fixture exercised profile validation and the
+omitted-effort default on the same installed payload. Missing model, empty
+profile, empty Task Operator list and conflicting common/scoped Evaluator
+profiles were refused before the affected role launched. An unsupported effort
+was rejected against the installed supported-control catalog; native diagnostic
+commands themselves accepted that value, so no native CLI rejection is claimed.
+The explicit Task Evaluator profile omitted effort and ran through Herdr with
+HIGH reasoning. Whole-profile omission kept the native Epic Evaluator and Task
+Operators on the current LOW Coordinator settings. Public controls were
+confirmed where available; private backend telemetry remains unknown.
+
+The committed status requirement established the intended display before the
+Writer changed it. The source-only change from `Status: ready` to
+`Status: complete` preserved newline, exit, stderr, import and working-directory
+behavior. The original unit and integration tests then failed at their old
+exact display literals. Required E2E cases skipped by the aggregate failure
+were run separately. Independent first assessments covered the original product
+meaning and retained these failures. The author changed only the two obsolete
+literal occurrences. Referring tests and the previously skipped stage passed,
+followed by the full serial Make gate with four unique tests. The source and
+E2E bytes, inputs and assertion strength stayed unchanged.
+
+The same first review also found stale Planned lifecycle records. A separately
+scoped record correction and the original nonauthoring Task Evaluator's focused
+confirmation resolved that finding. Current composition combined the preserved
+first reports, verified literal closures, focused record judgment and green
+checks. The native correction route therefore included affected confirmation;
+it supplies no claim that the entire mixed issue set used only local closure.
+
+A read-only comparison of the preceding campaign's retained outer-operator
+supervision records counted
+162 native waits returning 120,639 bytes and 226 visible main-pane inspections
+returning 428,038 redacted bytes. Fifty-eight retained exact UI/control pairs
+had intervals of 4.937 to 141.42 seconds, with a median of 19.4625 seconds,
+from the first matching retained UI read to its control receipt. These intervals
+are not event-onset detection latency. Event onset, exhaustive missed or false
+recoveries, provider cost and a matched controlled baseline were unavailable;
+the records establish no efficiency or savings result.
+
+Under Master's delegated verification authority, the Coordinator completed a
+separate installed ordinary Handler fixture in a fresh Codex context. It delivered
+two dependent Tasks, paused after the first actual commit before native
+finalization, and resumed the same conversation and Task session before delivering
+the second Task. One continuous Epic Evaluator and the ordinary Task Operator
+retained their roles; no Task Evaluator or Support Operator was added.
+
+The integrated product passed the full serial Make gate with 32 tests and ten
+separate Coordinator CLI checks covering exact positive output and invalid counts.
+Three fresh whole-Epic technical reviewers returned complete reports without
+findings. Internal Validation and the final readiness assessment passed. The
+fixture operator accepted the exact final record proposal, after which the final
+commit and same-session completed/achieved/handed-off result were verified. Both
+member grants and the conditional closeout grant were consumed once. Original
+negative reports and earlier unverified states remain intact alongside the later
+actual effects. Complete public records account for the main conversation and all
+eleven descendants, with completed latest turns and no nonterminal commands.
+These are the Coordinator's actual Handler results; Master's final overall
+EPIC-028 acceptance remains separate.
+
+The separate native-only Squad fixture delivered two dependent Tasks with fresh
+Task teams and one continuous Epic Evaluator. Both plan scopes preceded each
+Writer assignment, and each Task had independent result assessments, exact
+delegated acceptance, a separate actual commit and a verified native handoff.
+The first Task also delivered a function milestone before CLI completion. The
+integrated product passed 32 tests and ten separate Coordinator CLI checks.
+
+Source suitability rejected an initial Validation definition whose whole
+criterion required later overall acceptance and final effects before integration
+could finish. That rejection occurred before retention or native Validation
+admission. The original first report and corrected High finding remain intact.
+The Coordinator then adopted a distinct integration-readiness Goal using the
+installed structured JSON basis contract. Its six criteria retain every original
+product clause and current integration duty. The original whole criterion remains
+globally unverified in the reports and parent-duty ledger, with explicit
+`future_criteria` attribution. A fresh independent suitability assessment and
+actual qualification passed for the new definition. This establishes source fit;
+actual integration and final closeout require their own execution evidence.
+
+The same Epic Evaluator and two fresh nonauthoring Task Operators then formed
+independent first assembled views. Product behavior, traceability and member
+history passed; the reports retained missing cohort and handoff evidence as
+unverified. The first strict composition preserved those negatives. After the
+complete original reports and actual evidence were available, the same owners
+gave focused confirmations. Nine exact closures produced a ready integration
+composition with no current gap or pending judgment, followed by the actual
+native readiness judgment and retained integration result.
+
+A separate first substantive closeout assessment reviewed the complete prospective
+record changes and dossier retirement. The fixture operator accepted that exact
+proposal before application and the final conditional commit. The same native
+session then reached completed/achieved/handed-off to the verified commit. Both
+member grants and the conditional final grant were consumed once. Earlier
+unverified parent rows and rejected definitions remain unchanged historical
+reports; a separate reconciliation records the later actual effects. This
+completed the Coordinator's native-only Squad verification.
+
+Complete public records account for ten Squad conversations and twelve Handler
+conversations. Every latest turn completed without a pending command. The declared
+candidate and harness sources, original reports and complete owned fixture Git
+history were preserved before consumer restoration. All eight declared consumer
+roots then matched their saved preimages, including file modes. The unchanged
+consumer-cleanup recipe returned pass/verified and produced both original
+receipts.
+
+The initial native collection exceeded its 900-second deadline and retained the
+guest originals. Its immutable result remains `INCOMPLETE`, with partial evidence
+and failed cleanup. A separate native recovery collected all 34 required outputs
+before verifying and completing the same Job's cleanup. The host export contained
+35 files. Every required output matched the size and digest frozen in the guest,
+and all 6,637 members of the 13 evidence archives matched their manifests and
+required sets. The recovered outputs total 235,001,600 bytes. Supplementary
+recovery preserves the original failure; resource-health verification governs
+reuse separately. The three named groups passed and the other ten remain
+unobserved.
+
+Requested native `on-request` approval was not established as applied; the observed
+policy was `never`, and protected Git writes were refused. The outer fixture
+operator executed the exact authorized commit scripts and verified their actual
+results. A process-local `--disable apps` continuation followed an optional
+connector refusal. The two fixture trust registrations and generated bytecode
+were included in restoration. Private model, effort and operating-system
+isolation remain unconfirmed. These results supply no all-scenarios or all-harness
+pass, and Master's final overall EPIC-028 acceptance remains separate.

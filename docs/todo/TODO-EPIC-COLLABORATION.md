@@ -1602,8 +1602,9 @@ what each Task must deliver and demonstrate; they do not record lifecycle state.
   changed contracts that require EE participation. Distinguish synthetic checks
   from real account/model availability and observed settings. The seven examples
   are not a mandatory seven-profile live test matrix.
-- Verify native-only Squad and existing-handler preservation. Obtain Master's
-  separate functional verification before claiming those outcomes.
+- The Coordinator separately verifies native-only Squad and existing-handler
+  preservation through actual installed execution in the dedicated UTM VM. Keep
+  those results separate from Master's final overall Epic acceptance.
 - Require actual installed mixed Squad delivery observation for a named supported
   configuration; report unobserved CLIs/routes explicitly.
 - Promote implemented outcomes, settle each consumer's remaining requirements
