@@ -47,8 +47,9 @@ own native, Herdr and mixed role execution, readiness, first assessments,
 correction and recovery. The [execution consumer](../plugins/aquarium/references/epic-squad-execution.md)
 connects qualified Goal/Validation sources, original evidence and commit/design
 handoffs. The original Epic/Task requirements still come from the target
-repository's execution SOT; the temporary [development dossier](todo/TODO-EPIC-COLLABORATION.md)
-retains adoption and acceptance history while its consumers remain active.
+repository's execution SOT. The [workflow specification](specs/workflow-contracts.md#squad-collaboration)
+and [orchestration specification](specs/agent-orchestration.md#native-epic-squad-collaboration-source)
+map the implemented contracts and their owners.
 
 The shared roles are Coordinator, Epic Evaluator, Task Evaluator, Task Operator
 and optional factual Support Operator. Distinct direct EE/TE and author/reviewer

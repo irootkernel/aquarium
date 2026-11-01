@@ -58,7 +58,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-025 | Align review strategies with delivery goals | Completed |
 | EPIC-026 | ADAPT: Goal-adaptive Procedure orchestration | Completed |
 | EPIC-027 | Add native Epic Squad collaboration | Completed |
-| EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | In Progress |
+| EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | Completed |
 | EPIC-029 | Add directory AGENTS.md documentation indexes | Completed |
 | EPIC-030 | Unify Aquarium delivery across five agent hosts | Planned |
 | EPIC-031 | Adopt Coordinator, Evaluator and Executor roles in release workflows | Planned |
@@ -828,7 +828,7 @@ delivery while the extension develops.
 
 ## EPIC-028: Extend Epic Squad with Herdr and mixed collaboration
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Extend the existing `epic-squad` skill and workflow owner after EPIC-027 is
 complete. Resolve each role independently: omitted profiles use the Coordinator's
@@ -848,7 +848,12 @@ host defaults. Profile or route changes need user direction. Retain original
 results, current applicability, configurations and pending work across recovery.
 Do not add a second skill or owner.
 
-**Detailed SOT:** [Epic collaboration dossier](../todo/TODO-EPIC-COLLABORATION.md)
+**Canonical Outcomes:** [Squad instruction source](../../plugins/aquarium/skills/epic-squad/SKILL.md),
+[roles and configuration](../../plugins/aquarium/references/epic-squad-native.md),
+[collaboration](../../plugins/aquarium/references/epic-squad-collaboration.md),
+[execution and recovery](../../plugins/aquarium/references/epic-squad-execution.md),
+[orchestration specification](../specs/agent-orchestration.md#native-epic-squad-collaboration-source),
+and [installed verification and limits](../../tests/vm/README.md#task-156-candidate-observations).
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
