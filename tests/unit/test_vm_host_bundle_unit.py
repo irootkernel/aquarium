@@ -239,7 +239,7 @@ class HostBundleTest(unittest.TestCase):
                 cases = self.module.load_suites()["suites"][name]["manual"][
                     "required_scenarios"
                 ]
-                self.assertEqual(len(outputs), 28)
+                self.assertEqual(len(outputs), 34)
                 for case in cases:
                     for suffix in ("tar", "manifest.json"):
                         self.assertIn(
