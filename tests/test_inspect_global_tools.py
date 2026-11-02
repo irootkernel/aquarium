@@ -4,11 +4,9 @@ import hashlib
 import io
 import json
 import os
-import sqlite3
 import subprocess
 import sys
 import tempfile
-from contextlib import closing
 from pathlib import Path
 from unittest import mock
 
@@ -271,7 +269,7 @@ class TestInspectGlobalTools:
     def test_global_inventory_has_only_user_global_scope(self) -> None:
         payload = self.run_inspector(GLOBAL_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v7"
+        assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v8"
         assert payload["inspection_scope"] == "user_global"
         assert "repository" not in payload
         for name in ("sanho", "mulgae", "gaori", "sorage", "podway", "haepari"):
@@ -329,6 +327,11 @@ class TestInspectGlobalTools:
         paired_skill = payload["tools"]["sorage"]["paired_skill"]
         assert paired_skill["status"] == "degraded"
         assert paired_skill["canonical_present"] is True
+
+        for relative in inspect_global_tools.load_inspector().SORAGE_SKILL_FILES[1:]:
+            target = agents_skill / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("Policy reference", encoding="utf-8")
 
         codex_skill.joinpath("SKILL.md").unlink()
         codex_skill.rmdir()
@@ -628,7 +631,10 @@ class TestInspectGlobalTools:
         degraded: bool,
     ) -> None:
         inspector = mock.MagicMock()
-        inspector.sorage_upgrade_preflight_state.return_value = "fresh"
+        inspector.sorage_preflight.return_value = (
+            {"contract_valid": True},
+            "compatible",
+        )
         inspector.sorage_upgrade_skip_reason.return_value = None
         inspector.json_probe.return_value = {"ok": True}
         inspector.normalize_sorage_doctor.return_value = (
@@ -656,156 +662,8 @@ class TestInspectGlobalTools:
             ["/usr/local/bin/sorage", "doctor", "--json"],
             Path(self.repository.anchor),
             1.0,
+            error_json_on_stderr=True,
         )
-
-    def test_sorage_initialization_requires_upgrade_preflight_for_old_database(
-        self,
-    ) -> None:
-        inspector = inspect_global_tools.load_inspector()
-        database = self.base / "sorage-home/state/sorage.sqlite3"
-        database.parent.mkdir(parents=True)
-        (database.parent.parent / "config.yaml").write_text(
-            SORAGE_CONFIG, encoding="utf-8"
-        )
-        vault = database.parent.parent / "vault"
-        vault.mkdir()
-        (vault / ".sorage-vault.json").write_text(
-            json.dumps(
-                {
-                    "type": "sorage-vault",
-                    "schemaVersion": 1,
-                    "installationId": "11111111-1111-4111-8111-111111111111",
-                    "createdAt": "2026-01-01T00:00:00.000Z",
-                }
-            ),
-            encoding="utf-8",
-        )
-        with closing(sqlite3.connect(database)) as connection, connection:
-            connection.execute(
-                "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, name TEXT)"
-            )
-            connection.execute(
-                "INSERT INTO schema_migrations VALUES (6, 'backup-runs-v1')"
-            )
-            connection.execute(
-                "CREATE TABLE installation (id INTEGER PRIMARY KEY, installation_id TEXT)"
-            )
-            connection.execute("CREATE TABLE project_bindings (installation_id TEXT)")
-        tool = {
-            "status": "installed",
-            "installed": True,
-            "executable": "/usr/local/bin/sorage",
-            "probes": {"version": {"contract_valid": True}},
-        }
-        with (
-            mock.patch.dict(
-                os.environ, {"SORAGE_HOME": str(database.parent.parent).lstrip("/")}
-            ),
-            mock.patch.object(
-                inspect_global_tools, "inspect_versioned_cli", return_value=tool
-            ),
-            mock.patch.object(
-                inspector,
-                "sorage_config_validation_probe",
-                return_value={
-                    "ok": True,
-                    "result": {"ok": True, "data": {"valid": True}},
-                },
-            ) as config_validation,
-            mock.patch.object(
-                inspector, "json_probe", return_value={"ok": True}
-            ) as doctor,
-            mock.patch.object(
-                inspector,
-                "normalize_sorage_doctor",
-                return_value=({"ok": True}, True, 0),
-            ),
-        ):
-            blocked = inspect_global_tools.inspect_global_sorage(
-                inspector, self.repository, 1.0, True
-            )
-            assert blocked["probes"]["doctor"]["reason"] == "upgrade_preflight_required"
-            assert config_validation.call_count == 1
-            doctor.assert_not_called()
-            confirmed = inspect_global_tools.inspect_global_sorage(
-                inspector, self.repository, 1.0, True, True
-            )
-            assert (
-                confirmed["probes"]["doctor"]["reason"] == "upgrade_migration_required"
-            )
-            assert config_validation.call_count == 2
-            doctor.assert_not_called()
-            (database.parent.parent / "config.yaml").unlink()
-            recovery = inspect_global_tools.inspect_global_sorage(
-                inspector, self.repository, 1.0, True, True
-            )
-            assert (
-                recovery["probes"]["doctor"]["reason"]
-                == "installation_recovery_required"
-            )
-            assert config_validation.call_count == 2
-            doctor.assert_not_called()
-            (database.parent.parent / "config.yaml").write_text(
-                SORAGE_CONFIG, encoding="utf-8"
-            )
-            config_validation.return_value = {
-                "ok": False,
-                "result": {"ok": False, "error": {"code": "CONFIG_INVALID"}},
-            }
-            invalid = inspect_global_tools.inspect_global_sorage(
-                inspector, self.repository, 1.0, True, True
-            )
-            assert (
-                invalid["probes"]["doctor"]["reason"]
-                == "installation_recovery_required"
-            )
-            doctor.assert_not_called()
-            config_validation.return_value = {
-                "ok": True,
-                "result": {"ok": True, "data": {"valid": True}},
-            }
-            with closing(sqlite3.connect(database)) as connection, connection:
-                connection.execute(
-                    "INSERT INTO schema_migrations VALUES (7, 'project-memos-v1')"
-                )
-            migrated = inspect_global_tools.inspect_global_sorage(
-                inspector, self.repository, 1.0, True
-            )
-            assert migrated["initialization_status"] == "initialized"
-            doctor.assert_called_once()
-
-    def test_sorage_initialization_skips_missing_database(self) -> None:
-        inspector = inspect_global_tools.load_inspector()
-        home = self.base / "sorage-home"
-        state = home / "state"
-        state.mkdir(parents=True)
-        (home / "config.yaml").write_text("existing: installation\n", encoding="utf-8")
-        tool = {
-            "status": "installed",
-            "installed": True,
-            "executable": "/usr/local/bin/sorage",
-            "probes": {"version": {"contract_valid": True}},
-        }
-        with (
-            mock.patch.dict(os.environ, {"SORAGE_HOME": str(home).lstrip("/")}),
-            mock.patch.object(
-                inspect_global_tools, "inspect_versioned_cli", return_value=tool
-            ),
-            mock.patch.object(inspector, "json_probe") as doctor,
-        ):
-            for remaining in ("config", "wal"):
-                if remaining == "wal":
-                    (home / "config.yaml").unlink()
-                    (state / "sorage.sqlite3-wal").write_bytes(b"orphan")
-                for preflight_complete in (False, True):
-                    result = inspect_global_tools.inspect_global_sorage(
-                        inspector, self.repository, 1.0, True, preflight_complete
-                    )
-                    assert (
-                        result["probes"]["doctor"]["reason"]
-                        == "installation_recovery_required"
-                    )
-            doctor.assert_not_called()
 
     @pytest.mark.parametrize("timeout", ("0", "-1", "nan", "inf", "86401"))
     def test_invalid_timeouts_return_json_error(self, timeout: str) -> None:
@@ -872,7 +730,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(PROJECT_SCRIPT)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v24"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v25"
         assert "deslop" not in payload["tools"]
         assert "ouroboros" not in payload["tools"]
         assert payload["trusted_global_skills"]["deslop"] == {
@@ -928,7 +786,7 @@ class TestInspectGlobalTools:
 
         payload = self.run_inspector(isolated_script)
 
-        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v24"
+        assert payload["schema_version"] == "aquarium-dev-setup-inspection.v25"
         assert "error" not in payload
 
     def test_global_inventory_runs_outside_a_git_worktree_without_repository(
@@ -1626,7 +1484,7 @@ def test_ouroboros_public_cli_accepts_extra_home_and_keeps_v3_shape(
     )
     assert completed.returncode == 0, completed.stdout
     payload = json.loads(completed.stdout)
-    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v7"
+    assert payload["schema_version"] == "aquarium-dev-setup-global-inspection.v8"
     result = payload["tools"]["ouroboros"]
     assert {row["home"] for row in result["homes"]} == {
         str(current),

@@ -34,12 +34,12 @@ Read the selected sections of [the shared tool catalog](../../references/tool-ca
 
    When Ouroboros is selected, also add `--verify-ouroboros-release`; pass any explicitly supplied extra homes with repeatable `--codex-home <path>`. Use the catalog's home discovery and per-home readiness contract.
 
-   Start Sorage with the version-only probe. Outside Plan Mode, disclose the native database and journal effects, then rerun a scoped Sorage inspection with `--component sorage --include-sorage-initialization`. The inspector skips a pre-Memo database, a missing database in a nonempty home, an incomplete or mismatched installation configuration, and an unverifiable state. After the catalog's v0.1.2 backup and restore preflight, add `--sorage-upgrade-preflight-complete` to distinguish a prepared pre-Memo database from one still needing preparation. On `upgrade_migration_required`, propose the catalog's separately approved native reconfiguration and rerun diagnosis after it succeeds. On `installation_recovery_required` or `upgrade_state_unverifiable`, preserve the installation and report the unresolved state without running doctor. The same rule applies to a scoped Sorage continuation.
+   Start Sorage with version-only inventory. For selected diagnosis, use native `preflight --json` under the [Sorage catalog](../../references/tool-catalog.md#sorage). Preflight is permitted in Plan Mode; doctor and Project resolution remain execution-phase diagnostics. Only `compatible` admits those operational probes. A fresh home needs approved initialization; an older home needs matching-old-binary backup, verification and a separate restore drill before the approved new-binary `backup run` migration. Keep initialization and migration with global setup; Project mutations and ignore changes remain local.
 4. Treat `--repository <existing-directory>` only as a compatibility input. Validate that it is an existing directory, but never use it as command or configuration scope, so diagnosis also works outside a Git worktree.
 5. Diagnose local installation, supported version, canonical target, exact-upstream tree, duplicate and symlink state, paired-skill compatibility, services, global MCP, and Ouroboros integration independently.
 6. Do not ask the user to choose install, diagnose, or skip. Report current components without a question and propose actions only for missing, incompatible, unsafe, duplicated, or stale components.
 
-When `dev-setup-bundle` supplies `required_global_mcp`, keep CLI, paired-skill, and other global component diagnosis for every selected tool, but require or prepare a Mulgae or Gaori global MCP registration only for names in that union. A selected tool with no global MCP request must not make local-only targets depend on global MCP readiness. Preserve any existing global registration; no MCP request means unrequested, not disabled.
+When `dev-setup-bundle` supplies `required_global_mcp`, keep CLI, paired-skill, and other global component diagnosis for every selected tool, but require or prepare a Mulgae, Gaori, or Sorage global MCP registration only for names in that union. A selected tool with no global MCP request must not make local-only targets depend on global MCP readiness. Preserve any existing global registration; no MCP request means unrequested, not disabled.
 
 If a freshness lookup, download, validation, or comparison fails, report `freshness_unverifiable`, clean ephemeral payloads, and do not propose installation or replacement from that payload.
 
@@ -47,7 +47,7 @@ If a freshness lookup, download, validation, or comparison fails, report `freshn
 
 - Sanho, Dolgorae, Mulgae, Gaori, Sorage, Podway, and Haepari user-global CLIs.
 - `use-sanho`, `use-dolgorae`, `use-mulgae`, `use-gaori`, `use-gaori-status`, `use-sorage`, `use-podway`, and `use-haepari` under `~/.agents/skills`.
-- Mulgae and Gaori user-global MCP registrations.
+- Mulgae, Gaori, and Sorage user-global MCP registrations.
 - Podway's single Direct CLI identity and Sorage's minimal user-global initialization.
 - Lora's `lore-commits` and `lore-query`, upstream Deslop, Humanizer, and im-not-ai's `humanize-korean` skill.
 - Ouroboros package version, Codex rules and skills, MCP runtime, effective global registration, and live exposure when safely observable.
@@ -76,7 +76,7 @@ im-not-ai's `humanize-korean` skill also belongs to the active Codex home. Use `
 
 In Plan Mode, perform local and network read-only diagnosis and return exact proposals without mutation. Defer Sorage doctor or initialization checks that may update its database or journal to execution mode.
 
-Outside Plan Mode, use the version-only result to identify a pre-v0.1.2 installation before any Sorage doctor call. For an existing pre-Memo installation, prepare the upstream format-1 backup and separate restore drill before replacing the binary or opening it with v0.1.2. A v0.1.2 executable alone does not prove that preparation occurred. The inspector admits a missing or empty home and a database already carrying the Project Memo migration without upgrade confirmation; a nonempty home with no database or an incomplete installation configuration requires recovery. Disclose any selected Sorage diagnostic side effect before running it. Keep release lookup, archive download, executable installation, skill installation or replacement, legacy Podway service retirement, Sorage initialization or reconfiguration, global MCP changes, Ouroboros package changes, and Ouroboros setup or refresh as distinct actions.
+Start Sorage with version-only inventory. For selected diagnosis, use native `preflight --json` under the [Sorage catalog](../../references/tool-catalog.md#sorage). Preflight is permitted in Plan Mode; doctor and Project resolution remain execution-phase diagnostics. Only `compatible` admits those operational probes. A fresh home needs approved initialization; an older home needs matching-old-binary backup, verification and a separate restore drill before the approved new-binary `backup run` migration. Keep initialization and migration with global setup; Project mutations and ignore changes remain local.
 
 Before every persistent action:
 

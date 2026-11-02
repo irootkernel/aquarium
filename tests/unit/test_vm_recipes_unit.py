@@ -2420,5 +2420,243 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
             os.environ.pop("AQUARIUM_VM_LEASE_GENERATION", None)
 
 
+class SorageAdoptionRecipeTest(unittest.TestCase):
+    @staticmethod
+    def candidate_capture(module):
+        return {
+            "candidate_sha": "a" * 40,
+            "capture": "candidate",
+            "tools": {
+                "version": "v0.1.3",
+                "binary_sha256": module.RELEASE_SHA256,
+                "skill_tree_sha256": module.RELEASE_SKILL_TREE_SHA256,
+            },
+            "inventory": [
+                {
+                    "installation_scope": "shared-agents-skills",
+                    "relative_path": ".agents/skills/use-sorage/SKILL.md",
+                    "executable": False,
+                    "sha256": "b" * 64,
+                }
+            ],
+        }
+
+    def test_cleanup_refuses_malformed_or_stale_candidate_capture(self):
+        import copy
+
+        module = load_module(
+            "sorage_adoption_test", RECIPES_ROOT / "sorage_adoption.py"
+        )
+        context = mock.MagicMock()
+        context.inputs = {"candidate": {"git_sha": "a" * 40}}
+        with (
+            tempfile.TemporaryDirectory(dir="/tmp") as directory,
+            mock.patch.object(module.lib, "verify_guest_identity"),
+            mock.patch.object(module.lib, "verify_sealed_inputs"),
+            mock.patch.object(module.lib, "guard"),
+            mock.patch.object(
+                module.lib, "results_directory", return_value=Path(directory)
+            ),
+            mock.patch.object(module, "observe") as observe,
+            mock.patch.object(module.lib, "finish") as finish,
+        ):
+            root = Path(directory)
+            (root / "prepare.json").write_text(json.dumps({"candidate_sha": "a" * 40}))
+            cases = ["{bad", "{}"]
+            for key, value in (
+                ("candidate_sha", "c" * 40),
+                ("capture", "prepare"),
+                ("inventory", []),
+                ("inventory", None),
+                ("tools", {}),
+            ):
+                document = self.candidate_capture(module)
+                document[key] = value
+                cases.append(json.dumps(document))
+            for key in ("version", "binary_sha256", "skill_tree_sha256"):
+                document = copy.deepcopy(self.candidate_capture(module))
+                document["tools"][key] = "wrong"
+                cases.append(json.dumps(document))
+            for body in cases:
+                with self.subTest(body=body):
+                    (root / "candidate.json").write_text(body)
+                    with self.assertRaises(module.lib.RecipeError):
+                        module.run(context, "consumer-cleanup")
+                    self.assertEqual((root / "candidate.json").read_text(), body)
+                    self.assertFalse((root / "consumer-cleanup.json").exists())
+            observe.assert_not_called()
+            context.snapshot.assert_not_called()
+            finish.assert_not_called()
+
+    def test_valid_candidate_capture_allows_verified_restoration(self):
+        module = load_module(
+            "sorage_adoption_test", RECIPES_ROOT / "sorage_adoption.py"
+        )
+        context = mock.MagicMock()
+        context.inputs = {"candidate": {"git_sha": "a" * 40}}
+        context.snapshot.return_value = []
+        tools = {"binary_sha256": "original", "skill_tree_sha256": "original"}
+        with (
+            tempfile.TemporaryDirectory(dir="/tmp") as directory,
+            mock.patch.object(module.lib, "verify_guest_identity"),
+            mock.patch.object(module.lib, "verify_sealed_inputs"),
+            mock.patch.object(module.lib, "guard"),
+            mock.patch.object(
+                module.lib, "results_directory", return_value=Path(directory)
+            ),
+            mock.patch.object(module, "observe", return_value=tools),
+            mock.patch.object(module.lib, "postcondition_violations", return_value=[]),
+            mock.patch.object(module.lib, "finish", return_value=0) as finish,
+        ):
+            root = Path(directory)
+            (root / "prepare.json").write_text(
+                json.dumps({"candidate_sha": "a" * 40, "tools": tools, "inventory": []})
+            )
+            (root / "candidate.json").write_text(
+                json.dumps(self.candidate_capture(module))
+            )
+            self.assertEqual(module.run(context, "consumer-cleanup"), 0)
+            self.assertEqual(
+                json.loads((root / "consumer-cleanup.json").read_text())[
+                    "consumer_cleanup"
+                ],
+                "verified",
+            )
+            self.assertEqual(finish.call_args.kwargs["consumer_cleanup"], "verified")
+
+    def test_wrong_candidate_digest_is_not_executed(self):
+        module = load_module(
+            "sorage_adoption_test", RECIPES_ROOT / "sorage_adoption.py"
+        )
+        with tempfile.TemporaryDirectory(dir="/tmp") as directory:
+            binary = Path(directory) / "sorage"
+            binary.write_text("unqualified candidate")
+            with (
+                mock.patch.object(module.shutil, "which", return_value=str(binary)),
+                mock.patch.object(module.lib, "run") as run,
+            ):
+                with self.assertRaises(module.lib.RecipeError):
+                    module.observe(mock.MagicMock(), candidate=True)
+                run.assert_not_called()
+
+    def test_ready_does_not_inspect_storage_or_execute_sorage(self):
+        module = load_module(
+            "sorage_adoption_test", RECIPES_ROOT / "sorage_adoption.py"
+        )
+        context = mock.MagicMock()
+        context.inputs = {"candidate": {"git_sha": "a" * 40}}
+        context.snapshot.return_value = []
+        with (
+            tempfile.TemporaryDirectory(dir="/tmp") as directory,
+            mock.patch.object(module.lib, "verify_guest_identity"),
+            mock.patch.object(module.lib, "verify_sealed_inputs"),
+            mock.patch.object(module.lib, "guard"),
+            mock.patch.object(
+                module.lib, "results_directory", return_value=Path(directory)
+            ),
+            mock.patch.object(module, "observe") as observe,
+        ):
+            self.assertEqual(module.run(context, "ready"), 0)
+            observe.assert_not_called()
+            self.assertFalse((Path(directory) / "prepare.json").exists())
+            self.assertEqual(
+                json.loads((Path(directory) / "ready.json").read_text())[
+                    "candidate_sha"
+                ],
+                "a" * 40,
+            )
+
+    def test_storage_inventory_detects_changed_body_without_copying_content(self):
+        module = load_module(
+            "sorage_adoption_test", RECIPES_ROOT / "sorage_adoption.py"
+        )
+        with tempfile.TemporaryDirectory(dir="/tmp") as directory:
+            root = Path(directory)
+            home, vault = root / "home", root / "vault"
+            home.mkdir()
+            vault.mkdir()
+            (home / "config.yaml").write_text("synthetic configuration")
+            (vault / "body").write_text("PRIVATE BODY")
+            with mock.patch.dict(
+                os.environ,
+                {"SORAGE_HOME": str(home), "AQUARIUM_VM_SORAGE_VAULT": str(vault)},
+            ):
+                before = module.storage_inventory()
+                self.assertNotIn("PRIVATE BODY", json.dumps(before))
+                (vault / "body").write_text("changed body")
+                self.assertNotEqual(before, module.storage_inventory())
+            with (
+                mock.patch.dict(os.environ, {"SORAGE_HOME": "relative"}),
+                self.assertRaises(module.lib.RecipeError),
+            ):
+                module.storage_inventory()
+
+    def test_missing_baseline_cannot_capture_candidate_or_finish(self):
+        module = load_module(
+            "sorage_adoption_test", RECIPES_ROOT / "sorage_adoption.py"
+        )
+        context = mock.MagicMock()
+        context.inputs = {"candidate": {"git_sha": "a" * 40}}
+        context.snapshot.return_value = []
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            mock.patch.object(module.lib, "verify_guest_identity"),
+            mock.patch.object(module.lib, "verify_sealed_inputs"),
+            mock.patch.object(module.lib, "guard"),
+            mock.patch.object(
+                module.lib, "results_directory", return_value=Path(directory)
+            ),
+        ):
+            for phase in ("candidate", "consumer-cleanup"):
+                with (
+                    self.subTest(phase=phase),
+                    self.assertRaises(module.lib.RecipeError),
+                ):
+                    module.run(context, phase)
+            context.snapshot.assert_not_called()
+
+    def test_changed_binary_cannot_pass_restoration(self):
+        module = load_module(
+            "sorage_adoption_test", RECIPES_ROOT / "sorage_adoption.py"
+        )
+        context = mock.MagicMock()
+        context.inputs = {"candidate": {"git_sha": "a" * 40}}
+        context.snapshot.return_value = []
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "prepare.json").write_text(
+                json.dumps(
+                    {
+                        "candidate_sha": "a" * 40,
+                        "inventory": {},
+                        "tools": {"binary_sha256": "before"},
+                    }
+                )
+            )
+            (root / "candidate.json").write_text(
+                json.dumps(self.candidate_capture(module))
+            )
+            with (
+                mock.patch.object(module.lib, "verify_guest_identity"),
+                mock.patch.object(module.lib, "verify_sealed_inputs"),
+                mock.patch.object(module.lib, "guard"),
+                mock.patch.object(module.lib, "results_directory", return_value=root),
+                mock.patch.object(
+                    module, "observe", return_value={"binary_sha256": "changed"}
+                ),
+                mock.patch.object(
+                    module.lib, "postcondition_violations", return_value=[]
+                ),
+                mock.patch.object(module.lib, "finish") as finish,
+            ):
+                with self.assertRaises(module.lib.RecipeError):
+                    module.run(context, "consumer-cleanup")
+                finish.assert_not_called()
+                self.assertFalse((root / "consumer-cleanup.json").exists())
+                failures = list(root.glob("consumer-cleanup-*.json"))
+                self.assertEqual(len(failures), 1)
+                self.assertTrue(json.loads(failures[0].read_text())["violations"])
+
+
 if __name__ == "__main__":
     unittest.main()

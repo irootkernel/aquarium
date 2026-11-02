@@ -3205,10 +3205,15 @@ def main() -> int:
         return 2
     finish_options = (
         {"preserve_invalid_inventory": True}
-        if arguments.suite == "epic-squad" and arguments.phase == "stage-evidence"
+        if (arguments.suite == "epic-squad" and arguments.phase == "stage-evidence")
+        or arguments.suite == "sorage-adoption"
         else {}
     )
     try:
+        if arguments.suite == "sorage-adoption":
+            import sorage_adoption
+
+            return sorage_adoption.run(context, arguments.phase)
         if arguments.suite == "manual-hold":
             return run_manual_hold(context, arguments.phase)
         if arguments.suite in {"podway-upgrade", "epic-squad"}:

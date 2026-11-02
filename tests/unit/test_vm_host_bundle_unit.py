@@ -92,6 +92,7 @@ class HostBundleTest(unittest.TestCase):
         (cls.harness / "scenarios/podway-upgrade.md").write_text(
             "manual Podway upgrade\n"
         )
+        (cls.harness / "scenarios/sorage-adoption.md").write_text("Sorage cases\n")
         (cls.harness / "scenarios/epic-squad.md").write_text("native Squad cases\n")
         (cls.harness / "scenarios/release-acceptance.md").write_text(
             "release-acceptance runbook\n"

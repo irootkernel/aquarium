@@ -27,6 +27,8 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 - [Integrated-tool rollout dossier](TODO-HAEPARI-TOOL-ROLLOUT.md) belongs only to EPIC-032 and existing TASK-091 through TASK-099. It defines ordered producer implementation returns, released Mulgae advisory integration and a durable handoff to EPIC-033, then is settled at its own closeout.
 - [Combination qualification and retirement dossier](TODO-HAEPARI-COMBINATION-RETIREMENT.md) belongs only to EPIC-033 and existing TASK-100 through TASK-102. It consumes the completed earlier Epics' canonical outcomes, removes unnecessary Haepari integration layers, validators and harness code, verifies the simplified full environment, retires common legacy state under exact authority and settles its own and the historical legacy dossier's references and deletion.
 
+- [Sorage v0.1.3 adoption dossier](TODO-SORAGE-013.md) belongs to EPIC-035 and TASK-181 through TASK-184; it retains breaking-upgrade, MCP and installed qualification acceptance.
+
 ## Unadopted TODO Candidates
 
 There are no current unadopted TODO candidates. A work-definition workflow promotes an approved candidate by allocating the next roadmap-local epic and task IDs, applying the shared dossier threshold, and moving or linking only the resulting approved documents in one reviewed change.

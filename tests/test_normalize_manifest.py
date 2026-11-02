@@ -77,6 +77,29 @@ class NormalizeManifestTest(unittest.TestCase):
         self.assertEqual(payload["error"]["code"], code)
         return payload
 
+    def test_sorage_mcp_global_union_and_local_override(self) -> None:
+        manifest = self.write_manifest(
+            "sorage.yaml",
+            """
+            schema: aquarium.dev-setup-bundle/v2
+            defaults:
+              tools: [sorage]
+              global_mcp: [sorage]
+              agents_guidance: skip
+            targets:
+              - path: repository-a
+              - path: repository-b
+                local_mcp: [sorage]
+        """,
+        )
+        result = self.run_script(manifest)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        plan = json.loads(result.stdout)
+        self.assertEqual(plan["required_global_mcp"], ["sorage"])
+        self.assertEqual(plan["targets"][0]["global_mcp"], ["sorage"])
+        self.assertEqual(plan["targets"][1]["global_mcp"], [])
+        self.assertEqual(plan["targets"][1]["local_mcp"], ["sorage"])
+
     def test_normalizes_ready_and_invalid_targets(self) -> None:
         manifest = self.write_manifest(
             "bundle.yaml",
@@ -215,7 +238,7 @@ class NormalizeManifestTest(unittest.TestCase):
             "null-slug": ("    sorage_project_slug: null", "invalid_sorage_slug"),
             "non-list": ("    local_mcp: mulgae", "invalid_type"),
             "duplicate": ("    local_mcp: [mulgae, mulgae]", "duplicate_value"),
-            "unknown-mcp": ("    local_mcp: [sorage]", "unsupported_value"),
+            "unknown-mcp": ("    local_mcp: [unknown]", "unsupported_value"),
             "haepari-mcp": ("    local_mcp: [haepari]", "unsupported_value"),
             "non-bool": ("    mulgae_artist: yes-ish", "invalid_type"),
             "old-mcp-map": ("    mcp: {mulgae: local}", "unknown_key"),
@@ -548,12 +571,12 @@ class NormalizeManifestTest(unittest.TestCase):
                 """,
                 "invalid_mcp_selection",
             ),
-            "sorage-mcp": (
+            "unsupported-tool-mcp": (
                 """
                 schema: aquarium.dev-setup-bundle/v2
                 defaults:
                   tools: [sorage]
-                  global_mcp: [sorage]
+                  global_mcp: [unknown]
                   agents_guidance: skip
                 targets:
                   - path: repository-a

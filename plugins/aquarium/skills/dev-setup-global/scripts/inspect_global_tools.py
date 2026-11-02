@@ -14,7 +14,7 @@ from typing import Any
 
 from inspect_ouroboros import InvalidCodexHome, inspect_ouroboros
 
-SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v7"
+SCHEMA_VERSION = "aquarium-dev-setup-global-inspection.v8"
 GLOBAL_COMPONENTS = (
     "sanho",
     "dolgorae",
@@ -273,23 +273,26 @@ def inspect_global_sorage(
         tool["initialization_status"] = "not_inspected"
         tool["probes"]["doctor"] = inspector.skipped_probe("not_requested")
         return tool
-    upgrade_state = inspector.sorage_upgrade_preflight_state(neutral_cwd)
-    if upgrade_state == "pre_memo":
-        upgrade_state = inspector.sorage_validated_pre_memo_state(
-            upgrade_state,
-            inspector.sorage_config_validation_probe(
-                tool["executable"], neutral_cwd, timeout_seconds
-            ),
-        )
+    preflight_probe, upgrade_state = inspector.sorage_preflight(
+        tool["executable"], neutral_cwd, timeout_seconds
+    )
+    tool["probes"]["preflight"] = preflight_probe
     reason = inspector.sorage_upgrade_skip_reason(
         upgrade_state, upgrade_preflight_complete
     )
     if reason is not None:
         tool["initialization_status"] = "not_inspected"
         tool["probes"]["doctor"] = inspector.skipped_probe(reason)
+        if upgrade_state == "fresh":
+            tool["initialization_status"] = "not_initialized"
+        elif upgrade_state in {"unsupported", "unverifiable"}:
+            tool["status"] = "degraded"
         return tool
     doctor_probe = inspector.json_probe(
-        [tool["executable"], "doctor", "--json"], neutral_cwd, timeout_seconds
+        [tool["executable"], "doctor", "--json"],
+        neutral_cwd,
+        timeout_seconds,
+        error_json_on_stderr=True,
     )
     normalized, initialized, blocking_count = inspector.normalize_sorage_doctor(
         doctor_probe
@@ -412,7 +415,7 @@ def inspect_global(
                 environment_overrides={"GOTOOLCHAIN": "local"},
             )
         )
-    for name in ("mulgae", "gaori"):
+    for name in ("mulgae", "gaori", "sorage"):
         if name not in raw_tools:
             continue
         raw_tools[name]["global_mcp"] = inspect_global_mcp(
@@ -469,6 +472,9 @@ def inspect_global(
                     entry[key] = raw[key]
             entry["controller"] = raw["controller"]
         if name == "sorage":
+            entry["preflight_probe"] = raw["probes"].get(
+                "preflight", inspector.skipped_probe("not_requested")
+            )
             entry["initialization_status"] = raw.get("initialization_status")
             entry["initialization_probe"] = raw["probes"]["doctor"]
         tools[name] = entry
@@ -571,7 +577,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--sorage-upgrade-preflight-complete",
         action="store_true",
-        help="Confirm that the selected pre-Memo Sorage installation passed backup and restore preflight",
+        help="Confirm that the selected older Sorage installation passed backup and restore preflight",
     )
     parser.add_argument(
         "--codex-home",

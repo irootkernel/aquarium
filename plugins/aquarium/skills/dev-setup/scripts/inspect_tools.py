@@ -11,15 +11,12 @@ import os
 import platform
 import re
 import shutil
-import sqlite3
 import stat
 import subprocess
 import sys
 import time
-from contextlib import closing
 from pathlib import Path
 from typing import Any
-from urllib.parse import quote
 
 try:
     import yaml
@@ -28,7 +25,7 @@ except ModuleNotFoundError as error:
         raise
     yaml = None  # type: ignore[assignment]
 
-SCHEMA_VERSION = "aquarium-dev-setup-inspection.v24"
+SCHEMA_VERSION = "aquarium-dev-setup-inspection.v25"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
@@ -90,7 +87,12 @@ PODWAY_SKILL_FILES = (
     "references/goal.md",
     "references/recovery.md",
 )
-SORAGE_SKILL_FILES = ("SKILL.md",)
+SORAGE_SKILL_FILES = (
+    "SKILL.md",
+    "references/handoffs.md",
+    "references/project-memos.md",
+    "references/channels.md",
+)
 HAEPARI_SKILL_FILES = ("SKILL.md",)
 HAEPARI_CAPABILITIES = (
     "managed-execution/v1",
@@ -111,6 +113,7 @@ SORAGE_DOCTOR_CATALOG = (
     "db.pendingIntents",
     "db.migrations",
     "artifacts.checksums",
+    "content.checksums",
     "bindings.exist",
     "bindings.nested",
     "bindings.ambiguous",
@@ -124,153 +127,85 @@ SORAGE_DOCTOR_CATALOG = (
 )
 
 
-def sorage_upgrade_preflight_state(command_cwd: Path) -> str:
-    """Read the native database schema without opening a writable SQLite handle."""
-    override = os.environ.get("SORAGE_HOME")
-    selected_home = (
-        Path(override) if override and override.strip() else Path.home() / ".sorage"
+SORAGE_PREFLIGHT_CHECKS = (
+    "home.state",
+    "source.snapshot",
+    "config.schema",
+    "db.schema",
+    "db.integrity",
+    "vault.marker",
+    "installation.identity",
+    "upgrade.preparation",
+)
+SORAGE_PREFLIGHT_EXITS = {
+    "fresh": 0,
+    "compatible": 0,
+    "upgrade_required": 78,
+    "recovery_required": 78,
+    "unsupported": 78,
+    "unverifiable": 75,
+}
+
+
+def sorage_preflight(
+    executable: str, cwd: Path, timeout: float
+) -> tuple[dict[str, Any], str]:
+    probe = json_probe(
+        [executable, "preflight", "--json"], cwd, timeout, error_json_on_stderr=True
     )
-    home = (command_cwd / selected_home).absolute()
-    database = home / "state" / "sorage.sqlite3"
-    try:
-        if database.is_symlink():
-            return "unknown"
-        if not database.exists():
-            if home.is_symlink() and not home.exists():
-                return "unknown"
-            if not home.exists():
-                return "fresh"
-            if not home.is_dir():
-                return "unknown"
-            return "fresh" if next(home.iterdir(), None) is None else "missing_database"
-        wal = Path(f"{database}-wal")
-        shm = Path(f"{database}-shm")
-        if not database.is_file() or wal.is_symlink() or shm.is_symlink():
-            return "unknown"
-        if wal.exists() and not shm.exists():
-            return "unknown"
-        mode = "mode=ro" if wal.exists() else "mode=ro&immutable=1"
-        uri = f"file:{quote(str(database), safe='/')}?{mode}"
-        with closing(sqlite3.connect(uri, uri=True)) as connection:
-            row = connection.execute(
-                "SELECT name FROM schema_migrations WHERE version = 7"
-            ).fetchone()
-            if row == ("project-memos-v1",):
-                return "migrated"
-            if row is not None:
-                return "unknown"
-            config_file = home / "config.yaml"
-            if yaml is None:
-                return "unknown"
-            if not config_file.is_file():
-                return "installation_recovery"
-            try:
-                config = yaml.safe_load(config_file.read_text(encoding="utf-8"))
-            except (OSError, UnicodeError, yaml.YAMLError):
-                return "installation_recovery"
-            installation_id = (
-                config.get("installationId") if isinstance(config, dict) else None
-            )
-            if not isinstance(installation_id, str) or not re.fullmatch(
-                r"[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}",
-                installation_id,
-            ):
-                return "installation_recovery"
-            vault = config.get("vault")
-            vault_path = vault.get("path") if isinstance(vault, dict) else None
-            if not isinstance(vault_path, str) or not vault_path:
-                return "installation_recovery"
-            if vault_path == "~/.sorage":
-                vault_directory = home
-            elif vault_path.startswith("~/.sorage/"):
-                vault_directory = home / vault_path.removeprefix("~/.sorage/")
-            elif vault_path == "~":
-                vault_directory = Path.home()
-            elif vault_path.startswith("~/"):
-                vault_directory = Path.home() / vault_path[2:]
-            else:
-                vault_directory = command_cwd / vault_path
-            marker_file = vault_directory / ".sorage-vault.json"
-            try:
-                marker = json.loads(marker_file.read_text(encoding="utf-8"))
-            except (OSError, UnicodeError, json.JSONDecodeError):
-                return "installation_recovery"
-            if (
-                not isinstance(marker, dict)
-                or marker.get("type") != "sorage-vault"
-                or marker.get("installationId") != installation_id
-                or type(marker.get("schemaVersion")) is not int
-                or marker["schemaVersion"] < 1
-                or not isinstance(marker.get("createdAt"), str)
-                or not marker["createdAt"]
-            ):
-                return "installation_recovery"
-            if marker["schemaVersion"] > 1:
-                return "unknown"
-            installed = connection.execute(
-                "SELECT installation_id FROM installation WHERE id = 1"
-            ).fetchone()
-            if installed is not None and installed[0] != installation_id:
-                return "installation_recovery"
-            bindings = connection.execute(
-                "SELECT DISTINCT installation_id FROM project_bindings"
-            ).fetchall()
-            if any(binding[0] != installation_id for binding in bindings):
-                return "installation_recovery"
-            return "pre_memo"
-    except (OSError, RuntimeError, sqlite3.Error):
-        return "unknown"
+    normalized, data = sorage_envelope_data(probe)
+    status = data.get("status") if data else None
+    checks = data.get("checks") if data else None
+    valid = (
+        data is not None
+        and type(data.get("contractVersion")) is int
+        and data["contractVersion"] == 1
+        and isinstance(status, str)
+        and status in SORAGE_PREFLIGHT_EXITS
+        and type(probe.get("exit_code")) is int
+        and probe["exit_code"] == SORAGE_PREFLIGHT_EXITS[status]
+        and not probe.get("timed_out")
+        and isinstance(checks, list)
+        and len(checks) == len(SORAGE_PREFLIGHT_CHECKS)
+        and all(
+            isinstance(row, dict)
+            and row.get("id") == expected
+            and isinstance(row.get("severity"), str)
+            and row["severity"] in {"ok", "warning", "blocking"}
+            and isinstance(row.get("message"), str)
+            and bool(row["message"].strip())
+            for row, expected in zip(checks, SORAGE_PREFLIGHT_CHECKS, strict=False)
+        )
+    )
+    normalized["contract_valid"] = bool(valid)
+    if not valid:
+        return normalized, "unverifiable"
+    normalized["result"] = {
+        "status": status,
+        "counts": {
+            severity: sum(row["severity"] == severity for row in checks)
+            for severity in ("ok", "warning", "blocking")
+        },
+    }
+    return normalized, status
 
 
 def sorage_upgrade_skip_reason(state: str, preflight_complete: bool) -> str | None:
-    if state in {"fresh", "migrated"}:
+    if state == "compatible":
         return None
-    if state == "pre_memo":
+    if state == "fresh":
+        return "initialization_required"
+    if state == "upgrade_required":
         return (
             "upgrade_migration_required"
             if preflight_complete
             else "upgrade_preflight_required"
         )
-    if state in {"missing_database", "installation_recovery"}:
+    if state == "recovery_required":
         return "installation_recovery_required"
+    if state == "unsupported":
+        return "unsupported_storage"
     return "upgrade_state_unverifiable"
-
-
-def sorage_validated_pre_memo_state(state: str, probe: dict[str, Any]) -> str:
-    if state != "pre_memo":
-        return state
-    result = probe.get("result")
-    if (
-        probe.get("ok")
-        and isinstance(result, dict)
-        and result.get("ok") is True
-        and isinstance(result.get("data"), dict)
-        and result["data"].get("valid") is True
-    ):
-        return state
-    error = result.get("error") if isinstance(result, dict) else None
-    if isinstance(error, dict) and error.get("code") in {
-        "CONFIG_INVALID",
-        "NOT_INITIALIZED",
-    }:
-        return "installation_recovery"
-    return "unknown"
-
-
-def sorage_config_validation_probe(
-    executable: str, command_cwd: Path, timeout_seconds: float
-) -> dict[str, Any]:
-    raw = run_command(
-        [executable, "config", "validate", "--json"], command_cwd, timeout_seconds
-    )
-    channel = raw["stdout"] if raw["ok"] else raw["stderr"]
-    if raw["exit_code"] is None or raw["timed_out"]:
-        return {"ok": False}
-    try:
-        result = strict_json_loads(channel)
-    except (json.JSONDecodeError, ValueError):
-        return {"ok": False}
-    return {"ok": raw["ok"], "result": result}
 
 
 HUMANIZER_SKILL_FILES = (
@@ -606,17 +541,19 @@ def json_probe(
     repository: Path,
     timeout_seconds: float,
     environment_overrides: dict[str, str] | None = None,
+    *,
+    error_json_on_stderr: bool = False,
 ) -> dict[str, Any]:
-    if environment_overrides is None:
-        return parse_json_probe(run_command(arguments, repository, timeout_seconds))
-    return parse_json_probe(
-        run_command(
-            arguments,
-            repository,
-            timeout_seconds,
-            environment_overrides,
-        )
+    raw = (
+        run_command(arguments, repository, timeout_seconds)
+        if environment_overrides is None
+        else run_command(arguments, repository, timeout_seconds, environment_overrides)
     )
+    # Sorage emits failure envelopes on stderr; completed preflight reports
+    # remain on stdout even when their status has a nonzero exit code.
+    if error_json_on_stderr and not raw["ok"] and not raw["stdout"].strip():
+        raw = {**raw, "stdout": raw["stderr"]}
+    return parse_json_probe(raw)
 
 
 def version_from_probe(probe: dict[str, Any]) -> str | None:
@@ -1115,7 +1052,7 @@ def supported_sorage_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(rf"v?0\.1\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 2)
+    return bool(match and int(match.group(1)) >= 3)
 
 
 def supported_haepari_version(version: str | None) -> bool:
@@ -3879,6 +3816,9 @@ def inspect_sorage(
         if agent_skill is not None
         else inspect_agent_skill("use-sorage", SORAGE_SKILL_FILES)
     )
+    tool["mcp_registration"] = inspect_sorage_mcp(
+        repository, tool["executable"], timeout_seconds
+    )
     configuration = configuration_entry(
         repository,
         ".sorage/",
@@ -3908,7 +3848,10 @@ def inspect_sorage(
         return tool
 
     version_probe = json_probe(
-        [tool["executable"], "version", "--json"], repository, timeout_seconds
+        [tool["executable"], "version", "--json"],
+        repository,
+        timeout_seconds,
+        error_json_on_stderr=True,
     )
     tool["probes"]["version"] = normalize_sorage_version(version_probe)
     version_result = version_probe.get("result")
@@ -3939,14 +3882,10 @@ def inspect_sorage(
         tool["readiness_status"] = "not_inspected"
         return tool
 
-    upgrade_state = sorage_upgrade_preflight_state(repository)
-    if upgrade_state == "pre_memo":
-        upgrade_state = sorage_validated_pre_memo_state(
-            upgrade_state,
-            sorage_config_validation_probe(
-                tool["executable"], repository, timeout_seconds
-            ),
-        )
+    preflight_probe, upgrade_state = sorage_preflight(
+        tool["executable"], repository, timeout_seconds
+    )
+    tool["probes"]["preflight"] = preflight_probe
     reason = sorage_upgrade_skip_reason(upgrade_state, upgrade_preflight_complete)
     if reason is not None:
         tool["probes"]["doctor"] = skipped_probe(reason)
@@ -3954,10 +3893,19 @@ def inspect_sorage(
         tool["initialization_status"] = "not_inspected"
         tool["project_registration"]["status"] = "not_inspected"
         tool["readiness_status"] = "not_inspected"
+        if upgrade_state == "fresh":
+            tool["initialization_status"] = "not_initialized"
+            tool["readiness_status"] = "initialization_required"
+            tool["status"] = "installed"
+        elif upgrade_state in {"unsupported", "unverifiable"}:
+            tool["status"] = "degraded"
         return tool
 
     doctor_probe = json_probe(
-        [tool["executable"], "doctor", "--json"], repository, timeout_seconds
+        [tool["executable"], "doctor", "--json"],
+        repository,
+        timeout_seconds,
+        error_json_on_stderr=True,
     )
     normalized_doctor, initialized, blocking_count = normalize_sorage_doctor(
         doctor_probe
@@ -3997,6 +3945,7 @@ def inspect_sorage(
         ],
         repository,
         timeout_seconds,
+        error_json_on_stderr=True,
     )
     normalized_resolution, resolution = normalize_sorage_project_resolution(
         resolution_probe
@@ -4097,6 +4046,58 @@ def classify_gaori_mcp_scope(
     return registration
 
 
+def classify_sorage_mcp_scope(
+    probe: dict[str, Any], executable: str | None, repository: Path, scope: str
+) -> dict[str, Any]:
+    if not probe["ok"]:
+        return failed_mcp_scope(probe)
+    result = probe.get("result")
+    transport = result.get("transport") if isinstance(result, dict) else None
+    if not isinstance(transport, dict):
+        return {"status": "degraded", "reason": "invalid_registration_result"}
+    command = resolve_mcp_command(transport.get("command"))
+    env = transport.get("env", {})
+    if env is None:
+        env = {}
+    if not isinstance(env, dict):
+        return {"status": "degraded", "reason": "invalid_registration_result"}
+    # A custom CLI home needs an explicit matching server environment.
+    # Default registration remains configuration evidence, not live attachment proof.
+    try:
+        expected_home = Path(
+            os.environ.get("SORAGE_HOME") or Path.home() / ".sorage"
+        ).expanduser()
+        raw_home = env.get("SORAGE_HOME")
+        home_matches = (
+            (repository / expected_home).resolve()
+            == (Path.home() / ".sorage").resolve()
+            if raw_home is None
+            else (
+                isinstance(raw_home, str)
+                and Path(raw_home).is_absolute()
+                and Path(raw_home).resolve() == (repository / expected_home).resolve()
+            )
+        )
+    except (OSError, RuntimeError, ValueError):
+        home_matches = False
+    timeout = result.get("tool_timeout_sec")
+    valid = (
+        result.get("enabled") is True
+        and transport.get("type") == "stdio"
+        and transport.get("args") == ["mcp"]
+        and command is not None
+        and executable is not None
+        and command == Path(executable).resolve()
+        and home_matches is not False
+        and (timeout is None or (finite_number(timeout) and timeout > 0))
+    )
+    return {
+        "status": "configured" if valid else "degraded",
+        "installation_matches_selected": home_matches,
+        **({} if valid else {"reason": "registration_mismatch"}),
+    }
+
+
 def inspect_global_mcp_scope(
     name: str,
     executable: str | None,
@@ -4109,6 +4110,7 @@ def inspect_global_mcp_scope(
     classifiers = {
         "mulgae": classify_mulgae_mcp_scope,
         "gaori": classify_gaori_mcp_scope,
+        "sorage": classify_sorage_mcp_scope,
     }
     classifier = classifiers.get(name)
     if classifier is None:
@@ -4119,8 +4121,12 @@ def inspect_global_mcp_scope(
     return classifier(probe, executable, root, "global")
 
 
-def inspect_gaori_mcp(
-    repository: Path, gaori_executable: str | None, timeout_seconds: float
+def inspect_scoped_mcp(
+    name: str,
+    classifier: Any,
+    repository: Path,
+    executable: str | None,
+    timeout_seconds: float,
 ) -> dict[str, Any]:
     project_config_present, project_config_symlinked = safe_managed_file_state(
         repository / ".codex" / "config.toml", repository
@@ -4152,11 +4158,9 @@ def inspect_gaori_mcp(
 
     neutral_cwd = Path(repository.anchor)
     global_probe = mcp_registration_probe(
-        codex_executable, "gaori", neutral_cwd, timeout_seconds
+        codex_executable, name, neutral_cwd, timeout_seconds
     )
-    global_registration = classify_gaori_mcp_scope(
-        global_probe, gaori_executable, repository, "global"
-    )
+    global_registration = classifier(global_probe, executable, repository, "global")
     if global_probe["ok"]:
         global_registration["_result"] = global_probe.get("result")
 
@@ -4170,14 +4174,12 @@ def inspect_gaori_mcp(
     else:
         local_probe = mcp_registration_probe(
             codex_executable,
-            "gaori",
+            name,
             neutral_cwd,
             timeout_seconds,
             {"CODEX_HOME": str(repository / ".codex")},
         )
-        local_registration = classify_gaori_mcp_scope(
-            local_probe, gaori_executable, repository, "local"
-        )
+        local_registration = classifier(local_probe, executable, repository, "local")
         if local_probe["ok"]:
             local_registration["_result"] = local_probe.get("result")
     local_registration.update(
@@ -4188,7 +4190,7 @@ def inspect_gaori_mcp(
     )
 
     effective_probe = mcp_registration_probe(
-        codex_executable, "gaori", repository, timeout_seconds
+        codex_executable, name, repository, timeout_seconds
     )
     status, effective_scope, reason = effective_mcp_registration(
         global_registration,
@@ -4221,6 +4223,22 @@ def inspect_gaori_mcp(
     if reason:
         registration["reason"] = reason
     return registration
+
+
+def inspect_gaori_mcp(
+    repository: Path, executable: str | None, timeout_seconds: float
+) -> dict[str, Any]:
+    return inspect_scoped_mcp(
+        "gaori", classify_gaori_mcp_scope, repository, executable, timeout_seconds
+    )
+
+
+def inspect_sorage_mcp(
+    repository: Path, executable: str | None, timeout_seconds: float
+) -> dict[str, Any]:
+    return inspect_scoped_mcp(
+        "sorage", classify_sorage_mcp_scope, repository, executable, timeout_seconds
+    )
 
 
 def inspect_gaori(
@@ -5556,6 +5574,7 @@ def inspect(
     require_mulgae_mcp: bool = False,
     expected_mulgae_mcp: str | None = None,
     expected_gaori_mcp: str | None = None,
+    expected_sorage_mcp: str | None = None,
     include_haepari: bool = False,
     haepari_resource: str | None = None,
 ) -> dict[str, Any]:
@@ -5626,6 +5645,7 @@ def inspect(
         for name, scope in (
             ("mulgae", expected_mulgae_mcp),
             ("gaori", expected_gaori_mcp),
+            ("sorage", expected_sorage_mcp),
         )
         if scope is not None
     }
@@ -5657,7 +5677,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--sorage-upgrade-preflight-complete",
         action="store_true",
-        help="Confirm that the selected pre-Memo Sorage installation passed backup and restore preflight",
+        help="Confirm that the selected older Sorage installation passed backup and restore preflight",
     )
     parser.add_argument(
         "--include-podway",
@@ -5680,6 +5700,7 @@ def parse_arguments() -> argparse.Namespace:
     )
     parser.add_argument("--expected-mulgae-mcp", choices=("global", "local", "none"))
     parser.add_argument("--expected-gaori-mcp", choices=("global", "local", "none"))
+    parser.add_argument("--expected-sorage-mcp", choices=("global", "local", "none"))
     selected = parser.add_mutually_exclusive_group()
     selected.add_argument(
         "--selected-podway-source",
@@ -5808,6 +5829,7 @@ def main() -> int:
                 require_mulgae_mcp=arguments.require_mulgae_mcp,
                 expected_mulgae_mcp=arguments.expected_mulgae_mcp,
                 expected_gaori_mcp=arguments.expected_gaori_mcp,
+                expected_sorage_mcp=arguments.expected_sorage_mcp,
                 include_haepari=arguments.include_haepari,
                 haepari_resource=arguments.haepari_resource,
             )

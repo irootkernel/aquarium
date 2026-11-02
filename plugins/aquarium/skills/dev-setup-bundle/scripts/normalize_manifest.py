@@ -36,7 +36,7 @@ TOOLS = (
     "humanizer",
     "im-not-ai",
 )
-MCP_TOOLS = ("mulgae", "gaori")
+MCP_TOOLS = ("mulgae", "gaori", "sorage")
 AGENTS_GUIDANCE = ("skip", "propose")
 TOP_LEVEL_KEYS = ("schema", "defaults", "targets")
 DEFAULT_KEYS = ("tools", "global_mcp", "mulgae_artist", "agents_guidance")

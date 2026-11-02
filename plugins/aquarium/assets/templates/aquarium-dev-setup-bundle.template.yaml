@@ -2,7 +2,7 @@ schema: aquarium.dev-setup-bundle/v2
 
 defaults:
   tools: [mulgae, gaori, sorage, podway, dolgorae]
-  global_mcp: [mulgae, gaori]
+  global_mcp: [mulgae, gaori, sorage]
   mulgae_artist: false
   agents_guidance: propose
 

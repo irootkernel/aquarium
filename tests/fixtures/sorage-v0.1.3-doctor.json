@@ -1,0 +1,112 @@
+{
+  "ok": true,
+  "data": {
+    "checks": [
+      {
+        "id": "home.permissions",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "config.schema",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "config.lock",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "vault.marker",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "vault.gitattributes",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "vault.writable",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "db.integrity",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "db.pendingIntents",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "db.migrations",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "artifacts.checksums",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "content.checksums",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "bindings.exist",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "bindings.nested",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "bindings.ambiguous",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "daemon.reachable",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "daemon.port",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "token.permissions",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "service.installed",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "backup.schedule",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "git.state",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      },
+      {
+        "id": "platform.tcc",
+        "severity": "ok",
+        "message": "Synthetic healthy check"
+      }
+    ]
+  }
+}

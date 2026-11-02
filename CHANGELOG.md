@@ -13,6 +13,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Require Sorage v0.1.3 and its complete matching skill, use native zero-write preflight and the verified one-way storage upgrade, and support explicit Handoff/Memo/Channel operations with optional global or repository-local MCP and bundle configuration; existing users must update the executable, skill and storage before dependent operations.
+
 - Support explicit CLI/model profiles for `epic-squad` roles through Herdr, including same-CLI and mixed native teams, with original assessment settings preserved through recovery and commit handoffs.
 - Require cleanup ownership and handoffs for retained disposable build/test artifacts across Task, Epic, Squad, validation, diagnosis, release checks and test setup; unresolved cleanup blocks the next Task and successful workflow completion while preserving native evidence and shared caches.
 - Require Podway v0.2.15 or newer and its release-pinned skill, adopt contract generation 2 and observation v6, and require an explicitly approved fresh-runtime reset for incompatible v0.2.14 workspaces.
