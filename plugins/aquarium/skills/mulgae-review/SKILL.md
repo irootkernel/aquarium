@@ -39,7 +39,7 @@ A standalone invocation has no embedded goal revision, review ordinal, review mo
 
 Assign every applicable criterion to at least one responsibility in the already selected role arrangement. Do not add roles or provider calls merely to fill a gap. If the authorized arrangement leaves a criterion uncovered, keep it `unverified` in the result.
 
-Give `$use-mulgae` the exact target, roles, and identical Review Brief for preflight and execution. Follow its asynchronous start-and-await flow, retention advisory, and exact recovery rules. Do not duplicate or override provider selection, budgets, source access, retries, cancellation, extraction, or publication. Do not replace a pending or uncertain invocation, and do not start another root merely to obtain a cleaner result.
+For `completion`, prepare and consume native requirements under the shared Mulgae contract, including the narrow caller-owned input-file exception. Give `$use-mulgae` the exact target, roles, requirements path when applicable, and identical Review Brief for preflight and execution. Follow its asynchronous start-and-await flow, retention advisory, and exact recovery rules. Do not duplicate or override provider selection, budgets, source access, retries, cancellation, extraction, or publication. Do not replace a pending or uncertain invocation, and do not start another root merely to obtain a cleaner result.
 
 Operational completion requires one authoritative committed current-source root with complete selected-role coverage and a successful findings query. A transport success, provider success, passing CI, `reports_only`, or zero findings cannot substitute for those facts or for the criterion assessment.
 
@@ -64,4 +64,4 @@ Report these sections distinctly:
 
 Apply the intent contract's completion-support rule directly. When it does not support completion, report the exact unmet or unverified basis without starting implementation.
 
-This workflow is report-only. Do not run tests or formatters; edit, create, move, or delete repository files; remediate findings; alter the index; commit; change roadmap lifecycle; start a Task or Epic handler; invoke Epic validation; install tools; change providers; publish; or grant another review round. Reviewer-owned private runtime artifacts remain governed by Mulgae and the evidence-residency contract.
+This workflow is report-only. Do not run tests or formatters; edit, create, move, or delete repository files except its exact caller-owned requirements input under the shared contract; remediate findings; alter the index; commit; change roadmap lifecycle; start a Task or Epic handler; invoke Epic validation; install tools; change providers; publish; or grant another review round. Reviewer-owned private runtime artifacts remain governed by Mulgae and the evidence-residency contract.

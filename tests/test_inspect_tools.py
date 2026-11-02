@@ -279,9 +279,9 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         malformed_sanho: bool = False,
         sanho_version: str = "v0.2.9",
         sanho_doctor_warnings: int = 0,
-        mulgae_version: str = "v0.1.25",
-        mulgae_output_schema: str = "mulgae-command-result.v19",
-        mulgae_doctor_schema: str = "mulgae-doctor-result.v5",
+        mulgae_version: str = "v0.1.26",
+        mulgae_output_schema: str = "mulgae-command-result.v23",
+        mulgae_doctor_schema: str = "mulgae-doctor-result.v7",
         mulgae_config_version: int = 5,
         mulgae_provider_families: tuple[str, ...] = (
             "zcode",
@@ -426,7 +426,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                     not_applicable_cli = compatible("not_applicable", "not_evaluated", "not_observed", "")
                     not_applicable_application = compatible("not_applicable", "not_evaluated", "not_observed", "", minimum="", latest="")
                     application_compatible = compatible("verified", "eligible", "verified", "zcode_application_version_supported", "3.12.3", "3.12.3", "3.12.3")
-                    application_required = {inspect_tools.numbered_schema_at_least(mulgae_doctor_schema, "mulgae-doctor-result.v", 5)!r}
+                    application_required = {inspect_tools.numbered_schema_at_least(mulgae_doctor_schema, "mulgae-doctor-result.v", 7)!r}
                     application_case = {mulgae_application_compatibility_case!r}
 
                     def add_application_compatibility(row, configured):
@@ -3243,7 +3243,7 @@ else:
             ],
             1,
         )
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.25")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.26")
         self.assertTrue(tools["mulgae"]["version_supported"])
         expected_mulgae_status = (
             "configured"
@@ -6520,7 +6520,7 @@ else:
         self.assertTrue(tools["gaori"]["probes"]["version"]["timed_out"])
         self.assertIsNone(tools["gaori"]["version"])
         self.assertEqual(tools["gaori"]["status"], "degraded")
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.25")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.26")
         self.assertFalse(tools["mulgae"]["probes"]["doctor"]["ok"])
         self.assertEqual(tools["mulgae"]["probes"]["doctor"]["exit_code"], 4)
         self.assertEqual(
@@ -6640,15 +6640,16 @@ else:
             ("v0.1.24", False, "degraded"),
             ("0.1.24", False, "degraded"),
             ("v0.1.24+build.1", False, "degraded"),
-            ("v0.1.25", True, "installed"),
-            ("0.1.25", True, "installed"),
-            ("v0.1.25+build.1", True, "installed"),
-            ("v0.1.25+darwin-arm64", True, "installed"),
+            ("v0.1.25", False, "degraded"),
+            ("v0.1.26", True, "installed"),
+            ("0.1.26", True, "installed"),
+            ("v0.1.26+build.1", True, "installed"),
+            ("v0.1.26+darwin-arm64", True, "installed"),
             ("0.1.99", True, "installed"),
             ("v0.2.0", True, "installed"),
             ("v1.0.0", True, "installed"),
             ("v0.1.23-rc.1", False, "degraded"),
-            ("v0.1.25-rc.1", False, "degraded"),
+            ("v0.1.26-rc.1", False, "degraded"),
             ("v0.2.0-rc.1", False, "degraded"),
             ("v1.0.0-alpha.1", False, "degraded"),
             ("v0.1.23+", False, "degraded"),
@@ -6721,6 +6722,18 @@ else:
         self.assertTrue(mulgae["version_supported"])
         self.assertEqual(mulgae["probes"]["doctor"]["doctor_capability"], "supported")
         self.assertEqual(mulgae["status"], "configured")
+
+    def test_mulgae_v0126_five_family_inventory(self) -> None:
+        self.install_fake_tools(
+            mulgae_provider_families=("zcode", "grok", "codex", "cursor", "agy")
+        )
+        self.install_mulgae_config()
+        mulgae = json.loads(self.inspect().stdout)["tools"]["mulgae"]
+        self.assertTrue(mulgae["version_supported"])
+        self.assertEqual(
+            [row["family"] for row in mulgae["provider_inventory"]],
+            ["zcode", "grok", "codex", "cursor", "agy"],
+        )
 
     def test_mulgae_go_installation_floor(self) -> None:
         for version, supported in (
@@ -6911,7 +6924,7 @@ else:
         self.assertNotIn("live_review", health)
         self.assertNotIn("review_qualified", health)
 
-    def test_mulgae_v0125_contract_and_provider_inventory_are_supported(self) -> None:
+    def test_mulgae_v0126_contract_and_provider_inventory_are_supported(self) -> None:
         self.install_fake_tools()
         self.install_mulgae_config(version=5)
         with (
@@ -6925,11 +6938,11 @@ else:
         self.assertEqual(mulgae["status"], "configured")
         self.assertEqual(
             mulgae["probes"]["doctor"]["output_schema"],
-            "mulgae-command-result.v19",
+            "mulgae-command-result.v23",
         )
         self.assertEqual(
             mulgae["probes"]["doctor"]["result_schema"],
-            "mulgae-doctor-result.v5",
+            "mulgae-doctor-result.v7",
         )
         self.assertEqual(
             [row["family"] for row in mulgae["provider_inventory"]],
@@ -7035,7 +7048,7 @@ else:
         self.assertEqual(raw.returncode, 0)
         envelope = json.loads(raw.stdout)
         config = envelope["result"]["doctor"]["config"]
-        contract = inspect_tools.mulgae_native_contract("v0.1.25")
+        contract = inspect_tools.mulgae_native_contract("v0.1.26")
 
         config["reason_codes"] = ["future_config_reason"]
         normalized = inspect_tools.normalize_mulgae_doctor(
@@ -7240,8 +7253,10 @@ else:
             "mulgae-command-result.v12.0",
             "mulgae-command-result.v17",
             "mulgae-command-result.v18",
+            "mulgae-command-result.v19",
+            "mulgae-command-result.v22",
             "mulgae-command-result.v019",
-            "mulgae-command-result.v19-rc",
+            "mulgae-command-result.v23-rc",
         ):
             with self.subTest(schema=schema):
                 self.install_fake_tools(mulgae_output_schema=schema)
@@ -7264,50 +7279,50 @@ else:
         cases = (
             (
                 "v0.1.23",
-                "mulgae-command-result.v19",
-                "mulgae-doctor-result.v5",
+                "mulgae-command-result.v23",
+                "mulgae-doctor-result.v7",
                 "unsupported_native_version",
                 "degraded",
             ),
             (
-                "v0.1.25",
+                "v0.1.26",
                 "mulgae-command-result.v17",
-                "mulgae-doctor-result.v5",
+                "mulgae-doctor-result.v7",
                 "unsupported_output_schema",
                 "degraded",
             ),
             (
-                "v0.1.25",
-                "mulgae-command-result.v19",
+                "v0.1.26",
+                "mulgae-command-result.v23",
                 "mulgae-doctor-result.v4",
                 None,
                 "degraded",
             ),
             (
-                "v0.1.25",
-                "mulgae-command-result.v19",
+                "v0.1.26",
+                "mulgae-command-result.v23",
                 "mulgae-doctor-result.v05",
                 None,
                 "degraded",
             ),
             (
-                "v0.1.25",
-                "mulgae-command-result.v19",
-                "mulgae-doctor-result.v5.0",
+                "v0.1.26",
+                "mulgae-command-result.v23",
+                "mulgae-doctor-result.v7.0",
                 None,
                 "degraded",
             ),
             (
-                "v0.1.25",
-                "mulgae-command-result.v19",
-                "mulgae-doctor-result.v5",
+                "v0.1.26",
+                "mulgae-command-result.v23",
+                "mulgae-doctor-result.v7",
                 None,
                 "configured",
             ),
             (
                 "v0.1.26",
-                "mulgae-command-result.v20",
-                "mulgae-doctor-result.v6",
+                "mulgae-command-result.v24",
+                "mulgae-doctor-result.v8",
                 None,
                 "configured",
             ),
@@ -7362,7 +7377,7 @@ else:
         self,
     ) -> None:
         self.install_fake_tools(
-            mulgae_version="v0.1.25",
+            mulgae_version="v0.1.26",
             mulgae_output_schema="mulgae-command-result.v11",
             mulgae_doctor_schema="mulgae-doctor-result.v4",
         )
@@ -7380,9 +7395,9 @@ else:
 
     def test_mulgae_future_provider_family_is_preserved(self) -> None:
         self.install_fake_tools(
-            mulgae_version="v0.1.25",
-            mulgae_output_schema="mulgae-command-result.v19",
-            mulgae_doctor_schema="mulgae-doctor-result.v6",
+            mulgae_version="v0.1.26",
+            mulgae_output_schema="mulgae-command-result.v23",
+            mulgae_doctor_schema="mulgae-doctor-result.v8",
             mulgae_provider_families=("zcode", "grok", "codex", "future_provider"),
         )
         self.install_mulgae_config()
@@ -7423,7 +7438,7 @@ else:
                 "timed_out": False,
                 "result": envelope,
             },
-            inspect_tools.mulgae_native_contract("v0.1.25"),
+            inspect_tools.mulgae_native_contract("v0.1.26"),
         )
         self.assertEqual(normalized["doctor_capability"], "supported")
         safe_doctor = normalized["result"]["doctor"]
@@ -7446,7 +7461,7 @@ else:
                 "timed_out": False,
                 "result": mismatched,
             },
-            inspect_tools.mulgae_native_contract("v0.1.25"),
+            inspect_tools.mulgae_native_contract("v0.1.26"),
         )
         self.assertEqual(normalized["doctor_capability"], "invalid")
 
@@ -7976,7 +7991,7 @@ else:
                 "exit_code": 0,
                 "timed_out": False,
                 "result": {
-                    "schema_version": "mulgae-command-result.v19",
+                    "schema_version": "mulgae-command-result.v23",
                     "result": {
                         "kind": secret,
                         "readiness": secret,
@@ -7986,13 +8001,13 @@ else:
                             "provider_session_fingerprint": secret,
                         },
                         "doctor": {
-                            "schema_version": "mulgae-doctor-result.v5",
+                            "schema_version": "mulgae-doctor-result.v7",
                             "config": {"status": secret, "uri": secret},
                         },
                     },
                 },
             },
-            inspect_tools.mulgae_native_contract("v0.1.25"),
+            inspect_tools.mulgae_native_contract("v0.1.26"),
         )
         podway, _ = inspect_tools.normalize_podway_envelope(
             {
@@ -8817,14 +8832,14 @@ else:
                 "exit_code": 0,
                 "timed_out": False,
                 "result": {
-                    "schema_version": "mulgae-command-result.v19",
+                    "schema_version": "mulgae-command-result.v23",
                     "result": {
                         "kind": "diagnosed",
-                        "doctor": {"schema_version": "mulgae-doctor-result.v5"},
+                        "doctor": {"schema_version": "mulgae-doctor-result.v7"},
                     },
                 },
             },
-            inspect_tools.mulgae_native_contract("v0.1.25"),
+            inspect_tools.mulgae_native_contract("v0.1.26"),
         )
         self.assertEqual(normalized["doctor_capability"], "invalid")
         self.assertNotIn("doctor", normalized["result"])

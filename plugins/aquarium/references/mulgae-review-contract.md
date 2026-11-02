@@ -64,7 +64,7 @@ or advance its machine contracts:
 
 | Mulgae release | Command envelope | Doctor | Review preflight | Configuration |
 | --- | --- | --- | --- | --- |
-| Stable `>=v0.1.25` | `mulgae-command-result.v19` or later | `mulgae-doctor-result.v5` or later | `mulgae-review-preflight.v8` or later | Native supported configuration, Config v5 at the minimum |
+| Stable `>=v0.1.26` | `mulgae-command-result.v23` or later | `mulgae-doctor-result.v7` or later | `mulgae-review-preflight.v11` or later | Native supported configuration, Config v5 at the minimum |
 
 Reject prereleases and releases below the minimum. SemVer build metadata does
 not make an otherwise stable release ineligible. Do not impose an upper release
@@ -75,7 +75,7 @@ fields on every reported provider row. Provider membership and order remain
 native Doctor authority. A breaking removal of a required field or another
 incompatible shape remains an unsupported contract, not a reason to reject a
 release number by itself.
-Doctor v5 still exposes the field named
+Doctor v7 still exposes the field named
 `config_v3`; consume that native field name without treating it as the project
 configuration version.
 
@@ -119,6 +119,76 @@ uncertain invocation, reset an ordinal after context restoration, or run a broad
 self-audit under another name to make historical Low findings disappear. A
 required first review and a confirmation owed by a correction ineligible for local
 settlement remain independent reasons to dispatch.
+
+## Automatic completion requirements
+
+For every new `completion` review, prepare native requirements from the original
+work unit's criteria and current checkpoint. Task, Epic, validation and standalone completion callers use the same contract. Ordinary `change` review keeps its objective-only
+behavior unless requirements were explicitly supplied. The Review Brief still
+carries constraints, authority, verification provenance and previous responses.
+
+Assign each due criterion one primary owner from the selected enabled roles using
+the existing responsibility map. If a due criterion has no selected owner,
+report it as `unverified` and resolve that input gap before dispatch; do not
+invent ownership, omit the criterion or add a role without authority.
+Retain supporting roles and legitimate
+`not-applicable` dispositions separately. Preserve original IDs and sources;
+use invocation-local IDs with an explicit source mapping when native ID syntax
+requires it. Remediation confirmation submits only invalidated criteria and
+retains applicable earlier assessments under the shared intent contract.
+
+Use [the input helper](../skills/mulgae-review/scripts/prepare_requirements.py)
+with `prepare --repository <canonical-root>`. Stdin is an object with `roles`
+and `criteria`; every criterion has `id`, `source`, `text`, `acceptance_criteria`
+and `owner_role`. The caller resolves authority and selected enabled roles first;
+the helper does not discover requirements or grant permissions. It returns the
+project-relative path, native input digest, original mapping and cleanup identity.
+Retain that output in the existing private runtime handoff under the repository's
+temporary-file policy. Existing explicit native input may be reused only after
+reconciling its complete criteria and owners with the original authority; never
+overwrite a supplied file or delete it through this helper.
+
+The caller may create exactly one untracked root-level
+`aquarium-review-input-<unique>.json` as dispatch input, even for standalone
+report-only completion. This narrow exception covers preparation and cleanup,
+not source edits. Observe stronger local file policies and obtain a specific
+exception where needed. Aquarium's own repository has Master's approval for
+this input exception to its `/tmp` rule. Never stage it or change ignore rules;
+workspace selection includes it and the Brief must disclose that fact. Create it
+before preflight and keep its bytes and workspace/index stable through terminal
+completion. After terminal completion and supported result consumption, pass the original helper output
+to `cleanup --repository <same-root>` on stdin. Cleanup refuses replaced or
+changed files. Pending or uncertain execution retains its input for recovery.
+An authoritatively not-started failure may clean up its owned input. Cleanup
+failure remains an explicit owned residue with its exact recovery path.
+
+Use CLI `--requirements PATH` or MCP `requirements_path` with identical path,
+roles, target, objective and independent binding in preflight and execution.
+Require preflight v11 and `requirements_assessment: v1`; non-Git requirements
+execution is unsupported. Preserve native admission limits (100 items, 32 criteria
+per item), without truncation, hidden splitting or extra provider calls. Match
+preflight's `input_sha256` to the prepared bytes and completed receipt-bound
+requirements metadata; an input change leaves the assessment unqualified.
+
+Read requirements independently of findings using the release-matched skill's
+requirements pages and content reads. Follow both pagination streams and every
+content chunk under the same publication receipt. Retain all selected IDs,
+owners, original verdicts, reasons, origins, rationale, evidence and limitations.
+A missing item, derived placeholder, historical unavailable support or
+`unverified/no_change_target` cannot establish fulfillment, including with zero
+findings or operational success. Missing/corrupt support fails consumption.
+
+Map native `partially_met` to Aquarium `unmet`, retaining the supported and
+missing parts. Preserve `met`, `unmet` and `unverified`; derive `not-applicable`
+only from approved authority. Read original role reports as well and reconcile
+conflicts under the shared intent contract. Coordinator conclusions retain their
+provenance and cannot replace missing provider responsibility coverage.
+Check native assessment, coverage, findings, CI, extraction and publication
+independently. Do not enable extraction, change routes or retry reviews to
+obtain a structured answer. Preserve extraction-disabled and exhausted-allowance
+limitations. Existing promoted-evidence schemas remain unchanged; exact input
+mapping, digest, publication receipt and detailed assessments stay in native
+runtime and existing orchestration handoffs.
 
 ## Reconcile Incomplete Reviews
 

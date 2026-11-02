@@ -524,7 +524,7 @@ Run the applicable Task, Goal and Validation cases on Subagent Review, Herdr and
 
 ## Mulgae v0.1.25 adoption
 
-The inspector tests exercise the stable v0.1.25 floor, command-result v19 and Doctor v5 admission, Config v5 fixture diagnostics, redaction and private-file safeguards. Promoted-evidence v2 schema tests reject native-impossible scope/operand/Git-base combinations, missing bindings, capture fields, runtime identities and unsafe package-relative names. The stdin digest helper tests use official v0.1.25 example digests and an independently calculated Go encoding case with HTML and Unicode separators, including a non-UTF-8 stdin text configuration. These checks do not establish actual native publication, source consistency or staged payload integrity. Procedure tests exercise explicit fresh-root admission after terminal settlement, rejection of active, completed or wrong-route states for that admission, truthful completed-checkpoint recording, pending-ordinal continuity and retained historical snapshots.
+The original v0.1.25 inspector qualification covered its stable floor, command-result v19 and Doctor v5 admission, Config v5 fixture diagnostics, redaction and private-file safeguards. Current setup floors are defined in the v0.1.26 section below. Promoted-evidence v2 schema tests reject native-impossible scope/operand/Git-base combinations, missing bindings, capture fields, runtime identities and unsafe package-relative names. The stdin digest helper tests use official v0.1.25 example digests and an independently calculated Go encoding case with HTML and Unicode separators, including a non-UTF-8 stdin text configuration. These checks do not establish actual native publication, source consistency or staged payload integrity. Procedure tests exercise explicit fresh-root admission after terminal settlement, rejection of active, completed or wrong-route states for that admission, truthful completed-checkpoint recording, pending-ordinal continuity and retained historical snapshots.
 
 Installed qualification must cover the exact Aquarium candidate in UTM over the host's released baseline: Config v4-to-v5 migration and restoration, release-matched skill discovery, all five native targets, independent project binding errors, expected empty capture/guard capabilities, terminal partial failures and explicit new-review authority, historical reads and v2 hardening/commit handoffs. These skill and upgrade outcomes remain unverified until actual results, including Master's functional assessment, are available. No host candidate installation is permitted by the local test gate.
 
@@ -842,3 +842,17 @@ agent-executed installed functional verification and actual Epic acceptance
 remain separate. The [installed verification status](tests/vm/README.md#task-151-candidate-observations)
 identifies current assurance and revalidation limits; detailed native evidence
 retains its producer-owned residency.
+
+## Mulgae v0.1.26 adoption
+
+Setup regressions cover the stable v0.1.26 floor, command-result v23, Doctor v7,
+five-family inventory, later compatible contracts and private diagnostic filtering.
+The requirements helper tests exercise native ID mapping, selected owners, item
+limits, Unicode input, exclusive creation and refusal to remove changed or replaced
+files. These tests verify executable behavior, not skill decisions or provider truth.
+
+The [managed Mulgae scenario](tests/vm/recipes/scenarios/mulgae-adoption.md)
+defines exact-candidate installation, native discovery, CLI/MCP requirements reads,
+completion aggregation and consumer restoration. Installed verification is pending;
+source checks cannot report those cases or Master's functional assessment as passed.
+Historical v0.1.25 observations above retain their original applicability.

@@ -66,6 +66,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-033 | Qualify the combined environment and retire the development channel | Planned |
 | EPIC-034 | Adopt Podway v0.2.15 and contract generation 2 | Completed |
 | EPIC-035 | Adopt Sorage v0.1.3 | In Progress |
+| EPIC-036 | Adopt Mulgae v0.1.26 | In Progress |
 
 ## EPIC-000: Independent Tasks
 
@@ -1067,3 +1068,21 @@ dedicated UTM VM before support acceptance; source and unit checks are insuffici
 | TASK-182 | Integrate Sorage MCP and bundle scope | Support global/local/effective inspection and bundle v2 selection without borrowing another tool's command grammar. | In Progress | TASK-181 |
 | TASK-183 | Align integration documentation and regression scenarios | Update public and canonical contracts, executable checks and the managed VM scenario. | In Progress | TASK-182 |
 | TASK-184 | Qualify installed adoption and promote outcomes | Verify the exact committed candidate in UTM, complete independent review and actual acceptance, then promote outcomes and settle the dossier. | Planned | TASK-183 |
+
+## EPIC-036: Adopt Mulgae v0.1.26
+
+**Status:** `In Progress`
+
+Raise the stable floor to v0.1.26 and automatically assess original completion
+criteria through native requirements. This is breaking: users need the matching
+CLI and complete skill. Config v5 and existing provider policy remain intact.
+Installed qualification and Master's functional verification remain required.
+
+**Detailed SOT:** [Mulgae adoption dossier](../todo/TODO-MULGAE-0126.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-185 | Align released Mulgae contracts | Adopt v0.1.26, command v23, Doctor v7 and preflight v11 with Cursor/AGY support. | In Review | External Mulgae v0.1.26 release |
+| TASK-186 | Automate completion requirements | Prepare native input from original criteria and consume complete receipt-bound assessments. | In Review | TASK-185 |
+| TASK-187 | Prepare documentation and regressions | Align contracts and add helper, setup and managed UTM scenarios. | In Review | TASK-186 |
+| TASK-188 | Qualify installed adoption | Verify the exact committed candidate in UTM, retain functional results and promote outcomes after acceptance. | Planned | TASK-187 |

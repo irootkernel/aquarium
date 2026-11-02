@@ -3206,10 +3206,14 @@ def main() -> int:
     finish_options = (
         {"preserve_invalid_inventory": True}
         if (arguments.suite == "epic-squad" and arguments.phase == "stage-evidence")
-        or arguments.suite == "sorage-adoption"
+        or arguments.suite in {"sorage-adoption", "mulgae-adoption"}
         else {}
     )
     try:
+        if arguments.suite == "mulgae-adoption":
+            import mulgae_adoption
+
+            return mulgae_adoption.run(context, arguments.phase)
         if arguments.suite == "sorage-adoption":
             import sorage_adoption
 

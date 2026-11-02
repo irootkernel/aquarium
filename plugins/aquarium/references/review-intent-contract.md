@@ -122,7 +122,7 @@ A pre-closeout review does not reject ready work merely because an already autho
 
 ## Assign criterion responsibility
 
-Before dispatch, map every applicable criterion to at least one responsibility in the already authorized reviewer arrangement. A single reviewer owns all criteria unless an explicit narrower responsibility map says otherwise. For Mulgae, assign criteria across the selected roles and aggregate their accepted Markdown reports conservatively. Do not add roles or provider calls merely to fill a gap.
+Before dispatch, map every applicable criterion to at least one responsibility in the already authorized reviewer arrangement. A single reviewer owns all criteria unless an explicit narrower responsibility map says otherwise. For Mulgae, assign criteria across the selected roles and follow [automatic completion requirements](mulgae-review-contract.md#automatic-completion-requirements) for native input and receipt-bound assessment reads. Aggregate those assessments and accepted Markdown reports conservatively. Do not add roles or provider calls merely to fill a gap.
 
 Each criterion assessment is one of these Aquarium states, which are not new native backend fields:
 

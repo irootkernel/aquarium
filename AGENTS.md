@@ -105,6 +105,8 @@ Repository guidance for AI coding agents working on Aquarium. This is the sole r
 
 ### Project-Specific Operating Rules
 
+- For Mulgae completion review, Master approved one untracked root-level `aquarium-review-input-<unique>.json` as an exception to the `/tmp` rule. Preserve it through terminal execution and result consumption, then delete only that unchanged owned file. Other agent-owned temporary files stay under `/tmp`.
+
 - `EPIC-000` is the standing group for independent tasks. Use task-level workflows for its members; do not invoke epic-wide execution, validation, or closeout for this group. Keep its status `In Progress` when a member task completes. Settle a task-linked dossier at that task's closeout after promoting its durable content.
 - Aquarium does not vendor third-party Lora, Lore, Ouroboros, Deslop, Humanizer, or im-not-ai sources. Preserve the exact-upstream installation and provenance boundaries in `dev-setup-global`; `dev-setup` trusts canonical global skill presence and owns repository guidance.
 - Do not create `.aquarium` or another central project-state file. Bundle manifests are explicit external inputs, not repository discovery or persisted state.

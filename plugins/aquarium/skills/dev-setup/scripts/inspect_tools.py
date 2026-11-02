@@ -29,10 +29,10 @@ SCHEMA_VERSION = "aquarium-dev-setup-inspection.v25"
 DOLGORAE_INVOCATION_ID_RE = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
 )
-MULGAE_MINIMUM_VERSION = (0, 1, 25)
+MULGAE_MINIMUM_VERSION = (0, 1, 26)
 MULGAE_NATIVE_CONTRACT: dict[str, Any] = {
-    "minimum_command_schema": 19,
-    "minimum_doctor_schema": 5,
+    "minimum_command_schema": 23,
+    "minimum_doctor_schema": 7,
     "provider_compatibility_fields": (
         "cli_compatible",
         "application_compatible",

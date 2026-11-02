@@ -20,6 +20,7 @@ export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
 	tests/vm/recipes/sorage_adoption.py \
+	tests/vm/recipes/mulgae_adoption.py \
 	tests/unit/test_vm_squad_unit.py \
 	tests/unit/test_podway_release_bundle_unit.py \
 	tests/unit/test_podway_upgrade_unit.py \
@@ -102,6 +103,9 @@ PYTHON_FILES := \
 	plugins/aquarium/tools/aquarium-status/status_store.py \
 	plugins/aquarium/hooks/task_commit_gate.py \
 	plugins/aquarium/skills/dev-setup/scripts/inspect_tools.py \
+	plugins/aquarium/skills/mulgae-review/scripts/prepare_requirements.py \
+	tests/unit/test_mulgae_requirements_unit.py \
+	tests/unit/test_mulgae_adoption_unit.py \
 	plugins/aquarium/skills/dev-setup-global/scripts/inspect_global_tools.py \
 	plugins/aquarium/skills/dev-setup-global/scripts/inspect_ouroboros.py \
 	plugins/aquarium/tools/aquarium-dev/dev_contract.py \

@@ -29,6 +29,8 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 
 - [Sorage v0.1.3 adoption dossier](TODO-SORAGE-013.md) belongs to EPIC-035 and TASK-181 through TASK-184; it retains breaking-upgrade, MCP and installed qualification acceptance.
 
+- [Mulgae v0.1.26 adoption dossier](TODO-MULGAE-0126.md) belongs to EPIC-036 and TASK-185 through TASK-188; it retains automatic requirements and installed qualification acceptance.
+
 ## Unadopted TODO Candidates
 
 There are no current unadopted TODO candidates. A work-definition workflow promotes an approved candidate by allocating the next roadmap-local epic and task IDs, applying the shared dossier threshold, and moving or linking only the resulting approved documents in one reviewed change.

@@ -510,6 +510,57 @@
         "cleanup_seconds": 900,
         "run_seconds": 0
       }
+    },
+    "mulgae-adoption": {
+      "modes": [
+        "manual"
+      ],
+      "environment_profile": "candidate",
+      "argv": [
+        "/bin/sh",
+        "tests/vm/recipes/guest_entry.sh",
+        "--suite",
+        "mulgae-adoption",
+        "--phase",
+        "ready"
+      ],
+      "setup_argv": [
+        "/bin/sh",
+        "-c",
+        "umask 077 && printf '%s' \"$HAEPARI_PARENT_CONTEXT\" > ../operator-parent-context.json"
+      ],
+      "cwd": "harness",
+      "required_outputs": [
+        "results/mulgae-adoption/result.json",
+        "results/mulgae-adoption/inventories.json",
+        "results/mulgae-adoption/prepare.json",
+        "results/mulgae-adoption/candidate.json",
+        "results/mulgae-adoption/consumer-cleanup.json",
+        "results/mulgae-adoption/case-evidence.tar",
+        "results/mulgae-adoption/ready.json"
+      ],
+      "manual": {
+        "scenario_document": "harness/tests/vm/recipes/scenarios/mulgae-adoption.md",
+        "required_scenarios": [
+          "released-baseline",
+          "installed-discovery",
+          "native-input",
+          "native-results",
+          "completion-review",
+          "failure-recovery",
+          "consumer-restoration"
+        ]
+      },
+      "effects_mode": "live",
+      "authorization_reference": "epic-036-explicit-vm-test-authority",
+      "deadlines": {
+        "queue_seconds": 26100,
+        "prepare_seconds": 900,
+        "manual_seconds": 21600,
+        "collect_seconds": 600,
+        "cleanup_seconds": 900,
+        "run_seconds": 0
+      }
     }
   }
 }
