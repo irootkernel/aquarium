@@ -13,7 +13,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
-- Require Mulgae v0.1.26 and its matching skill, align command v23, Doctor v7 and preflight v11, support Cursor and AGY, and automatically assess Task/Epic completion criteria through native requirements with receipt-bound results; existing users must update the CLI and skill while configured provider policy and Config v5 remain intact.
+- Require Mulgae v0.1.26 and its matching skill, align command v23, Doctor v7 and preflight v11, support Cursor and AGY, and automatically assess Task/Epic completion criteria through native requirements with receipt-bound results and explicit owner-report evidence when native answers are omitted; existing users must update the CLI and skill while configured provider policy and Config v5 remain intact.
 
 - Require Sorage v0.1.3 and its complete matching skill, use native zero-write preflight and the verified one-way storage upgrade, and support explicit Handoff/Memo/Channel operations with optional global or repository-local MCP and bundle configuration; existing users must update the executable, skill and storage before dependent operations.
 

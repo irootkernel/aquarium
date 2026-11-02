@@ -39,3 +39,18 @@ This index owns small actionable findings intentionally postponed from current w
 - Source: EPIC-027 whole-Epic review 1, F-7 (code review CODE-2).
 - Reason for deferral: this is an independent maintainability improvement, with no additional current behavior defect established. The current unresolved-finding defect was repaired separately; broad decomposition is unnecessary for that correction.
 - Re-entry condition: before TASK-154 or TASK-155 changes composition or commit eligibility, evaluate small extractions by concern and verify preserved contracts with the existing affected suite. The finding imposes no line-count limit, mandatory large refactor or new framework.
+
+## DF-007: Retire the Mulgae requirements omission workaround
+
+- Actionable issue: Mulgae v0.1.26's requirements instruction requests provider output v3 with requirement assessments, while its later extraction instruction requires v1 finding output without them. Aquarium temporarily uses explicit, evidenced assessments in the assigned owner's accepted report for native derived `answer_omitted` rows, preserving those rows unchanged.
+- Owner: Mulgae owns the producer correction and its stable release. Aquarium's Mulgae adoption owns removal of the [temporary consumer path](../../plugins/aquarium/references/mulgae-review-contract.md#assess-criteria-when-native-answers-are-omitted).
+- Producer work: reconcile initial, extraction and applicable repair output contracts; verify that accepted report assessments survive as admissible native v3 answers with original IDs and evidence. Cover positive, partial, negative and genuinely unverified answers without changing extraction policy or invocation budgets to mask the issue. Aquarium's workaround does not complete this upstream work.
+- Reason for deferral: the producer release has its own implementation, verification and publication lifecycle. Aquarium's bounded consumer workaround permits current v0.1.26 adoption; its own installed qualification remains required.
+- Re-entry condition: when a stable Mulgae release with the verified correction is published, adopt that exact CLI and complete paired skill, raise Aquarium's minimum to the fixed version, remove the omission-specific report-based path and dependent guidance, and verify native assessments through Task, Epic, standalone and remediation-confirmation callers. Do not retain the workaround as a permanent alternate route or infer the correction from a version number. Preserve historical evidence and settle this entry only after the replacement adoption is verified.
+
+## DF-008: Investigate terminal observer teardown EPERM on macOS
+
+- Actionable issue: the host wrapper can report `UNKNOWN / OBSERVER_TEARDOWN_INCOMPLETE` after the native event stream ends because signaling its observer group returns `EPERM`. A later terminal query of the same Job can establish `PASS`, verified cleanup and successful export. The wrapper's earlier unknown observation must remain distinct from that native result.
+- Owner: the VM host wrapper's observer lifecycle (`tests/vm/host_wrapper.py`).
+- Reason for deferral: this is separate from the Mulgae consumer correction. Same-Job terminal reconnection recovered the authoritative result and export without another workload, consumer mutation or VM reservation.
+- Re-entry condition: at the next observer-lifecycle maintenance, establish the cause with owned-child exit and reap evidence and verify the macOS terminal-exit boundary. Do not suppress permission errors, infer termination without proof, signal an unrelated process group or weaken the fail-closed unknown result.

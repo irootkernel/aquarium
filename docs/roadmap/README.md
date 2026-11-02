@@ -66,7 +66,7 @@ Epic status is independent of child task status. Completing every child does not
 | EPIC-033 | Qualify the combined environment and retire the development channel | Planned |
 | EPIC-034 | Adopt Podway v0.2.15 and contract generation 2 | Completed |
 | EPIC-035 | Adopt Sorage v0.1.3 | In Progress |
-| EPIC-036 | Adopt Mulgae v0.1.26 | In Progress |
+| EPIC-036 | Adopt Mulgae v0.1.26 | Completed |
 
 ## EPIC-000: Independent Tasks
 
@@ -1071,18 +1071,27 @@ dedicated UTM VM before support acceptance; source and unit checks are insuffici
 
 ## EPIC-036: Adopt Mulgae v0.1.26
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
 Raise the stable floor to v0.1.26 and automatically assess original completion
 criteria through native requirements. This is breaking: users need the matching
 CLI and complete skill. Config v5 and existing provider policy remain intact.
-Installed qualification and Master's functional verification remain required.
+Scoped installed consumer qualification is complete. Master's separate functional
+verification and the exact release's installed acceptance remain pre-release
+obligations; no unobserved manual result is claimed.
 
-**Detailed SOT:** [Mulgae adoption dossier](../todo/TODO-MULGAE-0126.md)
+**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md), [review intent](../../plugins/aquarium/references/review-intent-contract.md), [tool catalog](../../plugins/aquarium/references/tool-catalog.md#mulgae), [testing contract](../../TESTING.md#mulgae-v0126-adoption), and [workaround retirement](../deferred-feedback/README.md#df-007-retire-the-mulgae-requirements-omission-workaround).
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-185 | Align released Mulgae contracts | Adopt v0.1.26, command v23, Doctor v7 and preflight v11 with Cursor/AGY support. | In Review | External Mulgae v0.1.26 release |
-| TASK-186 | Automate completion requirements | Prepare native input from original criteria and consume complete receipt-bound assessments. | In Review | TASK-185 |
-| TASK-187 | Prepare documentation and regressions | Align contracts and add helper, setup and managed UTM scenarios. | In Review | TASK-186 |
-| TASK-188 | Qualify installed adoption | Verify the exact committed candidate in UTM, retain functional results and promote outcomes after acceptance. | Planned | TASK-187 |
+| TASK-185 | Align released Mulgae contracts | Adopt v0.1.26, command v23, Doctor v7 and preflight v11 with Cursor/AGY support. | Completed | External Mulgae v0.1.26 release |
+| TASK-186 | Automate completion requirements | Prepare native input from original criteria and consume complete receipt-bound assessments. | Completed | TASK-185 |
+| TASK-187 | Prepare documentation and regressions | Align contracts and add helper, setup and managed UTM scenarios. | Completed | TASK-186 |
+| TASK-188 | Qualify installed adoption | Verify the final payload against scoped UTM evidence, retain qualification limits and promote outcomes after acceptance. | Completed | TASK-187 |
+
+Master directed finalization of the scoped adoption after agent-operated UTM
+verification. The temporary omission path preserves native assessments and uses
+explicit, evidenced owner reports for separate Aquarium judgments. Mulgae's
+producer correction and removal of that path remain owned by DF-007. Original
+incomplete and failed producer observations retain their meaning; the scoped
+consumer result does not certify the producer or replace release acceptance.

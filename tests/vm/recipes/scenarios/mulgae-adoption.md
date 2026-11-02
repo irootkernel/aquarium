@@ -48,6 +48,18 @@ actual cases and native manual completion.
   callers. Keep change review objective-only. Observe partial/unmet/unverified
   blocking completion and legitimate non-applicability from original authority.
   Reconcile native rows with full role reports; retain all original evidence.
+  For derived `answer_omitted` rows, verify a report-based `met` only when the
+  assigned owner's accepted report explicitly assesses the complete criterion
+  with sufficient evidence. Keep the native row `unverified` and identify the
+  owner report as the basis of the separate Aquarium judgment. Also verify an
+  evidenced report gap is `unmet`, and silence, partial coverage, a bare verdict
+  or missing required runtime evidence remains `unverified`. Preserve explicit
+  native negative answers and block unresolved provider conflicts. Missing or
+  corrupt support, no-change and extraction-disabled results cannot enter this
+  path. Use actual reports and native observations; do not fabricate producer
+  answers or alter native artifacts. Use a persistent native session for the
+  Epic Validator's required independent assessments and retain their actual
+  reports at the required checkpoints.
 - failure-recovery: preserve one invocation through start/await interruption and
   supported same-operation recovery. Verify extraction-disabled results do not
   change configuration or cause automatic reruns. Confirm remediation checks only

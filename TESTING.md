@@ -853,6 +853,20 @@ files. These tests verify executable behavior, not skill decisions or provider t
 
 The [managed Mulgae scenario](tests/vm/recipes/scenarios/mulgae-adoption.md)
 defines exact-candidate installation, native discovery, CLI/MCP requirements reads,
-completion aggregation and consumer restoration. Installed verification is pending;
-source checks cannot report those cases or Master's functional assessment as passed.
+completion aggregation and consumer restoration. Scoped agent-operated UTM
+verification covers standalone, Task, Epic and affected-criteria confirmation
+calls with the selected Codex provider, complete receipt-bound reads, refusal
+paths, same-invocation observer recovery and verified consumer restoration.
+Native omission rows remain unchanged; separate report-based judgments preserve
+positive, partial, negative and genuinely unverified evidence. Final payload
+reconciliation permits only the declared development-version stamp difference.
+
+The original incomplete campaign and failed native JSON producer probe remain
+separate results. Valid native-answer/report-conflict cases and live execution
+of the other provider families were not observed. This qualifies the bounded
+consumer workaround, not the producer fix. Master's actual functional results
+remain unverified until supplied; complete the applicable manual and exact
+release-acceptance gates before publication. Source checks cannot establish those
+results. [DF-007](docs/deferred-feedback/README.md#df-007-retire-the-mulgae-requirements-omission-workaround)
+owns the producer correction and later workaround removal.
 Historical v0.1.25 observations above retain their original applicability.

@@ -175,13 +175,14 @@ requirements pages and content reads. Follow both pagination streams and every
 content chunk under the same publication receipt. Retain all selected IDs,
 owners, original verdicts, reasons, origins, rationale, evidence and limitations.
 A missing item, derived placeholder, historical unavailable support or
-`unverified/no_change_target` cannot establish fulfillment, including with zero
-findings or operational success. Missing/corrupt support fails consumption.
+`unverified/no_change_target` cannot itself establish fulfillment, including with
+zero findings or operational success. Missing/corrupt support fails consumption.
 
 Map native `partially_met` to Aquarium `unmet`, retaining the supported and
-missing parts. Preserve `met`, `unmet` and `unverified`; derive `not-applicable`
-only from approved authority. Read original role reports as well and reconcile
-conflicts under the shared intent contract. Coordinator conclusions retain their
+missing parts. Preserve all native verdicts; derive `not-applicable` only from
+approved authority. Read original role reports as well and reconcile conflicts
+under the shared intent contract. Apply the report-based assessment below only
+to the specified derived omission. Coordinator conclusions retain their
 provenance and cannot replace missing provider responsibility coverage.
 Check native assessment, coverage, findings, CI, extraction and publication
 independently. Do not enable extraction, change routes or retry reviews to
@@ -189,6 +190,51 @@ obtain a structured answer. Preserve extraction-disabled and exhausted-allowance
 limitations. Existing promoted-evidence schemas remain unchanged; exact input
 mapping, digest, publication receipt and detailed assessments stay in native
 runtime and existing orchestration handoffs.
+
+### Assess criteria when native answers are omitted
+
+Mulgae accepts Markdown as the primary role report. In v0.1.26, its requirements
+instruction requests v3 JSON while the later extraction instruction requires v1
+finding JSON without a requirements field. An accepted report can therefore
+assess a criterion while its native row is `unverified`, with
+`origin=mulgae_derived` and `reason=answer_omitted`.
+
+For that exact combination, assess the criterion from its assigned owner's
+complete accepted report after the native input, candidate, publication, coverage
+and all required reads have passed the checks above. The report must explicitly
+assess the original criterion and supply sufficient evidence within the selected
+target and verification scope. Apply the intent contract's evidence, partial
+coverage and conflict rules. A supported gap is `unmet`; silence, a bare verdict
+or insufficient evidence remains `unverified`. Operator-reported checks retain
+that provenance and cannot satisfy a required independent or runtime check.
+
+Keep the native row unchanged. In the existing criterion handoff, record its
+original verdict, origin and reason separately from the Aquarium assessment,
+the accepted owner-report reference, supporting evidence and limitations. An
+Aquarium `met` based on that report does not claim a native `met` or an admitted
+structured provider answer. A coordinator's own assertion cannot supply a
+missing reviewer assessment. Existing independent Evaluator and acceptance
+requirements still apply.
+
+This path does not cover a missing criterion or owner, mismatched input or
+candidate, incomplete role coverage, unreadable/corrupt support, historical
+unavailable assessments, no-change results, extraction-disabled results, or
+provider-authored `unverified` answers. Preserve explicit native `unmet` and
+`partially_met` gaps; resolve conflicting provider assessments under the intent
+contract. Leave Mulgae's extraction policy, prompts, routes and artifacts
+unchanged. Do not start another review to obtain a different answer. Continue
+preparing and reading native requirements; a later valid native answer uses the
+ordinary path.
+
+This is a temporary consumer workaround. Mulgae must correct the conflicting
+requirements and extraction output contracts
+and verify native criterion answers in a new stable release. When adopting that
+verified release, raise Aquarium's minimum CLI and paired-skill requirement to
+the fixed version, remove this report-based omission path and its dependent
+instructions, and use the native requirements assessments again. Verify Task,
+Epic, standalone and affected-criteria confirmation callers before completing
+that adoption. A higher version number alone does not establish the fix. Retain
+historical native rows, report provenance and qualification outcomes unchanged.
 
 ## Reconcile Incomplete Reviews
 
