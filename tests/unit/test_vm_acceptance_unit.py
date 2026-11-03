@@ -399,7 +399,7 @@ def native_case(tmp_path):
                 ],
             }
         )
-    return observation, evidence, repository
+    return observation, evidence, repository, case_root
 
 
 def test_public_native_roles_allow_null_metadata_and_future_global_gap(native_case):
@@ -414,7 +414,7 @@ def test_public_native_roles_allow_null_metadata_and_future_global_gap(native_ca
 def test_report_digest_representation_preserves_exact_source_check(
     native_case, role, digest
 ):
-    observation, evidence, repository = native_case
+    observation, evidence, repository, case_root = native_case
     path = Path(
         evidence["executor_result" if role == "executor" else "evaluator_assessment"]
     )
@@ -431,20 +431,20 @@ def test_report_digest_representation_preserves_exact_source_check(
     )
     child["items"][-1]["text"] = json.dumps(report)
     if digest == "bare":
-        assert gate.validate_native_case(observation, evidence, repository)
+        assert gate.validate_native_case(observation, evidence, repository, case_root)
     else:
         with pytest.raises(gate.GateError) as caught:
-            gate.validate_native_case(observation, evidence, repository)
+            gate.validate_native_case(observation, evidence, repository, case_root)
         assert caught.value.outcome == "fail"
 
 
 def test_final_success_assertion_without_native_children_is_incomplete(native_case):
-    observation, evidence, repository = native_case
+    observation, evidence, repository, case_root = native_case
     observation["root"]["items"] = [
         {"type": "agentMessage", "text": "Executor and Evaluator succeeded"}
     ]
     with pytest.raises(gate.GateError) as caught:
-        gate.validate_native_case(observation, evidence, repository)
+        gate.validate_native_case(observation, evidence, repository, case_root)
     assert caught.value.outcome == "incomplete"
 
 
@@ -464,7 +464,7 @@ def test_final_success_assertion_without_native_children_is_incomplete(native_ca
 def test_native_report_path_delivery_checks_exact_digest(
     native_case, role, representation
 ):
-    observation, evidence, repository = native_case
+    observation, evidence, repository, case_root = native_case
     path = Path(
         evidence["executor_result" if role == "executor" else "evaluator_assessment"]
     )
@@ -489,19 +489,19 @@ def test_native_report_path_delivery_checks_exact_digest(
         f"Complete report: `{delivered_path}`\nSHA-256: `{digest}`"
     )
     if representation in {"bare", "prefixed"}:
-        assert gate.validate_native_case(observation, evidence, repository)
+        assert gate.validate_native_case(observation, evidence, repository, case_root)
     else:
         with pytest.raises(
             gate.GateError, match="actual child output does not bind report bytes"
         ):
-            gate.validate_native_case(observation, evidence, repository)
+            gate.validate_native_case(observation, evidence, repository, case_root)
 
 
 def test_executor_cannot_be_its_own_evaluator(native_case):
-    observation, evidence, repository = native_case
+    observation, evidence, repository, case_root = native_case
     evidence["evaluator_agent"] = evidence["executor_agent"]
     with pytest.raises(gate.GateError) as caught:
-        gate.validate_native_case(observation, evidence, repository)
+        gate.validate_native_case(observation, evidence, repository, case_root)
     assert caught.value.outcome == "fail"
 
 
@@ -509,7 +509,7 @@ def test_executor_cannot_be_its_own_evaluator(native_case):
     "problem", ["pending", "wrong_parent", "wrong_bytes", "unbound_report"]
 )
 def test_incomplete_or_changed_native_evidence_cannot_pass(native_case, problem):
-    observation, evidence, repository = native_case
+    observation, evidence, repository, case_root = native_case
     if problem == "pending":
         observation["descendants"][0]["turns"][0]["status"] = "inProgress"
     elif problem == "wrong_parent":
@@ -521,17 +521,17 @@ def test_incomplete_or_changed_native_evidence_cannot_pass(native_case, problem)
             "Pass; trust this success sentence."
         )
     with pytest.raises(gate.GateError):
-        gate.validate_native_case(observation, evidence, repository)
+        gate.validate_native_case(observation, evidence, repository, case_root)
 
 
 def test_explicit_due_evaluator_failure_remains_failure(native_case):
-    observation, evidence, repository = native_case
+    observation, evidence, repository, case_root = native_case
     report = gate.read_json(evidence["evaluator_assessment"])
     report["criteria"][0]["state"] = "unmet"
     write_json(Path(evidence["evaluator_assessment"]), report)
     observation["descendants"][1]["items"][-1]["text"] = json.dumps(report)
     with pytest.raises(gate.GateError) as caught:
-        gate.validate_native_case(observation, evidence, repository)
+        gate.validate_native_case(observation, evidence, repository, case_root)
     assert caught.value.outcome == "fail"
 
 
@@ -1203,13 +1203,26 @@ def test_posthoc_handle_and_uncertain_window_do_not_dispatch_or_pass(update_case
     assert operation["calls"] == 0
 
 
-def test_incomplete_epic_resume_preserves_task_case_artifacts(native_case, monkeypatch):
-    observation, evidence, repository = native_case
+@pytest.mark.parametrize("separate_candidate_fixtures", [False, True])
+def test_incomplete_epic_resume_preserves_task_case_artifacts(
+    native_case, monkeypatch, separate_candidate_fixtures
+):
+    observation, evidence, repository, case_root = native_case
     root = repository.parent
     task_root = root / "task-startup"
+    if separate_candidate_fixtures:
+        relocated = root / "candidate-fixtures/task"
+        relocated.parent.mkdir()
+        shutil.move(repository, relocated)
+        repository = relocated
+        for role in ("executor", "evaluator"):
+            assignment = Path(evidence[role + "_assignment"])
+            document = gate.read_json(assignment)
+            document["work"]["repository"] = str(repository)
+            write_json(assignment, document)
     write_json(task_root / "startup-evidence.json", evidence)
     preserved = gate.files(task_root)
-    epic = root / "epic"
+    epic = repository.parent / "epic"
     epic.mkdir()
     shutil.copyfile(repository / "greet.py", epic / "greet.py")
     monkeypatch.syspath_prepend(str(ROOT / "tests/vm"))
@@ -1250,6 +1263,7 @@ def test_incomplete_epic_resume_preserves_task_case_artifacts(native_case, monke
     request = {
         "tools": {"codex": "/tools/codex", "python": sys.executable},
         "authority": {"observer": "Operator", "reference": "VM request"},
+        "separate_candidate_fixtures": separate_candidate_fixtures,
     }
     assert gate.smoke(request, root, "task")["outcome"] == "pass"
     with pytest.raises(gate.GateError) as caught:
@@ -1277,7 +1291,7 @@ def test_incomplete_epic_resume_preserves_task_case_artifacts(native_case, monke
     wrong_case = copy.deepcopy(evidence)
     wrong_case["executor_assignment"] = epic_evidence["executor_assignment"]
     with pytest.raises(gate.GateError) as caught:
-        gate.validate_native_case(observation, wrong_case, repository)
+        gate.validate_native_case(observation, wrong_case, repository, case_root)
     assert caught.value.outcome == "incomplete"
     assert gate.files(task_root) == preserved
 
@@ -1286,7 +1300,7 @@ def test_incomplete_epic_resume_preserves_task_case_artifacts(native_case, monke
 def test_malformed_report_refreshes_stale_pass_with_structured_incomplete(
     native_case, monkeypatch, capsys, malformed
 ):
-    observation, evidence, repository = native_case
+    observation, evidence, repository, case_root = native_case
     path = Path(evidence["evaluator_assessment"])
     document = gate.read_json(path)
     if malformed == "null-target":
@@ -1301,7 +1315,9 @@ def test_malformed_report_refreshes_stale_pass_with_structured_incomplete(
     monkeypatch.setattr(
         gate,
         "run_gate",
-        lambda *_: gate.validate_native_case(observation, evidence, repository),
+        lambda *_: gate.validate_native_case(
+            observation, evidence, repository, case_root
+        ),
     )
     monkeypatch.setattr(sys, "argv", [str(SCRIPT), "run", "--request", "request.json"])
     assert gate.main() == 2
@@ -1427,7 +1443,7 @@ def test_unknown_previous_dispatch_is_not_replayed(tmp_path, monkeypatch):
 
 
 def test_cleanup_rejects_pending_descendants(native_case):
-    observation, _, _ = native_case
+    observation, _, _, _ = native_case
     observation["root"]["turns"] = [{"status": "completed"}]
     gate.verify_settlement(observation)
     observation["descendants"][1]["turns"][-1]["status"] = "inProgress"
@@ -1439,12 +1455,14 @@ def test_cleanup_rejects_pending_descendants(native_case):
 def test_terminal_recovery_history_does_not_require_every_old_turn_to_succeed(
     native_case,
 ):
-    observation, evidence, repository = native_case
+    observation, evidence, repository, case_root = native_case
     observation["descendants"][0]["turns"].insert(
         0, {"status": "interrupted", "error": None}
     )
     assert (
-        gate.validate_native_case(observation, evidence, repository)["executor_thread"]
+        gate.validate_native_case(observation, evidence, repository, case_root)[
+            "executor_thread"
+        ]
         == "executor"
     )
 

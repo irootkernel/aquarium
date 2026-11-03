@@ -1403,8 +1403,7 @@ def returned_report(child, path, schema):
     return document
 
 
-def case_artifact(repository, value):
-    directory = repository.parent / (repository.name + "-startup")
+def case_artifact(directory, value):
     require(
         directory.is_dir() and not directory.is_symlink(),
         "case artifact directory is unavailable",
@@ -1420,9 +1419,9 @@ def case_artifact(repository, value):
     return path
 
 
-def validate_native_case(observation, evidence, repository):
+def validate_native_case(observation, evidence, repository, case_root):
     paths = {
-        key: case_artifact(repository, evidence[key])
+        key: case_artifact(case_root, evidence[key])
         for key in (
             "executor_assignment",
             "evaluator_assignment",
@@ -1572,7 +1571,10 @@ report, so this test can compare the assessed bytes without native attestation.
         f"{CASE_IDS[name]} needs operator reply or missing evidence; resume actual thread {identifier}",
     )
     actors = validate_native_case(
-        observation, read_json(case_artifact(repository, evidence_file)), repository
+        observation,
+        read_json(case_artifact(case_root, evidence_file)),
+        repository,
+        case_root,
     )
     outcomes = oracle(request["tools"]["python"], repository)
     source_before_checks = sha256(repository / "greet.py")
