@@ -1158,6 +1158,136 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
 
         return Stub()
 
+    def test_retained_upgrade_cleanup_checks_unrelated_inventory(self):
+        import copy
+
+        import podway_upgrade
+
+        module = self.guest_main
+        context = mock.MagicMock()
+        context.dev_version = "0.1.21-dev.fixture"
+        records = {
+            "machine-prepare.json": {},
+            "record-setup-task.json": {},
+            "record-setup-epic.json": {},
+            "record-setup-preservation.json": {},
+            "capture.json": {"exit": 0},
+            "podway-upgrade.json": {"identity": {"result": {"version": "v0.2.16"}}},
+            "candidate-install.json": {},
+            "skill-identity.json": {
+                "comparisons": {"all_passed": True},
+                "prior_stage": {"comparisons": {"all_passed": True}},
+            },
+            "runtime-update.json": {
+                "approval_completed": True,
+                "workflow_exit": 0,
+                "receipt_plugin_version": "v0.1.21-dev.fixture",
+            },
+            "managed-update-task.json": {"exit": 0},
+            "managed-update-epic.json": {"exit": 0},
+            "managed-update-preservation.json": {"exit": 0},
+            "startup-smokes.json": {"outcome": "pass", "exit": 0},
+            "stale-skill.json": {
+                "observation": {"outcome": "shadowing"},
+                "restoration": {"verified": True},
+            },
+            "stage-evidence.json": {"ok": True},
+        }
+        before = [
+            {
+                "installation_scope": scope,
+                "relative_path": path,
+                "sha256": "a" * 64,
+                "executable": False,
+            }
+            for scope, path in (
+                ("user-global", ".aquarium/user-settings.json"),
+                ("user-global", ".aquarium/status-runtime/current"),
+                ("shared-agents-skills", ".agents/skills/use-podway/SKILL.md"),
+                ("user-global", ".aquarium/status.yaml"),
+            )
+        ]
+        retained = copy.deepcopy(before)
+        for entry in retained[1:]:
+            entry["sha256"] = "b" * 64
+        retained.append(
+            {
+                "installation_scope": "user-global",
+                "relative_path": ".aquarium/status.lock",
+                "sha256": hashlib.sha256(b"").hexdigest(),
+                "executable": False,
+            }
+        )
+        variants = {"retained-upgrade": retained}
+        for name in ("content", "missing", "extra", "executable"):
+            entries = copy.deepcopy(retained)
+            if name == "content":
+                entries[0]["sha256"] = "c" * 64
+            elif name == "missing":
+                entries.pop(0)
+            elif name == "extra":
+                entries.append(
+                    {**before[0], "relative_path": ".aquarium/unowned-leftover.txt"}
+                )
+            else:
+                entries[0]["executable"] = True
+            variants[name] = entries
+
+        with (
+            tempfile.TemporaryDirectory(dir="/tmp") as directory,
+            mock.patch.object(module.lib, "guard"),
+            mock.patch.object(module, "acceptance_request"),
+            mock.patch.object(
+                module.lib, "results_directory", return_value=Path(directory)
+            ),
+            mock.patch.object(podway_upgrade, "observe_tools", return_value={}),
+            mock.patch.object(
+                module,
+                "skill_identity_document",
+                return_value={"comparisons": {"all_passed": True}},
+            ),
+            mock.patch.object(
+                module.lib,
+                "read_current_generation",
+                return_value=(
+                    "candidate-generation",
+                    {"plugin_version": "v0.1.21-dev.fixture"},
+                ),
+            ),
+            mock.patch.object(module.lib, "assert_registration"),
+            mock.patch.object(
+                module.lib,
+                "finish",
+                side_effect=lambda _suite, outcome, _detail, **_kwargs: (
+                    0 if outcome == "pass" else 1
+                ),
+            ) as finish,
+        ):
+            root = Path(directory)
+            for name, record in records.items():
+                (root / name).write_text(json.dumps(record))
+            baseline = root / "inventory-prior-baseline.json"
+            baseline.write_text(
+                json.dumps({"schema": module.lib.INVENTORY_SCHEMA, "entries": before})
+            )
+            for name, entries in variants.items():
+                with self.subTest(variant=name):
+                    context.snapshot.return_value = entries
+                    expected = "verified" if name == "retained-upgrade" else "failed"
+                    code = module.run_release_acceptance(
+                        context, "consumer-cleanup", "task"
+                    )
+                    self.assertEqual(code, 0 if expected == "verified" else 1)
+                    self.assertEqual(
+                        finish.call_args.kwargs["consumer_cleanup"], expected
+                    )
+                    observed = json.loads((root / "consumer-cleanup.json").read_text())
+                    self.assertEqual(bool(observed["violations"]), expected == "failed")
+            baseline.unlink()
+            with self.assertRaises(module.lib.RecipeError) as error:
+                module.run_release_acceptance(context, "consumer-cleanup", "task")
+            self.assertEqual(error.exception.outcome, "incomplete")
+
     def test_codex_identity_records_only_login_mode_from_either_stream(self):
         context = self.context_stub()
         context.codex = "/fixture/codex"

@@ -1022,6 +1022,67 @@ def export_results(
     return str(destination)
 
 
+def settle_suite_result(
+    binary: str,
+    run: Path,
+    record: dict[str, Any],
+    entry: dict[str, Any],
+    outcome: str,
+    code: int,
+    detail: dict[str, Any],
+) -> tuple[str, int]:
+    entry["observation"] = {
+        "outcome": outcome,
+        "final_verdict": detail.get("final_verdict"),
+        "workload_outcome": detail.get("workload_outcome"),
+        "evidence_completeness": detail.get("evidence_completeness"),
+        "cleanup_outcome": detail.get("cleanup_outcome"),
+        "consumer_cleanup": (
+            detail.get("consumer_cleanup")
+            if isinstance(detail.get("consumer_cleanup"), str)
+            else "unobserved"
+        ),
+    }
+    save(run / "run.json", record)
+    export_destination = ""
+    if outcome in VERDICT_EXITS and entry.get("job_id"):
+        spec = read_spec(run, entry)
+        required_outputs = spec["workload"]["required_outputs"]
+        binding = record.get("installation_binding", {})
+        sealed_candidate = {
+            "git_sha": binding.get("candidate_git_sha"),
+            "development_version": binding.get("development_version"),
+            "artifact_tree_sha256": binding.get("artifact_tree_sha256"),
+        }
+        export_destination = export_results(
+            binary, run, entry, required_outputs, sealed_candidate
+        )
+    consumer = "unverified"
+    if export_destination:
+        evidence = export_artifact_path(
+            export_destination, f"results/{entry['suite']}/result.json"
+        )
+        try:
+            document = json.loads(evidence.read_text())
+            if isinstance(document, dict):
+                value = document.get("consumer_cleanup")
+                if isinstance(value, str) and value in {
+                    "verified",
+                    "failed",
+                    "unverified",
+                }:
+                    consumer = value
+        except (OSError, ValueError):
+            consumer = "unverified"
+    entry["observation"]["consumer_cleanup"] = consumer
+    if consumer != "verified" and outcome == "PASS":
+        entry["observation"]["acceptance"] = "blocked"
+        outcome, code = "ACCEPTANCE-BLOCKED", 3
+    save(run / "run.json", record)
+    report("result", suite=entry["suite"], **entry["observation"])
+    return outcome, code
+
+
 def cancel_run(binary: str, run: Path, record: dict[str, Any], args: Any) -> int:
     verify_installation_binding(binary, record)
     pending = [entry for entry in record["jobs"] if entry.get("job_id")]
@@ -1108,22 +1169,16 @@ def cancel_run(binary: str, run: Path, record: dict[str, Any], args: Any) -> int
                         exit_code=waited or 2,
                     )
         outcome, code, detail = wait_for_suite(binary, entry, args)
-        # Record the full native observation from the settled wait, not
-        # only the outcome.
-        entry["observation"] = {
-            "outcome": outcome,
-            "final_verdict": detail.get("final_verdict"),
-            "workload_outcome": detail.get("workload_outcome"),
-            "evidence_completeness": detail.get("evidence_completeness"),
-            "cleanup_outcome": detail.get("cleanup_outcome"),
-        }
-        save(run / "run.json", record)
+        native_outcome = outcome
+        outcome, code = settle_suite_result(
+            binary, run, record, entry, outcome, code, detail
+        )
         report(
             "cancel-settled",
             suite=entry["suite"],
             job_id=entry["job_id"],
             cancellation=entry["cancellation"].get("state"),
-            outcome=outcome,
+            outcome=native_outcome,
         )
     report("aggregate", status=outcome, run_dir=str(run))
     return code
@@ -1339,55 +1394,9 @@ def main() -> int:
                 )
                 return 5
             outcome, code, detail = wait_for_suite(args.haepari, entry, args)
-            entry["observation"] = {
-                "outcome": outcome,
-                "final_verdict": detail.get("final_verdict"),
-                "workload_outcome": detail.get("workload_outcome"),
-                "evidence_completeness": detail.get("evidence_completeness"),
-                "cleanup_outcome": detail.get("cleanup_outcome"),
-                "consumer_cleanup": (
-                    detail.get("consumer_cleanup")
-                    if isinstance(detail.get("consumer_cleanup"), str)
-                    else "unobserved"
-                ),
-            }
-            save(run / "run.json", record)
-            export_destination = ""
-            if outcome in VERDICT_EXITS and entry.get("job_id"):
-                spec = read_spec(run, entry)
-                required_outputs = spec["workload"]["required_outputs"]
-                binding = record.get("installation_binding", {})
-                sealed_candidate = {
-                    "git_sha": binding.get("candidate_git_sha"),
-                    "development_version": binding.get("development_version"),
-                    "artifact_tree_sha256": binding.get("artifact_tree_sha256"),
-                }
-                export_destination = export_results(
-                    args.haepari, run, entry, required_outputs, sealed_candidate
-                )
-            consumer = "unverified"
-            if export_destination:
-                evidence = export_artifact_path(
-                    export_destination, f"results/{entry['suite']}/result.json"
-                )
-                try:
-                    document = json.loads(evidence.read_text())
-                    if isinstance(document, dict):
-                        value = document.get("consumer_cleanup")
-                        if isinstance(value, str) and value in {
-                            "verified",
-                            "failed",
-                            "unverified",
-                        }:
-                            consumer = value
-                except (OSError, ValueError):
-                    consumer = "unverified"
-            entry["observation"]["consumer_cleanup"] = consumer
-            if consumer != "verified" and outcome == "PASS":
-                entry["observation"]["acceptance"] = "blocked"
-                outcome, code = "ACCEPTANCE-BLOCKED", 3
-            save(run / "run.json", record)
-            report("result", suite=entry["suite"], **entry["observation"])
+            outcome, code = settle_suite_result(
+                args.haepari, run, record, entry, outcome, code, detail
+            )
         report(
             "aggregate",
             status=outcome,

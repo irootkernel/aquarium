@@ -522,8 +522,8 @@ collapses any non-zero recipe exit to `2` while captured stdout and the wrapper 
 result reports the native `workload_outcome`, `evidence_completeness`,
 `cleanup_outcome` and the recipe's `consumer_cleanup` separately; missing
 observations or failed consumer cleanup never produce PASS, and `SUITE=all`
-selects all nine suites alphabetically using each suite's first declared mode,
-without filtering by `MODE`; a nonzero result skips later suites. Select
+selects every configured suite alphabetically using each suite's first declared
+mode, without filtering by `MODE`; a nonzero result skips later suites. Select
 explicit suites for a passing batch and retain deliberate failure or unobserved
 cases separately. Suite phases are budgeted inside the registered resource-v2
 ceilings, each queue budget satisfies the queue-deadline rule for
@@ -655,6 +655,10 @@ success and withdraws its previous declared archives and working files
 before rebuilding. Source originals and unrelated outputs remain in place.
 Publication stays within the 32 MiB per-archive and 256 MiB aggregate bounds,
 including interrupted retries; the controller pin is confirmed in preflight.
+Consumer cleanup checks the final inventory against the released baseline.
+It allows the retained installation, approved setup status records and native
+plugin-cache updates. It reports unrelated changes, missing entries and leftovers.
+The upgraded installation remains in place.
 The suite's per-capture inventory files
 (`inventory-prior-baseline`, `inventory-post-install`, `inventory-stale-pre`,
 `inventory-stale-post`, `inventory-cleanup-before`, `inventory-post-cleanup`)

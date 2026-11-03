@@ -3000,6 +3000,15 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
                 },
                 consumer_cleanup="unverified",
             )
+        baseline = lib.read_json_safe(results / "inventory-prior-baseline.json")
+        if (
+            not isinstance(baseline, dict)
+            or baseline.get("schema") != lib.INVENTORY_SCHEMA
+            or not isinstance(baseline.get("entries"), list)
+        ):
+            raise lib.RecipeError(
+                "the released baseline inventory is unavailable", "incomplete"
+            )
         import podway_upgrade
 
         context.snapshot(
@@ -3025,11 +3034,32 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
             context.marketplace,
             str(context.marketplace_path(CANDIDATE_KIND)),
         )
-        context.snapshot(
+        after = context.snapshot(
             "release-acceptance",
             "post_cleanup",
             profile="podway-candidate",
             capture="post-cleanup",
+        )
+
+        def allowed_upgrade(scope: str, path: str) -> bool:
+            return (
+                allowed_runtime_changes(scope, path)
+                or scope == "codex-plugin-cache"
+                or (
+                    scope == "user-global"
+                    and path in {".aquarium/status.yaml", ".aquarium/status.lock"}
+                )
+                or (
+                    scope == "shared-agents-skills"
+                    and (
+                        path == ".agents/skills/use-podway"
+                        or path.startswith(".agents/skills/use-podway/")
+                    )
+                )
+            )
+
+        violations += lib.postcondition_violations(
+            baseline["entries"], after, allowed_upgrade
         )
         lib.write_document(
             results / "consumer-cleanup.json",

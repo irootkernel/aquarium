@@ -809,6 +809,56 @@ class HostWrapperTest(unittest.TestCase):
         record = json.loads((run_dir / "run.json").read_text())
         self.assertEqual(record["jobs"][0]["cancellation"]["state"], "refused")
         self.assertEqual(record["jobs"][0]["cancellation"]["expected_revision"], 3)
+        self.assertEqual(
+            record["jobs"][0]["observation"]["consumer_cleanup"], "verified"
+        )
+        self.assertTrue(
+            (run_dir / f"export-{record['jobs'][0]['suite']}/manifest.json").is_file()
+        )
+
+    def test_cancel_race_blocks_missing_or_failed_consumer_evidence(self):
+        for fault in ("unavailable", "incomplete", "failed"):
+            with self.subTest(fault=fault):
+                run_dir, state = self.scenario(f"cancel-consumer-{fault}")
+                self.doctor_ok(state)
+                self.submit_ok(state)
+                self.respond(
+                    state, 5, error_envelope("WAIT_TIMEOUT", "none"), match="wait"
+                )
+                pending = self.invoke_wrapper(
+                    run_dir, state, AQUARIUM_VM_WAIT_ROUNDS="1"
+                )
+                self.assertEqual(pending.returncode, 5)
+                self.doctor_ok(state)
+                self.respond(state, 0, inspect_envelope(3), match="inspect")
+                self.respond(
+                    state, 2, error_envelope("STALE_REVISION", "none"), match="cancel"
+                )
+                self.respond(
+                    state, 0, envelope("wait", {"final_verdict": "PASS"}), match="wait"
+                )
+                environment = {}
+                if fault == "unavailable":
+                    self.respond(
+                        state, 2, error_envelope("RESULT_UNAVAILABLE"), match="export"
+                    )
+                elif fault == "incomplete":
+                    environment["FAKE_EXPORT_INCOMPLETE"] = "1"
+                else:
+                    environment["FAKE_EXPORT_CONSUMER"] = "failed"
+                result = self.invoke_wrapper(
+                    run_dir, state, AQUARIUM_VM_CANCEL="1", **environment
+                )
+                self.assertEqual(result.returncode, 3, result.stdout)
+                self.assertIn('"status": "ACCEPTANCE-BLOCKED"', result.stdout)
+                record = json.loads((run_dir / "run.json").read_text())
+                observation = record["jobs"][0]["observation"]
+                self.assertEqual(observation["outcome"], "PASS")
+                self.assertEqual(observation["acceptance"], "blocked")
+                self.assertEqual(
+                    observation["consumer_cleanup"],
+                    "failed" if fault == "failed" else "unverified",
+                )
 
     def test_cancel_uncertainty_preserves_replay_payload(self):
         run_dir, state = self.scenario("cancel-uncertain")

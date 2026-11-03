@@ -272,7 +272,7 @@ failed recipe to `2`, so capture the wrapper process exit separately. Workload
 outcome, evidence completeness, native cleanup, consumer cleanup and manual
 observations remain separate.
 
-`SUITE=all` selects all nine suites alphabetically using each suite's first
+`SUITE=all` selects every configured suite alphabetically using each suite's first
 declared mode, without filtering by `MODE`; a nonzero result skips later suites.
 Select explicit suites for a passing batch and retain deliberate failures or
 unobserved cases. Offline unit tests exercise the wrapper, sealing, recipes and
