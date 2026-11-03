@@ -1,7 +1,7 @@
-# Podway v0.2.15 installed upgrade
+# Podway v0.2.16 installed upgrade
 
-This manual suite qualifies EPIC-034's exact Aquarium candidate with the
-official Podway v0.2.15 CLI and complete `use-podway` tree. It keeps the qualified
+This manual suite qualifies the exact Aquarium candidate with the
+official Podway v0.2.16 CLI and complete `use-podway` tree. It keeps the qualified
 v0.2.14 baseline profiles unchanged. It does not replace a release's separate
 release-acceptance gate or turn preparation checks into installed acceptance.
 
@@ -34,8 +34,8 @@ skills/use-podway/references/goal.md
 skills/use-podway/references/recovery.md
 ```
 
-Use the unchanged official v0.2.15 archive, checksum file and provenance; `bin/podway` is their extracted executable. The skill files come
-from release commit `9a3f94c8752298f689832d05aa827a0f6496c1af`.
+Use the unchanged official v0.2.16 archive, checksum file and provenance; `bin/podway` is their extracted executable. The skill files come
+from release commit `e9f4b41d1d09573b7acd443b91fbfb8f378fb8e1`.
 The host sealer checks every file's pinned digest before and after copying,
 rejects extra or unsafe files, and performs no installation or upstream-code
 execution. The archive is unsigned and not notarized.
@@ -52,11 +52,19 @@ make test-vm-host SUITE=podway-upgrade MODE=manual \
   RUN_DIR="<new-empty-physical-run-dir>" GUEST_CONTEXT="<private-guest-context.json>"
 ```
 
-The bundle seals the dependency under `dependencies/podway-0.2.15/` and creates
+The bundle seals the dependency under `dependencies/podway-0.2.16/` and creates
 `profile/podway-candidate.json`; the existing stable and candidate profiles keep
 their previous dependency pins. `SUITE=all` still selects every declared suite
 and therefore also requires this explicit release input. It does not install
 the dependency in the other suites.
+
+Also supply `AQUARIUM_VM_PODWAY_PREVIOUS_RELEASE` with the same exact layout
+for official v0.2.15 and its release-tagged skill. The sealer pins that inventory
+separately at `dependencies/podway-0.2.15/`. Use its actual executable to create a
+populated fixture and retain an original successful mutation request and key.
+After switching that fixture to v0.2.16, verify that reads, fresh writes and exact
+original-request replay refuse without changing the old Store. This authentic
+previous-writer fixture is additional to the preserved v0.2.14 baseline.
 
 ## Observe and upgrade
 

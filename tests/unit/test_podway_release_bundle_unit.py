@@ -40,7 +40,7 @@ def test_release_sealing_updates_only_the_selected_candidate(tmp_path, release):
     files, identity = bundle.seal_podway_release(source, tmp_path / "bundle", profile)
     current = {row["name"]: row for row in profile["components"]}
     before = {row["name"]: row for row in previous["components"]}
-    assert current["podway"]["version"] == "v0.2.15"
+    assert current["podway"]["version"] == "v0.2.16"
     assert before["podway"]["version"] == "v0.2.14"
     assert current["use-podway"]["pin"] == {"commit": bundle.PODWAY_RELEASE_COMMIT}
     assert (
@@ -83,3 +83,21 @@ def test_release_sealing_checks_copied_bytes_again(tmp_path, monkeypatch, releas
     monkeypatch.setattr(bundle, "_copy_tree", drift)
     with pytest.raises(bundle.BundleError, match="changed while sealing"):
         bundle.seal_podway_release(source, tmp_path / "bundle", profile)
+
+
+def test_previous_release_is_sealed_separately(tmp_path, release, monkeypatch):
+    source, _ = release
+    inventory = {
+        name: hashlib.sha256((source / name).read_bytes()).hexdigest()
+        for name in bundle.PODWAY_PREVIOUS_RELEASE_FILES
+    }
+    monkeypatch.setattr(bundle, "PODWAY_PREVIOUS_RELEASE_FILES", inventory)
+    files = bundle.seal_release_files(
+        source, tmp_path / "bundle", "dependencies/podway-0.2.15", inventory
+    )
+    assert all((tmp_path / "bundle" / name).is_file() for name in files)
+    assert not (tmp_path / "bundle/dependencies/podway-0.2.16").exists()
+    (source / "bin/podway").write_bytes(b"tampered previous executable")
+    with pytest.raises(bundle.BundleError, match="digest differs"):
+        bundle.seal_release_files(source, tmp_path / "refused", "previous", inventory)
+    assert not (tmp_path / "refused").exists()

@@ -1290,7 +1290,7 @@ def native_identity_payload():
     return {
         "schema": "podway.version-result/v2",
         "product": "podway",
-        "version": "v0.2.15",
+        "version": "v0.2.16",
         "target": "aarch64-apple-darwin",
         "build_identity": "sha256:" + "a" * 64,
         "source_commit": "b" * 40,
@@ -1299,7 +1299,7 @@ def native_identity_payload():
     }
 
 
-@pytest.mark.parametrize("version", ["v0.2.14", "v0.2.15-rc.1"])
+@pytest.mark.parametrize("version", ["v0.2.14", "v0.2.15", "v0.2.16-rc.1"])
 def test_generation2_client_refuses_unsupported_writer(
     repository, monkeypatch, version
 ):
@@ -1380,7 +1380,7 @@ def runtime_probes(repository, monkeypatch):
             "stderr": "",
         }
         if request == ["version", "--json"]:
-            result["result"] = {"name": "podway", "version": "v0.2.15"}
+            result["result"] = {"name": "podway", "version": "v0.2.16"}
             return result
         if request == ["--json", "version", "--identity"]:
             command = "version"

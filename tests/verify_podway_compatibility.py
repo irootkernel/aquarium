@@ -1,4 +1,4 @@
-"""Verify one exact Podway v0.2.15 binary against Aquarium Procedures."""
+"""Verify one exact Podway v0.2.16 binary against Aquarium Procedures."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ if RUNTIME_SPEC is None or RUNTIME_SPEC.loader is None:
 podway_runtime_qualification = importlib.util.module_from_spec(RUNTIME_SPEC)
 RUNTIME_SPEC.loader.exec_module(podway_runtime_qualification)
 
-EXPECTED_VERSION = "v0.2.15"
+EXPECTED_VERSION = "v0.2.16"
 OUTPUT_SCHEMA = "podway.output/v4"
 DIAGNOSTICS_SCHEMA = "podway.procedure-diagnostics-result/v1"
 SOURCE_SCHEMA = "podway.procedure-source-result/v1"

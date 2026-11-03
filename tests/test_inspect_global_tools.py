@@ -2096,7 +2096,7 @@ def test_global_podway_rejects_unusable_identity(
     identity = {
         "schema": "podway.version-result/v2",
         "product": "podway",
-        "version": "v0.2.15",
+        "version": "v0.2.16",
         "target": "aarch64-apple-darwin",
         "build_identity": "sha256:" + "a" * 64,
         "source_commit": None,
@@ -2123,7 +2123,7 @@ def test_global_podway_rejects_unusable_identity(
     tool = {
         "installed": True,
         "version_supported": True,
-        "version": "v0.2.15",
+        "version": "v0.2.16",
         "status": "installed",
         "executable": "/fixture/podway",
         "probes": {},

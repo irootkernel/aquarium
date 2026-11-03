@@ -19,7 +19,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Support explicit CLI/model profiles for `epic-squad` roles through Herdr, including same-CLI and mixed native teams, with original assessment settings preserved through recovery and commit handoffs.
 - Require cleanup ownership and handoffs for retained disposable build/test artifacts across Task, Epic, Squad, validation, diagnosis, release checks and test setup; unresolved cleanup blocks the next Task and successful workflow completion while preserving native evidence and shared caches.
-- Require Podway v0.2.15 or newer and its release-pinned skill, adopt contract generation 2 and observation v6, and require an explicitly approved fresh-runtime reset for incompatible v0.2.14 workspaces.
+- Require Podway v0.2.16 or newer and its release-pinned skill, retain contract generation 2 and observation v6, support native workspace v3 settings, and require an explicitly approved fresh-runtime reset for incompatible earlier-writer workspaces.
 
 - Qualify Aquarium's installed-VM release-policy cutover and [Haepari VM operations runbook](docs/ops/haepari-vm-verification.md) around `make test-vm-host` (`SUITE=release-acceptance`, `MODE=manual`) with shared outer-boundary VM occupancy, `PATH`/`.venv` interpreter selection, and pre-submission versus returned Job/result handoffs, while keeping `release-handler` generic across target repository policies and running the guest-side `make test-vm` gate inside that held Job. The exact installed pilot covers upgrade, startup, contention, recovery and cleanup; publication and host activation retain separate authority.
 

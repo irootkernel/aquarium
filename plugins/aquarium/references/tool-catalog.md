@@ -547,9 +547,9 @@ Require the materialized payload to contain only regular non-symlink files, the 
 
 Official source: `https://github.com/irootkernel/podway`
 
-Support stable releases `>=v0.2.15` without a version upper bound, on native Apple Silicon macOS. Resolve the latest non-draft, non-prerelease official release by default or the user's selected supported release. Version eligibility is separate from machine-contract compatibility. Require Output v4, Error v2, version-result v2, contract-manifest v2, and observation v6 and status v5 where consumed. Report an actual contract mismatch rather than rejecting a later major or minor version by number.
+Support stable releases `>=v0.2.16` without a version upper bound, on native Apple Silicon macOS. Resolve the latest non-draft, non-prerelease official release by default or the user's selected supported release. Version eligibility is separate from machine-contract compatibility. Require Output v4, Error v2, version-result v2, contract-manifest v2, and observation v6 and status v5 where consumed. Report an actual contract mismatch rather than rejecting a later major or minor version by number.
 
-Pin the optional `use-podway` skill independently to the v0.2.15 release commit `9a3f94c8752298f689832d05aa827a0f6496c1af`. Follow [Complete Paired-Skill Inventory](#complete-paired-skill-inventory) for every regular file in `skills/use-podway/`, including its lifecycle, goal, recovery and delegation references. Require `name: use-podway` at the approved `~/.agents/skills/use-podway` target. Later runtime releases do not change this pin automatically. Keep `create-podway-procedure` as a separate maintainer dependency; setup neither installs nor requires it. Aquarium does not vendor either tree.
+Pin the optional `use-podway` skill independently to the v0.2.16 release commit `e9f4b41d1d09573b7acd443b91fbfb8f378fb8e1`. Follow [Complete Paired-Skill Inventory](#complete-paired-skill-inventory) for every regular file in `skills/use-podway/`, including its lifecycle, goal, recovery and delegation references. Require `name: use-podway` at the approved `~/.agents/skills/use-podway` target. Later runtime releases do not change this pin automatically. Keep `create-podway-procedure` as a separate maintainer dependency; setup neither installs nor requires it. Aquarium does not vendor either tree.
 
 Download the selected Apple Silicon archive, its published checksum and provenance only within the approved preparation scope. Verify the checksum, archive members, release commit and target before proposing installation of the single `bin/podway` executable at the exact user-local path. Disclose that the artifact is unsigned and not notarized. Binary installation, paired-skill replacement, legacy service retirement and workspace reset are distinct effects. Compare the complete verified skill tree with existing targets, show replacement diffs, preserve customizations, and follow the shared approval and backup policy.
 
@@ -609,7 +609,7 @@ For a customization, show the exact current-to-canonical diff and handler-contra
 
 ### Upgrade from older writers
 
-Podway v0.2.13 replaced the daemon contract with Direct execution and SQLite generation 15. v0.2.14 and v0.2.15 each change the writer manifest and declare no predecessor for the previous writer. In particular, v0.2.15 cannot admit a v0.2.14 Store. Generation-2 errors identify a known stored writer through `details.actual_product_version`; an unknown digest remains unidentified. Continue or settle v0.2.14 sessions with the exact original writer and its release-tagged skill, which do not accept `--contract-generation`. Legacy generations are refused unchanged with `LEGACY_RUNTIME_STATE_UNSUPPORTED`; incompatible direct writers use `WORKSPACE_CONTRACT_MISMATCH`. Preserve those errors and state. Semver alone never grants Store migration. Diagnose writer identity through `version --json --identity` and follow the selected release's native recovery contract.
+Podway v0.2.13 replaced the daemon contract with Direct execution and SQLite generation 15. v0.2.14, v0.2.15 and v0.2.16 each change the writer manifest and declare no predecessor for the previous writer. In particular, v0.2.16 cannot admit a v0.2.15 Store. Generation-2 errors identify a known stored writer through `details.actual_product_version`; an unknown digest remains unidentified. Continue or settle older sessions with the exact original writer and its release-tagged skill, using that writer's supported grammar. v0.2.14 does not accept `--contract-generation`; v0.2.15 accepts generation 2. Legacy generations are refused unchanged with `LEGACY_RUNTIME_STATE_UNSUPPORTED`; incompatible direct writers use `WORKSPACE_CONTRACT_MISMATCH`. Preserve those errors and state. Semver alone never grants Store migration. Diagnose writer identity through `version --json --identity` and follow the selected release's native recovery contract.
 
 A legacy non-production `mode` in tracked configuration produces `WORKSPACE_CONFIG_INVALID` before Store admission. This error carries no specific cause and does not itself authorize reset. Through `$aquarium:dev-setup`, inspect the tracked `.podway/config.yaml` and establish a retired mode only when its `podway.workspace/v2` configuration declares `mode` other than `prod`. Otherwise keep readiness degraded and do not propose a runtime reset from this error. For an established retired mode, disclose and separately approve the exact tracked configuration correction before any approved runtime discard. The reset preserves the corrected configuration; it cannot repair the retired mode by itself.
 
@@ -624,6 +624,21 @@ podway --contract-generation 2 --worktree <absolute-root> --json reset --all --y
 This is a new unfenced discard request, not a weakened retry. A UUID-fenced reset cannot reopen the incompatible Store. The command creates a fresh UUID and current Store while preserving configuration, Procedures, ignore rules and unrelated worktree files. Preserve its original request/key after interruption and use native marker recovery; never edit a database or marker. I/O, permission and contention failures grant no discard authority. A newer unsupported Store stays refused.
 
 Workspace removal remains the native pinned skill's separately authorized exact-worktree operation. It deletes the complete selected `.podway` tree, preserves Git and uses `podway.workspace-removal-result/v2`. Reset, installation and managed-file updates do not imply removal authority.
+
+### Integration settings
+
+Podway v0.2.16 accepts native workspace v3 configuration with optional
+`integrations.dolgorae.enabled`. Keep existing configuration bytes; default init
+still writes workspace v1. Native validation owns all three supported schemas.
+The explicit read-only `podway --contract-generation 2 --json integration show dolgorae`
+returns `podway.integration-settings-result/v1`, with `enabled` and a `source` of
+`project`, `user` or `default`. Project settings override user settings at
+`$HOME/.config/podway/config.yaml`, then default to false. This query works without
+Store admission. Invalid user settings return `USER_CONFIG_INVALID`, even with a
+project override; preserve the error rather than suggesting runtime reset.
+Ordinary Direct commands do not read user settings or probe Dolgorae. Permission
+is separate from connection readiness and qualification; existing native Aquarium
+execution gains no Dolgorae adapter from this setting.
 
 ## Haepari
 

@@ -24,8 +24,8 @@ import yaml
 OUTPUT_SCHEMA = "podway.output/v4"
 ERROR_SCHEMA = "podway.error/v2"
 OBSERVATION_SCHEMA = "podway.observation-result/v6"
-EXPECTED_VERSION = "v0.2.15"
-RELEASE_SOURCE_COMMIT = "9a3f94c8752298f689832d05aa827a0f6496c1af"
+EXPECTED_VERSION = "v0.2.16"
+RELEASE_SOURCE_COMMIT = "e9f4b41d1d09573b7acd443b91fbfb8f378fb8e1"
 COMMAND_TIMEOUT_SECONDS = 20
 # The delegated Task scenario needs 150 loop iterations and about 576s; allow
 # room for required rework coverage and variation in native command latency.
@@ -33,7 +33,7 @@ RUN_TIMEOUT_SECONDS = 900
 MAX_GRAPH_STEPS = 192
 MAX_PARALLEL_RUNTIMES = 4
 CONTRACT_MANIFEST_DIGEST = (
-    "sha256:293cfcf7bcaebb55b55b9e7cabb5842df228dbd9afacea5d1ae78474c25ae01b"
+    "sha256:57cb8463f0f24033f9bd0437ed1943e77b21b754a888e654bd847bec13f4b91d"
 )
 
 TASK_REVIEW_ENTRY_NODES = {
@@ -944,7 +944,7 @@ def release_identity(completed: subprocess.CompletedProcess[bytes]) -> dict[str,
         or re.fullmatch(r"sha256:[0-9a-f]{64}", identity["build_identity"]) is None
     ):
         raise RuntimeQualificationError(
-            "CLI does not match the official v0.2.15 identity"
+            "CLI does not match the official v0.2.16 identity"
         )
     return identity
 
@@ -1862,6 +1862,65 @@ class ManagedRuntime:
             "archive": True,
         }
 
+    def exercise_integration_settings(self) -> dict[str, Any]:
+        assert self.sandbox is not None and self.root is not None
+        assert self.environment is not None
+        config = self.sandbox / ".podway/config.yaml"
+        original = config.read_bytes()
+        original_home = self.environment.get("HOME")
+        home = self.root / "settings-home"
+        user = home / ".config/podway/config.yaml"
+        user.parent.mkdir(parents=True)
+        self.environment["HOME"] = str(home)
+
+        def query(enabled: bool, source: str) -> None:
+            result = output_result(
+                self.raw(["--json", "integration", "show", "dolgorae"]),
+                "integration.show",
+                "podway.integration-settings-result/v1",
+            )
+            if result != {
+                "schema": "podway.integration-settings-result/v1",
+                "integration": "dolgorae",
+                "enabled": enabled,
+                "source": source,
+            }:
+                raise RuntimeQualificationError("integration permission differs")
+
+        try:
+            query(False, "default")
+            user.write_text(
+                "schema: podway.user-config/v1\nintegrations:\n  dolgorae:\n    enabled: true\n"
+            )
+            query(True, "user")
+            config.write_text(
+                "schema: podway.workspace/v3\nintegrations:\n  dolgorae:\n    enabled: false\n"
+            )
+            expected_config = config.read_bytes()
+            query(False, "project")
+            self.raw(["--json", "doctor"])
+            user.write_text("invalid: true\n")
+            invalid = self.raw(
+                ["--json", "integration", "show", "dolgorae"], expected_exit=None
+            )
+            if invalid.returncode == 0 or error_code(invalid) != "USER_CONFIG_INVALID":
+                raise RuntimeQualificationError("invalid user settings were accepted")
+            self.raw(["--json", "doctor"])
+            if config.read_bytes() != expected_config:
+                raise RuntimeQualificationError("native reads rewrote workspace v3")
+            return {
+                "precedence": ["default", "user", "project"],
+                "invalid_user_refused": True,
+                "direct_home_independent": True,
+                "workspace_v3_preserved": True,
+            }
+        finally:
+            config.write_bytes(original)
+            if original_home is None:
+                self.environment.pop("HOME", None)
+            else:
+                self.environment["HOME"] = original_home
+
     def exercise_upgrade(self, legacy_sql: Path) -> list[dict[str, Any]]:
         assert self.sandbox is not None
         podway = self.sandbox / ".podway"
@@ -1895,6 +1954,12 @@ class ManagedRuntime:
                 "WORKSPACE_CONTRACT_MISMATCH",
                 "sha256:c699977dd232891041f4063d66295b94004702875855baace876f8a7e0c6391d",
                 "v0.2.14",
+            ),
+            (
+                "v0.2.15-writer-manifest",
+                "WORKSPACE_CONTRACT_MISMATCH",
+                "sha256:293cfcf7bcaebb55b55b9e7cabb5842df228dbd9afacea5d1ae78474c25ae01b",
+                "v0.2.15",
             ),
         ):
             shown = json_payload(self.raw(["--json", "workspace", "show"]))
@@ -6611,7 +6676,7 @@ class ManagedRuntime:
                 "--summary",
                 f"qualified {procedure_id}",
                 "--reference",
-                f"official-v0.2.15-run-{self.run_index}",
+                f"official-v0.2.16-run-{self.run_index}",
                 "--idempotency-key",
                 self.next_key("terminal-disposition"),
                 "--if-workspace-uuid",
@@ -6933,6 +6998,7 @@ def qualify_runtime(binary: Path, repository: Path) -> dict[str, Any]:
             probe_root = cleanup_probe.root
             generation2_lifecycle = cleanup_probe.exercise_generation2()
             outcome_recovery = cleanup_probe.exercise_outcomes()
+            integration_settings = cleanup_probe.exercise_integration_settings()
             upgrade_scenarios = cleanup_probe.exercise_upgrade(
                 repository / "tests/fixtures/podway/generation-13-populated.sql"
             )
@@ -6975,6 +7041,7 @@ def qualify_runtime(binary: Path, repository: Path) -> dict[str, Any]:
         "failure_cleanup": "passed",
         "outcome_recovery": outcome_recovery,
         "generation2_lifecycle": generation2_lifecycle,
+        "integration_settings": integration_settings,
         "upgrade_scenarios": upgrade_scenarios,
         "workspace_removal": workspace_removal,
         "wait_scenarios": wait_scenarios,

@@ -186,7 +186,7 @@ class NativeClient:
                 "contract_manifest_schema",
                 "contract_manifest_digest",
             }
-            or tuple(map(int, version.groups())) < (0, 2, 15)
+            or tuple(map(int, version.groups())) < (0, 2, 16)
             or identity.get("contract_manifest_schema") != "podway.contract-manifest/v2"
             or identity.get("product") != "podway"
             or identity.get("target") != "aarch64-apple-darwin"

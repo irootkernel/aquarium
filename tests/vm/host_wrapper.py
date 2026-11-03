@@ -1290,6 +1290,9 @@ def main() -> int:
                     else None
                 ),
                 queue_override=args.queue_seconds,
+                podway_previous_release=Path(args.podway_previous_release)
+                if getattr(args, "podway_previous_release", None)
+                else None,
                 podway_release=Path(args.podway_release)
                 if getattr(args, "podway_release", None)
                 else None,
@@ -1410,6 +1413,9 @@ def parse_arguments() -> Any:
         int(os.environ["AQUARIUM_VM_QUEUE_SECONDS"])
         if os.environ.get("AQUARIUM_VM_QUEUE_SECONDS")
         else None
+    )
+    arguments.podway_previous_release = (
+        os.environ.get("AQUARIUM_VM_PODWAY_PREVIOUS_RELEASE") or None
     )
     arguments.podway_release = os.environ.get("AQUARIUM_VM_PODWAY_RELEASE") or None
     arguments.candidate_sha = os.environ.get("AQUARIUM_VM_CANDIDATE_SHA") or None

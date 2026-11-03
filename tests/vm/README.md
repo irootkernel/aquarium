@@ -1280,3 +1280,90 @@ The [manual scenario](recipes/scenarios/sorage-adoption.md) defines the managed
 skill behavior, and consumer restoration. Qualification is pending. Submit only
 with exact candidate and guest installation authority; local checks do not establish
 an installed result.
+
+## Podway v0.2.16 adoption suite
+
+The current [upgrade scenario](recipes/scenarios/podway-upgrade.md) targets the
+official v0.2.16 CLI and its release-pinned skill. It preserves historical stable
+profiles and adds a separately sealed authentic v0.2.15 input for writer-refusal
+and original-request replay checks. The v0.2.15 observations above retain their
+original candidate and limits. Source checks and release-input preparation do
+not establish a v0.2.16 installed result.
+
+### Podway v0.2.16 direct SSH observations
+
+Under Master's explicit direction to proceed without Haepari, the operator ran
+the installed checks over `ssh UTM` on 2026-11-03. The installed candidate was
+built from verification snapshot `bee2e50f3be585793d07e2a095fe51ee2dc30783`.
+All 200 tracked plugin payload files match the working implementation, allowing
+only the declared development-version stamp. The official Podway release source
+is `e9f4b41d1d09573b7acd443b91fbfb8f378fb8e1`; the installed CLI and complete
+paired skill matched the sealed release inputs.
+
+| Case | Observed result |
+| --- | --- |
+| Released baseline | Authentic v0.2.14 and v0.2.15 CLIs created and began sessions, then cancelled them before replacement. Custom Procedure content, tracked configuration, staged and unstaged work, and a sentinel were retained. |
+| Writer refusal | v0.2.16 refused reads, fresh writes, original-request replay and UUID-fenced reset for both authentic Stores without changing their Store or source images. The original v0.2.14 generation-1 replay retained its original error-detail shape. |
+| Explicit fixture reset | Each owned fixture acquired a fresh UUID and no current session. Successful outcome lookup and exact envelope replay passed; configuration, custom source, Git index and unrelated work were preserved. |
+| Installed source discovery | Fresh Codex contexts resolved the candidate plugin root and loaded the installed Task/Epic sources and complete paired skill. Native filesystem discovery was used; this does not qualify the unavailable workspace-discovery connector or automatic advertisement of every handler in the initial skill catalog. |
+| Task startup | Actual Executor plan delivery and independent Evaluator assessment advanced the session to `prepare-implementation`. The scoped startup checkpoint passed; the original global `rework` result, three unmet implementation obligations and intentionally failing baseline tests remain separate. |
+| Epic startup | The first Task Operator corrected the addition fixture and passed three tests. Independent evaluation passed the due work checkpoint while retaining global `evidence-needed` and three future gaps. The Coordinator advanced to `record-evidence`. |
+| Consumer restoration | Run-owned startup sessions were observed and cancelled after the bounded stop. The original Podway v0.2.14 binary, paired skill, plugin cache and registration, configuration, skills and rules matched their recorded bytes, modes and symlinks after native registration readback. Foreign plugin cache changes were recorded rather than rolled back. |
+
+The initial ephemeral Codex calls and a pre-launch path error did not qualify
+startup. Their original records remain separate from the successful persistent
+calls. Codex 0.164.0 required a persisted parent rollout for native child context;
+explicit write access to the disposable fixture's `.git` allowed Podway's local
+retention lock. No installed executable or global configuration was patched.
+
+These are bounded installed upgrade and initial orchestration observations.
+Task/Epic completion, later technical review, final acceptance, other producer
+paths and the release's separate acceptance gate were not exercised. The original
+Haepari attempt remains `INCOMPLETE`; these direct SSH results do not rewrite it
+or establish a managed Job PASS. Original requests, native responses, complete
+child reports, observations and restoration inventories are retained outside Git.
+
+### Full workflow follow-up
+
+A second direct SSH campaign on 2026-11-03 used the same installed payload and
+official v0.2.16 inputs in separate disposable addition fixtures. The standalone
+Task completed planning, implementation, Deslop refinement, verification,
+documentation, three fresh technical reviews and final independent evaluation.
+All three behavior checks passed; the final assessment had no unmet or unverified
+criteria. After Master's actual acceptance, the same native session reached
+`completed`, goal outcome `achieved` and disposition `handed_off` to the verified
+no-commit result. The Task became `Completed`; its parent remained `In Progress`.
+The existing HEAD and index were preserved, with only the approved status change
+added to the worktree.
+
+The Epic completed its sole member Task, including three fresh technical reviews,
+independent evaluation and a fixture-only member commit.
+Internal whole-Epic Validation used another three fresh technical reviewers and
+reached native `completed`, goal outcome `achieved` and disposition `not_required`.
+The unchanged implementation and exact proposed Epic status-only closeout passed
+focused checks and final independent evaluation, with no unmet or unverified
+criteria. After Master's actual overall acceptance, the approved Epic status-only
+change was committed in the fixture. The same closeout session reached
+`completed`, goal outcome `achieved` and disposition `handed_off` to that verified
+commit, with both Task and Epic `Completed` and a clean fixture worktree.
+
+During closeout preparation, the Executor ran `git write-tree` despite its
+read-only Git assignment. Independent checks confirmed unchanged source and
+staged content; no earlier physical index snapshot existed, so index-byte
+identity remains unverified. The command outputs were excluded from required
+proof, and the independent assessment found no product blocker. The original
+incident and its adjudication remain in the evidence.
+
+Before awaiting the real final decision, the operator restored the original
+controlled consumers and native plugin registration. Byte, mode and symlink
+checks after native readback passed. Both pending fixture images, including
+their native sessions, retained sources and Git state, remained unchanged for
+resumption after reinstalling the same candidate. Finalization reused those exact
+sessions and source/binding identities. A second restoration after completion
+passed the same checks and preserved both completed fixture images.
+
+These follow-up results cover the exercised one-Task fixtures through actual
+acceptance, final repository results, native terminal completion and disposition.
+Other workflows and producer paths still need their own applicable evidence;
+release acceptance remains separate. The earlier startup-only assessments and
+failed attempts retain their original scope.

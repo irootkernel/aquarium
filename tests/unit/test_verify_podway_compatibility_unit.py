@@ -1330,13 +1330,13 @@ def test_workspace_removal_replay_requires_success_with_v10_receipt() -> None:
     assert (
         verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v10"
     )
-    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.15"
+    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.16"
 
 
 @pytest.mark.parametrize(
     ("name", "version", "accepted"),
     [
-        ("podway", "v0.2.15", True),
+        ("podway", "v0.2.16", True),
         ("podway", "v0.2.14", False),
         ("podway", "v0.2.13", False),
         ("podway", "v0.2.11", False),

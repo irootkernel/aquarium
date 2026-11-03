@@ -232,7 +232,7 @@ class HostBundleTest(unittest.TestCase):
             )
             self.assertEqual(
                 podway["version"],
-                "v0.2.15" if name == "podway-candidate" else "v0.2.14",
+                "v0.2.16" if name == "podway-candidate" else "v0.2.14",
             )
         for index, name in enumerate(record["declared_suites"]):
             spec = json.loads((run_dir / f"spec-{index}.json").read_text())
