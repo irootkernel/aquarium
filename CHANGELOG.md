@@ -8,24 +8,20 @@ This file records concise shipped outcomes and the planned next stable release.
 
 - Add explicitly invoked native `epic-squad` collaboration with independent planning and result assessments, scoped corrections and recovery, and exact commit handoffs.
 - Add optional Haepari v0.1.0 setup, covering its verified CLI, complete `use-haepari` skill and readiness checks for the shared controller and VM resource; an existing managed status runtime is diagnosed `outdated` and needs its routine approval-based update before the next repository setup.
-- Add the project-owned Haepari VM suites through `make test-vm-host`, submitting the sealed bundle's consumer-declared suites as managed Jobs over the installed release controller with truthful per-suite verdict, consumer-cleanup and export-receipt reporting.
-- Add the managed release-acceptance VM suite: one uninterrupted manual Job carrying installed-skill identity over the native scopes, the approval-based status-runtime update, the EPIC-024 startup smokes, fixed-name evidence archives and verified consumer cleanup before manual completion.
+- Add Haepari-managed VM suites through `make test-vm-host`, including release acceptance with sealed Podway v0.2.16 inputs, preserved baseline evidence, fresh generation-2 Task/Epic startup checks, approved status-runtime updates and verified cleanup that retains the upgraded test installation.
 
 ### Changed
 
 - Require Mulgae v0.1.26 and its matching skill, align command v23, Doctor v7 and preflight v11, support Cursor and AGY, and automatically assess Task/Epic completion criteria through native requirements with receipt-bound results and explicit owner-report evidence when native answers are omitted; existing users must update the CLI and skill while configured provider policy and Config v5 remain intact.
-
 - Require Sorage v0.1.3 and its complete matching skill, use native zero-write preflight and the verified one-way storage upgrade, and support explicit Handoff/Memo/Channel operations with optional global or repository-local MCP and bundle configuration; existing users must update the executable, skill and storage before dependent operations.
-
 - Support explicit CLI/model profiles for `epic-squad` roles through Herdr, including same-CLI and mixed native teams, with original assessment settings preserved through recovery and commit handoffs.
 - Require cleanup ownership and handoffs for retained disposable build/test artifacts across Task, Epic, Squad, validation, diagnosis, release checks and test setup; unresolved cleanup blocks the next Task and successful workflow completion while preserving native evidence and shared caches.
 - Require Podway v0.2.16 or newer and its release-pinned skill, retain contract generation 2 and observation v6, support native workspace v3 settings, and require an explicitly approved fresh-runtime reset for incompatible earlier-writer workspaces.
 
-- Qualify Aquarium's installed-VM release-policy cutover and [Haepari VM operations runbook](docs/ops/haepari-vm-verification.md) around `make test-vm-host` (`SUITE=release-acceptance`, `MODE=manual`) with shared outer-boundary VM occupancy, `PATH`/`.venv` interpreter selection, and pre-submission versus returned Job/result handoffs, while keeping `release-handler` generic across target repository policies and running the guest-side `make test-vm` gate inside that held Job. The exact installed pilot covers upgrade, startup, contention, recovery and cleanup; publication and host activation retain separate authority.
+- Run Aquarium's installed release acceptance inside one shared Haepari allocation with the supported Python environment and revision-bound result handoffs, while `release-handler` follows each target repository's declared verification environment.
 
 ### Fixed
 
-- Verify release acceptance with sealed Podway v0.2.16 inputs and fresh generation-2 workspaces, then retain the tested Aquarium, CLI, paired skill and status runtime in the dedicated VM.
 - Require prospective approval for terminal no-op setup status recording, including the concrete scoped record and its ledger and language-observation effects.
 
 ## v0.1.21 - 2026-10-21
