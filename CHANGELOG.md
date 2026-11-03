@@ -25,6 +25,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Fixed
 
+- Verify release acceptance with sealed Podway v0.2.16 inputs and fresh generation-2 workspaces, then retain the tested Aquarium, CLI, paired skill and status runtime in the dedicated VM.
 - Require prospective approval for terminal no-op setup status recording, including the concrete scoped record and its ledger and language-observation effects.
 
 ## v0.1.21 - 2026-10-21

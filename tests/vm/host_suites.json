@@ -165,7 +165,7 @@
       "modes": [
         "manual"
       ],
-      "environment_profile": "candidate",
+      "environment_profile": "podway-candidate",
       "argv": [
         "/bin/sh",
         "tests/vm/recipes/guest_entry.sh",
@@ -223,7 +223,8 @@
         "results/release-acceptance/evidence/epic-startup.tar",
         "results/release-acceptance/evidence/epic-startup.manifest.json",
         "results/release-acceptance/evidence/stale-skill.tar",
-        "results/release-acceptance/evidence/stale-skill.manifest.json"
+        "results/release-acceptance/evidence/stale-skill.manifest.json",
+        "results/release-acceptance/podway-upgrade.json"
       ],
       "manual": {
         "scenario_document": "harness/tests/vm/recipes/scenarios/release-acceptance.md",

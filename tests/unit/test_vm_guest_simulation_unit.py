@@ -402,6 +402,12 @@ class SequenceSimulationTest(unittest.TestCase):
         (profiles / "candidate.json").write_text(
             json.dumps(candidate_profile, indent=2, ensure_ascii=False) + "\n"
         )
+        upgraded = json.loads(json.dumps(candidate_profile))
+        upgraded["profile_id"] += "-podway-16"
+        for component in upgraded["components"]:
+            if component.get("name") == "podway":
+                component["version"] = "v0.2.16"
+        (profiles / "podway-candidate.json").write_text(json.dumps(upgraded))
         lock = job / "requirements/fixture-requirements.lock"
         lock.parent.mkdir(parents=True, exist_ok=True)
         lock.write_text("pytest==9.1.1 --hash=sha256:" + "a" * 64 + "\n")
@@ -458,6 +464,11 @@ class SequenceSimulationTest(unittest.TestCase):
                     },
                     "harness_tree_sha256": digest(harness),
                     "fixture_requirements": "requirements/fixture-requirements.lock",
+                    "podway_upgrade": {
+                        "source_commit": "sim-podway-16",
+                        "contract_manifest_digest": "sim-manifest-16",
+                        "contract_generation": 2,
+                    },
                 },
                 indent=2,
             )
@@ -1533,6 +1544,24 @@ class SequenceSimulationTest(unittest.TestCase):
         if cache.exists():
             shutil.rmtree(cache)
 
+    def _upgrade_jra_dependency(self, job):
+        if not (job / "results/release-acceptance/capture.json").exists():
+            for fixture in ("task", "epic", "preservation"):
+                self._released_setup(job, fixture)
+                self.assertEqual(
+                    self._jra_run(
+                        job,
+                        "record-setup",
+                        fixture,
+                        AQUARIUM_VM_THREAD=self._released_threads[fixture],
+                    ),
+                    0,
+                    SEQUENCE_LOG[-1],
+                )
+            self._preservation_prerequisites(job)
+            self.assertEqual(self._jra_run(job, "capture"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "podway-upgrade"), 0, SEQUENCE_LOG[-1])
+
     def _run_jra_through_managed_updates(self, job: Path) -> Path:
         """The operator prefix every J-RA run shares, up to step g."""
         self._reset_fake_guest_for_jra()
@@ -1558,6 +1587,7 @@ class SequenceSimulationTest(unittest.TestCase):
             0,
             capture_path.read_text() if capture_path.is_file() else SEQUENCE_LOG[-1],
         )
+        self._upgrade_jra_dependency(job)
         self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
         self.assertEqual(self._jra_run(job, "skill-identity"), 0, SEQUENCE_LOG[-1])
         request_before_runtime = (job / "acceptance/request.json").read_bytes()
@@ -1592,6 +1622,17 @@ class SequenceSimulationTest(unittest.TestCase):
             self.assertEqual(record["exit"], 0)
             self.assertEqual(record["driver_outcome"], "managed-update-observed")
         return job / "results/release-acceptance"
+
+    def test_podway_transition_without_baseline_refuses_before_copy(self):
+        job = self.job_root("jra-upgrade-no-baseline")
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-upgrade-no-baseline")
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self.assertEqual(self._jra_run(job, "podway-upgrade"), 2, SEQUENCE_LOG[-1])
+        self.assertFalse((job / "acceptance-run/candidate-fixtures").exists())
+        self.assertFalse(
+            (job / "results/release-acceptance/podway-upgrade.json").exists()
+        )
 
     def test_jra_offline_sequence_through_the_smoke_boundary(self):
         job = self.job_root("jra-sequence")
@@ -1961,18 +2002,10 @@ class SequenceSimulationTest(unittest.TestCase):
         self.assertEqual(document["consumer_cleanup"], "verified")
         cleanup = json.loads((results / "consumer-cleanup.json").read_text())
         self.assertEqual(cleanup["violations"], [])
-        self.assertEqual(
-            sorted(
-                cleanup["runtime_end_state"][
-                    "runtime_update_created_generations_removed"
-                ]
-            ),
-            sorted(dev_generations),
-        )
-        for name in cleanup["runtime_end_state"][
-            "runtime_update_created_generations_removed"
-        ]:
-            self.assertFalse((versions / name).exists())
+        selected = cleanup["runtime_end_state"]["selected_generation"]
+        self.assertIn(selected, dev_generations)
+        self.assertTrue((versions / selected).exists())
+        self.assertEqual(cleanup["tools"]["identity"]["result"]["version"], "v0.2.16")
         self.assertEqual(self._jra_run(job, "complete-template"), 0, SEQUENCE_LOG[-1])
         template = json.loads((results / "manual-complete-template.json").read_text())
         self.assertEqual({row["status"] for row in template["scenarios"]}, {"pass"})
@@ -1983,6 +2016,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self._reset_fake_guest_for_jra()
         self._c10_establish_prior_for_hold("jra-shadow-prefix")
         self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self._upgrade_jra_dependency(job)
         self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
         self.assertEqual(
             self._jra_run(job, "stale-skill", FAKE_CODEX_SHADOW="1"),
@@ -2002,6 +2036,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self._reset_fake_guest_for_jra()
         self._c10_establish_prior_for_hold(f"{name}-prefix")
         self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self._upgrade_jra_dependency(job)
         self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
         drifted = self.home / ".codex/skills/ouroboros-orca/SKILL.md"
         original = drifted.read_bytes()
@@ -2112,7 +2147,7 @@ class SequenceSimulationTest(unittest.TestCase):
         # Reset the task setup windows so the sequence dispatches a fresh
         # setup that asks for the decision.
         shutil.rmtree(job / "acceptance-run/operations/task-setup")
-        flag = str(job / "acceptance-run/task")
+        flag = str(job / "acceptance-run/candidate-fixtures/task")
         exit_one = self._jra_run(
             job, "managed-updates", "task", FAKE_CODEX_SETUP_DECISION=flag
         )
@@ -2146,6 +2181,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self._reset_fake_guest_for_jra()
         self._c10_establish_prior_for_hold("jra-unreadable-selection-prefix")
         self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self._upgrade_jra_dependency(job)
         self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
         self.assertEqual(self._jra_run(job, "runtime-update"), 0, SEQUENCE_LOG[-1])
         current = self.home / ".aquarium/status-runtime/current"
@@ -2485,6 +2521,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self._reset_fake_guest_for_jra()
         self._c10_establish_prior_for_hold("jra-settings-drift-rule-prefix")
         self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self._upgrade_jra_dependency(job)
         self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
         rules = self.home / ".codex/rules/ouroboros.md"
         original = rules.read_bytes()
@@ -2513,6 +2550,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self._c10_establish_prior_for_hold("jra-settings-drift-config-prefix")
         self._config_with_features(self.home)
         self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self._upgrade_jra_dependency(job)
         self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
         config = self.home / ".codex/config.toml"
         original = config.read_bytes()
@@ -2706,6 +2744,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self._reset_fake_guest_for_jra()
         self._c10_establish_prior_for_hold("jra-reply-window-prefix")
         self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self._upgrade_jra_dependency(job)
         self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
         self.assertEqual(self._jra_run(job, "runtime-update"), 0, SEQUENCE_LOG[-1])
         # Install the candidate runtime BEFORE the reply, as a self-updating
@@ -2761,6 +2800,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self._reset_fake_guest_for_jra()
         self._c10_establish_prior_for_hold("jra-ignored-prefix")
         self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self._upgrade_jra_dependency(job)
         self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
         self.assertEqual(
             self._jra_run(job, "stale-skill", FAKE_CODEX_IGNORE_SCOPE="1"),
@@ -2877,6 +2917,7 @@ class SequenceSimulationTest(unittest.TestCase):
             encoding="utf-8",
         )
         self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self._upgrade_jra_dependency(job)
         self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
         self.assertEqual(
             self._jra_run(
@@ -2983,6 +3024,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self._reset_fake_guest_for_jra()
         self._c10_establish_prior_for_hold("jra-initial-record-prefix")
         self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self._upgrade_jra_dependency(job)
         self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
         self.assertEqual(self._jra_run(job, "runtime-update"), 0, SEQUENCE_LOG[-1])
         runtime_path = results / "runtime-update.json"
@@ -3028,6 +3070,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self._reset_fake_guest_for_jra()
         self._c10_establish_prior_for_hold("jra-cache-observation-prefix")
         self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self._upgrade_jra_dependency(job)
         self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
         self.assertEqual(
             self._jra_run(job, "stale-skill", FAKE_CODEX_DRIFT_BUNDLED_CACHE="1"),

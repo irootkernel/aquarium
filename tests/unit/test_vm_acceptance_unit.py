@@ -1612,3 +1612,72 @@ def test_baseline_authoring_checks_honor_the_explicit_generation(
     assert "procedure" in argv and "check" in argv
     assert "--worktree" not in argv
     assert kwargs["cwd"] == repository
+
+
+def test_candidate_fixtures_preserve_git_work_without_old_runtime(tmp_path):
+    for name in gate.FIXTURES:
+        source = tmp_path / name
+        source.mkdir()
+        gate.git(source, "init", "-q")
+        gate.git(source, "config", "user.name", "Fixture")
+        gate.git(source, "config", "user.email", "fixture@example.invalid")
+        (source / ".gitignore").write_text(".podway/runtime/\n")
+        (source / "work.txt").write_text("committed\n")
+        gate.git(source, "add", ".")
+        gate.git(source, "commit", "-qm", "fixture")
+        (source / "work.txt").write_text("staged\n")
+        gate.git(source, "add", "work.txt")
+        (source / "work.txt").write_text("unstaged\n")
+        runtime = source / ".podway/runtime/store"
+        runtime.parent.mkdir(parents=True)
+        runtime.write_bytes(b"original writer state")
+        (source / "sentinel.txt").write_text("preserve\n")
+    gate.prepare_candidate_fixtures({}, tmp_path)
+    for name in gate.FIXTURES:
+        original = tmp_path / name
+        candidate = gate.fixture_path(
+            {"separate_candidate_fixtures": True}, tmp_path, name
+        )
+        assert gate.git(candidate, "ls-files", "--stage") == gate.git(
+            original, "ls-files", "--stage"
+        )
+        assert gate.git(candidate, "status", "--porcelain") == gate.git(
+            original, "status", "--porcelain"
+        )
+        assert (candidate / "work.txt").read_text() == "unstaged\n"
+        assert (candidate / "sentinel.txt").read_text() == "preserve\n"
+        assert not (candidate / ".podway/runtime").exists()
+        (candidate / "work.txt").write_text("candidate edit\n")
+        assert (original / "work.txt").read_text() == "unstaged\n"
+        assert (
+            original / ".podway/runtime/store"
+        ).read_bytes() == b"original writer state"
+    with pytest.raises(gate.GateError):
+        gate.prepare_candidate_fixtures({}, tmp_path)
+
+
+@pytest.mark.parametrize("code", ["SESSION_NOT_FOUND", "WORKSPACE_NOT_INITIALIZED"])
+def test_optional_observation_accepts_only_absent_runtime(monkeypatch, tmp_path, code):
+    request = {"tools": {"podway": "/tools/podway"}, "podway_contract_generation": 2}
+    monkeypatch.setattr(
+        gate,
+        "command",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=5, stdout=json.dumps({"schema": "podway.error/v2", "code": code})
+        ),
+    )
+    assert gate.observe(request, tmp_path, optional=True) is None
+    with pytest.raises(gate.GateError):
+        gate.observe(request, tmp_path)
+    monkeypatch.setattr(
+        gate,
+        "command",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=5,
+            stdout=json.dumps(
+                {"schema": "podway.error/v2", "code": "WORKSPACE_CONTRACT_MISMATCH"}
+            ),
+        ),
+    )
+    with pytest.raises(gate.GateError):
+        gate.observe(request, tmp_path, optional=True)

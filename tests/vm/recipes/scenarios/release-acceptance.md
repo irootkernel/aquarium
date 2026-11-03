@@ -165,6 +165,29 @@ writes `capture.json` (later cleanup and completion checks require that
 file; `baseline.json` alone is insufficient). The old status runtime stays
 selected through this capture.
 
+## Podway v0.2.16 transition
+
+Supply `AQUARIUM_VM_PODWAY_RELEASE` with the official release input described
+by the [Podway upgrade scenario](podway-upgrade.md). The host seals the archive,
+checksum, provenance, CLI and complete paired skill and selects
+`podway-candidate` for this suite. The released v0.2.14 baseline remains unchanged.
+
+After baseline capture, update the dedicated guest's CLI and paired skill to
+those sealed v0.2.16 bytes through the scoped installed setup proposal. Preserve
+the original fixture workspaces and their admitted sessions. Then run:
+
+```sh
+/bin/sh tests/vm/recipes/guest_entry.sh --suite release-acceptance \
+  --phase podway-upgrade
+```
+
+This phase verifies the installed dependency and copies each fixture's Git work
+into `acceptance-run/candidate-fixtures/`, excluding ignored runtime state.
+Candidate operations use generation 2 and observation v6. Original session
+preservation is checked through the saved original writer against the unchanged
+baseline fixtures; candidate startup uses fresh workspaces. No earlier session
+is represented as migrated. Resume uncertain work through its existing handles.
+
 ## e. Candidate install and skill identity
 
 The `candidate-install` phase installs the candidate plugin, records the
@@ -314,10 +337,13 @@ archives, manifests and working files. Source originals and unrelated
 outputs remain in place. Each replacement is checked before publication
 against the 32 MiB per-archive and 256 MiB aggregate limits, including an
 interrupted retry. The collection pin is confirmed in preflight.
-`consumer-cleanup`
-restores prior stable, removes every generation the approved update created
-with the ledger and post-cleanup inventory as evidence, verifies the
-post-cleanup inventory, and declares the runtime end state. Only then does
+`consumer-cleanup` verifies that the tested Aquarium candidate, Podway v0.2.16,
+complete paired skill and approved candidate status runtime remain selected.
+The dedicated test VM keeps this upgraded combination. Marketplace sources stay
+in the persistent guest installation outside the disposable Job workspace.
+The post-cleanup inventory records this retained state. Temporary stale-skill
+injections are removed and their pre-scenario state is checked separately.
+Only then does
 `complete-template` emit the closed `haepari.manual-result/v1` record for
 the ten required scenarios, and the operator submits `manual complete`.
 Native collection and Haepari-owned cleanup follow; the host wrapper

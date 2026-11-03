@@ -1100,7 +1100,8 @@ def podway_identity_record(context: Context) -> dict[str, Any]:
     observed = "sha256:" + lib.sha256_file(executable)
     if pinned != observed:
         raise lib.RecipeError(
-            "the guest Podway executable digest differs from the stable "
+            "the retained test VM does not match the selected released baseline; "
+            "select a matching baseline before mutation. Podway digest differs from the stable "
             f"profile pin ({observed} != {pinned}); the unverified executable "
             "is never executed",
             "incomplete",
@@ -2263,10 +2264,44 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
         # binds to this Job's driver import. The old runtime stays selected.
         import run_acceptance as driver_module
 
-        capture = _run_driver_phase(driver_module.baseline, request_json(), run_root)
+        document = request_json()
+        backup = run_root / "baseline-podway"
+        if not backup.exists():
+            shutil.copy2(document["tools"]["podway"], backup)
+        document["baseline_tools"] = {**document["tools"], "podway": str(backup)}
+        save_request(document)
+        capture = _run_driver_phase(driver_module.baseline, document, run_root)
         lib.write_document(results / "capture.json", capture)
         return 0 if capture["exit"] == 0 else 2
+    if phase == "podway-upgrade":
+        import podway_upgrade
+        import run_acceptance as driver_module
+
+        captured = lib.read_json_safe(results / "capture.json")
+        if not isinstance(captured, dict) or captured.get("exit") != 0:
+            raise lib.RecipeError(
+                "capture the released baseline before upgrading", "incomplete"
+            )
+        tools = podway_upgrade.observe_tools(context, "candidate")
+        document = request_json()
+        driver_module.prepare_candidate_fixtures(document, run_root)
+        for name in driver_module.FIXTURES:
+            environment = lib.create_venv(
+                context.python, run_root / "candidate-fixtures" / name / ".venv"
+            )
+            lib.pip_install_locked(
+                environment, context.root / context.inputs["fixture_requirements"]
+            )
+        document["separate_candidate_fixtures"] = True
+        document["podway_contract_generation"] = 2
+        save_request(document)
+        lib.write_document(results / "podway-upgrade.json", tools)
+        return 0
     if phase == "candidate-install":
+        if request_json().get("podway_contract_generation") != 2:
+            raise lib.RecipeError(
+                "verify the sealed Podway v0.2.16 upgrade first", "incomplete"
+            )
         ledger = lib.run_ledger("release-acceptance")
         context.ensure_candidate_installed(ledger, predecessors=(PRIOR_KIND,))
         ledger.save()
@@ -2300,14 +2335,21 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
             "marketplace_root": str(marketplace_dir),
         }
         save_request(document)
-        context.snapshot("release-acceptance", "candidate", capture="post-install")
+        context.snapshot(
+            "release-acceptance",
+            "candidate",
+            profile="podway-candidate",
+            capture="post-install",
+        )
         lib.write_document(
             results / "candidate-install.json",
             {"plugin": row.get("version"), "candidate": document["candidate"]},
         )
         return 0
     if phase == "skill-identity":
-        document = skill_identity_document(context, "candidate")
+        document = skill_identity_document(
+            context, "candidate", candidate_profile="podway-candidate"
+        )
         previous = lib.read_json_safe(results / "skill-identity.json")
         if isinstance(previous, dict):
             document["prior_stage"] = previous
@@ -2607,7 +2649,10 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
             context.home / ".codex/rules", "codex-rules", ".codex/rules"
         )
         before = context.snapshot(
-            "release-acceptance", "candidate", capture="stale-pre"
+            "release-acceptance",
+            "candidate",
+            profile="podway-candidate",
+            capture="stale-pre",
         )
         planted.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(source, planted)
@@ -2619,7 +2664,7 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
                 "tree_sha256": lib.skill_tree_digest(context.checkout, planted),
             },
         }
-        observation = discovery(context, run_root / "task")
+        observation = discovery(context, run_root / "candidate-fixtures/task")
         (run_root / "stale-skill-originals").mkdir(parents=True, exist_ok=True)
         lib.write_document(
             run_root / "stale-skill-originals/skills-list.json", observation
@@ -2680,7 +2725,10 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
         }
         shutil.rmtree(planted)
         after = context.snapshot(
-            "release-acceptance", "candidate", capture="stale-post"
+            "release-acceptance",
+            "candidate",
+            profile="podway-candidate",
+            capture="stale-post",
         )
         registrations_after = lib.marketplace_registrations(context.codex)
 
@@ -2906,6 +2954,10 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
                 document, dict
             ),
             "capture.json": lambda document: document.get("exit") == 0,
+            "podway-upgrade.json": lambda document: (
+                document.get("identity", {}).get("result", {}).get("version")
+                == "v0.2.16"
+            ),
             "candidate-install.json": lambda document: isinstance(document, dict),
             "skill-identity.json": lambda document: (
                 document.get("comparisons", {}).get("all_passed") is True
@@ -2948,46 +3000,45 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
                 },
                 consumer_cleanup="unverified",
             )
-        ledger = lib.run_ledger("release-acceptance")
-        before = context.snapshot(
-            "release-acceptance", "candidate", capture="cleanup-before"
+        import podway_upgrade
+
+        context.snapshot(
+            "release-acceptance",
+            "candidate",
+            profile="podway-candidate",
+            capture="cleanup-before",
         )
-        context.ensure_prior_stable(ledger, predecessors=(CANDIDATE_KIND,))
-        current_name, _receipt = lib.read_current_generation(context.home)
-        removed_generations = []
-        for name in list(ledger.document.get("generations", [])):
-            if name != current_name and lib.remove_owned_generation(
-                context.home, name, ledger
-            ):
-                removed_generations.append(name)
-        removal = lib.remove_owned_marketplace(
-            context.codex, context.home, CANDIDATE_KIND, ledger, context.marketplace
+        tools = podway_upgrade.observe_tools(context, "candidate")
+        skills = skill_identity_document(
+            context, "candidate", candidate_profile="podway-candidate"
         )
-        ledger.save()
-        after = context.snapshot(
-            "release-acceptance", "post_cleanup", capture="post-cleanup"
-        )
-        violations = lib.postcondition_violations(
-            before, after, allowed_runtime_changes
-        )
+        current_name, receipt = lib.read_current_generation(context.home)
+        violations = []
+        if _receipt_plugin_version(receipt) != expected_version:
+            violations.append(
+                "the selected status runtime does not match the candidate"
+            )
+        if skills.get("comparisons", {}).get("all_passed") is not True:
+            violations.append("the retained installed skill identities do not match")
         lib.assert_registration(
             context.codex,
             context.marketplace,
-            str(context.marketplace_path(PRIOR_KIND)),
+            str(context.marketplace_path(CANDIDATE_KIND)),
+        )
+        context.snapshot(
+            "release-acceptance",
+            "post_cleanup",
+            profile="podway-candidate",
+            capture="post-cleanup",
         )
         lib.write_document(
             results / "consumer-cleanup.json",
             {
                 "violations": violations,
-                "candidate_marketplace": removal,
+                "tools": tools,
                 "runtime_end_state": {
                     "selected_generation": current_name,
-                    "runtime_update_created_generations_removed": removed_generations,
-                    "declared": (
-                        "the prior generation is selected; every generation this "
-                        "run created through the approved update is removed with "
-                        "the ledger and post-cleanup inventory as evidence"
-                    ),
+                    "declared": "retain the tested Aquarium candidate, Podway v0.2.16, paired skills and selected candidate status runtime",
                 },
             },
         )
@@ -3149,8 +3200,8 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
             "schema": "haepari.manual-result/v1",
             "job_id": "<admitted-job-id>",
             "installation_id": "<run.json installation_id>",
-            "profile_id": context.profile("candidate")["profile_id"],
-            "profile_digest": context.profile_digest("candidate"),
+            "profile_id": context.profile("podway-candidate")["profile_id"],
+            "profile_digest": context.profile_digest("podway-candidate"),
             "expected_revision": "<current awaiting job_revision>",
             "observer": "coordinator-fixture-operator",
             "scenarios": scenarios,

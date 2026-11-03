@@ -652,7 +652,7 @@ def build_bundle(
     )
     if not names:
         raise BundleError("select a consumer-declared suite or all")
-    dependency_suites = {"podway-upgrade", "epic-squad"}
+    dependency_suites = {"podway-upgrade", "epic-squad", "release-acceptance"}
     if podway_release is not None and not dependency_suites.intersection(names):
         raise BundleError(
             "Podway release inputs require an explicit manual dependency suite"

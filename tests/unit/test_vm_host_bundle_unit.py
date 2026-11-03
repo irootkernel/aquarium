@@ -162,8 +162,24 @@ class HostBundleTest(unittest.TestCase):
             "artifact_manifest": self.manifest,
         }
         parameters.update(overrides)
-        record = self.module.build_bundle(**parameters)
+        if suite == "release-acceptance" and "podway_release" not in overrides:
+            release = (run_dir / "release-input").resolve()
+            hashes = {}
+            for relative in self.module.PODWAY_RELEASE_FILES:
+                path = release / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(f"synthetic {relative}\n".encode())
+                hashes[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
+            parameters["podway_release"] = release
+            with mock.patch.object(self.module, "PODWAY_RELEASE_FILES", hashes):
+                record = self.module.build_bundle(**parameters)
+        else:
+            record = self.module.build_bundle(**parameters)
         return run_dir, record
+
+    def test_release_acceptance_requires_verified_podway_input(self):
+        with self.assertRaises(self.module.BundleError):
+            self.build(suite="release-acceptance", mode="manual", podway_release=None)
 
     def test_build_seals_inputs_and_builds_v2_specs(self):
         run_dir, record = self.build()
@@ -249,7 +265,7 @@ class HostBundleTest(unittest.TestCase):
                         )
                 self.assertIn("results/epic-squad/consumer-result.json", outputs)
                 self.assertIn("results/epic-squad/stage-evidence.json", outputs)
-            if name in {"podway-upgrade", "epic-squad"}:
+            if name in {"podway-upgrade", "epic-squad", "release-acceptance"}:
                 self.assertEqual(spec["mode"], "manual")
                 self.assertEqual(
                     spec["environment"]["profile_id"],

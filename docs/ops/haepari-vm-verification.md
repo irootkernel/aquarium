@@ -131,7 +131,8 @@ Observe `fixture-check`, leave the demonstration's `discovery-check` unobserved,
 then finish consumer cleanup and verify all five declared outputs before
 completion. That truthful demonstration yields native INCOMPLETE, not PASS.
 
-For release acceptance, use `MODE=manual SUITE=release-acceptance` and follow the
+For release acceptance, supply `AQUARIUM_VM_PODWAY_RELEASE`, use
+`MODE=manual SUITE=release-acceptance`, and follow the
 [complete operator runbook](../../tests/vm/recipes/scenarios/release-acceptance.md).
 It owns the phase commands, fixed profiles, model-use budget, actual proposal and
 result decisions, ten required scenarios, nine bounded evidence archives and
@@ -155,7 +156,9 @@ declared snapshots available for native collection, not newer unstaged originals
 and report gaps; positively absent outputs can release an incomplete Job, while
 existing outputs that cannot be collected retain native protection.
 
-Finish and verify consumer cleanup, then restage its actual immutable pass
+Release acceptance retains the tested Aquarium, Podway v0.2.16, paired skill
+and candidate status runtime in the dedicated VM. Verify this final installation
+and finish run-owned consumer cleanup, then restage its actual immutable pass
 receipt and restoration inventory in the same held Job. For epic-squad,
 `consumer-cleanup` seals `consumer-result.json` before another phase can overwrite
 aggregate `result.json`; `stage-evidence` consumes that receipt without executing

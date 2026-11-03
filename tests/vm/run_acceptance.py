@@ -188,6 +188,44 @@ def load_request(path):
     return request, root, identity
 
 
+def fixture_path(request, root, name):
+    """Current-generation fixtures are separate from retained writer state."""
+    return (
+        root
+        / ("candidate-fixtures" if request.get("separate_candidate_fixtures") else "")
+        / name
+    )
+
+
+def prepare_candidate_fixtures(request, root):
+    """Copy Git work without copying the original writer's ignored runtime."""
+    require(
+        not request.get("separate_candidate_fixtures"),
+        "candidate fixtures already prepared",
+    )
+    destination = root / "candidate-fixtures"
+    require(not destination.exists(), "preserve partially prepared candidate fixtures")
+    destination.mkdir()
+    for name in FIXTURES:
+        source = root / name
+        target = destination / name
+        target.mkdir()
+        shutil.copytree(source / ".git", target / ".git", symlinks=True)
+        names = set(git(source, "ls-files", "-z").split("\0")) | set(
+            git(source, "ls-files", "--others", "--exclude-standard", "-z").split("\0")
+        )
+        for relative in sorted(names - {""}):
+            path = source / relative
+            require(
+                path.is_file() and not path.is_symlink(),
+                "unsafe candidate fixture input",
+            )
+            output = target / relative
+            output.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, output)
+    return destination
+
+
 def podway_generation_options(request):
     generation = request.get("podway_contract_generation", 1)
     require(
@@ -323,7 +361,7 @@ def git(root, *arguments):
 def seed(request, root):
     template = Path(__file__).parent / "fixtures/greeting"
     for name in ("task", "epic"):
-        target = root / name
+        target = fixture_path(request, root, name)
         require(not target.exists(), f"fixture already exists; preserve it: {target}")
         shutil.copytree(template, target)
         git(target, "init", "-q")
@@ -350,7 +388,10 @@ def observe(request, repository, *, optional=False):
         check=False,
     )
     payload = json.loads(output.stdout)
-    if optional and payload.get("code") == "SESSION_NOT_FOUND":
+    if optional and payload.get("code") in {
+        "SESSION_NOT_FOUND",
+        "WORKSPACE_NOT_INITIALIZED",
+    }:
         return None
     require(
         output.returncode == 0 and payload.get("schema") == "podway.output/v4",
@@ -414,7 +455,7 @@ def baseline(request, root):
     snapshots = {}
     setup = {}
     for name in ("task", "epic", "preservation"):
-        repository = root / name
+        repository = fixture_path(request, root, name)
         require((repository / ".git").exists(), f"missing baseline repository: {name}")
         for procedure in PROCEDURES:
             path = repository / ".podway/procedures" / procedure
@@ -459,7 +500,7 @@ def baseline(request, root):
         "released_plugin_files": plugin_files(plugin),
         "cache_projection": "shipped payload; source-associated Python bytecode excluded",
         "fixtures": snapshots,
-        "discovery": discover(request, root / "task", plugin),
+        "discovery": discover(request, fixture_path(request, root, "task"), plugin),
         "authority": request["authority"],
         "setup": setup,
     }
@@ -570,7 +611,7 @@ def protected_index(value, paths):
 def verify_preservation(request, root, original, installed):
     observed = {}
     for name, before in original["fixtures"].items():
-        repository = root / name
+        repository = fixture_path(request, root, name)
         for relative, expected in {**before["protected"], **before["custom"]}.items():
             path = repository / relative
             require(
@@ -599,7 +640,18 @@ def verify_preservation(request, root, original, installed):
                     f"managed update is incomplete: {name}/{filename}",
                 )
         if before["observation"] is not None:
-            after = observe(request, repository)
+            legacy_request = {
+                **request,
+                "tools": request.get("baseline_tools", request["tools"]),
+            }
+            if request.get("separate_candidate_fixtures"):
+                legacy_request["podway_contract_generation"] = 1
+            after = observe(
+                legacy_request,
+                root / name
+                if request.get("separate_candidate_fixtures")
+                else repository,
+            )
             old_status = before["observation"]["status"]
             for key in ("id", "revision", "lifecycle"):
                 require(
@@ -692,12 +744,15 @@ def verify_setup(request, root, name, handle, *, plugin, before=None, observatio
     identifier = thread_id(handle) if Path(handle).is_file() else handle
     if observation is None:
         try:
-            observation = collect(request["tools"]["codex"], root / name, identifier)
+            observation = collect(
+                request["tools"]["codex"], fixture_path(request, root, name), identifier
+            )
         except ObservationError as error:
             raise GateError(str(error)) from error
     actual = observation["root"]
     require(
-        Path(actual["metadata"]["cwd"]).resolve() == (root / name).resolve(),
+        Path(actual["metadata"]["cwd"]).resolve()
+        == (fixture_path(request, root, name)).resolve(),
         "setup used the wrong fixture",
         "fail",
     )
@@ -770,7 +825,9 @@ def verify_setup(request, root, name, handle, *, plugin, before=None, observatio
         "item_ids": [item["id"] for item in actual["items"]],
         "installed_source": source,
         "managed_sources": {
-            filename: sha256(root / name / ".podway/procedures" / filename)
+            filename: sha256(
+                fixture_path(request, root, name) / ".podway/procedures" / filename
+            )
             for filename in PROCEDURES
         },
         **capture,
@@ -801,12 +858,16 @@ def invoke(
     require(not (resume_thread and previous), "initial resume already dispatched")
     directory.mkdir(parents=True, exist_ok=True)
     prefix = directory / f"{len(previous):03d}"
-    repository = repository or root / (
-        "epic"
-        if "epic" in case
-        else "preservation"
-        if "preservation" in case
-        else "task"
+    repository = repository or fixture_path(
+        request,
+        root,
+        (
+            "epic"
+            if "epic" in case
+            else "preservation"
+            if "preservation" in case
+            else "task"
+        ),
     )
     argv = [
         request["tools"]["codex"],
@@ -955,20 +1016,23 @@ def reconcile_setup(request, root, name, binding, original):
         "setup has no existing public handle; do not replay unknown work",
     )
     require(
-        image_hashes(managed_image(root / name))
+        image_hashes(managed_image(fixture_path(request, root, name)))
         == image_hashes(after["managed_image"]),
         "managed targets changed after the captured operation",
     )
     try:
         observation = collect(
-            request["tools"]["codex"], root / name, receipt["thread_id"]
+            request["tools"]["codex"],
+            fixture_path(request, root, name),
+            receipt["thread_id"],
         )
     except ObservationError as error:
         raise GateError(str(error)) from error
     actual = observation["root"]
     require(
         actual["metadata"]["id"] == receipt["thread_id"]
-        and Path(actual["metadata"]["cwd"]).resolve() == (root / name).resolve(),
+        and Path(actual["metadata"]["cwd"]).resolve()
+        == (fixture_path(request, root, name)).resolve(),
         "setup reconciliation used another native operation",
         "fail",
     )
@@ -1105,7 +1169,7 @@ def verify_managed_update(request, root, name, binding, original):
         f"candidate setup for {name} needs an actual operator decision or further work; resume {basis['thread_id']}",
     )
     require(
-        image_hashes(managed_image(root / name)) == expected,
+        image_hashes(managed_image(fixture_path(request, root, name))) == expected,
         "managed targets changed outside captured native setup",
     )
     current = verify_setup(
@@ -1154,13 +1218,15 @@ def setup_update(request, root, name, *, reply=None, resume_thread=None):
             "previous setup window is unresolved",
         )
         expected = image_hashes(last["managed_image"])
-    image = managed_image(root / name)
+    image = managed_image(fixture_path(request, root, name))
     require(
         image_hashes(image) == expected,
         "unexplained managed change before native setup",
     )
     discovery = discover(
-        request, root / name, request["candidate"]["installed_plugin_root"]
+        request,
+        fixture_path(request, root, name),
+        request["candidate"]["installed_plugin_root"],
     )
     prefix = directory / f"{len(receipts):03d}"
     basis = (
@@ -1177,7 +1243,7 @@ def setup_update(request, root, name, *, reply=None, resume_thread=None):
             "basis": basis,
         },
     )
-    prompt = f"""Invoke the normally discovered installed $aquarium:dev-setup for {root / name}, scoped only to Podway managed configuration and sources.
+    prompt = f"""Invoke the normally discovered installed $aquarium:dev-setup for {fixture_path(request, root, name)}, scoped only to Podway managed configuration and sources.
 Use the current installed source and normal concrete proposal/approval boundary.
 The authorized fixture operator is {request["authority"]["observer"]}; existing scope authority is {request["authority"]["reference"]}.
 Preserve custom sources, original admitted sessions, Git work and reports. Ask
@@ -1219,7 +1285,7 @@ Settle native agents and return the actual result. Do not commit or publish.
             receipt = read_json(receipt_path)
             after["thread_id"] = receipt["thread_id"]
             after["invocation_exit"] = receipt["exit"]
-        after["managed_image"] = managed_image(root / name)
+        after["managed_image"] = managed_image(fixture_path(request, root, name))
         write_once_json(Path(str(prefix) + ".setup-after.json"), after)
     return {
         "outcome": "managed-update-observed",
@@ -1459,7 +1525,7 @@ def verify_startup_state(name, current):
 def smoke(request, root, name):
     from native_observation import ObservationError, collect
 
-    repository = root / name
+    repository = fixture_path(request, root, name)
     case_root = root / (name + "-startup")
     require(not case_root.is_symlink(), "case artifact directory is a symlink")
     case_root.mkdir(parents=True, exist_ok=True)
@@ -1602,7 +1668,9 @@ def run_gate(request, root):
                     )
                     for name in FIXTURES
                 },
-                "discovery": discover(request, root / "task", installed),
+                "discovery": discover(
+                    request, fixture_path(request, root, "task"), installed
+                ),
             }
             write_json(upgrade_path, upgrade)
         result["cases"].append(upgrade)

@@ -464,6 +464,13 @@ records the adopted architecture.
 
 ## Host-submitted managed VM suites
 
+Release acceptance requires the sealed `AQUARIUM_VM_PODWAY_RELEASE` input and
+uses `podway-candidate`. Its successful final state retains the tested Aquarium,
+Podway v0.2.16, paired skill and candidate status runtime in the dedicated VM.
+Original baseline fixtures remain separate from fresh generation-2 candidate
+workspaces. Consumer cleanup verifies the retained installation and settles
+run-owned temporary effects. Other suites keep their declared cleanup contracts.
+
 VM and SSH registration stay with the native operator. A new or replaced
 Haepari binary may need macOS Automation approval for UTM access; registration
 can return `PREREQUISITE_UNAVAILABLE` until the operator approves access. Report

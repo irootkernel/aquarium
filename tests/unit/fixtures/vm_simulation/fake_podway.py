@@ -16,7 +16,8 @@ import sys
 import uuid
 
 arguments = sys.argv[1:]
-VERSION = "v0.2.14"
+GENERATION = 2 if "--contract-generation" in arguments else 1
+VERSION = "v0.2.16" if GENERATION == 2 else "v0.2.14"
 
 
 def state_path() -> str:
@@ -72,13 +73,18 @@ def main() -> int:
         # The global `--json` flag before the route yields the envelope the
         # driver's versions() reads; `podway version --json` prints the bare
         # reported shape.
-        if arguments[0] == "--json":
+        if arguments[0] == "--json" or (GENERATION == 2 and "--json" in arguments):
             identity = {
                 "schema": "podway.version-identity/v1",
                 "version": VERSION,
                 "commit": "fa29dba929777b020377bc9803cb0a3954d219b1",
             }
-            result = {"schema": "podway.version-result/v2", "version": VERSION}
+            result = {
+                "schema": "podway.version-result/v2",
+                "version": VERSION,
+                "source_commit": "sim-podway-16",
+                "contract_manifest_digest": "sim-manifest-16",
+            }
             if "--identity" in arguments:
                 result["identity"] = identity
             print(json.dumps(envelope(result)))
@@ -166,7 +172,9 @@ def main() -> int:
             json.dumps(
                 envelope(
                     {
-                        "schema": "podway.observation-result/v5",
+                        "schema": "podway.observation-result/v6"
+                        if GENERATION == 2
+                        else "podway.observation-result/v5",
                         "status": {
                             "session": {
                                 "id": session["session_id"],

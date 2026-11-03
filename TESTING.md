@@ -217,6 +217,13 @@ meaningful application artifacts are required; success sentences are insufficien
 
 ## Host-submitted managed VM suites
 
+Release acceptance requires the sealed `AQUARIUM_VM_PODWAY_RELEASE` input and
+uses `podway-candidate`. Its successful final state retains the tested Aquarium,
+Podway v0.2.16, paired skill and candidate status runtime in the dedicated VM.
+Original baseline fixtures remain separate from fresh generation-2 candidate
+workspaces. Consumer cleanup verifies the retained installation and settles
+run-owned temporary effects. Other suites keep their declared cleanup contracts.
+
 TASK-088 adds the separate `make test-vm-host HAEPARI=<absolute CLI>
 RESOURCE=<registered id> MODE=auto|manual RUN_DIR=<private 0700 physical
 path> SUITE=<suite|all> GUEST_CONTEXT=<private json>` wrapper over the
