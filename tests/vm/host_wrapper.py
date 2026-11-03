@@ -258,13 +258,19 @@ def queue_position(binary: str, resource: str) -> int:
         if not isinstance(cursor, str) or not cursor:
             raise Refusal("queue pagination is truncated; refuse speculative sizing")
     waited, envelope = invoke(binary, "resources", "list", "--json")
-    if waited == 0 and envelope["ok"]:
-        for row in envelope.get("data", {}).get("resources", []):
-            if isinstance(row, dict) and row.get("resource_id") == resource:
-                occupancy = row.get("occupancy")
-                if isinstance(occupancy, int) and occupancy > 0:
-                    ahead += 1
-                break
+    if waited != 0 or not envelope["ok"]:
+        raise Refusal(
+            "resource occupancy is unobservable; retain the original run and "
+            f"follow the native retry policy: {json.dumps(envelope.get('error', {}))}",
+            native=True,
+            exit_code=waited or 2,
+        )
+    for row in envelope.get("data", {}).get("resources", []):
+        if isinstance(row, dict) and row.get("resource_id") == resource:
+            occupancy = row.get("occupancy")
+            if isinstance(occupancy, int) and occupancy > 0:
+                ahead += 1
+            break
     return ahead
 
 

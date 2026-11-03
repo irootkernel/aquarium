@@ -1109,6 +1109,65 @@ class HostWrapperTest(unittest.TestCase):
             len([e for e in self.log_entries(state) if e["argv"][0] == "submit"]), 0
         )
 
+    def test_unavailable_resource_inventory_preserves_unsubmitted_request(self):
+        module = self._load_host_wrapper_module("hw_resource_inventory_error")
+        for exit_code, code in (
+            (6, "STORAGE_UNAVAILABLE"),
+            (6, "TRANSPORT_UNCERTAIN"),
+            (2, "INVALID_REQUEST"),
+        ):
+            with self.subTest(code=code):
+                run = Path(tempfile.mkdtemp(prefix="queue-unavailable-", dir=self.work))
+                spec = run / "spec-0.json"
+                spec.write_text(
+                    json.dumps(
+                        {
+                            "resource_id": "synthetic-resource",
+                            "deadlines": {"queue_seconds": 26100},
+                        }
+                    )
+                )
+                entry = {
+                    "suite": "release-acceptance",
+                    "spec": spec.name,
+                    "spec_sha256": hashlib.sha256(spec.read_bytes()).hexdigest(),
+                    "request_key": "saved-queue-request",
+                    "submission_started": False,
+                }
+                record = {"jobs": [entry]}
+                module.save(run / "run.json", record)
+                before = (run / "run.json").read_bytes()
+                native_error = error_envelope(
+                    code, "reconcile" if exit_code == 6 else "none"
+                )
+                responses = [
+                    (0, envelope("jobs.list", {"jobs": [], "more": False})),
+                    (exit_code, native_error),
+                ]
+                with (
+                    mock.patch.object(module, "invoke", side_effect=responses) as calls,
+                    self.assertRaises(module.Refusal) as raised,
+                ):
+                    module.submit_suite(
+                        "fixture-haepari",
+                        run,
+                        record,
+                        entry,
+                        types.SimpleNamespace(resource="synthetic-resource"),
+                    )
+                self.assertTrue(raised.exception.native)
+                self.assertEqual(raised.exception.exit_code, exit_code)
+                message = str(raised.exception)
+                self.assertEqual(
+                    json.loads(message[message.index("{") :]), native_error["error"]
+                )
+                self.assertNotIn(
+                    "submit", [call.args[1] for call in calls.call_args_list]
+                )
+                self.assertFalse(entry["submission_started"])
+                self.assertNotIn("job_id", entry)
+                self.assertEqual((run / "run.json").read_bytes(), before)
+
     def test_s5_2_kill_and_reconnect_same_job_and_export_reuse(self):
         run_dir, state = self.scenario("reconnect-hold")
         self.doctor_ok(state)

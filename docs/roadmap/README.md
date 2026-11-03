@@ -818,7 +818,7 @@ Herdr/mixed execution, commit and recovery integration from EPIC-028 is complete
 Changing the selected route requires user direction. Preserve native-only
 delivery while the extension develops.
 
-**Detailed SOT:** [Native Epic Squad collaboration](../specs/agent-orchestration.md#native-epic-squad-collaboration-source)
+**Canonical Outcomes:** [Native Epic Squad collaboration](../specs/agent-orchestration.md#native-epic-squad-collaboration-source)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
