@@ -493,6 +493,7 @@ def baseline(request, root):
     )
     result = {
         "schema": "aquarium.vm-baseline/v1",
+        "podway_contract_generation": request.get("podway_contract_generation", 1),
         "combination": observed,
         "installed_plugin": installed_plugin(
             request, request["released_marketplace_root"], plugin
@@ -645,7 +646,9 @@ def verify_preservation(request, root, original, installed):
                 "tools": request.get("baseline_tools", request["tools"]),
             }
             if request.get("separate_candidate_fixtures"):
-                legacy_request["podway_contract_generation"] = 1
+                legacy_request["podway_contract_generation"] = original.get(
+                    "podway_contract_generation", 1
+                )
             after = observe(
                 legacy_request,
                 root / name

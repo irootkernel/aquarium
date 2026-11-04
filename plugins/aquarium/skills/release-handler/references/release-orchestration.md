@@ -328,3 +328,13 @@ wiring owns the breaking user-action entry. Revisit that decision if the candida
 activates behavior. TASK-175/176 retain scenario preparation and actual installed
 observations, including the Haepari role seams. No new report/helper schema,
 Podway release Procedure, automated LLM gate or retry quota is introduced.
+
+## Prepared integrated verification
+
+The source repository's `tests/vm/recipes/scenarios/release-orchestration.md` and
+`tests/vm/fixtures/release-orchestration/cases.json` prepare the complete original
+release-role scenarios through the existing managed adapter. TASK-176 retains
+actual installed Codex observations and original Job/result/consumer/native
+cleanup evidence against the exact committed matching candidate. J-RA separately
+checks only release-handler plan-readiness startup. These methods change none
+of the accepted role, QA, gate, publication or recovery authority above.

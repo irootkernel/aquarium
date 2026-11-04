@@ -1632,6 +1632,132 @@ def test_baseline_authoring_checks_honor_the_explicit_generation(
     assert kwargs["cwd"] == repository
 
 
+@pytest.mark.parametrize("generation", [None, 1, 2])
+def test_baseline_records_original_generation_without_candidate_rebinding(
+    tmp_path, monkeypatch, generation
+):
+    for name in gate.FIXTURES:
+        (tmp_path / name / ".git").mkdir(parents=True)
+        path = tmp_path / name / ".podway/procedures/fixture.yaml"
+        path.parent.mkdir(parents=True)
+        path.write_text("original source")
+    monkeypatch.setattr(gate, "PROCEDURES", ["fixture.yaml"])
+    monkeypatch.setattr(gate, "versions", lambda *args: {"aquarium": "0.1.22"})
+    monkeypatch.setattr(gate, "command", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        gate,
+        "snapshot",
+        lambda *args: {
+            "custom": {"fixture.yaml": "original"},
+            "observation": {
+                "schema": "podway.observation-result/v6"
+                if generation == 2
+                else "podway.observation-result/v5"
+            },
+            "git_status": " M fixture.yaml",
+        },
+    )
+    for name in ("verify_setup", "installed_plugin", "plugin_files", "discover"):
+        monkeypatch.setattr(gate, name, lambda *args, **kwargs: {})
+    request = {
+        "tools": {"podway": "/original/podway"},
+        "released_plugin_root": str(tmp_path / "plugin"),
+        "released_marketplace_root": "prior",
+        "baseline_combination": {"aquarium": "0.1.22"},
+        "baseline_setup": {name: "original-" + name for name in gate.FIXTURES},
+        "authority": {"observer": "synthetic"},
+    }
+    if generation is not None:
+        request["podway_contract_generation"] = generation
+    gate.baseline(request, tmp_path)
+    original = (tmp_path / "baseline.json").read_bytes()
+    assert json.loads(original)["podway_contract_generation"] == (generation or 1)
+    request["podway_contract_generation"] = 2
+    request["tools"]["podway"] = "/candidate/podway"
+    assert (tmp_path / "baseline.json").read_bytes() == original
+
+
+@pytest.mark.parametrize("original_generation", ["legacy", 1, 2, True, 0, 3, "2", None])
+def test_separate_fixtures_observe_original_writer_generation(
+    tmp_path, monkeypatch, original_generation
+):
+    observation = {
+        "status": {
+            "session": {"id": "original-session", "revision": 7, "lifecycle": "active"},
+            "procedure": {"digest": "original-source"},
+        }
+    }
+    before = {
+        "fixtures": {
+            "preservation": {
+                "protected": {},
+                "custom": {},
+                "git_head": "original-head",
+                "index": "",
+                "observation": observation,
+            }
+        }
+    }
+    if original_generation != "legacy":
+        before["podway_contract_generation"] = original_generation
+    original = copy.deepcopy(before)
+    request = {
+        "separate_candidate_fixtures": True,
+        "podway_contract_generation": 2,
+        "tools": {"podway": "/candidate/podway"},
+        "baseline_tools": {"podway": "/original/podway"},
+    }
+    original_request = copy.deepcopy(request)
+    monkeypatch.setattr(gate, "PROCEDURES", [])
+    monkeypatch.setattr(
+        gate,
+        "git",
+        lambda repository, *args: (
+            "original-head" if args == ("rev-parse", "HEAD") else ""
+        ),
+    )
+    calls = []
+
+    def observe(selected, repository):
+        options = gate.podway_generation_options(selected)
+        calls.append((selected, repository, options))
+        return observation
+
+    monkeypatch.setattr(gate, "observe", observe)
+    monkeypatch.setattr(
+        gate,
+        "snapshot",
+        lambda selected, repository, plugin: {
+            "candidate": str(repository),
+            "generation": selected["podway_contract_generation"],
+        },
+    )
+    if (
+        type(original_generation) is int
+        and original_generation in (1, 2)
+        or original_generation == "legacy"
+    ):
+        result = gate.verify_preservation(
+            request, tmp_path, before, tmp_path / "installed"
+        )
+        selected, repository, options = calls[0]
+        assert selected["tools"] == request["baseline_tools"]
+        assert repository == tmp_path / "preservation"
+        assert options == (
+            ["--contract-generation", "2"] if original_generation == 2 else []
+        )
+        assert result["preservation"] == {
+            "candidate": str(tmp_path / "candidate-fixtures/preservation"),
+            "generation": 2,
+        }
+    else:
+        with pytest.raises(gate.GateError):
+            gate.verify_preservation(request, tmp_path, before, tmp_path / "installed")
+        assert not calls
+    assert request == original_request
+    assert before == original
+
+
 def test_candidate_fixtures_preserve_git_work_without_old_runtime(tmp_path):
     for name in gate.FIXTURES:
         source = tmp_path / name

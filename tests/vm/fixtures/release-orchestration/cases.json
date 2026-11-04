@@ -1,0 +1,931 @@
+{
+  "source": "docs/todo/TODO-RELEASE-ORCHESTRATION.md#verification-and-evidence",
+  "cases": {
+    "released-baseline": {
+      "original_variants": [
+        "Meaningful actual released state, retained session/custom source, Git work and unrelated sentinel.",
+        "Exact host-released baseline/profile applicability and original-writer settlement."
+      ],
+      "required_evidence": "Original baseline, source and configuration inventories, actual setup/settlement records and input identities.",
+      "variants": [
+        {
+          "id": "released-baseline-01",
+          "objective": "Meaningful actual released state, retained session/custom source, Git work and unrelated sentinel.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "released-baseline-02",
+          "objective": "Exact host-released baseline/profile applicability and original-writer settlement.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    },
+    "installed-discovery": {
+      "original_variants": [
+        "Exact committed candidate and matching harness.",
+        "Fresh installed Codex discovery and native Coordinator/Executor/Evaluator configuration.",
+        "Unavailable required role/capability remains a visible gap."
+      ],
+      "required_evidence": "Installed package/skill/artifact/profile comparisons, actual public native discovery and requested/applied/unknown configuration.",
+      "variants": [
+        {
+          "id": "installed-discovery-01",
+          "objective": "Exact committed candidate and matching harness.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "installed-discovery-02",
+          "objective": "Fresh installed Codex discovery and native Coordinator/Executor/Evaluator configuration.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "installed-discovery-03",
+          "objective": "Unavailable required role/capability remains a visible gap.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    },
+    "full-gate-before-commit": {
+      "original_variants": [
+        "Normal previous-release full mode.",
+        "Actual delivery and all four assessment boundaries.",
+        "Actual post-hook tree, sole parent and metadata-only delta binding.",
+        "Material hook drift invalidates affected evidence."
+      ],
+      "required_evidence": "Original assignments/reports, QA records, actual gates, decisions, commit/tree/parent/delta and local fixture publication readback.",
+      "variants": [
+        {
+          "id": "full-gate-before-commit-native-complete",
+          "objective": "Actual role delivery and all four assessment boundaries through fixture publication completion, with post-hook byte and parent binding.",
+          "original_native_row": "Full release, gate before commit",
+          "native_required": true,
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full"
+        },
+        {
+          "id": "full-gate-before-commit-01",
+          "objective": "Normal previous-release full mode.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": true
+        },
+        {
+          "id": "full-gate-before-commit-02",
+          "objective": "Actual delivery and all four assessment boundaries.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "full-gate-before-commit-03",
+          "objective": "Actual post-hook tree, sole parent and metadata-only delta binding.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "full-gate-before-commit-04",
+          "objective": "Material hook drift invalidates affected evidence.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    },
+    "commit-before-gate": {
+      "original_variants": [
+        "Normal full mode reaches readiness on the exact clean release commit.",
+        "Actual failed gate preserves the unpushed commit and stops before unauthorized history changes.",
+        "Known-unstarted policy-later gate resumes only after complete original/current prerequisite proof and fresh actual bounded execution authority.",
+        "Pending or uncertain gate reconnects to the same operation/Job.",
+        "Missing or stale QA, neutral binding, light confirmation, installed applicability or check inputs disqualifies known-unstarted recovery.",
+        "Existing publication effects, target objects, conflicting ancestry or commit drift disqualify that recovery branch."
+      ],
+      "required_evidence": "Original start/no-start facts, public operation records, preserved commit identity, prerequisite records, actual new grant and real gate outputs; no synthetic gate SHA or PASS.",
+      "variants": [
+        {
+          "id": "commit-before-gate-native-complete",
+          "objective": "A clean-commit policy such as Podway's reaches publication readiness with the actual gate result bound to that commit. A failed gate preserves the unpushed commit and stops before unauthorized history changes or publication.",
+          "original_native_row": "Commit before gate",
+          "native_required": true,
+          "order": "after",
+          "baseline": "previous",
+          "mode": "full"
+        },
+        {
+          "id": "commit-before-gate-01",
+          "objective": "Normal full mode reaches readiness on the exact clean release commit.",
+          "order": "after",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": true
+        },
+        {
+          "id": "commit-before-gate-02",
+          "objective": "Actual failed gate preserves the unpushed commit and stops before unauthorized history changes.",
+          "order": "after",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "commit-before-gate-03",
+          "objective": "Known-unstarted policy-later gate resumes only after complete original/current prerequisite proof and fresh actual bounded execution authority.",
+          "order": "after",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "commit-before-gate-04",
+          "objective": "Pending or uncertain gate reconnects to the same operation/Job.",
+          "order": "after",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "commit-before-gate-05",
+          "objective": "Missing or stale QA, neutral binding, light confirmation, installed applicability or check inputs disqualifies known-unstarted recovery.",
+          "order": "after",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "commit-before-gate-06",
+          "objective": "Existing publication effects, target objects, conflicting ancestry or commit drift disqualify that recovery branch.",
+          "order": "after",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    },
+    "first-release-full-light": {
+      "original_variants": [
+        "Previous-release light mode under both gate orders.",
+        "Confirmed first-release full mode under both gate orders.",
+        "Confirmed first-release light mode under both gate orders.",
+        "Absent first-release/version/mode confirmation stops.",
+        "Complete first-release reachable-history/current-surface coverage with null prior baseline."
+      ],
+      "required_evidence": "Actual fixture-operator decisions, complete scope/notes matrices, exact-SHA prior-result confirmations and actual permitted reduced execution.",
+      "variants": [
+        {
+          "id": "first-release-full-light-native-complete",
+          "objective": "Actual fixture-operator confirmation binds to the exact candidate and required prior results; candidate drift invalidates it without silently switching modes or inventing passing checks.",
+          "original_native_row": "Light mode and drift",
+          "native_required": true,
+          "order": "before",
+          "baseline": "previous",
+          "mode": "light"
+        },
+        {
+          "id": "first-release-full-light-previous-light-before",
+          "objective": "Actual fixture-operator decisions and original scope/confirmation obligations for previous light before",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "light",
+          "native_required": true
+        },
+        {
+          "id": "first-release-full-light-previous-light-after",
+          "objective": "Actual fixture-operator decisions and original scope/confirmation obligations for previous light after",
+          "order": "after",
+          "baseline": "previous",
+          "mode": "light",
+          "native_required": true
+        },
+        {
+          "id": "first-release-full-light-first-full-before",
+          "objective": "Actual fixture-operator decisions and original scope/confirmation obligations for first full before",
+          "order": "before",
+          "baseline": "first",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "first-release-full-light-first-full-after",
+          "objective": "Actual fixture-operator decisions and original scope/confirmation obligations for first full after",
+          "order": "after",
+          "baseline": "first",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "first-release-full-light-first-light-before",
+          "objective": "Actual fixture-operator decisions and original scope/confirmation obligations for first light before",
+          "order": "before",
+          "baseline": "first",
+          "mode": "light",
+          "native_required": false
+        },
+        {
+          "id": "first-release-full-light-first-light-after",
+          "objective": "Actual fixture-operator decisions and original scope/confirmation obligations for first light after",
+          "order": "after",
+          "baseline": "first",
+          "mode": "light",
+          "native_required": false
+        },
+        {
+          "id": "first-release-full-light-boundary-01",
+          "objective": "Absent first-release/version/mode confirmation stops.",
+          "native_required": false
+        },
+        {
+          "id": "first-release-full-light-boundary-02",
+          "objective": "Complete first-release reachable-history/current-surface coverage with null prior baseline.",
+          "native_required": false
+        }
+      ]
+    },
+    "negative-and-drift": {
+      "original_variants": [
+        "rework and evidence-needed at dependent boundaries.",
+        "Changed candidate, requirement or material check input invalidates affected rows.",
+        "Missing, unreadable, truncated or wrong-candidate original report.",
+        "Missing actual Executor or independent Evaluator result.",
+        "Light confirmation drift stops without an implicit full-mode switch.",
+        "Later VM evidence remains pending at QA readiness when policy does not yet make it due."
+      ],
+      "required_evidence": "Original negative reports/gaps, before/after identities and proof that dependent effects did not occur.",
+      "variants": [
+        {
+          "id": "negative-and-drift-native-complete",
+          "objective": "`rework` or `evidence-needed` prevents the dependent effect; it supplies no new authority and cannot turn QA findings or incomplete coverage into a passing result.",
+          "original_native_row": "Negative assessment",
+          "native_required": true,
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full"
+        },
+        {
+          "id": "negative-and-drift-01",
+          "objective": "rework and evidence-needed at dependent boundaries.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": true
+        },
+        {
+          "id": "negative-and-drift-02",
+          "objective": "Changed candidate, requirement or material check input invalidates affected rows.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "negative-and-drift-03",
+          "objective": "Missing, unreadable, truncated or wrong-candidate original report.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "negative-and-drift-04",
+          "objective": "Missing actual Executor or independent Evaluator result.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "negative-and-drift-05",
+          "objective": "Light confirmation drift stops without an implicit full-mode switch.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "negative-and-drift-06",
+          "objective": "Later VM evidence remains pending at QA readiness when policy does not yet make it due.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    },
+    "qa-confirmation": {
+      "original_variants": [
+        "Preserve original full FINDINGS/INCOMPLETE and report it before remediation.",
+        "One correction Executor delivers the bounded fix and focused results.",
+        "Actual confirmation stop and operator reply.",
+        "prepare-confirmation precedes refreshed QA readiness; negative readiness leaves the claim absent.",
+        "Assessed physical manifest, helper-native canonical digest and bytes reach begin unchanged.",
+        "Retained superseded manifest is never selected.",
+        "Claim manifest/path/digest readback precedes dispatch.",
+        "Identical begin/finish recovery uses the same claim/admission without repeated scenario dispatch.",
+        "One confirmation only; failed/incomplete confirmation grants no further correction or automatic full pass."
+      ],
+      "required_evidence": "Original frozen record, every retained cluster, correction handoff, actual decisions, manifests/receipts/claim/admission/terminal records and real dispatch counts.",
+      "variants": [
+        {
+          "id": "qa-confirmation-native-complete",
+          "objective": "One correction Executor delivers the bounded fix and focused evidence; the Coordinator stops at the existing confirmation boundary. On actual fixture-operator confirmation, the remediated candidate receives refreshed QA-readiness coverage after `prepare-confirmation` and before `begin-confirmation` creates its claim. A negative assessment leaves the claim absent; only the ready candidate enters the one permitted confirmation pass.",
+          "original_native_row": "QA findings and confirmation",
+          "native_required": true,
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full"
+        },
+        {
+          "id": "qa-confirmation-01",
+          "objective": "Preserve original full FINDINGS/INCOMPLETE and report it before remediation.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": true
+        },
+        {
+          "id": "qa-confirmation-02",
+          "objective": "One correction Executor delivers the bounded fix and focused results.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "qa-confirmation-03",
+          "objective": "Actual confirmation stop and operator reply.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "qa-confirmation-04",
+          "objective": "prepare-confirmation precedes refreshed QA readiness; negative readiness leaves the claim absent.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "qa-confirmation-05",
+          "objective": "Assessed physical manifest, helper-native canonical digest and bytes reach begin unchanged.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "qa-confirmation-06",
+          "objective": "Retained superseded manifest is never selected.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "qa-confirmation-07",
+          "objective": "Claim manifest/path/digest readback precedes dispatch.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "qa-confirmation-08",
+          "objective": "Identical begin/finish recovery uses the same claim/admission without repeated scenario dispatch.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "qa-confirmation-09",
+          "objective": "One confirmation only; failed/incomplete confirmation grants no further correction or automatic full pass.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    },
+    "gate-convergence-neutrality": {
+      "original_variants": [
+        "Authoritative public checkpoints, expected mismatch rejection, failing-stage suffix and final uninterrupted aggregate.",
+        "QA-affecting correction stops for separately authorized full QA.",
+        "One eligible non-distributed direct child receives independent eligibility before actual equivalence approval.",
+        "Separate negative cases for each of the six eligibility conditions.",
+        "Second reuse, non-direct child, incomplete frozen evidence and ambiguous distribution classification reject reuse.",
+        "Suffix completion, small diff or an Evaluator report never grants an extra QA pass."
+      ],
+      "required_evidence": "Exact diff and distribution authority, six distinct eligibility rows, actual equivalence decision, separate direct-QA/release-basis SHAs and final gate evidence.",
+      "variants": [
+        {
+          "id": "gate-convergence-neutrality-01",
+          "objective": "Authoritative public checkpoints, expected mismatch rejection, failing-stage suffix and final uninterrupted aggregate.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "gate-convergence-neutrality-02",
+          "objective": "QA-affecting correction stops for separately authorized full QA.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "gate-convergence-neutrality-03",
+          "objective": "One eligible non-distributed direct child receives independent eligibility before actual equivalence approval.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "gate-convergence-neutrality-04",
+          "objective": "Separate negative cases for each of the six eligibility conditions.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "gate-convergence-neutrality-05",
+          "objective": "Second reuse, non-direct child, incomplete frozen evidence and ambiguous distribution classification reject reuse.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "gate-convergence-neutrality-06",
+          "objective": "Suffix completion, small diff or an Evaluator report never grants an extra QA pass.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    },
+    "publication-recovery": {
+      "original_variants": [
+        "Partial states before push, after main push, after annotated tag push and after hosted Release creation.",
+        "Fresh v5 inspector selects one authorized remaining action and skips matching objects.",
+        "Verified advanced remote includes the original release commit; no main rewrite and original tag/Release target retained.",
+        "Sibling advancement, divergence, unknown ancestry, conflicts and missing bindings stop.",
+        "Unknown mutation reply is reconciled from actual local Git/hosting objects before replay.",
+        "Highlights are assessed separately from validation text.",
+        "Negative completion reports actual published fixture objects without rollback/republication.",
+        "Retarget-only and separately requested next-cycle paths retain their bounded grants and synchronization stops."
+      ],
+      "required_evidence": "Original Git/stand-in commands and exits, exact v5 observations/results, effect log, current object readback, independent readiness/completion and remaining authority.",
+      "variants": [
+        {
+          "id": "publication-recovery-native-complete",
+          "objective": "A new invocation reconciles partial objects through the inspector and an applicable independent Evaluator, preserves missing-authority stops and creates no duplicate publication objects.",
+          "original_native_row": "Interrupted publication",
+          "native_required": true,
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full"
+        },
+        {
+          "id": "publication-recovery-01",
+          "objective": "Partial states before push, after main push, after annotated tag push and after hosted Release creation.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": true
+        },
+        {
+          "id": "publication-recovery-02",
+          "objective": "Fresh v5 inspector selects one authorized remaining action and skips matching objects.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "publication-recovery-03",
+          "objective": "Verified advanced remote includes the original release commit; no main rewrite and original tag/Release target retained.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "publication-recovery-04",
+          "objective": "Sibling advancement, divergence, unknown ancestry, conflicts and missing bindings stop.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "publication-recovery-05",
+          "objective": "Unknown mutation reply is reconciled from actual local Git/hosting objects before replay.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "publication-recovery-06",
+          "objective": "Highlights are assessed separately from validation text.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "publication-recovery-07",
+          "objective": "Negative completion reports actual published fixture objects without rollback/republication.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "publication-recovery-08",
+          "objective": "Retarget-only and separately requested next-cycle paths retain their bounded grants and synchronization stops.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    },
+    "role-replacement": {
+      "original_variants": [
+        "Settle mutating Executor, descendants and background effects before replacement.",
+        "Recover complete original results through existing public handles before redispatch.",
+        "Reconnect logical Evaluator or supply independent replacement with original criteria, findings, current artifacts and remaining authority.",
+        "Restored pass or actor identity alone does not establish applicability.",
+        "Coordinator self-assessment cannot replace required independence."
+      ],
+      "required_evidence": "Original assignments/results, actual public handles/configuration, settlement evidence, replacement handoff and current applicability.",
+      "variants": [
+        {
+          "id": "role-replacement-01",
+          "objective": "Settle mutating Executor, descendants and background effects before replacement.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": true
+        },
+        {
+          "id": "role-replacement-02",
+          "objective": "Recover complete original results through existing public handles before redispatch.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "role-replacement-03",
+          "objective": "Reconnect logical Evaluator or supply independent replacement with original criteria, findings, current artifacts and remaining authority.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "role-replacement-04",
+          "objective": "Restored pass or actor identity alone does not establish applicability.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "role-replacement-05",
+          "objective": "Coordinator self-assessment cannot replace required independence.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    },
+    "managed-resource-recovery": {
+      "original_variants": [
+        "Two actual disposable project callers P/Q share the same native resource: Q is queued during P's manual hold and\n  its original Job actually executes/reaches manual-ready only after P's native resource release. Retain both complete original\n  transactions; queued cancellation is a distinct variant.",
+        "Manual occupancy remains held during hands-on work.",
+        "Queued cancellation and active cancellation retain actual terminal outcomes.",
+        "Observer timeout remains pending.",
+        "Lost admission reply follows original key/spec and native retry hint.",
+        "Same-Job reconnect and replacement Executor preserve original identity/effects.",
+        "Resource return is observed separately from a workload or assessment result."
+      ],
+      "required_evidence": "Persisted request/spec before submit, installation/resource/profile/input identities, Job/revisions, native wait/events/inspect/cancel originals, timeline and applicability of any reused EPIC-019 evidence.",
+      "variants": [
+        {
+          "id": "managed-resource-recovery-native-complete",
+          "objective": "Using the accepted EPIC-019 adapter, two disposable project callers share one VM resource without overlap; manual checks retain occupancy, timeout/lost reply/replacement reconnect to the original Job, and cancellation/collection/cleanup failures retain their actual native and consumer outcomes. Assessments use original due results and create no duplicate Job or review lock. Verify added role seams and retain the exact applicability basis for reused native evidence.",
+          "original_native_row": "Adopted managed VM path",
+          "native_required": true,
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full"
+        },
+        {
+          "id": "managed-resource-recovery-01",
+          "objective": "Two actual disposable project callers P/Q share the same native resource: Q is queued during P's manual hold and\n  its original Job actually executes/reaches manual-ready only after P's native resource release. Retain both complete original\n  transactions; queued cancellation is a distinct variant.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": true
+        },
+        {
+          "id": "managed-resource-recovery-02",
+          "objective": "Manual occupancy remains held during hands-on work.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "managed-resource-recovery-03",
+          "objective": "Queued cancellation and active cancellation retain actual terminal outcomes.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "managed-resource-recovery-04",
+          "objective": "Observer timeout remains pending.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "managed-resource-recovery-05",
+          "objective": "Lost admission reply follows original key/spec and native retry hint.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "managed-resource-recovery-06",
+          "objective": "Same-Job reconnect and replacement Executor preserve original identity/effects.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "managed-resource-recovery-07",
+          "objective": "Resource return is observed separately from a workload or assessment result.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    },
+    "evidence-cleanup-failures": {
+      "original_variants": [
+        "Missing collected output or manifest member.",
+        "Collection/export failure and unavailable original result.",
+        "Consumer cleanup failure despite native workload PASS.",
+        "Native cleanup failure despite successful consumer cleanup.",
+        "Interrupted staging, malformed inventory and retry preserve original bytes and failed history.",
+        "No replacement Job or synthetic successful cleanup."
+      ],
+      "required_evidence": "Separate native workload/evidence/cleanup/disposition facts, consumer receipt/inventory, actual export manifest and all available originals.",
+      "variants": [
+        {
+          "id": "evidence-cleanup-failures-01",
+          "objective": "Missing collected output or manifest member.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "evidence-cleanup-failures-02",
+          "objective": "Collection/export failure and unavailable original result.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "evidence-cleanup-failures-03",
+          "objective": "Consumer cleanup failure despite native workload PASS.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "evidence-cleanup-failures-04",
+          "objective": "Native cleanup failure despite successful consumer cleanup.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "evidence-cleanup-failures-05",
+          "objective": "Interrupted staging, malformed inventory and retry preserve original bytes and failed history.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "evidence-cleanup-failures-06",
+          "objective": "No replacement Job or synthetic successful cleanup.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    },
+    "consumer-restoration": {
+      "original_variants": [
+        "Settle run-owned agents/processes and remove only owned temporary fixture effects.",
+        "Restore the feature suite's actual declared starting consumers, plugin registration/configuration/rules and complete paired tools.",
+        "Seal consumer-result.json before later aggregation.",
+        "Stage restoration originals, then complete and collect the same Job."
+      ],
+      "required_evidence": "Before/after byte/mode/symlink inventories, actual restoration receipt, original failed history, complete staging and later native cleanup/export observations.",
+      "variants": [
+        {
+          "id": "consumer-restoration-01",
+          "objective": "Settle run-owned agents/processes and remove only owned temporary fixture effects.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "consumer-restoration-02",
+          "objective": "Restore the feature suite's actual declared starting consumers, plugin registration/configuration/rules and complete paired tools.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "consumer-restoration-03",
+          "objective": "Seal consumer-result.json before later aggregation.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        },
+        {
+          "id": "consumer-restoration-04",
+          "objective": "Stage restoration originals, then complete and collect the same Job.",
+          "order": "before",
+          "baseline": "previous",
+          "mode": "full",
+          "native_required": false
+        }
+      ]
+    }
+  },
+  "original_criterion_mapping": {
+    "TASK175_clause_1": {
+      "original": "Cover normal progression, first-release and full/light paths, changed or missing evidence, negative verdicts and absent native agents.",
+      "cases": [
+        "full-gate-before-commit",
+        "commit-before-gate",
+        "first-release-full-light",
+        "negative-and-drift",
+        "installed-discovery"
+      ]
+    },
+    "TASK175_clause_2": {
+      "original": "Cover QA findings and confirmation stops, gate corrections, QA-neutral binding and prevention of accidental extra QA passes.",
+      "cases": [
+        "qa-confirmation",
+        "gate-convergence-neutrality",
+        "commit-before-gate"
+      ]
+    },
+    "TASK175_clause_3": {
+      "original": "Cover partial publication, remote advancement, unknown effect outcomes, Executor settlement and Evaluator replacement.",
+      "cases": [
+        "publication-recovery",
+        "role-replacement"
+      ]
+    },
+    "TASK175_clause_4": {
+      "original": "Prepare applicable native VM queue contention, manual occupancy, queue/active cancellation, wait timeout, lost submission reply, same-Job reconnect, collection/consumer-cleanup failure and replacement-Executor scenarios. Exercise native contracts through isolated fixtures; no prose-matching test can prove them.",
+      "cases": [
+        "managed-resource-recovery",
+        "evidence-cleanup-failures",
+        "role-replacement",
+        "consumer-restoration"
+      ]
+    },
+    "TASK175_clause_5": {
+      "original": "Add objective helper regressions only where executable behavior changes. Commit required guest fixtures, driver support, testing-authority and planned startup-policy updates before TASK-176 observations; earlier Tasks retain their own focused verification.",
+      "delivery": "New executable unit/E2E coverage, existing adapter/J-RA regressions, Make enrollment, complete authorities/startup support and C-owned committed handoff before Task176."
+    },
+    "TASK176_original_installed_table": [
+      {
+        "original_row": "Full release, gate before commit",
+        "cases": [
+          "full-gate-before-commit"
+        ]
+      },
+      {
+        "original_row": "Commit before gate",
+        "cases": [
+          "commit-before-gate"
+        ]
+      },
+      {
+        "original_row": "Negative assessment",
+        "cases": [
+          "negative-and-drift",
+          "qa-confirmation"
+        ]
+      },
+      {
+        "original_row": "QA findings and confirmation",
+        "cases": [
+          "qa-confirmation"
+        ]
+      },
+      {
+        "original_row": "Interrupted publication",
+        "cases": [
+          "publication-recovery",
+          "role-replacement"
+        ]
+      },
+      {
+        "original_row": "Light mode and drift",
+        "cases": [
+          "first-release-full-light",
+          "negative-and-drift"
+        ]
+      },
+      {
+        "original_row": "Adopted managed VM path",
+        "cases": [
+          "managed-resource-recovery",
+          "evidence-cleanup-failures",
+          "role-replacement",
+          "consumer-restoration"
+        ]
+      }
+    ],
+    "TASK176_additional_original_obligations": [
+      "First-release, remote-advancement, hook-drift, gate-correction and agent-replacement cases remain required.",
+      "Install only the exact committed candidate with matching committed tests over the actual released baseline in the dedicated UTM VM.",
+      "Observe actual installed native Codex Coordinator/Executors/Evaluator and actual C fixture-operator decisions.",
+      "Report every variant's actual native-installed, fixture/helper-only, reused-with-applicability or unobserved evidence class.",
+      "Promote durable outcomes later; preserve overall Master acceptance and final dossier settlement boundaries.",
+      "Changed installed payload or relevant harness bytes invalidate affected observations. Later documentation commits retain the actual earlier tested identity."
+    ],
+    "shared_constraints": [
+      "All four independent boundaries and original criterion states/provenance remain intact.",
+      "One mutating Executor; Coordinator retains decisions, task-commit handoffs and publication actions.",
+      "No synthetic release Task or Podway release session.",
+      "Target-specific gate order, exact confirmations, original QA verdicts, both matrices and attempt facts remain authoritative.",
+      "Policy-due installed evidence is included at its actual boundary; later evidence remains pending.",
+      "Original Haepari outcomes, consumer cleanup, native cleanup, occupancy and assessment stay separate.",
+      "Controlled Git/hosting effects do not prove production hosting or native roles.",
+      "Current output qualification is Codex only; EPIC-030 packaging and EPIC-032/033 successor work are not silently added.",
+      "No automated LLM evaluation, prose-matching test, new schema, scheduler, outer lock or restriction on supported native capability."
+    ]
+  },
+  "limits": [
+    "No observation is presumed.",
+    "Native-required rows remain due; fixture-helper evidence cannot replace them.",
+    "Original raw QA/native/fixture outcomes stay distinct from scenario-oracle results.",
+    "The seven original installed table rows each retain an explicit native-complete variant; one actual operation may cover multiple accurately mapped variants without redispatch."
+  ]
+}

@@ -1056,6 +1056,7 @@ EVIDENCE_CASES = (
     "runtime-update",
     "task-startup",
     "epic-startup",
+    "release-startup",
     "stale-skill",
 )
 ARCHIVE_BYTES_BOUND = lib.EVIDENCE_ARCHIVE_BYTES_BOUND
@@ -1593,6 +1594,24 @@ def acceptance_request(context: Context) -> Path:
     if request_path.is_file():
         return request_path
     stable = context.profile("stable")
+    combination = baseline_combination_from_profile(stable)
+    baseline_podway = next(
+        component for component in stable["components"] if component["name"] == "podway"
+    )
+    release = context.inputs.get("podway_upgrade", {})
+    generation = 1
+    if combination["podway"] == release.get("version") and baseline_podway.get(
+        "executable_sha256"
+    ) == "sha256:" + release.get("binary_sha256", ""):
+        generation = release.get("contract_generation")
+    elif combination["podway"] != "v0.2.14":
+        raise lib.RecipeError(
+            "baseline requires its matching sealed Podway contract generation",
+            "incomplete",
+        )
+    import run_acceptance as driver
+
+    driver.podway_generation_options({"podway_contract_generation": generation})
     request = {
         "schema": "aquarium.vm-acceptance-request/v1",
         "expected_guest_uuid": lib.context_value("AQUARIUM_EXPECTED_GUEST_UUID"),
@@ -1618,7 +1637,8 @@ def acceptance_request(context: Context) -> Path:
             "--add-dir",
             str(context.home / ".local/bin"),
         ],
-        "baseline_combination": baseline_combination_from_profile(stable),
+        "baseline_combination": combination,
+        "podway_contract_generation": generation,
         "authority": {
             "kind": "explicit-vm-test",
             "reference": "epic-019-vm-test-authority",
@@ -2040,6 +2060,45 @@ def evidence_members(
     caller keeps `ok` false while any gap remains.
     """
     gaps: list[str] = []
+    if case == "release-startup":
+        directory = run_root / "originals/release-startup/release-startup"
+        members = sorted(
+            path.relative_to(run_root).as_posix()
+            for path in directory.rglob("*")
+            if path.is_file()
+        )
+        required = ["originals/release-startup/release-startup/startup-evidence.json"]
+        for pattern in (
+            "operations/*.request.json",
+            "operations/*.input",
+            "operations/*.jsonl",
+            "operations/*.stderr",
+            "operations/*.invocation.json",
+            "native-*.json",
+            "capture-*.json",
+        ):
+            matches = list(directory.glob(pattern))
+            if not matches:
+                gaps.append(f"release-startup lacks {pattern}")
+            required.extend(path.relative_to(run_root).as_posix() for path in matches)
+        evidence = lib.read_json_safe(directory / "startup-evidence.json")
+        if isinstance(evidence, dict):
+            for key in (
+                "executor_assignment",
+                "evaluator_assignment",
+                "executor_result",
+                "evaluator_assessment",
+            ):
+                try:
+                    path = Path(evidence[key])
+                    if path.is_symlink() or not path.is_relative_to(directory):
+                        raise ValueError("outside case directory")
+                    required.append(path.relative_to(run_root).as_posix())
+                except (KeyError, TypeError, ValueError):
+                    gaps.append(f"release-startup lacks safe {key}")
+        else:
+            gaps.append("release-startup original role evidence is missing or invalid")
+        return members, required, gaps
     if case == "baseline":
         members = [
             f"released-{fixture}.last" for fixture in ("task", "epic", "preservation")
@@ -2627,6 +2686,21 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
         if gate.returncode == 0 and summary.get("outcome") == "pass":
             return 0
         return {"fail": 1}.get(summary.get("outcome"), 2)
+    if phase == "release-startup":
+        import release_orchestration
+
+        skills = lib.read_json_safe(results / "skill-identity.json") or {}
+        smokes = lib.read_json_safe(results / "startup-smokes.json") or {}
+        if (
+            skills.get("comparisons", {}).get("all_passed") is not True
+            or smokes.get("exit") != 0
+            or smokes.get("outcome") != "pass"
+        ):
+            raise lib.RecipeError(
+                "complete installed identity and existing startup smokes first",
+                "incomplete",
+            )
+        return release_orchestration.startup(context, results, run_root)
     if phase == "stale-skill":
         planted = context.home / ".codex/skills" / STALE_SKILL_NAME
         source = (
@@ -2978,6 +3052,12 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
             "startup-smokes.json": lambda document: (
                 document.get("outcome") == "pass" and document.get("exit") == 0
             ),
+            "release-startup.json": lambda document: (
+                document.get("outcome") == "pass"
+                and document.get("exit") == 0
+                and document.get("candidate_sha")
+                == context.inputs["candidate"]["git_sha"]
+            ),
             "stale-skill.json": lambda document: (
                 document.get("observation", {}).get("outcome")
                 in {"shadowing", "duplication"}
@@ -3090,6 +3170,24 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
             return [path] if (results / name).is_file() else []
 
         scenarios = [
+            {
+                "id": "release-startup",
+                "status": "pass"
+                if observed(
+                    "release-startup.json",
+                    lambda d: (
+                        d.get("exit") == 0
+                        and d.get("outcome") == "pass"
+                        and d.get("candidate_sha")
+                        == context.inputs["candidate"]["git_sha"]
+                    ),
+                )
+                else "unobserved",
+                "evidence_references": [
+                    "results/release-acceptance/release-startup.json",
+                    "results/release-acceptance/evidence/release-startup.tar",
+                ],
+            },
             {
                 "id": "released-baseline",
                 "status": "pass"
@@ -3287,10 +3385,17 @@ def main() -> int:
     finish_options = (
         {"preserve_invalid_inventory": True}
         if (arguments.suite == "epic-squad" and arguments.phase == "stage-evidence")
-        or arguments.suite in {"sorage-adoption", "mulgae-adoption"}
+        or arguments.suite
+        in {"sorage-adoption", "mulgae-adoption", "release-orchestration"}
         else {}
     )
     try:
+        if arguments.suite == "release-orchestration":
+            import release_orchestration
+
+            return release_orchestration.run(
+                context, arguments.phase, arguments.fixture or ""
+            )
         if arguments.suite == "mulgae-adoption":
             import mulgae_adoption
 

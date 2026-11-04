@@ -1166,6 +1166,7 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
         module = self.guest_main
         context = mock.MagicMock()
         context.dev_version = "0.1.21-dev.fixture"
+        context.inputs = {"candidate": {"git_sha": "a" * 40}}
         records = {
             "machine-prepare.json": {},
             "record-setup-task.json": {},
@@ -1187,6 +1188,11 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
             "managed-update-epic.json": {"exit": 0},
             "managed-update-preservation.json": {"exit": 0},
             "startup-smokes.json": {"outcome": "pass", "exit": 0},
+            "release-startup.json": {
+                "outcome": "pass",
+                "exit": 0,
+                "candidate_sha": "a" * 40,
+            },
             "stale-skill.json": {
                 "observation": {"outcome": "shadowing"},
                 "restoration": {"verified": True},
@@ -1601,6 +1607,107 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
         with self.assertRaises(self.guest_main.lib.RecipeError):
             self.guest_main.baseline_combination_from_profile(broken)
 
+    def test_acceptance_request_retains_sealed_original_generation(self):
+        from types import SimpleNamespace
+
+        driver = load_module(
+            "request_generation_driver", REPOSITORY / "tests/vm/run_acceptance.py"
+        )
+        for name, version, digest, generation in (
+            ("legacy", "v0.2.14", "b" * 64, 1),
+            ("current", "v0.2.16", "a" * 64, 2),
+        ):
+            stable = {
+                "components": [
+                    {"name": "aquarium-plugin", "version": "0.1.22"},
+                    {"name": "codex", "version": "0.164.0"},
+                    {
+                        "name": "podway",
+                        "version": version,
+                        "executable_sha256": "sha256:" + digest,
+                    },
+                ]
+            }
+            context = SimpleNamespace(
+                root=self.work / name,
+                home=self.home,
+                marketplace="fixture",
+                python=sys.executable,
+                codex="synthetic-codex",
+                inputs={
+                    "prior": {"version": "0.1.22"},
+                    "podway_upgrade": {
+                        "version": "v0.2.16",
+                        "binary_sha256": "a" * 64,
+                        "contract_generation": 2,
+                    },
+                },
+                profile=lambda _, stable=stable: stable,
+                marketplace_path=lambda _: self.work / "prior-marketplace",
+            )
+            with (
+                mock.patch.object(
+                    self.guest_main.lib, "context_value", return_value="synthetic"
+                ),
+                mock.patch.dict(sys.modules, {"run_acceptance": driver}),
+            ):
+                path = self.guest_main.acceptance_request(context)
+            original = path.read_bytes()
+            request = json.loads(original)
+            self.assertEqual(request["podway_contract_generation"], generation)
+            self.assertEqual(request["baseline_combination"]["podway"], version)
+            self.assertEqual(
+                request["released_plugin_root"],
+                str(self.home / ".codex/plugins/cache/fixture/aquarium/0.1.22"),
+            )
+            context.profile = lambda _: self.fail(
+                "must retain existing request on reconnect"
+            )
+            context.inputs["podway_upgrade"]["contract_generation"] = 1
+            self.assertEqual(self.guest_main.acceptance_request(context), path)
+            self.assertEqual(path.read_bytes(), original)
+
+    def test_current_baseline_without_matching_sealed_generation_refuses(self):
+        from types import SimpleNamespace
+
+        driver = load_module(
+            "current_baseline_generation_driver",
+            REPOSITORY / "tests/vm/run_acceptance.py",
+        )
+
+        stable = {
+            "components": [
+                {"name": "aquarium-plugin", "version": "0.1.22"},
+                {"name": "codex", "version": "0.164.0"},
+                {
+                    "name": "podway",
+                    "version": "v0.2.16",
+                    "executable_sha256": "sha256:" + "a" * 64,
+                },
+            ]
+        }
+        for name, binary, generation in (
+            ("wrong-bytes", "b" * 64, 2),
+            ("invalid-generation", "a" * 64, True),
+        ):
+            context = SimpleNamespace(
+                root=self.work / name,
+                profile=lambda _: stable,
+                inputs={
+                    "podway_upgrade": {
+                        "version": "v0.2.16",
+                        "binary_sha256": binary,
+                        "contract_generation": generation,
+                    }
+                },
+            )
+            with (
+                mock.patch.dict(sys.modules, {"run_acceptance": driver}),
+                self.assertRaises((self.guest_main.lib.RecipeError, driver.GateError)),
+            ):
+                self.guest_main.acceptance_request(context)
+            self.assertFalse(context.root.exists())
+
     def test_skill_tree_digest_uses_the_profile_algorithm(self):
         # The digest comes from the candidate checkout's validator, so a
         # changed file, an added file or a flipped bit changes the value —
@@ -1895,9 +2002,7 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
             tree = home / ".agents/skills/use-podway"
             tree.mkdir(parents=True)
             if use_podway == "match":
-                shutil.copytree(
-                    Path.home() / ".agents/skills/use-podway", tree, dirs_exist_ok=True
-                )
+                (tree / "SKILL.md").write_text("# synthetic use-podway\n")
             else:
                 (tree / "SKILL.md").write_text("# drifted\n")
         os.environ["FAKE_CODEX_STATE"] = str(self.codex_state)
@@ -1905,10 +2010,6 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
         context = self._identity_context(home, checkout)
         context.codex = str(self._fake_codex)
         return context, home
-
-    STABLE_PODWAY_PIN = (
-        "25e79d40154f9129ec8313c2b06e1c34890f8bdc3954efad547f832486c5f35e"
-    )
 
     def _stable_profile_for(self, context) -> None:
         stable = json.loads(
@@ -1931,6 +2032,14 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
             for component in stable["components"]:
                 if component["name"] == "aquarium-plugin":
                     component["skill_tree"]["sha256"] = stable_plugin_pin
+        reference = self.work / "synthetic-podway-reference"
+        reference.mkdir(exist_ok=True)
+        (reference / "SKILL.md").write_text("# synthetic use-podway\n")
+        for component in stable["components"]:
+            if component["name"] == "use-podway":
+                component["skill_tree"]["sha256"] = (
+                    self.guest_main.lib.skill_tree_digest(context.checkout, reference)
+                )
         (context.root / "profile/stable.json").write_text(
             json.dumps(stable, indent=2) + "\n"
         )

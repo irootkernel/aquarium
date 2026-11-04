@@ -897,3 +897,37 @@ flows through actual user acceptance, final repository results and native
 `completed`/`achieved`/`handed_off` readback. Preserve those scoped results
 separately from the original incomplete Haepari Job and a future release-acceptance
 result.
+
+## Release orchestration verification
+
+The separately authorized manual `release-orchestration` feature suite uses the
+existing sealed host adapter. Its [operator scenario](tests/vm/recipes/scenarios/release-orchestration.md)
+and [fixed inventory](tests/vm/fixtures/release-orchestration/cases.json) prepare
+every original EPIC-031 requirement. TASK-176 still owes actual installed native
+Codex Coordinator, Executor and independent Evaluator observations, including
+actual fixture-operator decisions and original managed Job/cleanup evidence.
+No prepared fixture, source gate or synthetic report establishes those results.
+
+Objective unit/E2E controls cover the new local Git/hosting/gate utility and guest
+phases: hermetic Git bootstrap, real local refs and publication readback, both
+gate orders and mismatch rejection, lost-reply effects, per-invocation hosting
+identity/environment, original-result correlation, unsafe/missing evidence,
+interrupted staging, preserved restoration history and native-required coverage.
+The same validated immutable `AQUARIUM_VM_BASELINE_PROFILE` input serves feature,
+release-acceptance and scoped probe callers; absence preserves old defaults.
+Feature qualification requires an explicit matching current released baseline.
+These tests invoke no provider, controller, VM or automated LLM evaluator.
+
+J-RA separately adds `VM-RELEASE-START-01` / `release-startup` after installed
+identity and the existing Task/Epic smokes. It observes read-only native
+preparation and independent plan readiness, then stops before settlement commit,
+pre-QA checks, QA or publication. Its summary and fixed archive/manifest join the
+required manual inventory. This startup check never replaces the full feature
+suite. The existing guest-side Task/Epic gate stays unchanged.
+
+Before staging, explicitly check all four new Markdown files with the existing
+`LocalReferences.check(path, root)` API: the operator scenario and fixture
+AGENTS, TESTING and CHANGELOG files. Keep manual anchor/semantic review separate.
+The documentation inspector's exit zero is not global PASS: retain actual status
+and diagnostics, including historic EPIC002 Cancelled UNVERIFIABLE, unwaived,
+and require no new candidate-attributable structural/roadmap/reference defect.

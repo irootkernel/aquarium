@@ -89,3 +89,14 @@ native cleanup and assessment separate. Later publication/report assembly does
 not prolong settled occupancy or reacquire the Job. Reconcile tested pre-metadata
 bytes with final distribution under the existing identity contract; any unsupported
 payload difference renews affected installed verification before publication.
+
+## Aquarium startup scope
+
+Aquarium's canonical `tests/vm/recipes/scenarios/release-acceptance.md` adds
+release-handler plan readiness alongside Task/Epic startup. Its bounded native
+preparation and independent assessment stop before settlement commit, pre-QA
+execution, QA or publication. The separately authorized `release-orchestration`
+development suite covers full feature progression and recovery. Other targets
+retain their declared inventory and environment; this adds no universal VM gate.
+The fixture operator supplies actual concrete decisions under its real authority.
+No startup or fixture status substitutes for full installed/native qualification.

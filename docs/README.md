@@ -189,3 +189,14 @@ git --no-pager diff --check
 ```
 
 The inspector proves conservative structure and roadmap-reference rules only. Semantic review must separately confirm that the indexes match current implementation and authority.
+
+## Release-role verification methods
+
+[Full release-orchestration scenarios](../tests/vm/recipes/scenarios/release-orchestration.md)
+and their [fixed inventory](../tests/vm/fixtures/release-orchestration/cases.json)
+prepare integrated development verification. The separate
+[managed release startup](../tests/vm/recipes/scenarios/release-acceptance.md#release-startup)
+stops at plan readiness. [Testing authority](../TESTING.md#release-orchestration-verification)
+distinguishes objective helper checks, fixture effects and actual installed
+native results still due under TASK-176. This navigation adopts no directory
+agent guides and records no functional acceptance.

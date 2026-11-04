@@ -224,7 +224,10 @@
         "results/release-acceptance/evidence/epic-startup.manifest.json",
         "results/release-acceptance/evidence/stale-skill.tar",
         "results/release-acceptance/evidence/stale-skill.manifest.json",
-        "results/release-acceptance/podway-upgrade.json"
+        "results/release-acceptance/podway-upgrade.json",
+        "results/release-acceptance/release-startup.json",
+        "results/release-acceptance/evidence/release-startup.tar",
+        "results/release-acceptance/evidence/release-startup.manifest.json"
       ],
       "manual": {
         "scenario_document": "harness/tests/vm/recipes/scenarios/release-acceptance.md",
@@ -235,6 +238,7 @@
           "skill-identity",
           "task-startup",
           "epic-startup",
+          "release-startup",
           "stale-skill-failure",
           "stale-skill-restoration",
           "evidence-staging",
@@ -560,6 +564,90 @@
         "manual_seconds": 21600,
         "collect_seconds": 600,
         "cleanup_seconds": 900,
+        "run_seconds": 0
+      }
+    },
+    "release-orchestration": {
+      "modes": [
+        "manual"
+      ],
+      "environment_profile": "podway-candidate",
+      "argv": [
+        "/bin/sh",
+        "tests/vm/recipes/guest_entry.sh",
+        "--suite",
+        "release-orchestration",
+        "--phase",
+        "prepare"
+      ],
+      "setup_argv": [
+        "/bin/sh",
+        "-c",
+        "umask 077 && printf '%s' \"$HAEPARI_PARENT_CONTEXT\" > ../operator-parent-context.json"
+      ],
+      "cwd": "harness",
+      "required_outputs": [
+        "results/release-orchestration/prepared.json",
+        "results/release-orchestration/candidate.json",
+        "results/release-orchestration/case-evidence.json",
+        "results/release-orchestration/stage-evidence.json",
+        "results/release-orchestration/consumer-cleanup.json",
+        "results/release-orchestration/consumer-result.json",
+        "results/release-orchestration/inventories.json",
+        "results/release-orchestration/result.json",
+        "results/release-orchestration/evidence/released-baseline.tar",
+        "results/release-orchestration/evidence/released-baseline.manifest.json",
+        "results/release-orchestration/evidence/installed-discovery.tar",
+        "results/release-orchestration/evidence/installed-discovery.manifest.json",
+        "results/release-orchestration/evidence/full-gate-before-commit.tar",
+        "results/release-orchestration/evidence/full-gate-before-commit.manifest.json",
+        "results/release-orchestration/evidence/commit-before-gate.tar",
+        "results/release-orchestration/evidence/commit-before-gate.manifest.json",
+        "results/release-orchestration/evidence/first-release-full-light.tar",
+        "results/release-orchestration/evidence/first-release-full-light.manifest.json",
+        "results/release-orchestration/evidence/negative-and-drift.tar",
+        "results/release-orchestration/evidence/negative-and-drift.manifest.json",
+        "results/release-orchestration/evidence/qa-confirmation.tar",
+        "results/release-orchestration/evidence/qa-confirmation.manifest.json",
+        "results/release-orchestration/evidence/gate-convergence-neutrality.tar",
+        "results/release-orchestration/evidence/gate-convergence-neutrality.manifest.json",
+        "results/release-orchestration/evidence/publication-recovery.tar",
+        "results/release-orchestration/evidence/publication-recovery.manifest.json",
+        "results/release-orchestration/evidence/role-replacement.tar",
+        "results/release-orchestration/evidence/role-replacement.manifest.json",
+        "results/release-orchestration/evidence/managed-resource-recovery.tar",
+        "results/release-orchestration/evidence/managed-resource-recovery.manifest.json",
+        "results/release-orchestration/evidence/evidence-cleanup-failures.tar",
+        "results/release-orchestration/evidence/evidence-cleanup-failures.manifest.json",
+        "results/release-orchestration/evidence/consumer-restoration.tar",
+        "results/release-orchestration/evidence/consumer-restoration.manifest.json"
+      ],
+      "manual": {
+        "scenario_document": "harness/tests/vm/recipes/scenarios/release-orchestration.md",
+        "required_scenarios": [
+          "released-baseline",
+          "installed-discovery",
+          "full-gate-before-commit",
+          "commit-before-gate",
+          "first-release-full-light",
+          "negative-and-drift",
+          "qa-confirmation",
+          "gate-convergence-neutrality",
+          "publication-recovery",
+          "role-replacement",
+          "managed-resource-recovery",
+          "evidence-cleanup-failures",
+          "consumer-restoration"
+        ]
+      },
+      "effects_mode": "live",
+      "authorization_reference": "epic-031-explicit-vm-test-authority",
+      "deadlines": {
+        "queue_seconds": 26100,
+        "prepare_seconds": 1800,
+        "manual_seconds": 21600,
+        "collect_seconds": 900,
+        "cleanup_seconds": 1800,
         "run_seconds": 0
       }
     }

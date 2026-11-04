@@ -243,3 +243,15 @@ An explicit plan handoff is the sole temporary artifact exception. It is private
 The [finding-disposition contract](../../plugins/aquarium/references/finding-disposition.md) separates impact from the need for another review. `local-verified-fix` restores an approved requirement with an isolated correction and direct authorized proof. It may resolve a source completion gap while retaining the original priority, report and assessment ordinal. The final candidate composes the reviewed basis with the exact verified delta and current criterion assessment; required final Evaluator and actual user acceptance remain separate. Missing coverage, new design or safety judgment, failed checks and effects outside the envelope cannot use this path.
 
 An unauthorized command, read or file creation is recorded separately from product findings. Exclude unauthorized evidence, preserve the reports that remain supported, and recover only affected state or coverage under existing authority. A recorded prevention step is sufficient only when no required guarantee was lost. Standalone review remains report-only.
+
+## Release verification scopes
+
+The managed release gate adds bounded installed release-handler plan readiness
+alongside its Task/Epic startup, stopping before settlement commit, pre-QA gates,
+QA or publication. The [operator phase](../../tests/vm/recipes/scenarios/release-acceptance.md#release-startup)
+and [separate feature suite](../../tests/vm/recipes/scenarios/release-orchestration.md)
+separate startup from development qualification. The feature suite requires
+the actual current released baseline, original native role observations and
+separate consumer/native cleanup evidence; preparation is not qualification.
+The original four assessments, actual operator decisions and release grants
+remain authoritative.

@@ -2670,6 +2670,50 @@ class HostWrapperTest(unittest.TestCase):
             module.validate_record(broken_binding, args)
         self.assertIn("saved Job binding is invalid", str(raised.exception))
 
+    def test_optional_baseline_profile_keeps_exact_sealed_bytes_on_resume(self):
+        module = self._load_host_wrapper_module("hw_baseline_profile")
+        root = Path(tempfile.mkdtemp(dir=self.work)).resolve()
+        source = root / "baseline.json"
+        source.write_bytes(b'{"explicitly":"synthetic profile"}\n')
+        sealed = root / "bundle/profile/stable.json"
+        sealed.parent.mkdir(parents=True)
+        sealed.write_bytes(source.read_bytes())
+        args = types.SimpleNamespace(
+            resource="r",
+            suite="manual-hold",
+            mode="manual",
+            run_dir=str(root),
+            baseline_profile=str(source),
+        )
+        record = {
+            "resource": "r",
+            "suite": "manual-hold",
+            "mode": "manual",
+            "declared_suites": ["manual-hold"],
+            "jobs": [
+                {
+                    "suite": "manual-hold",
+                    "spec": "spec-0.json",
+                    "request_key": "saved-key",
+                    "submission_started": True,
+                    "spec_sha256": "a" * 64,
+                }
+            ],
+        }
+        module.validate_record(record, args)
+        source.write_bytes(source.read_bytes() + b" ")
+        with self.assertRaises(module.Refusal):
+            module.validate_record(record, args)
+        with mock.patch.dict(
+            os.environ,
+            {
+                "AQUARIUM_VM_BASELINE_PROFILE": str(source),
+                "AQUARIUM_VM_MODE": "manual",
+                "AQUARIUM_VM_SUITE": "manual-hold",
+            },
+        ):
+            self.assertEqual(module.parse_arguments().baseline_profile, str(source))
+
     def test_c35_run_dir_symlink_and_wrong_mode_refused(self):
         module = self._load_host_wrapper_module("hw_refusal_rundir")
         real = tempfile.mkdtemp(prefix="vm-real-", dir=str(self.work))

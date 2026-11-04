@@ -287,6 +287,32 @@ invocation's Make exit is 0 and the result it just wrote settles with the
 VM-UPGRADE-01 case row present and every observed case explicitly passing;
 a row without an explicit outcome stays `unobserved`.
 
+## Release startup
+
+After installed skill identity, approved runtime/managed updates and the existing
+Task/Epic smokes, run:
+
+```sh
+/bin/sh tests/vm/recipes/guest_entry.sh --suite release-acceptance --phase release-startup
+```
+
+This is VM-RELEASE-START-01. The normally discovered installed handler uses a fresh
+local bare-Git/hosting fixture, a native read-only preparation Executor and an
+independent Evaluator. The authorized fixture operator reads concrete proposals
+and supplies actual decisions. Before every start/resume the driver propagates
+the process-only fixture environment and verifies the expected regular owned
+hosting executable identity. A missing/changed/wrong resolution stops before
+invocation, without production fallback.
+
+Stop after plan readiness, before settlement commit, pre-QA gates, QA, metadata
+or publication. Future obligations remain open. This is not the full development
+feature suite. For an actual reply, set `AQUARIUM_VM_REPLY_FILE` and run the same
+phase; it resumes the original handle. Missing or negative original reports stay
+incomplete. Preserve all invocation windows, assignments, returned reports,
+public captures and actual decisions. The fixed `release-startup.json` summary
+and `evidence/release-startup.tar` plus content manifest are required outputs;
+staging and consumer cleanup cannot pass without this case.
+
 ## i. Stale-skill failure and restoration
 
 `--phase stale-skill` asserts the plant target
@@ -345,7 +371,7 @@ The post-cleanup inventory records this retained state. Temporary stale-skill
 injections are removed and their pre-scenario state is checked separately.
 Only then does
 `complete-template` emit the closed `haepari.manual-result/v1` record for
-the ten required scenarios, and the operator submits `manual complete`.
+the eleven required scenarios, and the operator submits `manual complete`.
 Native collection and Haepari-owned cleanup follow; the host wrapper
 reconnects with the same `RUN_DIR` and exports last. Missing observations
 stay `unobserved` and prevent PASS.
@@ -354,11 +380,11 @@ stay `unobserved` and prevent PASS.
 
 Model use stays within the guest's existing Codex 0.164.0 installation and
 ChatGPT login with its default model, with no new account, endpoint or
-provider. The authorized population is 9 top-level threads (three released
-setups, the runtime update, three candidate setups and two smokes), about
-9-11 resumed turns, the smoke child agents (Executor and Evaluator per
-smoke, plus any selected review work), and about 5 model-free native reads,
-for at most 4 h of model work inside the 6 h manual window. The stale-skill
-observation is one of the model-free native reads.
+provider. The original setup and two startup-smoke population gains one bounded
+release-startup Coordinator and its native preparation/Evaluator children.
+Record actual threads, resumes, children and model-free reads separately.
+Historical time/count estimates do not establish sufficiency for this addition;
+plan within the same manual budget with evidence/cleanup reserve, and retain
+actual progress. No additional native capability quota is introduced.
 `machine-prepare` records the non-secret Codex identity before any model
 turn.

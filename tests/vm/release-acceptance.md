@@ -142,3 +142,19 @@ readiness, PM clipboard authority, actual user approval, complete native evidenc
 or settled descendants is incomplete. Tool preparation and unit passes are not
 installed results; preserve each actual scenario's candidate, combination,
 failures, corrections and unperformed outcomes separately.
+
+## VM-RELEASE-START-01: Installed release-handler plan readiness
+
+The managed J-RA [operator phase](recipes/scenarios/release-acceptance.md#release-startup)
+adds a fresh normally discovered installed release-handler invocation. Observe
+substantive read-only preparation by a native Executor, actual authorized
+fixture-operator decisions and independent plan-readiness assessment of the
+original baseline/version/mode/notes/gate/environment/authority obligations.
+Bind original assignments, returned reports, public native captures and fixture
+state to the exact candidate. Verify the process-only hosting stand-in before
+every start/resume and preserve incomplete/negative results truthfully.
+
+Stop before settlement commit, pre-QA execution, QA admission, metadata or
+publication. Existing upgrade and Task/Epic startup cases remain unchanged.
+The separate full feature suite owns development progression/recovery; a
+plan-readiness smoke does not qualify it or complete a release.

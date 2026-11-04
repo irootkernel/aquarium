@@ -19,6 +19,11 @@ override PYTEST_ADDOPTS :=
 export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
+	tests/vm/recipes/release_fixture.py \
+	tests/vm/recipes/release_orchestration.py \
+	tests/unit/test_release_orchestration_fixture_unit.py \
+	tests/unit/test_vm_release_orchestration_unit.py \
+	tests/e2e/test_release_orchestration_fixture_cli.py \
 	tests/vm/recipes/sorage_adoption.py \
 	tests/vm/recipes/mulgae_adoption.py \
 	tests/unit/test_vm_squad_unit.py \

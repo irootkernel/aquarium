@@ -639,6 +639,7 @@ def build_bundle(
     queue_override: int | None = None,
     podway_release: Path | None = None,
     podway_previous_release: Path | None = None,
+    baseline_profile: Path | None = None,
 ) -> dict[str, Any]:
     context = load_guest_context(context_path)
     declarations = load_suites()
@@ -652,7 +653,52 @@ def build_bundle(
     )
     if not names:
         raise BundleError("select a consumer-declared suite or all")
-    dependency_suites = {"podway-upgrade", "epic-squad", "release-acceptance"}
+    dependency_suites = {
+        "podway-upgrade",
+        "epic-squad",
+        "release-acceptance",
+        "release-orchestration",
+    }
+    if "release-orchestration" in names and baseline_profile is None:
+        raise BundleError(
+            "release-orchestration requires an explicit matching released baseline profile"
+        )
+    if baseline_profile is not None and (
+        not baseline_profile.is_absolute()
+        or baseline_profile != baseline_profile.resolve()
+        or not baseline_profile.is_file()
+    ):
+        raise BundleError("baseline profile must be a physical absolute regular file")
+    stable_bytes = (
+        baseline_profile or (PROFILES_ROOT / STABLE_PROFILE_NAME)
+    ).read_bytes()
+    stable_profile = json.loads(stable_bytes)
+    if baseline_profile is not None:
+        errors = _PROFILE_VALIDATOR.validate_profile(stable_profile)
+        if errors:
+            raise BundleError("invalid baseline profile: " + "; ".join(errors))
+        plugin = next(
+            (
+                row
+                for row in stable_profile["components"]
+                if row["name"] == "aquarium-plugin"
+            ),
+            None,
+        )
+        if plugin is None or not isinstance(plugin.get("version"), str):
+            raise BundleError("baseline must pin the released Aquarium plugin version")
+        provenance = plugin.get("provenance", {})
+        prior_tag = provenance.get("release_tag", "")
+        if prior_tag != "v" + plugin["version"] or not plugin.get("skill_tree", {}).get(
+            "sha256"
+        ):
+            raise BundleError(
+                "baseline requires released tag/version and complete plugin skill-tree provenance"
+            )
+        if _git(
+            repository, "rev-parse", prior_tag + "^{commit}"
+        ).strip() != provenance.get("tag_commit"):
+            raise BundleError("baseline release tag commit differs from profile")
     if podway_release is not None and not dependency_suites.intersection(names):
         raise BundleError(
             "Podway release inputs require an explicit manual dependency suite"
@@ -694,6 +740,17 @@ def build_bundle(
             raise BundleError("prebuilt artifact manifest does not bind the candidate")
     artifact_files = _copy_tree(artifact_source, bundle / "artifact")
     prior_files = _materialize_tree_at(repository, prior_tag, bundle / "prior-artifact")
+    if baseline_profile is not None:
+        prior_plugin = bundle / "prior-artifact/plugins/aquarium"
+        version = json.loads((prior_plugin / ".codex-plugin/plugin.json").read_text())[
+            "version"
+        ]
+        if (
+            version != plugin["version"]
+            or skill_tree_digest_from_directory(prior_plugin / "skills")
+            != plugin["skill_tree"]["sha256"]
+        ):
+            raise BundleError("baseline profile differs from the released plugin bytes")
     subprocess.run(
         [
             "git",
@@ -707,14 +764,8 @@ def build_bundle(
         capture_output=True,
         check=True,
     )
-    stable_profile = json.loads(
-        (PROFILES_ROOT / STABLE_PROFILE_NAME).read_text(encoding="utf-8")
-    )
     (bundle / "profile").mkdir(parents=True, exist_ok=True)
-    (bundle / "profile/stable.json").write_text(
-        json.dumps(stable_profile, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    (bundle / "profile/stable.json").write_bytes(stable_bytes)
     development_version = manifest["development_version"]
     candidate_digest = tree_sha256(bundle / "artifact", artifact_files)
     candidate_skill_digest = skill_tree_digest_from_directory(
@@ -928,6 +979,7 @@ def main() -> int:
     parser.add_argument("--queue-seconds", type=int)
     parser.add_argument("--podway-release")
     parser.add_argument("--podway-previous-release")
+    parser.add_argument("--baseline-profile", type=Path)
     arguments = parser.parse_args()
     try:
         record = build_bundle(
@@ -952,6 +1004,7 @@ def main() -> int:
             podway_release=Path(arguments.podway_release)
             if arguments.podway_release
             else None,
+            baseline_profile=arguments.baseline_profile,
         )
     except (BundleError, OSError, subprocess.SubprocessError) as error:
         print(f"aquarium host bundle: {error}", file=sys.stderr)

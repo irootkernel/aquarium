@@ -61,3 +61,13 @@ consumer cleanup/inventory separately from native collection/cleanup/export.
 Finish active releases with their installed workflow before updating.
 
 Publication is ordered: commit, push `main`, create and push the annotated tag, create the GitHub Release, then re-observe remote `main`, the peeled tag, and the release. Recovery may skip the push when a fresh ancestry check proves that remote main includes the release commit, subject to repository policy; tag and Release targets remain the original release SHA. Local success never proves distribution readiness. Opening the next empty `Unreleased` section is a separate post-release change with separate approval.
+
+## Prepared release scenarios
+
+Use the [full release-orchestration scenario](../../tests/vm/recipes/scenarios/release-orchestration.md)
+for separately authorized installed development verification. Its finite cases
+retain every original requirement, actual native versus fixture evidence and
+same-Job recovery. The [J-RA release startup](../../tests/vm/recipes/scenarios/release-acceptance.md#release-startup)
+checks only plan readiness. Required actual installed results remain TASK-176
+work; neither source checks nor prepared scenarios establish them. Preserve
+the original dossier criteria through final settlement.

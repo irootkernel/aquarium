@@ -638,7 +638,8 @@ approval-based status-runtime update through the named `dev-setup-global`
 continuation before any candidate repository setup, then managed updates,
 the EPIC-024 startup smokes (VM-UPGRADE-01, VM-TASK-START-01 and
 VM-EPIC-START-01 through `make test-vm`, bound to the current invocation),
-the stale-skill failure and restoration scenario, evidence staging,
+the bounded release-handler plan-readiness startup, the stale-skill failure
+and restoration scenario, evidence staging,
 consumer cleanup and the manual completion. Evidence transport is fixed
 before admission: one deterministic tar per case under
 `results/release-acceptance/evidence/` with a content manifest whose
@@ -663,7 +664,7 @@ The suite's per-capture inventory files
 (`inventory-prior-baseline`, `inventory-post-install`, `inventory-stale-pre`,
 `inventory-stale-post`, `inventory-cleanup-before`, `inventory-post-cleanup`)
 are declared outputs, and `inventories.json` aggregates every capture across
-the phase processes. The suite's `manual.required_scenarios` are the ten
+the phase processes. The suite's `manual.required_scenarios` are the eleven
 scenario ids of the completion record; missing observations stay
 `unobserved` and prevent PASS. The queue budget is selected from the live
 queue position before sealing (26100/52200/78300 for zero/one/two Jobs
@@ -1378,3 +1379,35 @@ acceptance, final repository results, native terminal completion and disposition
 Other workflows and producer paths still need their own applicable evidence;
 release acceptance remains separate. The earlier startup-only assessments and
 failed attempts retain their original scope.
+
+## Release orchestration feature suite
+
+The [release-orchestration scenario](recipes/scenarios/release-orchestration.md)
+owns the full manual development feature suite and its
+[original-row inventory](fixtures/release-orchestration/cases.json). Select
+`SUITE=release-orchestration MODE=manual` through the existing host adapter with
+the exact committed candidate, matching harness, sealed Podway input and an
+explicit immutable `AQUARIUM_VM_BASELINE_PROFILE` matching the actual current
+released combination. The optional existing-profile input also serves
+release-acceptance and scoped probes; absent input preserves historical defaults
+and does not make them proof of a current-baseline obligation.
+
+The feature suite declares 13 case archives, 13 manifests and eight JSON outputs,
+34 total. Complete original evidence and per-variant native/fixture/reused/
+unobserved classes remain separate. Pre-main native P/Q callers prove genuine
+queue-to-execution sharing after resource release; queued cancellation and
+active cancellation are distinct. manual-hold's intentional INCOMPLETE remains
+INCOMPLETE. Legitimate predeclared campaigns can contribute original applicable
+evidence without replacement Jobs, omitted outputs or deadline extensions.
+
+The feature recipe observes approved installation and verifies restoration of
+the actual starting consumers. J-RA retains its upgraded installation instead.
+Both stage consumer evidence before manual completion and retain native
+collection/cleanup/export afterward. TASK-176 owns actual installed/native
+qualification and original fixture-operator decisions; preparation proves none.
+
+J-RA adds only [release-startup](recipes/scenarios/release-acceptance.md#release-startup),
+one native release-handler plan-readiness smoke with a summary and archive/manifest.
+The ten historical scenarios remain; the current manual inventory has eleven.
+Existing Task/Epic `make test-vm` behavior stays intact. Full feature verification
+is not repeated inside that startup check.

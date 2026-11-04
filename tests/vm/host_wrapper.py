@@ -158,6 +158,16 @@ def load_record(run: Path) -> dict[str, Any]:
 
 
 def validate_record(record: dict[str, Any], args: Any) -> None:
+    supplied_profile = getattr(args, "baseline_profile", None)
+    if supplied_profile:
+        source = Path(supplied_profile)
+        sealed = Path(args.run_dir) / "bundle/profile/stable.json"
+        if (
+            source != source.resolve()
+            or not source.is_file()
+            or source.read_bytes() != sealed.read_bytes()
+        ):
+            raise Refusal("resume requires the original sealed baseline profile")
     for key in ("resource", "suite"):
         if record.get(key) != getattr(args, key):
             raise Refusal(
@@ -1357,6 +1367,9 @@ def main() -> int:
                 podway_release=Path(args.podway_release)
                 if getattr(args, "podway_release", None)
                 else None,
+                baseline_profile=Path(args.baseline_profile)
+                if getattr(args, "baseline_profile", None)
+                else None,
             )
             record = {
                 "schema": RUN_SCHEMA,
@@ -1441,6 +1454,7 @@ def parse_arguments() -> Any:
     arguments.fixture_requirements = (
         os.environ.get("AQUARIUM_VM_FIXTURE_REQUIREMENTS") or None
     )
+    arguments.baseline_profile = os.environ.get("AQUARIUM_VM_BASELINE_PROFILE") or None
     if arguments.probe and arguments.probe not in PROBE_KINDS:
         raise Refusal(f"unknown probe kind: {arguments.probe}")
     if arguments.mode not in {"auto", "manual"}:

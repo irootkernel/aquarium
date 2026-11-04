@@ -95,6 +95,12 @@ class HostBundleTest(unittest.TestCase):
         (cls.harness / "scenarios/sorage-adoption.md").write_text("Sorage cases\n")
         (cls.harness / "scenarios/mulgae-adoption.md").write_text("Mulgae cases\n")
         (cls.harness / "scenarios/epic-squad.md").write_text("native Squad cases\n")
+        (cls.harness / "scenarios/release-orchestration.md").write_text(
+            "release role cases\n"
+        )
+        skills = cls.repository / "plugins/aquarium/skills/dev-setup"
+        skills.mkdir(parents=True)
+        (skills / "SKILL.md").write_text("synthetic released setup\n")
         (cls.harness / "scenarios/release-acceptance.md").write_text(
             "release-acceptance runbook\n"
         )
@@ -162,7 +168,12 @@ class HostBundleTest(unittest.TestCase):
             "artifact_manifest": self.manifest,
         }
         parameters.update(overrides)
-        if suite == "release-acceptance" and "podway_release" not in overrides:
+        if suite == "all" and "baseline_profile" not in overrides:
+            parameters["baseline_profile"] = self.baseline()
+        if (
+            suite in {"release-acceptance", "release-orchestration"}
+            and "podway_release" not in overrides
+        ):
             release = (run_dir / "release-input").resolve()
             hashes = {}
             for relative in self.module.PODWAY_RELEASE_FILES:
@@ -176,6 +187,63 @@ class HostBundleTest(unittest.TestCase):
         else:
             record = self.module.build_bundle(**parameters)
         return run_dir, record
+
+    def baseline(self):
+        document = json.loads(
+            (PROFILES_ROOT / self.module.STABLE_PROFILE_NAME).read_text()
+        )
+        plugin = next(
+            row for row in document["components"] if row["name"] == "aquarium-plugin"
+        )
+        plugin["provenance"]["tag_commit"] = self.git_sha
+        plugin["skill_tree"]["sha256"] = self.module.skill_tree_digest_from_directory(
+            self.repository / "plugins/aquarium/skills"
+        )
+        path = Path(tempfile.mkdtemp(dir=self.work)).resolve() / "baseline.json"
+        path.write_text(json.dumps(document, indent=2) + "\n")
+        return path
+
+    def test_feature_suite_requires_explicit_released_baseline(self):
+        with self.assertRaises(self.module.BundleError):
+            self.build("release-orchestration", mode="manual")
+
+    def test_feature_and_release_acceptance_seal_exact_optional_profile(self):
+        for name in ("release-orchestration", "release-acceptance", "manual-hold"):
+            profile = self.baseline()
+            run_dir, record = self.build(name, mode="manual", baseline_profile=profile)
+            self.assertEqual(
+                (run_dir / "bundle/profile/stable.json").read_bytes(),
+                profile.read_bytes(),
+            )
+            spec = json.loads((run_dir / "spec-0.json").read_text())
+            self.assertEqual(record["declared_suites"], [name])
+            self.assertIn("profile/stable.json", spec["input"]["selected_files"])
+            if name == "release-orchestration":
+                self.assertEqual(len(spec["workload"]["required_outputs"]), 34)
+
+    def test_optional_profile_refuses_symlink_version_and_source_pin_drift(self):
+        for fault in ("symlink", "version", "commit", "tree"):
+            profile = self.baseline()
+            document = json.loads(profile.read_text())
+            plugin = next(
+                row
+                for row in document["components"]
+                if row["name"] == "aquarium-plugin"
+            )
+            if fault == "symlink":
+                link = profile.with_name("link.json")
+                link.symlink_to(profile)
+                profile = link
+            elif fault == "version":
+                plugin["version"] = "0.1.22"
+            elif fault == "commit":
+                plugin["provenance"]["tag_commit"] = "f" * 40
+            else:
+                plugin["skill_tree"]["sha256"] = "0" * 64
+            if fault != "symlink":
+                profile.write_text(json.dumps(document))
+            with self.assertRaises(self.module.BundleError):
+                self.build("manual-hold", mode="manual", baseline_profile=profile)
 
     def test_release_acceptance_requires_verified_podway_input(self):
         with self.assertRaises(self.module.BundleError):
@@ -265,7 +333,12 @@ class HostBundleTest(unittest.TestCase):
                         )
                 self.assertIn("results/epic-squad/consumer-result.json", outputs)
                 self.assertIn("results/epic-squad/stage-evidence.json", outputs)
-            if name in {"podway-upgrade", "epic-squad", "release-acceptance"}:
+            if name in {
+                "podway-upgrade",
+                "epic-squad",
+                "release-acceptance",
+                "release-orchestration",
+            }:
                 self.assertEqual(spec["mode"], "manual")
                 self.assertEqual(
                     spec["environment"]["profile_id"],
@@ -381,6 +454,7 @@ class HostBundleTest(unittest.TestCase):
                 "skill-identity",
                 "task-startup",
                 "epic-startup",
+                "release-startup",
                 "stale-skill-failure",
                 "stale-skill-restoration",
                 "evidence-staging",

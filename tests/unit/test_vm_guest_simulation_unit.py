@@ -298,11 +298,10 @@ class SequenceSimulationTest(unittest.TestCase):
             skill = home / ".agents/skills" / name
             skill.mkdir(parents=True, exist_ok=True)
             (skill / "SKILL.md").write_text(f"# {name}\n")
-        # The guest use-podway tree is pinned by content in the profile;
-        # copy the installed host tree so the observed digest matches.
-        host_use_podway = Path.home() / ".agents/skills/use-podway"
-        assert host_use_podway.is_dir(), "host use-podway tree missing"
-        shutil.copytree(host_use_podway, home / ".agents/skills/use-podway")
+        # The profile pins this synthetic guest tree, independent of host installs.
+        synthetic_skill = home / ".agents/skills/use-podway"
+        synthetic_skill.mkdir(parents=True)
+        (synthetic_skill / "SKILL.md").write_text("# synthetic use-podway\n")
         # Per-home skills shaped like the guest: system skills plus foreign
         # trees, all inventoried by the codex-home-skills scope, and per-home
         # rules preserved as starting state with content identity.
@@ -396,6 +395,10 @@ class SequenceSimulationTest(unittest.TestCase):
                     component["version"] = version
                 if component.get("name") == "podway":
                     component["executable_sha256"] = fake_podway_digest
+                if component.get("name") == "use-podway":
+                    component["skill_tree"]["sha256"] = skill_tree_digest_of(
+                        self.home / ".agents/skills/use-podway"
+                    )
         (profiles / "stable.json").write_text(
             json.dumps(stable, indent=2, ensure_ascii=False) + "\n"
         )
@@ -480,6 +483,7 @@ class SequenceSimulationTest(unittest.TestCase):
         return {
             "PATH": "/usr/bin:/bin",
             "HOME": str(self.home),
+            "TMPDIR": str(self.test_work.resolve()),
             "AQUARIUM_GUEST_HOME": str(self.home),
             "AQUARIUM_GUEST_PYTHON": str(FIXTURES / "fake_python.py"),
             "AQUARIUM_DRIVER_PYTHON": sys.executable,
@@ -1713,9 +1717,7 @@ class SequenceSimulationTest(unittest.TestCase):
             ),
         )
         # The smoke gate runs as a subprocess without the launcher's guest
-        # patch, so it stops at the driver's own precise guest boundary: the
-        # gate refuses the physical host before writing result.json, and the
-        # phase records that exact diagnostic as the unobserved boundary.
+        # patch. The driver must refuse before producing an installed result.
         smoke_exit = self._jra_run(job, "startup-smokes")
         smoke_path = results / "startup-smokes.json"
         self.assertEqual(
@@ -1725,7 +1727,12 @@ class SequenceSimulationTest(unittest.TestCase):
         )
         smokes = json.loads(smoke_path.read_text())
         self.assertEqual(smokes["outcome"], "unobserved")
-        self.assertIn("physical-host execution is rejected", smokes["tail"])
+        self.assertNotEqual(smokes["exit"], 0)
+        self.assertFalse((run_root / "result.json").exists())
+        self.assertEqual(
+            set(smokes["unobserved_cases"]),
+            {"VM-UPGRADE-01", "VM-TASK-START-01", "VM-EPIC-START-01"},
+        )
         self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
         stale = json.loads((results / "stale-skill.json").read_text())
         self.assertEqual(stale["observation"]["outcome"], "duplication")
@@ -1757,10 +1764,44 @@ class SequenceSimulationTest(unittest.TestCase):
             "candidate-upgrade",
             "task-startup",
             "epic-startup",
+            "release-startup",
             "evidence-staging",
             "consumer-cleanup",
         ):
             self.assertEqual(statuses[unobserved], "unobserved", statuses)
+
+    def _seed_release_startup(self, run_root: Path) -> None:
+        """Synthetic startup originals for archive/cleanup scenarios only."""
+        release_case = run_root / "originals/release-startup/release-startup"
+        release_case.mkdir(parents=True)
+        evidence = {}
+        for key in (
+            "executor_assignment",
+            "evaluator_assignment",
+            "executor_result",
+            "evaluator_assessment",
+        ):
+            path = release_case / (key + ".json")
+            path.write_text(json.dumps({"explicitly": "synthetic"}))
+            evidence[key] = str(path)
+        (release_case / "startup-evidence.json").write_text(json.dumps(evidence))
+        for name in (
+            "operations/000.request.json",
+            "operations/000.input",
+            "operations/000.jsonl",
+            "operations/000.stderr",
+            "operations/000.invocation.json",
+            "native-000.json",
+            "capture-000.json",
+        ):
+            path = release_case / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("{}")
+        (
+            run_root.parent / "results/release-acceptance/release-startup.json"
+        ).write_text(
+            json.dumps({"candidate_sha": self.git_sha, "exit": 0, "outcome": "pass"})
+        )
 
     def _seed_upgrade_observation(self, run_root: Path) -> None:
         # run_gate retains verify_managed_update's setup capture bindings.
@@ -1948,6 +1989,7 @@ class SequenceSimulationTest(unittest.TestCase):
             )
             + "\n"
         )
+        self._seed_release_startup(run_root)
         self._seed_upgrade_observation(run_root)
         for case in ("task-startup", "epic-startup"):
             self._seed_startup_case(run_root, case)
@@ -1955,7 +1997,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
         staged = json.loads((results / "stage-evidence.json").read_text())
         self.assertIs(staged["ok"], True)
-        self.assertEqual(len(staged["archives"]), 9)
+        self.assertEqual(len(staged["archives"]), 10)
         for row in staged["archives"]:
             self.assertTrue((results / f"evidence/{row['case']}.tar").is_file(), row)
             manifest = json.loads(
@@ -2009,7 +2051,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self.assertEqual(self._jra_run(job, "complete-template"), 0, SEQUENCE_LOG[-1])
         template = json.loads((results / "manual-complete-template.json").read_text())
         self.assertEqual({row["status"] for row in template["scenarios"]}, {"pass"})
-        self.assertEqual(len(template["scenarios"]), 10)
+        self.assertEqual(len(template["scenarios"]), 11)
 
     def test_shadowing_outcome_is_observed(self):
         job = self.job_root("jra-shadow")
@@ -2107,6 +2149,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self._seed_startup_case(run_root, "task-startup")
         self._seed_startup_case(run_root, "epic-startup")
         (run_root / "result.json").write_text("{}\n")
+        self._seed_release_startup(run_root)
         self._seed_upgrade_observation(run_root)
         # A row without an explicit outcome never becomes a pass.
         (results / "startup-smokes.json").write_text(
@@ -2335,13 +2378,17 @@ class SequenceSimulationTest(unittest.TestCase):
         self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
         staged = json.loads((results / "stage-evidence.json").read_text())
         self.assertIs(staged["ok"], False)
-        self.assertEqual(len(staged["archives"]), 9)
+        self.assertEqual(len(staged["archives"]), 10)
         for row in staged["archives"]:
             self.assertTrue((results / f"evidence/{row['case']}.tar").is_file(), row)
         startup = json.loads(
             (results / "evidence/task-startup.manifest.json").read_text()
         )
         self.assertTrue(startup["missing_required"])
+        release_startup = json.loads(
+            (results / "evidence/release-startup.manifest.json").read_text()
+        )
+        self.assertTrue(release_startup["missing_required"])
         self.assertTrue(
             any("operation window" in name for name in startup["missing_required"])
         )
@@ -2375,6 +2422,7 @@ class SequenceSimulationTest(unittest.TestCase):
             )
             + "\n"
         )
+        self._seed_release_startup(run_root)
         self._seed_upgrade_observation(run_root)
         self.assertEqual(self._jra_run(job, "stale-skill"), 0, SEQUENCE_LOG[-1])
         self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
@@ -2409,7 +2457,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
         staged = json.loads((results / "stage-evidence.json").read_text())
         self.assertIs(staged["ok"], False)
-        self.assertEqual(len(staged["archives"]), 9)
+        self.assertEqual(len(staged["archives"]), 10)
         self.assertEqual(self._jra_run(job, "consumer-cleanup"), 1, SEQUENCE_LOG[-1])
         self.assertEqual(
             self.result_of(job, "release-acceptance")["consumer_cleanup"], "unverified"
@@ -2587,7 +2635,7 @@ class SequenceSimulationTest(unittest.TestCase):
         staged = json.loads((results / "stage-evidence.json").read_text())
         self.assertIs(staged["ok"], False)
         by_case = {row["case"]: row for row in staged["archives"]}
-        self.assertEqual(len(staged["archives"]), 9)
+        self.assertEqual(len(staged["archives"]), 10)
         # The later cases still stage with their originals.
         for case in ("runtime-update", "task-startup", "epic-startup", "stale-skill"):
             self.assertIn(case, by_case)
@@ -2615,6 +2663,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self._seed_startup_case(run_root, "epic-startup")
         (run_root / "task-startup/startup-evidence.json").write_text("{not json")
         (run_root / "result.json").write_text("{}\n")
+        self._seed_release_startup(run_root)
         self._seed_upgrade_observation(run_root)
         (results / "startup-smokes.json").write_text(
             json.dumps({"exit": 0, "outcome": "pass", "cases": []}, indent=2) + "\n"
@@ -2649,6 +2698,7 @@ class SequenceSimulationTest(unittest.TestCase):
         ):
             (run_root / "task-startup" / child).unlink()
         (run_root / "result.json").write_text("{}\n")
+        self._seed_release_startup(run_root)
         self._seed_upgrade_observation(run_root)
         (results / "startup-smokes.json").write_text(
             json.dumps({"exit": 0, "outcome": "pass", "cases": []}, indent=2) + "\n"
@@ -2692,6 +2742,7 @@ class SequenceSimulationTest(unittest.TestCase):
             )
             + "\n"
         )
+        self._seed_release_startup(run_root)
         self._seed_upgrade_observation(run_root)
         (results / "startup-smokes.json").write_text(
             json.dumps({"exit": 0, "outcome": "pass", "cases": []}, indent=2) + "\n"
@@ -2973,6 +3024,7 @@ class SequenceSimulationTest(unittest.TestCase):
             )
             + "\n"
         )
+        self._seed_release_startup(run_root)
         self._seed_upgrade_observation(run_root)
         # Remove the generation created in the first passing reply so the
         # second (failing) reply creates a fresh generation in its own window

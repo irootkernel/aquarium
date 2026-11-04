@@ -22,8 +22,12 @@ including conditional remediation and exact confirmation-manifest intake.
 now implements both gate orders, post-hook binding and independent QA-neutral
 eligibility. [Publication evidence/recovery](../../plugins/aquarium/skills/release-handler/references/publication-recovery.md)
 implements independent readiness/completion and original operation/Job recovery.
-TASK-175/176 retain integrated scenarios and installed Codex observations. Source
-integration supplies no functional or installed result.
+TASK-175 prepares integrated executable regressions, committed guest fixtures
+and driver support for the managed release-orchestration feature suite. It also
+adds bounded release-handler plan-readiness startup to release acceptance.
+TASK-176 retains actual installed/native observations against the exact committed
+matching candidate. Prepared fixtures and source integration establish no
+functional, installed or release result.
 This dossier keeps the original acceptance criteria and remaining obligations
 until final settlement.
 
