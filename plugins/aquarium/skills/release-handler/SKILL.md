@@ -15,8 +15,10 @@ Follow [release preparation and QA handoffs](references/release-preparation.md)
 for publication requests: bounded actual Executor delivery and independent plan
 and QA-readiness assessments are required before their dependent effects.
 The [release orchestration contract](references/release-orchestration.md) owns
-four boundaries; post-QA gate, publication and recovery integration remains with
-TASK-174. TASK-175/176 retain integrated scenarios and installed observations.
+all four boundaries. Follow [gate convergence](references/gate-convergence.md)
+for post-QA delivery and [publication recovery](references/publication-recovery.md)
+for original observations, independent publication assessments and recovery.
+TASK-175/176 retain integrated scenarios and installed observations.
 Finish active releases with their installed workflow before updating. This
 release invocation uses ordinary v3 reports with `procedure: null`; leave
 unrelated development sessions untouched.
@@ -32,6 +34,9 @@ disposable-output cleanup blocks progression separately from a passing gate.
 
 1. Resolve one Git root and inspect the worktree, conflicts, branch, `HEAD`, local and remote `main`, upstream, tags, hosted Releases, version authority, release-notes declaration, and repository release policy. Reconcile tags, hosted Releases, and completed release notes to establish the latest published stable version; stop on conflicting baseline evidence. When none exists, obtain explicit confirmation of the first release and intended version; do not fabricate a previous tag or commit.
    Never fetch, merge, switch, stash, clean, or repair state while establishing the candidate. When a conforming target release commit or any matching publication object already exists, read [publication-recovery.md](references/publication-recovery.md) and classify it before applying ordinary pre-release stop rules.
+   For a preserved unpushed commit under commit-before-gate policy, first follow
+   [known unstarted gate recovery](references/publication-recovery.md#recover-a-known-unstarted-policy-later-gate).
+   Missing gate evidence alone proves neither an unstarted gate nor publication readiness.
 2. Require one intended stable SemVer version greater than the established latest stable version, or the explicitly confirmed first-release version. When the request is only to retarget the open cycle, verify that the target remains greater than that latest stable version and that no tag or Release exists for either target, show the exact changelog heading edit, obtain approval, apply only that edit, and run the release-notes inspector and documentation checks.
    Request separate commit and push authority, use `$aquarium:task-commit` with `intentional no-note` for the exact heading edit, and stop without QA or publication when either authority is withheld.
    This retarget-only branch precedes mandatory release-role dispatch. Add no
@@ -110,6 +115,12 @@ recovery. Stop when QA is incomplete, findings remain or confirmation does not p
 
 After QA passes, re-inspect the exact candidate and confirm that changelog entries are byte-identical to the passing candidate. The sole later candidate exception is one approved QA-neutral direct child established under the gate-convergence reference; keep its direct-QA SHA and release-basis SHA distinct.
 
+Assign metadata edits, authorized checks and any bounded correction to Executors
+under the post-QA references. Read their complete actual handoffs, including
+candidate bytes, original results, pending effects and cleanup. The Coordinator
+retains actual approvals, commit handoffs and publication actions; an assignment
+or Evaluator verdict supplies no effect grant.
+
 When the target repository requires installed-system VM acceptance, follow its
 declared verification environment and [manual VM acceptance](references/manual-vm-acceptance.md)
 before its release-metadata or publication boundary. When that policy selects a
@@ -128,11 +139,35 @@ Before running the selected repository release gate, show its exact commands and
 
 In full mode, freeze its authoritative public checkpoints and include the aggregate and every possible suffix command in the requested convergence authority. In light mode, preserve the repository's fixed reduced gate and stop when policy requires full verification. Never split recipe lines or infer resumable stages from command output.
 
-Run only the approved gate commands and all required mismatch checks. On a full-gate failure, use the gate-convergence reference: rerun only the failing public checkpoint through the frozen suffix while diagnosing, settle at most one correction commit for that cycle, and require the complete authoritative gate to pass once from the beginning without candidate mutation before release. Suffix completion is never release-gate `PASS`.
+Have the authorized Executor run only the approved gate commands and all required mismatch checks in the repository-defined gate/commit order below. On a full-gate failure, use the gate-convergence reference: rerun only the failing public checkpoint through the frozen suffix while diagnosing, settle at most one correction commit for that cycle, and require the complete authoritative gate to pass once from the beginning without candidate mutation before publication. Suffix completion is never release-gate `PASS`.
 
-A QA-affecting correction requires new full release QA with explicit authority; the current invocation stops before that pass. The handler may instead restart once from a proven, explicitly approved QA-neutral direct child without rerunning release QA; never classify a small diff by size, accept a second reuse, or report the direct child as directly QA-passed. A new invocation re-establishes all facts and authority.
+A QA-affecting correction requires new full release QA with explicit authority; the current invocation stops before that pass. The handler may instead restart once from a proven, explicitly approved QA-neutral direct child without rerunning release QA. Obtain independent eligibility within publication readiness before seeking the user's exact equivalence approval; never classify a small diff by size, accept a second reuse, or report the direct child as directly QA-passed. A new invocation re-establishes all facts and authority.
 
-Do not commit or publish when a required check fails or is missing. Resolve the exact release title from the target repository's commit rule; do not impose Aquarium's title on another repository. Aquarium itself requires exactly `[REL] Release v<version>`. After explicit commit approval, create exactly one repository-conforming release commit through `$aquarium:task-commit` with `intentional no-note`. Preserve the direct-QA candidate SHA, release-basis candidate SHA, QA binding, release commit and parent, QA result, and release-gate result in the active handler report, then obtain separate push and publication authority.
+Resolve the exact release title from the target repository's commit rule; do not
+impose Aquarium's title on another repository. Aquarium itself requires exactly
+`[REL] Release v<version>` and gate-before-commit ordering. After actual commit
+approval, create exactly one repository-conforming release commit through
+`$aquarium:task-commit` with `intentional no-note`, following the target policy:
+
+- **Gate before commit:** require the authorized gate to pass on the identified
+  metadata bytes and inputs, with independent coverage of those bytes. After
+  commit, inspect the actual post-hook tree, sole release-basis parent and allowed
+  metadata-only delta. Bind the passing evidence to the release commit only when
+  those tested bytes and inputs still apply. Material hook changes invalidate
+  affected evidence before publication.
+- **Commit before gate:** inspect the actual clean post-hook release commit, then
+  have the Executor run the authorized gate on that exact commit. In the unchanged
+  commit handoff, mark the policy-later gate inapplicable only to that commit
+  boundary; it remains globally unverified and due before publication. A failed
+  gate preserves the unpushed commit and stops before any history-changing
+  correction until its exact disposition is explicitly authorized.
+
+Do not commit with a failed or missing check due at that commit boundary. Before
+the first publication mutation, require applicable independent publication
+readiness from the original evidence specified in publication recovery. All
+now-due checks must pass. Retain direct-QA and release-basis SHAs, QA binding,
+actual release commit/tree/parent/delta, QA and gate results, installed/distribution
+bindings and remaining authority. Obtain the separate push and publication grants.
 
 Publish in this order unless stricter repository policy overrides it:
 
@@ -145,14 +180,33 @@ Before every publication mutation and after every successful step, re-query live
 
 Perform only its one returned next action after obtaining that action's authority. A remote `main` that still equals or is an ancestor of the release-basis candidate permits the single fast-forward `push_main`; a verified descendant of the release commit skips `push_main` and resumes missing tag or hosted Release steps at the original release SHA. A descendant of the basis that does not include the release commit, divergence, unavailable relationship, `conflict`, or `unproven` state stops as `INCOMPLETE`. A `matching` step is skipped. Stricter repository publication rules remain authoritative. Never rewrite or delete a published tag or Release without explicit destructive-action authorization naming the exact objects.
 
+Obtain independent publication completion from original Git/hosting readback,
+including settled highlights separately from validation text. The inspector's
+structural `verify_complete` action alone does not establish semantic completion.
+Report a negative result with actual published state and unresolved obligations;
+it authorizes no rollback or repeated publication.
+
 ## Open the Next Cycle
 
-Only after publication verification, ask the user for the next planned stable version. Verify that it is greater than the published version and has no tag, hosted Release, or completed changelog section. The target is provisional and may later be retargeted through this skill with explicit approval.
+Normal continuation waits for all due publication-completion observations and
+the applicable independent completion assessment. Then ask the user for the next
+planned stable version. A separately requested bounded heading-only path still
+verifies publication facts and branch synchronization, reports unresolved release
+obligations and makes no release-success claim. Neither that path nor retargeting
+adds an Evaluator cycle, QA or publication requirement for the unreleased heading.
+Verify that the next version is greater than the published version and has no
+tag, hosted Release or completed changelog section. The target is provisional and
+may later be retargeted through this skill with explicit approval.
 
-Before drafting the next-cycle change, reconcile the branch state left by publication. If remote `main` advanced, follow the local fast-forward boundary in [publication recovery](references/publication-recovery.md) first. Show the exact new empty `Unreleased` section against that refreshed base and request separate commit authority. If approved, apply and validate it, create one non-release commit through `$aquarium:task-commit` with `intentional no-note`, then request separate push authority. If any authority is withheld, leave the published release complete, make no implied mutation, and report that enrolled commits must wait for an open target.
+Before drafting the next-cycle change, reconcile the branch state left by publication. If remote `main` advanced, follow the local fast-forward boundary in [publication recovery](references/publication-recovery.md) first. Show the exact new empty `Unreleased` section against that refreshed base and request separate commit authority. If approved, apply and validate it, create one non-release commit through `$aquarium:task-commit` with `intentional no-note`, then request separate push authority. If any authority is withheld, preserve established publication facts and unresolved obligations, make no implied mutation, and report that the next cycle and enrolled commits must wait for an open target.
 
 ## Report
 
 Return the intended version, mode, previous release or confirmed first-release baseline, every candidate and release commit SHA including the distinct direct-QA, release-basis, and correction commit identities, QA binding, exact reuse-attempt fact and approval, changelog path and decision, release-qa result and evidence root, frozen gate checkpoints, and suffix and final aggregate commands and exit codes.
 
 Also return publication-state classification and per-object status, push, tag, hosted Release and peeled-target verification, next planned version and its separate commit or gap, current Git state, and any remaining uncertainty.
+
+Include actual Executor handoffs, independent publication-readiness/completion
+reports and their current applicability, original observation provenance,
+post-hook tested-byte binding, any commit-first disposition stop, policy-due
+original VM Job/case/consumer/native cleanup evidence and retained-output owners.

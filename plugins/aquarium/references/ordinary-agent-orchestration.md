@@ -61,7 +61,7 @@ using supported Actions, selected evidence and Coordinator Decisions:
 | Validation | Independent original-source audit or re-audit; each correction group with checks before settlement; final integrated outcome after admitted review |
 | Design | Context and discovery; draft, challenge and quality evidence; approved application with verification and final design outcome |
 | War-room | Baseline and investigation for cause/scope Decisions; proposal and quality evidence; approved document or verified no-change delivery and final diagnosis outcome |
-| Release | Plan and QA readiness through [release preparation](../skills/release-handler/references/release-preparation.md); publication readiness and completion remain reserved under the [release contract](../skills/release-handler/references/release-orchestration.md) for TASK-174 integration |
+| Release | Plan and QA readiness through [release preparation](../skills/release-handler/references/release-preparation.md); publication readiness before the first mutation and completion from original evidence through [publication recovery](../skills/release-handler/references/publication-recovery.md), under the [release contract](../skills/release-handler/references/release-orchestration.md) |
 
 Operational bookkeeping and report assembly do not create another Evaluator cycle.
 Evaluator reports are never recursively evaluated. The Coordinator checks completeness,
@@ -74,8 +74,11 @@ reports stay in the enclosing release handler's evidence; the existing commit-le
 input remains unchanged. Preparation and QA dispatch consume actual bounded
 Executor results and independent plan/QA-readiness assessments. Retarget-only
 heading changes keep their existing path without those new role requirements.
-Post-QA gate/publication/recovery dispatch remains pending TASK-174 integration;
-current post-QA owners remain authoritative.
+Post-QA Executors deliver authorized metadata, gates, corrections and original
+observations. Independent publication readiness follows the repository gate/commit
+order and actual post-hook binding; completion assesses original Git/hosting
+readback and notes. Recovery settles modifying work and the original Haepari Job
+before replacement. These roles supply no additional effect grants.
 
 Reconcile assigned criteria with canonical sources, including omitted criteria
 and applicable parent constraints. Each criterion retains its source, evidence,
@@ -205,7 +208,7 @@ for ordinary dispatch.
 | Owner | Required alignment |
 | --- | --- |
 | [Task handler](../skills/task-handler/SKILL.md), [Epic handler](../skills/epic-handler/SKILL.md), [Epic validator](../skills/epic-validator/SKILL.md) | Produce assignments/checkpoints and consume actual Executor results and applicable Evaluator reports; preserve actual acceptance and commit authority |
-| [Release handler](../skills/release-handler/SKILL.md) and [release target contract](../skills/release-handler/references/release-orchestration.md) | Coordinator assignments/checkpoints, actual preparation/correction Executor handoffs and independent plan/QA readiness through existing v3 fields; TASK-174 retains post-QA producer/consumer integration, with installed results unverified |
+| [Release handler](../skills/release-handler/SKILL.md) and [release target contract](../skills/release-handler/references/release-orchestration.md) | Coordinator assignments/checkpoints, actual preparation/gate/correction/observation Executor handoffs and all four independent release assessments through existing v3 fields; retain original QA, post-hook, publication and Job/cleanup evidence, with installed results unverified |
 | [New feature](../skills/new-feature/SKILL.md), [new project](../skills/new-project/SKILL.md), [refactor](../skills/refactor/SKILL.md), [war-room](../skills/war-room/SKILL.md) | Use grouped native roles while preserving proposal, quality, exact-diff, leaf and non-Git boundaries |
 | Task phases: [plan](../skills/task-plan/SKILL.md), [implement](../skills/task-implement/SKILL.md), [refine](../skills/task-refine/SKILL.md), [verify](../skills/task-verify/SKILL.md), [document](../skills/task-document/SKILL.md), [review](../skills/task-review/SKILL.md), [close](../skills/task-close/SKILL.md) | Produce v3 handoffs or consume final assessments under a compatible ordinary handler; retain direct-invocation authority |
 | [Executor guidance](executor-guidance.md), [Goal Evaluator](../skills/goal-evaluator/SKILL.md) | Produce v3 reports without formal qualification prerequisites |

@@ -18,9 +18,12 @@ promotes TASK-172's frozen roles, boundaries and evidence interfaces.
 [Preparation/QA handoffs](../../plugins/aquarium/skills/release-handler/references/release-preparation.md)
 now implement bounded Executor delivery and independent plan/QA readiness,
 including conditional remediation and exact confirmation-manifest intake.
-TASK-174 retains post-QA gates/publication/recovery integration under current
-operational owners. TASK-175/176 retain integrated scenarios and installed Codex
-observations. Source integration supplies no functional or installed result.
+[Post-QA convergence](../../plugins/aquarium/skills/release-handler/references/gate-convergence.md)
+now implements both gate orders, post-hook binding and independent QA-neutral
+eligibility. [Publication evidence/recovery](../../plugins/aquarium/skills/release-handler/references/publication-recovery.md)
+implements independent readiness/completion and original operation/Job recovery.
+TASK-175/176 retain integrated scenarios and installed Codex observations. Source
+integration supplies no functional or installed result.
 This dossier keeps the original acceptance criteria and remaining obligations
 until final settlement.
 

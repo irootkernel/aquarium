@@ -4,7 +4,8 @@ Use this reference from [release-handler](../SKILL.md) for a publication request
 The [release orchestration contract](release-orchestration.md) owns roles,
 original evidence and the four assessment boundaries. This reference implements
 preparation, plan readiness, QA readiness and the QA caller seam. Post-QA gates,
-publication and recovery retain their current owners pending TASK-174 integration.
+publication and recovery follow [gate convergence](gate-convergence.md) and
+[publication evidence and recovery](publication-recovery.md).
 
 Finish active releases with their installed workflow before updating. Start new
 invocations under the updated contract; old Coordinator summaries do not replace
@@ -201,7 +202,8 @@ reproduction under QA's fixed inventory and environment bindings, then consume
 the original finish result. Nonpassing confirmation stops without another
 correction, confirmation or automatic full pass.
 
-Hand the post-QA owner original QA records/results, direct-QA candidate, unchanged
-settled entries, current pre-QA/light evidence, due or pending VM facts, cleanup/
-retention and remaining authority. A passing preparation/QA assessment supplies
-no publication readiness, release acceptance or authority for a later effect.
+Hand [post-QA convergence](gate-convergence.md) and [publication readiness](publication-recovery.md)
+original QA records/results, direct-QA candidate, unchanged settled entries, current
+pre-QA/light evidence, due or pending VM facts, cleanup/retention and remaining
+authority. A passing preparation/QA assessment supplies no publication readiness,
+release acceptance or authority for a later effect.

@@ -18,7 +18,10 @@ history, model telemetry or configuration qualification.
 The [release orchestration target contract](../release-handler/references/release-orchestration.md)
 owns four release assessments. The handler now requires plan and QA-readiness
 assessments through its [preparation handoff](../release-handler/references/release-preparation.md).
-Publication-readiness/completion dispatch remains reserved for TASK-174 integration;
+The handler also requires publication readiness before the first publication
+mutation and completion from original observations through [publication evidence
+and recovery](../release-handler/references/publication-recovery.md). Assess exact
+post-hook/gate binding and settled highlights separately from validation text;
 source instructions establish no installed result.
 
 ## Establish the assessment

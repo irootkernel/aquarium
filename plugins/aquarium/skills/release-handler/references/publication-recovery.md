@@ -1,8 +1,87 @@
-# Publication Recovery
+# Publication Evidence and Recovery
 
-Read this reference only when the intended version already has a conforming local release commit or any remote `main`, publication-remote annotated tag, or hosted Release publication state to reconcile.
+Read this reference before publication readiness, each publication action and
+completion. Apply its recovery rules when a conforming local release commit or
+any publication object already exists; reconstruct current state before replay.
 
-Recovery is stateless. Reconstruct it from current Git and hosting objects plus exact prior QA, QA-binding, QA reuse-attempt, and release-gate evidence still present in the active conversation or supplied by the user. Never create `.aquarium`, a tracked marker, or a `/tmp` resume manifest. If the direct-QA candidate SHA, release-basis candidate SHA, QA binding, exact reuse-attempt fact, or gate-bound release commit SHA is unavailable, classify recovery as `unproven` and stop `INCOMPLETE`; do not rerun release QA or infer success from a commit title.
+## Original evidence and independent readiness
+
+The Coordinator or an explicitly authorized read-only Executor captures original
+Git and hosting outputs with exact commands, exits, candidate/object identities
+and provenance. Retain those outputs with the v5 observation and inspector result
+in existing v3 evidence fields. The Evaluator reads the originals and local Git
+objects, distinguishing firsthand artifact reads from supplied remote observations.
+Direct remote reads require an explicit scope within existing discovery authority;
+they grant no credential inspection, authentication changes, checks or mutations.
+
+Before the first publication mutation, obtain applicable independent publication
+readiness against the original release requirements and exact current candidate.
+Supply original passing QA/frozen coverage and any approved neutral binding;
+current pre-QA results and actual exact-SHA light confirmation; authorized metadata;
+the actual post-hook release commit/tree, sole parent and tested-byte/input binding;
+the required uninterrupted gate and mismatch results; settled notes; policy-due
+installed/case/cleanup evidence and final distribution-byte applicability. Respect
+both gate orders from [gate convergence](gate-convergence.md). A policy-later gate
+is not globally satisfied because it was inapplicable at commit time.
+
+In full mode use actual due results. In light mode retain the prior results and
+actual confirmation required for the exact SHA, plus current reduced execution;
+do not run excluded checks, silently switch mode or claim omitted runs occurred.
+The structural inspector selects an action, but cannot establish semantic note
+coverage, actual approvals, original QA or installed acceptance. Missing due
+evidence yields `evidence-needed`; established gaps retain `rework`. Neither
+report supplies authority, repairs a result or grants another operation.
+
+## Recover a known unstarted policy-later gate
+
+Before constructing a publication observation, distinguish an interrupted
+commit-before-gate release whose required gate is known never to have started
+from a missing result of an existing operation. A missing report or public handle
+alone proves neither case. Use original handoffs and available native operation
+records to establish what actually started. Reconnect or reconcile any existing,
+pending or uncertain operation through its same public handle and, when adopted,
+original Haepari request/spec/Job before replay or replacement. Lost admission
+and result replies follow the native retry/reconciliation contract, not a new
+dispatch inferred from absent evidence. An actual failed gate follows the existing
+commit-preservation, explicit-disposition and bounded-cycle stops.
+
+Resume the policy-later gate before the missing gate-evidence stop below only
+when it is known unstarted and these facts are re-established:
+
+- Repository policy requires commit before gate; the exact preserved release
+  commit remains unpushed on clean local `main`. Live remote `main` equals or is
+  a proved ancestor of the release basis. No publication effect has started and
+  no target publication object exists. Existing or uncertain publication state,
+  conflict or unprovable ancestry follows normal reconciliation, not this branch.
+- Original direct QA or the one approved QA-neutral binding, complete retained
+  record and exact reuse fact support the same release basis. Version, full/light
+  mode, required pre-QA results, applicable actual exact-SHA light confirmation
+  and unchanged settled note bytes remain valid. Missing or stale prerequisites
+  keep their normal stops; this branch grants no QA pass or reconfirmation.
+- Re-inspection proves the actual post-hook commit/tree, sole release-basis
+  parent, approved metadata-only delta and current check inputs/environment still
+  match the retained candidate bindings. Drift or missing QA/input evidence cannot
+  be classified as an unstarted gate. Preserve policy-due installed/distribution
+  applicability and remaining authority without inventing passing results.
+
+Obtain the actual gate-execution authority required in this invocation under
+[gate convergence](gate-convergence.md), including its existing public checkpoints,
+pass conditions and bounded-cycle grants. Assign a bounded Executor only those
+authorized commands on the same preserved commit. Consume its original result
+and verify commit identity, tested-byte/input binding and unchanged tracked state.
+An uninterrupted passing gate supplies its actual release-commit binding; never
+synthesize a gate SHA or `PASS` to enter the inspector. Failure preserves the
+unpushed commit and follows existing correction/disposition limits.
+
+Then complete the existing independent publication-readiness boundary against
+all now-due original evidence before any publication mutation, and proceed through
+the unchanged strict v5 observation and per-action routing below. This continuation
+adds no Evaluator cycle and grants no installation, history change or publication
+effect. Gate-before-commit and all other missing-evidence stops remain unchanged.
+
+## Reconstruct the publication state
+
+Recovery is stateless. Reconstruct it from current Git and hosting objects plus exact prior QA, QA-binding, QA reuse-attempt, and release-gate evidence still present in the active conversation or supplied by the user. Never create `.aquarium`, a tracked marker, or a `/tmp` resume manifest. Apply the known unstarted policy-later gate branch above before requiring its not-yet-produced gate evidence. Otherwise, if the direct-QA candidate SHA, release-basis candidate SHA, QA binding, exact reuse-attempt fact, or gate-bound release commit SHA is unavailable, classify recovery as `unproven` and stop `INCOMPLETE`; do not rerun release QA or infer success from a commit title.
 
 Resolve and independently verify:
 
@@ -38,4 +117,51 @@ A remote descendant is reported as `advanced`, not `matching`. It authorizes no 
 
 Re-observe and rerun the helper immediately before each mutation and after it succeeds. Obtain the normal separate authority for the returned mutation; earlier authority does not survive a new invocation. Never recreate a matching object, skip an earlier missing step, or repair a conflict by rewriting or deleting published state.
 
-After verified advance recovery, local `main` still names the release commit. Before preparing a next-cycle commit, freshly verify a clean local worktree and the remote descendant, then obtain authority for the exact local fast-forward through the repository's native Git or Sanho workflow. Publication authority alone does not authorize this update. Recheck the resulting HEAD and changelog before proposing the next-cycle diff; if synchronization is withheld or conflicts, leave publication complete and the next cycle pending. Never rewrite the published release to reconcile this state.
+After verified advance recovery, local `main` still names the release commit. Before preparing a next-cycle commit, freshly verify a clean local worktree and the remote descendant, then obtain authority for the exact local fast-forward through the repository's native Git or Sanho workflow. Publication authority alone does not authorize this update. Recheck the resulting HEAD and changelog before proposing the next-cycle diff; if synchronization is withheld or conflicts, preserve established publication facts and unresolved obligations and leave the next cycle pending. Never rewrite the published release to reconcile this state.
+
+## Interrupted roles and uncertain effects
+
+Before a resumed invocation's first remaining publication mutation, reconnect the
+logical Evaluator or supply an independent replacement with original criteria,
+current artifacts, prior gaps/findings, original results and remaining authority.
+Establish current applicability; a restored pass or the same agent identity alone
+does not suffice. Carry unaffected rows only with an explicit applicability basis.
+Reassess affected rows before their dependent effect; unchanged report assembly
+and per-action readback do not themselves require another Evaluator cycle.
+
+Reconcile an uncertain external effect from current original Git/hosting evidence
+before replay. Reconnect known public operations and consume complete results.
+Before replacing a mutating Executor, settle its commands, relevant descendants,
+background writes and possible effects. Missing settlement capability stops the
+affected mutation; Coordinator self-assessment cannot supply independence.
+
+For an adopted Haepari path, recover the original persisted request key, exact
+spec, controller/resource, sealed candidate/profile inputs and returned or
+recovered Job/revision. Await or reconcile that same Job before Executor replacement
+or redispatch. Follow native `error.code`/`error.retry`; lost admission replays
+only the identical key/spec when directed. Timeout remains pending and returns no
+capacity. Keep original case outputs, verified consumer cleanup/inventory and
+native collection/cleanup/export evidence separate from occupancy and assessment.
+Use [manual acceptance](manual-vm-acceptance.md); no replacement Job or outer lock
+is authorized by a wait expiry, lost reply, role replacement or verdict.
+
+## Independent completion and bounded continuation
+
+After the final publication readback, obtain independent publication completion
+from the original commands/results and Git/hosting objects. Verify the actual
+release commit, permitted remote-main equality or proved descendant, annotated
+publication-remote tag and peeled target, hosted Release target and stable status.
+Compare its highlights with the settled entry text separately from the validation
+section and its actual claims. Retain applicable original QA, gate and installed
+evidence without reacquiring a settled VM Job. `verify_complete` is structural
+routing, not the semantic completion assessment.
+
+A negative completion result reports actual published objects and remaining
+obligations; it authorizes no rollback, deletion or repeated publication. Normal
+continuation requires all due completion observations and an applicable completion
+assessment. A separately requested bounded next-cycle heading still verifies
+publication facts and branch synchronization, reports unresolved release facts
+honestly and makes no release-success claim. Retargeting and next-cycle opening
+retain exact approved diffs, inspector/docs checks and separate local fast-forward,
+commit and push grants. Withheld authority stops that effect. These heading paths
+add no Evaluator cycle, QA or publication requirement for the unreleased cycle.

@@ -8,11 +8,12 @@ plan/QA readiness and bounded remediation/confirmation through
 [release preparation](release-preparation.md). The conditional QA caller seam
 preserves standalone behavior and the original verdict and confirmation authority.
 
-TASK-174 retains post-QA gates, publication and recovery integration, including
-removal of generic gate-before-commit assumptions. Until that integration,
-[gate convergence](gate-convergence.md), [publication recovery](publication-recovery.md)
-and the handler's current post-QA steps govern their operations. The reserved
-publication assessments below do not override those steps. TASK-175 prepares
+[Gate convergence](gate-convergence.md) now implements both repository-defined
+gate orders, bounded Executor delivery and independent QA-neutral eligibility.
+[Publication evidence and recovery](publication-recovery.md) implements original
+observation intake, independent publication readiness/completion and interrupted
+role/effect recovery. [Manual acceptance](manual-vm-acceptance.md) supplies the
+policy-selected original Job, case and cleanup handoff. TASK-175 prepares
 integrated scenarios and the bounded installed startup case; TASK-176 observes
 the exact installed candidate. Source integration establishes no installed result.
 
@@ -172,7 +173,8 @@ requires the complete final aggregate to pass uninterrupted. Preserve existing
 correction limits and QA-affecting routing. Where uncommitted metadata must be
 restored for a correction commit, follow the exact restoration contract without
 changing settled entry text. The commit-first failure path grants no history
-exception. TASK-174 integrates these orders into the handler and convergence owner.
+exception. The handler and [convergence owner](gate-convergence.md) implement
+these orders and exact post-hook bindings.
 
 ## Observations, QA and recovery
 

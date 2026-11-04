@@ -15,8 +15,12 @@ actual approvals, selected technical reviews and scoped commit authority.
 The [release orchestration target contract](../skills/release-handler/references/release-orchestration.md)
 owns release roles, four boundaries and original-evidence ownership.
 [Preparation and QA handoffs](../skills/release-handler/references/release-preparation.md)
-implement bounded Executor delivery and independent plan/QA readiness. TASK-174
-retains post-QA gate/publication/recovery integration under current owners.
+implement bounded Executor delivery and independent plan/QA readiness.
+[Gate convergence](../skills/release-handler/references/gate-convergence.md) and
+[publication evidence/recovery](../skills/release-handler/references/publication-recovery.md)
+implement post-QA delivery, both gate orders, actual post-hook binding and
+independent publication readiness/completion from original observations. Preserve
+actual grants, settled Writer replacement and original Job/cleanup evidence.
 The non-Podway path adds no Procedure or commit-leaf input schema; installed
 release-role observations remain unverified.
 

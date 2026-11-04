@@ -39,11 +39,14 @@ confirmation stop. Prepared-manifest readiness precedes claim creation; claim
 readback binds dispatch to the assessed manifest. Retarget-only heading edits
 keep their existing branch before mandatory role dispatch.
 
-The Coordinator retains actual approvals and commit handoffs. TASK-174 owns
-post-QA gates/publication/recovery integration and reserved publication
-assessments; current post-QA steps retain their authority. Evaluator reports
-remain in the handler's evidence. Existing QA records and Git/hosting objects
-support recovery without a resume manifest or new commit-leaf schema. A resumed
+The Coordinator retains actual approvals, commit handoffs and publication actions.
+Post-QA Executors deliver authorized metadata, gates, corrections and original
+observations. Independent publication readiness follows repository gate/commit
+order and actual post-hook tested-byte/parent binding before the first mutation;
+completion assesses original readback and note highlights separately from
+validation. Failed commit-first candidates remain preserved pending authorized
+disposition. Evaluator reports remain in the handler's evidence. Existing QA
+records and Git/hosting objects support recovery without a resume manifest or new commit-leaf schema. A resumed
 publication requires applicable independent readiness before its first remaining
 mutation; all modifying work is settled before Executor replacement. Haepari's
 native request/spec/Job and recipe cleanup remain under their existing owners.

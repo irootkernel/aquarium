@@ -60,3 +60,32 @@ non-passing. Respect the command's actual exit semantics: Make may map a failing
 recipe to its own nonzero status. Keep private runtime evidence under the
 target's evidence residency contract. VM acceptance does not grant staging,
 commits or publication.
+
+## Release-role delivery and recovery
+
+The Coordinator supplies the policy-due boundary, exact candidate/test sources,
+controller/resource, admitted installation/manual effects and cleanup owners in
+the existing assignment. An authorized bounded Executor returns the persisted
+request key/spec and sealed input identities, returned or recovered Job/revisions,
+original native envelopes, actual case results, verified consumer inventory and
+native collection/cleanup/export evidence. Planning acquires no occupancy and
+does not require an idle resource; normal contention follows the native queue.
+
+Before Executor replacement or redispatch, reconcile its commands, descendants
+and possible effects, recover that original request/spec/Job and await or reconnect
+to the same Job. A lost admission reply may resend only the identical key/spec as
+native `error.code` and `error.retry` direct; do not invent a replacement key or
+Job. A wait timeout remains pending, does not cancel and does not return capacity.
+Preserve actual cancellation, collection and cleanup failures separately.
+
+The independent publication-readiness Evaluator reads policy-due original installed
+and case results, consumer cleanup/inventory and native export evidence for the
+exact candidate. Include them at QA readiness only when policy makes them due
+there. Light mode retains actual exact-SHA confirmation and required prior results;
+full mode follows the declared installed boundary. A manual-ready state, smoke
+exit or assessment verdict cannot supply missing observations or resource return.
+Keep occupancy/disposition, workload outcome, evidence completeness, recipe cleanup,
+native cleanup and assessment separate. Later publication/report assembly does
+not prolong settled occupancy or reacquire the Job. Reconcile tested pre-metadata
+bytes with final distribution under the existing identity contract; any unsupported
+payload difference renews affected installed verification before publication.

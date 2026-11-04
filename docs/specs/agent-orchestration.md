@@ -26,9 +26,14 @@ binds the prepared manifest before claim creation; claim readback must match the
 assessed path and native canonical digest before dispatch. Standalone QA remains
 unchanged. Retarget-only heading changes bypass these new role requirements.
 
-TASK-174 retains post-QA gate/publication/recovery integration and reserved
-publication assessments under current operational owners. Existing v3 reports
-carry original evidence and the accepted Haepari handoff without a new schema,
+[Gate convergence](../../plugins/aquarium/skills/release-handler/references/gate-convergence.md)
+and [publication evidence/recovery](../../plugins/aquarium/skills/release-handler/references/publication-recovery.md)
+implement bounded post-QA delivery, repository-defined gate order, post-hook
+commit binding and independent publication readiness before the first mutation.
+Completion reads original Git/hosting evidence and settled highlights separately
+from validation. Recovery settles modifying effects and the original Job before
+replacement; actual grants and failed commit-first history stops remain. Existing
+v3 reports carry original evidence and the accepted Haepari handoff without a new schema,
 commit-leaf input or Podway release session. TASK-175/176 retain integrated
 scenarios and installed Codex observations. The [roadmap](../roadmap/README.md#epic-031-adopt-coordinator-evaluator-and-executor-roles-in-release-workflows)
 owns delivery state. Source integration establishes no installed result.

@@ -2,6 +2,38 @@
 
 Read this reference after release QA has passed and before executing a repository full release gate. It governs efficient diagnosis after a gate failure without weakening the repository's aggregate command or binding prior QA evidence to a candidate it did not directly assess.
 
+## Delivery and gate order
+
+The Coordinator assigns approved metadata edits and authorized gate commands to
+a bounded Executor, consuming its actual diff, candidate identity, command/input/
+environment records, original exits and outputs, tracked-state comparisons and
+cleanup handoff. Assign an authorized correction to one mutating Executor; retain
+its exact edits, focused results and diagnostic suffix evidence. The Coordinator
+keeps approvals, `task-commit` handoffs and publication control. Readiness and
+rework reports supply no execution, correction or Git authority.
+
+Follow the repository's planned full/light or reduced-patch gate order. Aquarium's
+own policy remains gate before commit. For that order, assess the gate-tested
+metadata bytes and inputs, then inspect the actual post-hook release commit tree,
+sole release-basis parent and authorized metadata-only delta. Bind the gate to
+the release commit only when the comparison proves its applicability. Hook changes
+invalidate affected evidence; the title or successful commit cannot prove binding.
+
+For commit before gate, the Coordinator commits the approved metadata delta through
+the unchanged leaf handoff and inspects the actual clean post-hook result. Record
+the later gate as inapplicable to this commit boundary only, globally unverified
+and still required before publication. The Executor then runs the authorized gate
+on that exact commit. Independent publication readiness must cover the actual
+commit, parent, tested bytes and all due results before the first publication
+mutation. Keep separate pre-QA, installed, metadata and final distribution bindings.
+
+If that commit-first gate fails, preserve the unpushed local release commit and
+report its identity and failure. Diagnostics may continue within authority while
+preserving it. Stop before a correction requiring history changes until the user
+authorizes disposition of that exact commit. Do not reset, amend, automatically
+restore metadata over it or replay publication. The disposition must establish
+the resulting candidate and renew affected evidence; it grants no extra QA pass.
+
 ## Rebind Pre-QA Evidence
 
 The clean committed candidate after changelog settlement owns pre-QA compatibility evidence and any light-mode test confirmation. Follow the repository policy to determine which gates are required and which exact distributed artifact and environment they must use. A development commit alone does not start a release gate.
@@ -28,7 +60,17 @@ Once a suffix reaches the end, determine whether its corrections require a candi
 
 ## Settle One Correction Commit
 
-When a candidate correction commit is required, first restore only the applied release metadata to the exact release-basis state, including the open `Unreleased` heading, without changing settled entry text. Then collect the verified candidate corrections from one suffix cycle into one exact reviewed commit after the suffix reaches the end. Include required regression coverage and any release-note entry whose shipped outcome changed. Obtain the normal exact diff, release-note decision, and `$aquarium:task-commit` authority through its direct-commit flow, not a release-handler commit handoff operation; do not amend an earlier correction commit or hide functional work in the release commit.
+When a candidate correction commit is required and release metadata is still
+uncommitted under gate-before-commit policy, have the authorized Executor restore
+only that metadata to the exact release-basis state, including the open
+`Unreleased` heading, without changing settled entry text. The commit-first stop
+above takes precedence when a release commit already exists. Collect the verified
+corrections from one suffix cycle into one exact reviewed commit after the suffix
+reaches the end. Include required regression coverage and any release-note entry
+whose shipped outcome changed. Obtain the normal exact diff, release-note decision
+and `$aquarium:task-commit` authority through its direct-commit flow, not a
+release-handler commit handoff operation; do not amend an earlier correction
+commit or hide functional work in the release commit.
 
 Repository-authorized release metadata remains outside that correction commit: published version, pinned validation expectation, the release heading's date transition, and deterministic release links. A correction limited to that allowlist may remain in the later metadata-only release commit when entry text is unchanged.
 
@@ -45,6 +87,14 @@ The handler may reuse one prior release-qa `PASS` for exactly one direct-child c
 - tests are not removed, skipped, weakened, or relaxed, and no product expectation changes; and
 - no candidate surface listed as QA-affecting above changes.
 
+Before the Coordinator seeks that exact equivalence approval, the independent
+Evaluator assesses all six conditions against the original PASS/frozen record,
+exact clean direct-child diff, distribution authority, affected scenario inputs
+and first-and-only reuse fact. Return eligibility as a nonfinal checkpoint within
+publication readiness. A negative or inconclusive result stops the dependent
+equivalence request; a passing eligibility result supplies neither actual approval
+nor final readiness. Keep all remaining global obligations in their actual state.
+
 Diff size, commit title, file location alone, formatting claims, or a successful focused check cannot establish equivalence. Missing evidence, an ambiguous classification, a candidate that is not the direct child, or a second correction commit requires a new full release-qa pass.
 
 Record the prior release-qa result against its actual SHA and record the current SHA separately as an approved QA-neutral release-basis candidate. Never claim that release QA directly passed the direct child. Re-establish the release from live Git and hosting state on handler restart; retained evidence grants no test, commit, push, tag, or publication authority.
@@ -55,10 +105,22 @@ After a QA-neutral reuse, any further candidate commit requires new full release
 
 ## Prove the Final Gate
 
-After the corrected release-basis candidate has direct QA or one approved QA-neutral binding, reapply only the previously authorized release metadata and run the complete authoritative release gate from its first command. Require every pass condition in one uninterrupted run and compare tracked state before and after.
+After the corrected release-basis candidate has direct QA or one approved QA-neutral
+binding, apply only the previously authorized metadata and follow the selected
+order above: for gate-before-commit, run on those identified bytes before the
+release commit; for commit-before-gate, run on the actual clean release commit
+after any required authorized disposition and preparation. Require every pass
+condition in one uninterrupted authoritative gate from its first command, comparing tracked
+state before and after. Complete applicable independent publication readiness
+with the actual post-hook binding and every other due obligation.
 
 Any candidate edit, unexpected tracked mutation, missing command, or new failure discards that full-run evidence and begins a new bounded cycle from the observed failure. Publication remains blocked until one complete run passes without changing the candidate.
 
 ## Report
 
 Return the frozen checkpoint inventory and pass conditions, initial aggregate result, each failure and suffix range, corrections, tracked-state comparisons, correction commit and release-note decision, direct-QA SHA and result, QA-reuse classification and approval, release-basis SHA, final uninterrupted aggregate result, and remaining gaps.
+
+Retain Executor deliveries, policy order, actual release commit/tree/parent/delta,
+tested-byte/input binding, independent eligibility and final readiness evidence,
+any failed commit-first disposition stop and remaining grants. Diagnostic suffixes
+and unchanged bookkeeping add no Evaluator cycle.

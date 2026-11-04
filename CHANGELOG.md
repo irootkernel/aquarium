@@ -6,7 +6,7 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
-- Require bounded Executor preparation and independent plan and QA-readiness assessments in `release-handler`; finish active releases with their installed workflow before updating.
+- Require bounded Executor delivery and independent plan, QA-readiness, publication-readiness and publication-completion assessments in `release-handler`, including QA-neutral eligibility before equivalence approval, repository-defined gate order, post-hook commit binding, original publication and VM cleanup evidence, and same-Job recovery; finish active releases with their installed workflow before updating.
 
 ## v0.1.22 - 2026-11-04
 

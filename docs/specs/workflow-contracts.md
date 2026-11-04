@@ -209,9 +209,16 @@ available without replaying dispatched scenarios or adding attempts.
 Retarget-only requests take the existing approved heading-edit branch before
 mandatory role dispatch, without a new Evaluator cycle, QA or release publication.
 The enclosing handler owns assessment evidence and existing commit-leaf inputs
-stay unchanged. TASK-174 retains post-QA gates/publication/recovery and reserved
-publication assessments under current owners. TASK-175/176 retain integrated
-scenarios and installed Codex observations; the [roadmap](../roadmap/README.md#epic-031-adopt-coordinator-evaluator-and-executor-roles-in-release-workflows)
+stay unchanged. Post-QA Executor delivery and independent publication assessments
+follow [gate convergence](../../plugins/aquarium/skills/release-handler/references/gate-convergence.md)
+and [publication evidence/recovery](../../plugins/aquarium/skills/release-handler/references/publication-recovery.md).
+Readiness covers original due results and actual post-hook tree/parent/tested-byte
+binding before the first publication mutation. QA-neutral eligibility precedes
+actual equivalence approval within that boundary. Completion assesses original
+Git/hosting readback and settled highlights separately from validation text.
+Recover uncertain effects and settle modifying descendants and the original Job
+before replacement; retain current Evaluator applicability. TASK-175/176 retain
+integrated scenarios and installed Codex observations; the [roadmap](../roadmap/README.md#epic-031-adopt-coordinator-evaluator-and-executor-roles-in-release-workflows)
 owns delivery state. Finish active releases with their installed workflow before
 updating; source integration establishes no installed result.
 
@@ -223,7 +230,7 @@ Installed evidence binds the committed pre-metadata candidate. Light-mode confir
 
 Release-QA executors emit versioned cluster results. A full pass freezes the baseline identity, complete commit and surface matrices, cluster scenarios, findings, and evidence before remediation. An explicitly confirmed first release covers every reachable commit, including the root, and the complete current tree. Active Design Gate positive and failure scenarios are inventoried independently from release-delta coverage, frozen with the record, and retained in confirmation. Confirmation preparation derives the exact non-empty remediation range and coverage from Git, and begin atomically creates the one permitted claim by frozen-record digest. An identical repeated begin may recover the same receipt before a settlement admission exists, but begin cannot authorize another executor dispatch after admission. Finish authenticates that exact claim before creating a claim-keyed settlement admission that freezes the request, evidence digests, and terminal output path. It normalizes the physical output parent, rejects non-file or overlong basenames, reserves the admission filename without case sensitivity, and matches scenarios by stable ID rather than array position. The verdict is computed from the exact cluster bytes verified against the admission, and the admitted request converges on one immutable terminal `PASS`, `FINDINGS`, `INCOMPLETE`, or `REJECTED` result. Changed replay, inconsistent admission snapshots, and divergent concurrent settlement fail closed; a canonical malformed snapshot settles as `REJECTED`. An interrupted exact request may resume only with the admitted output path while its evidence bytes remain unchanged and the fresh request snapshot still matches. A changed request or output reports the pending admitted state until a terminal exists, and unexpected transient helper failures do not freeze a terminal rejection. These private records under `/tmp` are workflow authority for the bounded pass, not tracked repository documentation.
 
-The handler then creates the repository-authorized release commit, pushes main, creates and pushes an annotated tag, and publishes the hosted Release. Recovery may skip the main push when a fresh ancestry check proves that remote main already includes the release commit; remaining tag and hosted Release steps stay bound to that original SHA. Final verification distinguishes exact remote-main equality from this verified advance and respects any stricter repository policy. Opening the next Unreleased cycle remains a separate post-release action.
+The handler follows the repository gate/commit order; Aquarium itself runs gates before commit. A policy-later gate is inapplicable only at its commit boundary and remains globally due before publication. Failed commit-first gates preserve the unpushed commit and require explicit disposition before history-changing correction. After applicable independent readiness, the Coordinator pushes main, creates and pushes an annotated tag, and publishes the hosted Release, using fresh v5 routing and actual grants for each action. Recovery may skip the main push when a fresh ancestry check proves that remote main already includes the release commit; remaining tag and hosted Release steps stay bound to that original SHA. Final verification distinguishes exact remote-main equality from this verified advance and respects any stricter repository policy. Opening the next Unreleased cycle remains a separate post-release action.
 
 ## Pause, Resume, and Hand Off
 

@@ -26,10 +26,12 @@ For cross-repository work, carry the exact repository and commit identity. A dow
 ### Release contract integration
 
 The [release target contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
-owns four boundaries. Keep implemented [preparation/QA handoffs](../../plugins/aquarium/skills/release-handler/references/release-preparation.md)
-distinct from TASK-174's pending post-QA convergence, publication and recovery
-integration in entrypoints, shared v3 maps and canonical summaries. Reserved
-publication assessments must not override current post-QA steps.
+owns four boundaries. Keep [preparation/QA handoffs](../../plugins/aquarium/skills/release-handler/references/release-preparation.md)
+aligned with post-QA [gate convergence](../../plugins/aquarium/skills/release-handler/references/gate-convergence.md)
+and [publication evidence/recovery](../../plugins/aquarium/skills/release-handler/references/publication-recovery.md)
+in entrypoints, shared v3 maps and canonical summaries. Trace independent
+publication readiness before the first mutation and completion from original
+readback, including note highlights separately from validation text.
 
 Preserve the retarget-only branch before mandatory role dispatch. For handler-called
 QA, require full-report-first remediation through one correction Executor's actual
@@ -45,9 +47,14 @@ evidence, both gate orders and post-hook binding. Existing v3 fields carry relea
 identity and Haepari request/spec/Job/result/cleanup evidence; do not add a report
 engine or commit-leaf schema. Review semantic applicability separately from link
 checks. TASK-172's source-only contract retains its intentional no-note decision.
-Preparation/QA activation owns the breaking note requiring active releases to
-finish before updating. TASK-175/176 retain integrated and installed verification;
-structural checks cannot establish those outcomes.
+Operational activation owns the breaking note requiring active releases to
+finish before updating. Review commit-first failure preservation, all six QA-neutral
+eligibility conditions before actual equivalence approval, per-action v5 routing,
+settled Writer replacement and original-Job/result/cleanup handoffs. Trace normal
+post-publication continuation versus separately requested next-cycle and retarget
+headings, including branch synchronization and separate grants; heading edits,
+bookkeeping and diagnostic suffixes add no Evaluator cycle. TASK-175/176 retain
+integrated and installed verification; structural checks cannot establish those outcomes.
 
 ## Extend Squad collaboration
 
