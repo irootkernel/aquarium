@@ -2,17 +2,17 @@
 
 ## Authority and implementation state
 
-The sole consumer is `EPIC-032`, with existing `TASK-091` through `TASK-099`. The [canonical roadmap](../roadmap/README.md) owns identity, ordering, dependencies and lifecycle; this dossier owns detailed rollout scope and acceptance. EPIC-019 and EPIC-031 must be completed before this Epic starts. Task IDs remain unchanged and each Task has one owning Epic.
+The sole consumer is `EPIC-032`, with existing `TASK-091` through `TASK-099`. The [canonical roadmap](../roadmap/README.md) owns identity, ordering, dependencies and lifecycle; this dossier owns detailed rollout scope and acceptance. EPIC-019 and EPIC-031 must be completed before formal Epic execution starts. The roadmap permits the tool-owned parallel cleanup below as earlier work. Task IDs remain unchanged and each Task has one owning Epic.
 
-This is planning only. Producer implementations, installed verification, broker operations, host changes, commits and publication require their applicable execution authority. No implementation or runtime result is claimed.
+This dossier plans the formal rollout. Four separately authorized cleanup Handoffs have been sent; their existence establishes no producer implementation, runtime result or full Task acceptance. Further producer work, installed verification, broker operations, host changes, commits and publication require their applicable execution authority.
 
 ## Goal, inputs and boundaries
 
-Apply the accepted Aquarium/Haepari contract to the producers through Sorage in this order:
+Apply the accepted Aquarium/Haepari contract through the formal Sorage rollout in this order:
 
 `Podway -> Mulgae -> Gaori -> Sorage -> Sanho -> Dolgorae -> Gul -> Seongge -> Gaebokchi`.
 
-Accept each real implementation return before dispatching the next. Aquarium owns coordination and its integration changes; each producer owns its source, roadmap IDs, installation unit, skills, migrations and native legacy detachment. A request acknowledgement is not completion. Keep the stable host Sorage broker as the rollout control plane, including while testing a Sorage candidate in the guest.
+Accept each real implementation return before advancing the formal rollout to the next producer. The parallel cleanup exception below is limited to early retirement work. Aquarium owns coordination and its integration changes; each producer owns its source, roadmap IDs, installation unit, skills, migrations and native legacy detachment. A request acknowledgement is not completion. Keep the stable host Sorage broker as the rollout control plane, including while testing a Sorage candidate in the guest.
 
 Read EPIC-019 and EPIC-031 Canonical Outcomes and the current [tool specifications](../specs/tool-integrations.md), [tool catalog](../../plugins/aquarium/references/tool-catalog.md#haepari), [Haepari integration](../../plugins/aquarium/references/haepari-integration.md), [workflow contracts](../specs/workflow-contracts.md), [Haepari VM operations](../ops/haepari-vm-verification.md), [TESTING.md](../../TESTING.md), and [tests/vm/README.md](../../tests/vm/README.md). EPIC-019 must already have promoted the shared setup, VM adapter, sealed-input/profile, complete skill/configuration, migration, manual-completion, pre-submission versus returned Job/result handoff, and cleanup contracts. EPIC-031 must already have promoted release roles and assessment/result handoffs. Missing required durable inputs block the affected work; do not recover them from deleted dossiers or raw review logs.
 
@@ -21,6 +21,14 @@ Carry exact accepted component and profile identities into each packet. Preserve
 Keep candidate installation in the dedicated UTM VM, use isolated guest controllers and stub providers for fault tests, and preserve live/provider authority. No host account files, production data, recursive parent-VM acquisition, outer review-lock wrapper or automatic release/activation is introduced. Adoption is breaking and needs exact installed verification before any applicable release.
 
 Detach only producer-owned legacy hooks/services whose identity and exclusive channel use are proved. Preserve foreign hooks, stable binaries/skills and common infrastructure still needed by consumers. EPIC-033 alone owns final shared-channel removal; this Epic's completion does not wait for that removal or the final combined environment pass.
+
+## Parallel producer cleanup
+
+Podway, Dolgorae, Gaori and Sanho may remove their aquarium-dev-specific integration before or alongside EPIC-031, independently of one another and of the formal rollout order. Each repository owns its local work IDs and approval process. Inventory current source and actual enrollment, hook, worker and service references; detach owned live callers before removing the targets they invoke. Verify the affected supported workflows and report source removal separately from observed host detachment or absence. Preserve production state, ordinary development features and other consumers' shared infrastructure.
+
+Reuse the four cleanup Handoffs already sent through Sorage and correlate each completion report with its original request. Keep native IDs, current state and raw reports in their supported Sorage/runtime owners. Do not resend an identical cleanup request when formal rollout begins. Inspect the returned evidence for the exact current candidate, reuse applicable observations and request only missing scope or corrections under the authorized native protocol.
+
+Early cleanup requires no new per-tool Haepari controller, VM resource or product integration. Required VM checks use the existing shared installation/resource and released `use-haepari` skill, with repository-owned scenarios and cleanup; shared VM occupancy still serializes installation-dependent checks. This exception does not waive any of the nine producer acceptance criteria, Mulgae's released native advisory integration, formal Task dependencies or EPIC-033's combined verification. Keep Aquarium's Epic and Task lifecycle unchanged until their own execution and acceptance occur.
 
 ## Native Mulgae advisory-lock contract
 
@@ -44,7 +52,7 @@ The producer allocates its own local task/epic IDs and may accept the request or
 
 The producer sends a separate completion-report Handoff back to Aquarium after implementation and verification. It references the original logical request, native request/revision, and accepted scope. The producer does not edit Aquarium's sender-owned request or the managed Vault. Aquarium reads the current returned document, checks evidence, requests bounded corrections through native review/revision when needed, and explicitly accepts the completed response only when its criteria are met.
 
-Do not send the next project until this return is accepted. Blocked or unobserved producer work pauses the sequence; a receipt, acknowledgement, commit list, or prose claim is insufficient. No recurring inbox watcher, unrelated inbox scan, or automatic resend is part of the implementation. An authorized waiting operation uses native supported waiting semantics.
+Do not advance the formal rollout to the next producer until this return is accepted. The four early cleanup exchanges follow the parallel exception above and are reused at their corresponding Tasks. Blocked or unobserved producer work pauses the formal sequence; a receipt, acknowledgement, commit list, or prose claim is insufficient. No recurring inbox watcher, unrelated inbox scan, or automatic resend is part of the implementation. An authorized waiting operation uses native supported waiting semantics.
 
 ### Required producer return
 
@@ -61,16 +69,16 @@ A missing prior release or native skill uses evidence-backed `not_applicable`. D
 Each task is Aquarium-owned coordination work with a separately owned producer implementation. Its normal final commit records only accepted Aquarium-owned integration/documentation changes. Intermediate transport state stays in Sorage and permitted local evidence; do not manufacture a repository commit for every poll or message.
 
 - [ ] Read the current prerequisite acceptance and resolve the next exact recipient.
-- [ ] Send one authorized, versioned request with the common contract and product-specific criteria. Reconcile an uncertain send before retrying.
+- [ ] Reuse any applicable early cleanup exchange and evidence. Send authorized requests only for remaining scope, using the common contract and product-specific criteria. Reconcile an uncertain send before retrying.
 - [ ] Obtain the producer's own work-ID mapping and a correlated completed implementation report, not merely a request acknowledgement.
 - [ ] Verify exact candidate/test/profile/binary/skill identities, installation, real old-state migration where applicable, regression, manual observations, failure recovery, owned cleanup and reusable guest state.
 - [ ] Review actual obsolete source removal and separately evidenced native hook/service detachment or proven absence. Preserve shared infrastructure until TASK-101.
 - [ ] Return corrections through Sorage when acceptance is incomplete; do not edit producer source from Aquarium.
-- [ ] Accept the final returned Handoff using current native revision/row fences, promote only permitted bounded evidence, and only then allow the next task.
+- [ ] Accept the final returned Handoff using current native revision/row fences, promote only permitted bounded evidence, and only then advance the formal rollout to the next Task.
 
 ### TASK-091: Freeze producer packets and accept Podway
 
-- [ ] Read completed EPIC-019 and EPIC-031 Canonical Outcomes and their current durable owners. Freeze the producer request/completion packets against the accepted adapter, profiles and release-role contracts before the first send. Include Mulgae managed-VM and native advisory-lock scope, original-invocation recovery, partial-role terminal handling and live-source consistency limits.
+- [ ] Read completed EPIC-019 and EPIC-031 Canonical Outcomes and their current durable owners. Freeze the formal producer request/completion packets against the accepted adapter, profiles and release-role contracts before sending remaining rollout requests. Reconcile the earlier cleanup exchanges without resending them. Include Mulgae managed-VM and native advisory-lock scope, original-invocation recovery, partial-role terminal handling and live-source consistency limits.
 - [ ] Apply the common acceptance protocol to Podway.
 - [ ] Require matching CLI and any shipped runtime identity under Podway's current native contract, the independently declared full `use-podway` tree, workspace/configuration/history preservation, Procedure compatibility, restart/recovery and the native busy-work update policy.
 - [ ] Detach only legacy producer/controller/development-service interfaces proved exclusive to aquarium-dev. Preserve supported native runtime modes and generic features still used independently.

@@ -96,7 +96,7 @@ accepted canonical outcomes before deleting the dossier.
 
 ## Haepari adoption and planned release delivery
 
-The [roadmap](roadmap/README.md) orders four complete Epics so each can finish through `epic-handler` before the next starts:
+The [roadmap](roadmap/README.md) orders four complete Epics so each can finish through `epic-handler` before the next begins formal execution. Podway, Dolgorae, Gaori and Sanho may perform their tool-owned aquarium-dev cleanup before or alongside EPIC-031; EPIC-032 later reuses the existing cleanup exchanges and verifies their applicability during its formal rollout.
 
 | Epic | Outcome and canonical scope |
 | --- | --- |
@@ -104,6 +104,8 @@ The [roadmap](roadmap/README.md) orders four complete Epics so each can finish t
 | EPIC-031 | [Release orchestration](todo/TODO-RELEASE-ORCHESTRATION.md): Coordinator, Executor and independent Evaluator roles consuming the completed adapter, with four release assessments and installed verification. |
 | EPIC-032 | [Integrated-tool rollout](todo/TODO-HAEPARI-TOOL-ROLLOUT.md): nine ordered producer returns, including Mulgae's released native advisory lock. |
 | EPIC-033 | [Combined qualification and retirement](todo/TODO-HAEPARI-COMBINATION-RETIREMENT.md): remove unnecessary Haepari integration layers, validators and harness code, verify the simplified installed/upgrade combination and safely remove shared legacy infrastructure. |
+
+The [v0.1.23 release prerequisite](roadmap/README.md#v0123-release-prerequisite) requires completed and verified aquarium-dev retirement, including actual acceptance and approved shared host cleanup. It applies to both full and light releases. Early tool cleanup or a passing test gate alone does not satisfy it.
 
 Haepari v0.1.0 is published; the repository implements setup registration, consumer profiles, host-submitted VM suites (`make test-vm-host`), the uninterrupted `release-acceptance` manual suite (`J-RA`), and qualifies the `TASK-090` policy cutover through [Haepari integration](../plugins/aquarium/references/haepari-integration.md), [tool integrations](specs/tool-integrations.md#haepari), [workflow contracts](specs/workflow-contracts.md#release-a-stable-version), [Haepari VM operations](ops/haepari-vm-verification.md), [TESTING.md](../TESTING.md#host-submitted-managed-vm-suites), and [tests/vm/README.md](../tests/vm/README.md#host-submitted-managed-vm-suites), while `EPIC-031` through `EPIC-033` remain planned. The guest-side `make test-vm` gate executes inside the held managed Job. [ADR-0010](architecture-decision-records/0010-haepari-vm-verification-and-advisory-locks.md) and the [VM qualification record](../tests/vm/README.md#qualified-pilot-and-limits) preserve the accepted scope and limits. Haepari owns managed Job execution and files; recipes own guest installation/assertions and cleanup. The persistent VM is not reset. Release roles grant no additional execution or publication authority.
 
