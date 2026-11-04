@@ -61,10 +61,18 @@ using supported Actions, selected evidence and Coordinator Decisions:
 | Validation | Independent original-source audit or re-audit; each correction group with checks before settlement; final integrated outcome after admitted review |
 | Design | Context and discovery; draft, challenge and quality evidence; approved application with verification and final design outcome |
 | War-room | Baseline and investigation for cause/scope Decisions; proposal and quality evidence; approved document or verified no-change delivery and final diagnosis outcome |
+| Release (frozen target, not yet integrated) | Plan readiness, QA readiness, publication readiness and publication completion under the [release target contract](../skills/release-handler/references/release-orchestration.md); TASK-173 owns preparation/QA wiring and TASK-174 owns gates/publication/recovery |
 
 Operational bookkeeping and report assembly do not create another Evaluator cycle.
 Evaluator reports are never recursively evaluated. The Coordinator checks completeness,
 source coverage and applicability without repeating the semantic assessment.
+
+The release target uses repository, intended version, baseline and candidate as
+work identity, with no synthetic roadmap Task. Its non-Podway invocation uses
+`procedure: null` and leaves unrelated development sessions untouched. Evaluator
+reports stay in the enclosing release handler's evidence; the existing commit-leaf
+input remains unchanged. TASK-172 freezes these interfaces without activating
+mandatory release dispatch or changing the current handler's operational steps.
 
 Reconcile assigned criteria with canonical sources, including omitted criteria
 and applicable parent constraints. Each criterion retains its source, evidence,
@@ -194,6 +202,7 @@ for ordinary dispatch.
 | Owner | Required alignment |
 | --- | --- |
 | [Task handler](../skills/task-handler/SKILL.md), [Epic handler](../skills/epic-handler/SKILL.md), [Epic validator](../skills/epic-validator/SKILL.md) | Produce assignments/checkpoints and consume actual Executor results and applicable Evaluator reports; preserve actual acceptance and commit authority |
+| [Release handler](../skills/release-handler/SKILL.md) and [release target contract](../skills/release-handler/references/release-orchestration.md) | Frozen target: Coordinator assignments/checkpoints, actual Executor handoffs and independent release assessments through existing v3 fields; TASK-173/174 own operational producer/consumer wiring, with installed results still unverified |
 | [New feature](../skills/new-feature/SKILL.md), [new project](../skills/new-project/SKILL.md), [refactor](../skills/refactor/SKILL.md), [war-room](../skills/war-room/SKILL.md) | Use grouped native roles while preserving proposal, quality, exact-diff, leaf and non-Git boundaries |
 | Task phases: [plan](../skills/task-plan/SKILL.md), [implement](../skills/task-implement/SKILL.md), [refine](../skills/task-refine/SKILL.md), [verify](../skills/task-verify/SKILL.md), [document](../skills/task-document/SKILL.md), [review](../skills/task-review/SKILL.md), [close](../skills/task-close/SKILL.md) | Produce v3 handoffs or consume final assessments under a compatible ordinary handler; retain direct-invocation authority |
 | [Executor guidance](executor-guidance.md), [Goal Evaluator](../skills/goal-evaluator/SKILL.md) | Produce v3 reports without formal qualification prerequisites |

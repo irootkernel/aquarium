@@ -23,6 +23,24 @@ When adding or changing a handoff, define the producer, consumer, required field
 
 For cross-repository work, carry the exact repository and commit identity. A downstream statement that work exists is not proof until the owning repository and required independent validation confirm the exact candidate.
 
+### Release contract integration
+
+The [release target contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
+is frozen but not yet integrated. Keep that status explicit in entrypoints,
+shared v3 producer/consumer maps and canonical summaries. TASK-173 owns preparation,
+pre-QA gates, QA remediation and confirmation caller seams; TASK-174 owns
+post-QA convergence, publication and recovery. Activate each surface coherently
+with its implementation; a reserved interface must not override current steps.
+
+Trace original requirements, Executor results and Evaluator criteria through all
+four boundaries. Preserve QA-native briefs/verdicts, create-once confirmation
+evidence, both gate orders and post-hook binding. Existing v3 fields carry release
+identity and Haepari request/spec/Job/result/cleanup evidence; do not add a report
+engine or commit-leaf schema. Review semantic applicability separately from link
+checks. The unintegrated TASK-172 contract has an intentional no-note decision;
+operational wiring owns the breaking user-action note and actual installed
+verification remains due under TASK-175/176.
+
 ## Extend Squad collaboration
 
 Use the [collaboration contract](../../plugins/aquarium/references/epic-squad-collaboration.md),

@@ -11,6 +11,12 @@ Own one stable release lifecycle without weakening repository release policy. Re
 
 Explicit invocation authorizes read-only release discovery against the configured Git remote and hosting Releases through already-configured ambient authentication. It does not authorize credential inspection or changes, authentication, staging, commits, pushes, tags, hosted Releases, destructive tag or Release changes, or post-release next-cycle publication. Obtain each required authority at its actual boundary.
 
+The [release orchestration target contract](references/release-orchestration.md)
+freezes ordinary v3 roles and four assessment boundaries under TASK-172. It is
+not yet integrated and does not override the operational steps below. TASK-173
+owns preparation and QA wiring; TASK-174 owns gate, publication and recovery
+wiring. TASK-175/176 own integrated scenarios and installed observations.
+
 ## Establish the Release
 
 Read [artifact cleanup](../../references/artifact-cleanup.md) before creating

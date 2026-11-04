@@ -86,7 +86,7 @@ This rule establishes retirement-evidence applicability only. The release's SHA-
 | EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | Completed |
 | EPIC-029 | Add directory AGENTS.md documentation indexes | Completed |
 | EPIC-030 | Unify Aquarium delivery across five agent hosts | Planned |
-| EPIC-031 | Adopt Coordinator, Evaluator and Executor roles in release workflows | Planned |
+| EPIC-031 | Adopt Coordinator, Evaluator and Executor roles in release workflows | In Progress |
 | EPIC-032 | Adopt Haepari across integrated tools | Planned |
 | EPIC-033 | Qualify the combined environment and retire the development channel | Planned |
 | EPIC-034 | Adopt Podway v0.2.15 and contract generation 2 | Completed |
@@ -972,7 +972,7 @@ cutover and Master's overall acceptance.
 
 ## EPIC-031: Adopt Coordinator, Evaluator and Executor roles in release workflows
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Extend ordinary v3 orchestration to `release-handler`. The Coordinator retains
 scope, actual approvals, commit and publication control; Executors deliver
@@ -1004,7 +1004,7 @@ EPIC-019 supplies the completed Haepari setup, VM adapter and policy cutover thr
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-172 | Define release orchestration and authority boundaries | Reuse ordinary v3 roles and four assessments; identify applicable VM path, resource, occupancy and cleanup ownership alongside gate order, evidence and preserved approvals. | Planned | EPIC-019; EPIC-024; EPIC-026 |
+| TASK-172 | Define release orchestration and authority boundaries | Reuse ordinary v3 roles and four assessments; identify applicable VM path, resource, occupancy and cleanup ownership alongside gate order, evidence and preserved approvals. | Completed | EPIC-019; EPIC-024; EPIC-026 |
 | TASK-173 | Integrate release preparation and QA handoffs | Delegate bounded preparation and corrections, assess exact QA-ready candidates and any policy-due original VM evidence without changing QA verdicts or confirmation authority. | Planned | TASK-172 |
 | TASK-174 | Integrate release gates, publication and recovery assessments | Support both gate/commit orders and original result binding; reconcile an existing Haepari Job before Executor replacement or redispatch and preserve cleanup evidence, convergence and publication authority. | Planned | TASK-173 |
 | TASK-175 | Prepare integrated regressions and manual verification scenarios | Prepare native-role scenarios for both gate orders, bounded release-handler startup, and applicable VM queue/manual hold/cancel/reconnect/cleanup failures without duplicate dispatch. Earlier Tasks retain focused checks. | Planned | TASK-174 |

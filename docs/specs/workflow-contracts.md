@@ -185,10 +185,19 @@ preserves the accepted composition and introduces no new semantic guidance.
 
 `release-handler` establishes the intended version, clean main candidate, previous release, publication state, and repository release policy. It reconciles every material delta with cumulative release notes before delegating one exact candidate to `release-qa`.
 
-The current release contract uses fresh QA scenario Executors and Coordinator
-adjudication without a dedicated independent Evaluator for the whole release.
-Planned release-orchestration work is tracked in the
-[roadmap](../roadmap/README.md#epic-031-adopt-coordinator-evaluator-and-executor-roles-in-release-workflows).
+The [release orchestration target contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
+is frozen but not yet integrated. Current release steps retain fresh QA scenario
+Executors and Coordinator adjudication. TASK-173 owns preparation/QA integration;
+TASK-174 owns gates/publication/recovery. The target uses existing v3 reports,
+an independent report-only Evaluator and four assessments at plan readiness,
+QA readiness, publication readiness and completion. The enclosing handler owns
+Evaluator evidence; commit-leaf inputs stay unchanged. The target preserves both
+repository-defined gate orders, original QA verdicts and confirmation authority,
+exact post-hook/gate binding, full/light evidence and Haepari's separate Job and
+consumer-cleanup outcomes. It adds no runtime requirement to the current steps.
+TASK-175/176 own integration scenarios and installed Codex observations; the
+[roadmap](../roadmap/README.md#epic-031-adopt-coordinator-evaluator-and-executor-roles-in-release-workflows)
+owns delivery state.
 
 Full release mode runs the complete repository gate after metadata changes. Light mode requires explicit test confirmation for the clean exact candidate after changelog settlement and permits only release metadata changes. Every later candidate change, including a settlement or remediation commit, requires fresh confirmation or full mode before the next QA pass or metadata step.
 

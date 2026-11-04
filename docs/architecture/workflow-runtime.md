@@ -27,6 +27,25 @@ The epic lifecycle coordinates multiple task lifecycles and a cold validation pa
 
 Workflows prefer re-observation over replay. Unknown or interrupted external execution is quarantined until its actual state can be resolved. A retry never widens authority, and successful earlier effects are not rolled back automatically unless the owning contract explicitly provides a safe recovery action.
 
+## Release orchestration target
+
+The [release target contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
+defines a non-Podway release invocation with `procedure: null`, leaving unrelated
+development sessions intact. It is frozen and not yet integrated. TASK-173 owns
+preparation/QA wiring; TASK-174 owns gates/publication/recovery. Current release
+steps continue to govern until their corresponding integration lands.
+
+The target Coordinator assigns bounded Executors, consumes original results and
+independent assessments at four release boundaries, and retains actual approvals,
+commit handoffs and inspector-selected publication actions. Evaluator reports
+remain in the handler's evidence. Existing QA records and Git/hosting objects
+support recovery without a resume manifest or new commit-leaf schema. A resumed
+publication requires applicable independent readiness before its first remaining
+mutation; all modifying work is settled before Executor replacement. Haepari's
+native request/spec/Job and recipe cleanup remain under their existing owners.
+TASK-175/176 retain scenarios and installed Codex evidence; source definitions
+prove neither those outcomes nor actual user acceptance.
+
 ## Ordinary native orchestration
 
 The [ordinary v3 contract](../../plugins/aquarium/references/ordinary-agent-orchestration.md)

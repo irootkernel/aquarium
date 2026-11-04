@@ -15,6 +15,10 @@ dispatch, native result acceptance, Podway progression, and user authority.
 This capability supplies independent assessment without requiring private native
 history, model telemetry or configuration qualification.
 
+The [release orchestration target contract](../release-handler/references/release-orchestration.md)
+defines reserved release assessments. Mandatory release dispatch is not yet
+integrated; TASK-173 owns preparation/QA and TASK-174 owns gates/publication/recovery.
+
 ## Establish the assessment
 
 Require the objective, purpose, node instructions, work identity, canonical
@@ -88,6 +92,13 @@ Read assigned sources and existing evidence. Do not edit source, Git, Podway,
 runtime state, configuration, or artifacts; run tests, builds, generators,
 formatters, or linters; dispatch nested agents or provider reviews; commit; or
 grant authority. Name any required execution and its owner in the report.
+
+Reading assigned files, retained original outputs and local Git objects is source
+inspection. Explicitly scoped read-only Git or hosting observations may use the
+caller's existing release-discovery authority. Distinguish firsthand reads from
+supplied results. These reads grant no check execution, mutation, credential
+inspection or authentication change; obtain missing observations through the
+supervisor when direct access is outside the assignment.
 
 The Evaluator does not repeat Executor implementation or serve as a technical-review
 provider. It assesses the selected technical findings and original evidence.

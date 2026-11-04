@@ -26,4 +26,22 @@ The release handler establishes `full` or `light` mode before metadata changes. 
 
 Before either mode, reconcile all material changes since the previous release, or the complete reachable history for a confirmed first release, with the open changelog section. After release QA, preserve approved entry text byte-for-byte. A substantive edit creates a new candidate and requires QA again.
 
+The [release target contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
+freezes both repository-defined gate orders without activating them in the current
+handler. TASK-174 owns that integration. For gate-before-commit, bind tested bytes
+to the actual post-hook tree, metadata delta and release-basis parent. For
+commit-before-gate, inspect the clean post-hook release commit first and run the
+gate on that commit. A later gate is not due at the commit boundary but remains
+globally required before publication. A failed commit-first gate preserves the
+unpushed commit and stops before unauthorized history changes.
+
+The target readiness assessments retain original gate/QA results and exact-SHA
+light confirmation, including required prior VM/compatibility evidence. Do not
+rerun omitted light checks or claim they ran. Full-mode VM timing follows target
+policy. Structural checks and fixture preparation do not establish native role
+progression, installed acceptance or user acceptance. TASK-175 prepares scenarios
+and the bounded installed startup case; TASK-176 observes the exact candidate
+in the dedicated UTM environment. Current release steps and gate-convergence
+instructions remain authoritative until their corresponding wiring lands.
+
 Publication is ordered: commit, push `main`, create and push the annotated tag, create the GitHub Release, then re-observe remote `main`, the peeled tag, and the release. Recovery may skip the push when a fresh ancestry check proves that remote main includes the release commit, subject to repository policy; tag and Release targets remain the original release SHA. Local success never proves distribution readiness. Opening the next empty `Unreleased` section is a separate post-release change with separate approval.

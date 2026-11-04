@@ -8,10 +8,17 @@ This temporary execution SOT defines detailed scope, approach and acceptance
 under the [Epic Execution SOT contract](../../plugins/aquarium/references/epic-execution-sot.md).
 Unchecked items specify required evidence, not completed work.
 
-The current authorization covers planning documents only. Implementation,
-installation, managed updates, staging, commits and publication require their
-applicable workflow authority. This dossier records no functional or installed
-verification result.
+Implementation follows the applicable approved execution envelope. Installation,
+managed updates, staging, commits and publication retain their own workflow
+authority. This dossier grants none of those effects and records no functional
+or installed verification result.
+
+The [release orchestration target contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
+promotes TASK-172's frozen roles, boundaries and evidence interfaces. It is not
+yet integrated and does not override current release steps. TASK-173 owns
+preparation/QA wiring; TASK-174 owns gates/publication/recovery. TASK-175/176
+retain scenario preparation and installed Codex observations. This dossier keeps
+the original acceptance criteria and remaining obligations until final settlement.
 
 ## Goal and current authorities
 

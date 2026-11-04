@@ -12,6 +12,11 @@ Use the owning [Task](task-orchestration.md), [Epic](epic-orchestration.md),
 reference for grouped work and evidence routes. The Coordinator retains Decisions,
 actual approvals, selected technical reviews and scoped commit authority.
 
+The [release orchestration target contract](../skills/release-handler/references/release-orchestration.md)
+freezes release roles, four boundaries and original-evidence ownership. TASK-173
+and TASK-174 own its pending operational integration; current release instructions
+remain in force. Its non-Podway path adds no Procedure or commit-leaf input schema.
+
 Declared formal delegation and admitted historical sessions retain the
 [formal v1 contract](formal-agent-orchestration-v1.md), [native mapping profiles](native-agent-mappings.md),
 original role instructions, digest domains and genuine Podway receipt requirements.
