@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.23 - Unreleased
 
+### Changed
+
+- Require bounded Executor preparation and independent plan and QA-readiness assessments in `release-handler`; finish active releases with their installed workflow before updating.
+
 ## v0.1.22 - 2026-11-04
 
 ### Added

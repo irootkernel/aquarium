@@ -26,20 +26,28 @@ For cross-repository work, carry the exact repository and commit identity. A dow
 ### Release contract integration
 
 The [release target contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
-is frozen but not yet integrated. Keep that status explicit in entrypoints,
-shared v3 producer/consumer maps and canonical summaries. TASK-173 owns preparation,
-pre-QA gates, QA remediation and confirmation caller seams; TASK-174 owns
-post-QA convergence, publication and recovery. Activate each surface coherently
-with its implementation; a reserved interface must not override current steps.
+owns four boundaries. Keep implemented [preparation/QA handoffs](../../plugins/aquarium/skills/release-handler/references/release-preparation.md)
+distinct from TASK-174's pending post-QA convergence, publication and recovery
+integration in entrypoints, shared v3 maps and canonical summaries. Reserved
+publication assessments must not override current post-QA steps.
+
+Preserve the retarget-only branch before mandatory role dispatch. For handler-called
+QA, require full-report-first remediation through one correction Executor's actual
+handoff while standalone remediation stays unchanged. Bind preparation receipts,
+independent readiness, begin input and actual claim readback to the same current
+manifest path and native canonical digest. Retain immutable prior manifests and
+native same-operation recovery; never select a superseded manifest or replay an
+already dispatched scenario to recover a receipt.
 
 Trace original requirements, Executor results and Evaluator criteria through all
 four boundaries. Preserve QA-native briefs/verdicts, create-once confirmation
 evidence, both gate orders and post-hook binding. Existing v3 fields carry release
 identity and Haepari request/spec/Job/result/cleanup evidence; do not add a report
 engine or commit-leaf schema. Review semantic applicability separately from link
-checks. The unintegrated TASK-172 contract has an intentional no-note decision;
-operational wiring owns the breaking user-action note and actual installed
-verification remains due under TASK-175/176.
+checks. TASK-172's source-only contract retains its intentional no-note decision.
+Preparation/QA activation owns the breaking note requiring active releases to
+finish before updating. TASK-175/176 retain integrated and installed verification;
+structural checks cannot establish those outcomes.
 
 ## Extend Squad collaboration
 

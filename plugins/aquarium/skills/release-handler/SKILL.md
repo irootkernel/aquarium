@@ -11,11 +11,15 @@ Own one stable release lifecycle without weakening repository release policy. Re
 
 Explicit invocation authorizes read-only release discovery against the configured Git remote and hosting Releases through already-configured ambient authentication. It does not authorize credential inspection or changes, authentication, staging, commits, pushes, tags, hosted Releases, destructive tag or Release changes, or post-release next-cycle publication. Obtain each required authority at its actual boundary.
 
-The [release orchestration target contract](references/release-orchestration.md)
-freezes ordinary v3 roles and four assessment boundaries under TASK-172. It is
-not yet integrated and does not override the operational steps below. TASK-173
-owns preparation and QA wiring; TASK-174 owns gate, publication and recovery
-wiring. TASK-175/176 own integrated scenarios and installed observations.
+Follow [release preparation and QA handoffs](references/release-preparation.md)
+for publication requests: bounded actual Executor delivery and independent plan
+and QA-readiness assessments are required before their dependent effects.
+The [release orchestration contract](references/release-orchestration.md) owns
+four boundaries; post-QA gate, publication and recovery integration remains with
+TASK-174. TASK-175/176 retain integrated scenarios and installed observations.
+Finish active releases with their installed workflow before updating. This
+release invocation uses ordinary v3 reports with `procedure: null`; leave
+unrelated development sessions untouched.
 
 ## Establish the Release
 
@@ -30,16 +34,33 @@ disposable-output cleanup blocks progression separately from a passing gate.
    Never fetch, merge, switch, stash, clean, or repair state while establishing the candidate. When a conforming target release commit or any matching publication object already exists, read [publication-recovery.md](references/publication-recovery.md) and classify it before applying ordinary pre-release stop rules.
 2. Require one intended stable SemVer version greater than the established latest stable version, or the explicitly confirmed first-release version. When the request is only to retarget the open cycle, verify that the target remains greater than that latest stable version and that no tag or Release exists for either target, show the exact changelog heading edit, obtain approval, apply only that edit, and run the release-notes inspector and documentation checks.
    Request separate commit and push authority, use `$aquarium:task-commit` with `intentional no-note` for the exact heading edit, and stop without QA or publication when either authority is withheld.
-3. For publication, select the repository-defined full or light mode. Obtain candidate-specific confirmations only after settlement below. Stop on a dirty or ambiguous candidate, divergent release refs, a conflicting target tag or Release, a target version not greater than the latest stable version, a baseline outside the candidate, or an unenrolled or invalid release-notes authority. A matching partial publication follows the recovery reference instead of restarting QA or recreating an existing object.
+   This retarget-only branch precedes mandatory release-role dispatch. Add no
+   Executor discovery, Evaluator cycle, release QA or publication requirement;
+   stop the corresponding effect on invalid facts or withheld authority.
+3. For publication, assign substantive discovery, note preparation and authorized
+   checks/edits to bounded native Executors under the preparation reference.
+   Read their complete actual handoffs. Keep independent Evaluator judgment,
+   reserved Coordinator operations and all effect grants separate. Pre-QA gate
+   execution waits for plan readiness below.
+   Select the repository-defined full or light mode. Obtain candidate-specific confirmations only after settlement below. Stop on a dirty or ambiguous candidate, divergent release refs, a conflicting target tag or Release, a target version not greater than the latest stable version, a baseline outside the candidate, or an unenrolled or invalid release-notes authority. A matching partial publication follows the recovery reference instead of restarting QA or recreating an existing object.
 4. Resolve this skill's directory and run the release-notes inspector with `--expected-version <version>` plus exactly one established baseline: `--previous-release <latest-stable-tag>`, or `--first-release` after the user confirms that no stable tag or completed release exists. Treat its JSON as structural evidence only; independently inspect semantic coverage.
 
 ## Settle the Candidate Before QA
 
-Compare every commit and material changed surface after the previous stable release with the open changelog section. For a confirmed first release, use the complete reachable history and current public surface with no regression baseline.
+Assign the comparison of every commit and material changed surface after the previous stable release with the open changelog section to a bounded preparation Executor. For a confirmed first release, use the complete reachable history and current public surface with no regression baseline.
 
 Apply the shared release-notes settlement criteria to the intended version's open section: combine related final outcomes, remove superseded intermediate claims, and group entries without following commit order. Preserve completed release sections byte-for-byte and retain all material remaining impacts and required user actions. Present one exact diff that merges duplicates and adds, edits, or removes only entries needed to describe shipped outcomes, with evidence for omissions in the review.
 
-Obtain approval before applying it. When this creates a change, validate it and commit the exact approved preparation through `$aquarium:task-commit` with `intentional no-note`; the settlement commit must not add an entry about itself.
+Obtain approval before applying it. Obtain independent plan readiness against
+original requirements, actual version/mode/first-release decisions, the approved
+proposal, output and gate inventories, environment and authority before the
+settlement commit or pre-QA gate execution. Include policy-due VM planning
+selections and owners without acquiring occupancy. Assign approved edits and
+focused checks to one Executor, read its actual handoff and verify current
+assessment applicability. When this creates a change, the Coordinator commits
+the exact approved preparation through `$aquarium:task-commit` with
+`intentional no-note`; the settlement commit must not add an entry about itself.
+Readiness supplies none of those effect grants.
 
 Do not push a candidate before release QA. Query live remote `main` and proceed only when it equals the clean committed local `main` candidate or is a verified ancestor of it. Require the configured upstream to identify the publication remote's `main` branch, but do not require its cached tracking SHA to equal the candidate.
 
@@ -47,15 +68,43 @@ Record the candidate SHA, live remote SHA, and `equal` or `ancestor` relationshi
 
 After settlement, bind every repository-required pre-QA gate to this clean exact candidate. Run a compatibility or distribution gate only when the current release policy requires it, using its exact artifact, checksum, command, environment, and supported tool transport; an ordinary development commit does not trigger that gate. Preserve installation, network, and gate execution authority separately, carrying forward authority already granted for those effects. In light mode, show this settled candidate SHA and obtain the required positive test confirmation, including any required compatibility result, before QA or release-metadata edits. A prior confirmation for the pre-settlement SHA is stale. Recheck these bindings after every candidate change under the [gate-convergence reference](references/gate-convergence.md#rebind-pre-qa-evidence).
 
+Before that QA handoff, obtain independent QA readiness from original evidence
+for this clean committed candidate: material-change/note coverage, live remote
+binding, actual required pre-QA results, exact-SHA light confirmation and original
+VM results only when policy makes them due before QA. Negative or inconclusive
+readiness stops the dependent effect; keep later global obligations pending.
+The same Coordinator invokes release-QA and directly assigns its fresh scenario
+Executors with the complete QA-native withholding brief. Neither enclosing v3
+context nor an Evaluator may weaken QA coverage or change its verdicts.
+
 The handler's explicit release request is an authorized handoff for exactly one release-qa pass against the disclosed version and candidate. Preserve every release-qa convergence and confirmation boundary; never reinterpret a finding fix or focused check as a passing candidate.
 
-When remediation changes a shipped outcome, update the open changelog entry in the same reviewed remediation commit. A new candidate follows the release-qa confirmation contract. Preserve the full pass's authoritative frozen confirmation record and retained evidence root.
+For full-pass findings, preserve the complete original QA report and frozen
+evidence first, then delegate bounded fixes and focused checks to one correction
+Executor. The Coordinator adjudicates its actual handoff and preserves the
+explicit user-confirmation stop; it does not remediate source itself. Standalone
+QA keeps its existing remediation path. When remediation changes a shipped
+outcome, include the open changelog update in that same reviewed remediation commit. A new candidate follows the release-qa confirmation contract. Preserve the full pass's authoritative frozen confirmation record and retained evidence root.
 
 Resolve the release-QA skill's directory and build the confirmation manifest only through its deterministic helper: `scripts/manage_release_qa.py prepare-confirmation --input <prepare.json> --output <full-evidence-root>/confirmation-manifest.json`. The input names the canonical frozen record, current exact candidate, changed-surface mappings, and finding reproductions.
 
 The helper copies its complete cluster and scenario inventory and entry facts without re-deriving, regrouping, or sampling them, then appends only the current candidate, exact non-empty remediation range, those mappings, each exact frozen finding-to-scenario pair, and the one-attempt fact.
 
-If the helper rejects the retained record, evidence, ancestry, changed-surface coverage, finding reproduction coverage, or output boundary, stop as `INCOMPLETE` before invoking confirmation. Never manually repair or bypass its manifest. Stop when QA is incomplete, findings remain, or the permitted confirmation does not pass.
+Follow the preparation reference's exact manifest intake: retain the returned
+physical path and helper-native canonical digest with the assessed unchanged
+bytes; obtain independent confirmation-candidate QA readiness after preparation
+and before `begin-confirmation` creates its claim. Supply only that assessed
+manifest, compare its binding immediately before begin, then read back
+`claim.manifest` and `claim.manifest_digest` before dispatch. Retain superseded
+valid manifests unchanged and prepare a supported replacement only into a fresh
+nonconflicting output under existing non-product input authority.
+
+If the helper rejects the retained record, evidence, ancestry, changed-surface
+coverage, finding reproduction coverage or output boundary, stop as `INCOMPLETE`.
+Never manually repair or bypass its manifest. A binding mismatch stops and
+reconciles the same actual operation/claim without replacement, redispatch or a
+new attempt. Preserve legitimate native same-request claim and settlement
+recovery. Stop when QA is incomplete, findings remain or confirmation does not pass.
 
 ## Create and Publish the Release
 

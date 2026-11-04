@@ -16,8 +16,10 @@ This capability supplies independent assessment without requiring private native
 history, model telemetry or configuration qualification.
 
 The [release orchestration target contract](../release-handler/references/release-orchestration.md)
-defines reserved release assessments. Mandatory release dispatch is not yet
-integrated; TASK-173 owns preparation/QA and TASK-174 owns gates/publication/recovery.
+owns four release assessments. The handler now requires plan and QA-readiness
+assessments through its [preparation handoff](../release-handler/references/release-preparation.md).
+Publication-readiness/completion dispatch remains reserved for TASK-174 integration;
+source instructions establish no installed result.
 
 ## Establish the assessment
 

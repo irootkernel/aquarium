@@ -35,13 +35,26 @@ gate on that commit. A later gate is not due at the commit boundary but remains
 globally required before publication. A failed commit-first gate preserves the
 unpushed commit and stops before unauthorized history changes.
 
-The target readiness assessments retain original gate/QA results and exact-SHA
-light confirmation, including required prior VM/compatibility evidence. Do not
-rerun omitted light checks or claim they ran. Full-mode VM timing follows target
+[Preparation and QA readiness](../../plugins/aquarium/skills/release-handler/references/release-preparation.md)
+retain original pre-QA results and exact-SHA light confirmation, including required
+prior VM/compatibility evidence. Plan readiness precedes settlement/pre-QA effects;
+QA readiness precedes full QA and confirmation claim creation. Verify that the
+current assessed manifest path, helper-native canonical digest and unchanged bytes
+reach begin unchanged, then check actual claim readback before scenario dispatch.
+Keep helper rejection stops and legitimate exact-request recovery distinct.
+
+Review failure paths for handler-called Coordinator self-remediation, stale or
+superseded manifest selection, negative readiness before claim creation, missing
+actual confirmation and retarget-only requests entering mandatory role dispatch.
+Standalone QA and retarget-only heading edits keep their existing boundaries.
+These are semantic verification duties; do not encode prose matching as tests.
+
+Do not rerun omitted light checks or claim they ran. Full-mode VM timing follows target
 policy. Structural checks and fixture preparation do not establish native role
 progression, installed acceptance or user acceptance. TASK-175 prepares scenarios
 and the bounded installed startup case; TASK-176 observes the exact candidate
-in the dedicated UTM environment. Current release steps and gate-convergence
-instructions remain authoritative until their corresponding wiring lands.
+in the dedicated UTM environment. Current post-QA release steps and gate-convergence
+instructions remain authoritative pending TASK-174 integration. Finish active
+releases with their installed workflow before updating.
 
 Publication is ordered: commit, push `main`, create and push the annotated tag, create the GitHub Release, then re-observe remote `main`, the peeled tag, and the release. Recovery may skip the push when a fresh ancestry check proves that remote main includes the release commit, subject to repository policy; tag and Release targets remain the original release SHA. Local success never proves distribution readiness. Opening the next empty `Unreleased` section is a separate post-release change with separate approval.

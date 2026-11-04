@@ -14,11 +14,15 @@ authority. This dossier grants none of those effects and records no functional
 or installed verification result.
 
 The [release orchestration target contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
-promotes TASK-172's frozen roles, boundaries and evidence interfaces. It is not
-yet integrated and does not override current release steps. TASK-173 owns
-preparation/QA wiring; TASK-174 owns gates/publication/recovery. TASK-175/176
-retain scenario preparation and installed Codex observations. This dossier keeps
-the original acceptance criteria and remaining obligations until final settlement.
+promotes TASK-172's frozen roles, boundaries and evidence interfaces.
+[Preparation/QA handoffs](../../plugins/aquarium/skills/release-handler/references/release-preparation.md)
+now implement bounded Executor delivery and independent plan/QA readiness,
+including conditional remediation and exact confirmation-manifest intake.
+TASK-174 retains post-QA gates/publication/recovery integration under current
+operational owners. TASK-175/176 retain integrated scenarios and installed Codex
+observations. Source integration supplies no functional or installed result.
+This dossier keeps the original acceptance criteria and remaining obligations
+until final settlement.
 
 ## Goal and current authorities
 

@@ -2,19 +2,19 @@
 
 ## Status and integration owners
 
-TASK-172 freezes this target contract; runtime integration is still pending.
-The current [release handler](../SKILL.md),
-[release QA](../../release-qa/SKILL.md), [gate convergence](gate-convergence.md)
-and [publication recovery](publication-recovery.md) continue to govern their
-implemented operations. This reference does not override their current steps.
+TASK-172 established this target contract. The [release handler](../SKILL.md)
+and [release QA](../../release-qa/SKILL.md) implement preparation, pre-QA checks,
+plan/QA readiness and bounded remediation/confirmation through
+[release preparation](release-preparation.md). The conditional QA caller seam
+preserves standalone behavior and the original verdict and confirmation authority.
 
-TASK-173 owns preparation, pre-QA gates, QA remediation and confirmation handoffs,
-including necessary release-QA caller-context instructions. TASK-174 owns
-post-QA gates, publication and recovery integration, including removal of generic
-gate-before-commit assumptions. Each Task activates its instructions coherently
-and verifies its affected behavior. TASK-175 prepares integrated scenarios and
-the bounded installed startup case; TASK-176 observes the exact installed
-candidate. Operational integration and installed functionality remain unverified.
+TASK-174 retains post-QA gates, publication and recovery integration, including
+removal of generic gate-before-commit assumptions. Until that integration,
+[gate convergence](gate-convergence.md), [publication recovery](publication-recovery.md)
+and the handler's current post-QA steps govern their operations. The reserved
+publication assessments below do not override those steps. TASK-175 prepares
+integrated scenarios and the bounded installed startup case; TASK-176 observes
+the exact installed candidate. Source integration establishes no installed result.
 
 ## Roles and authority
 

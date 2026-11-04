@@ -15,17 +15,23 @@ helpers and all five bundled Procedures use the ordinary contract. Source and
 structural results do not establish installed functionality; actual startup,
 rework and recovery remain separate verification.
 
-The [release orchestration target contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
-freezes ordinary v3 release roles and plan-readiness, QA-readiness,
-publication-readiness and publication-completion assessments. It is not yet
-integrated: `release-handler` still calls `release-qa` with fresh scenario
-Executors and Coordinator adjudication under its current operational steps.
-TASK-173 owns preparation/QA wiring and TASK-174 owns gates/publication/recovery.
-The reference defines both gate orders, original evidence, exact candidate
-binding, report ownership and the accepted Haepari handoff without new schemas
-or a Podway release session. TASK-175/176 retain scenarios and actual installed
-Codex observations. The [roadmap](../roadmap/README.md#epic-031-adopt-coordinator-evaluator-and-executor-roles-in-release-workflows)
-owns delivery state. This frozen interface establishes no installed result.
+The [release orchestration contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
+owns four release boundaries. [Preparation and QA handoffs](../../plugins/aquarium/skills/release-handler/references/release-preparation.md)
+implement substantive bounded Executor discovery, note proposals, authorized edits
+and checks, independent plan readiness before settlement/pre-QA effects, and QA
+readiness for the exact clean committed candidate. The same Coordinator calls QA,
+directly assigns fresh scenario Executors, preserves original briefs/verdicts and
+delegates bounded remediation to one correction Executor. Confirmation readiness
+binds the prepared manifest before claim creation; claim readback must match the
+assessed path and native canonical digest before dispatch. Standalone QA remains
+unchanged. Retarget-only heading changes bypass these new role requirements.
+
+TASK-174 retains post-QA gate/publication/recovery integration and reserved
+publication assessments under current operational owners. Existing v3 reports
+carry original evidence and the accepted Haepari handoff without a new schema,
+commit-leaf input or Podway release session. TASK-175/176 retain integrated
+scenarios and installed Codex observations. The [roadmap](../roadmap/README.md#epic-031-adopt-coordinator-evaluator-and-executor-roles-in-release-workflows)
+owns delivery state. Source integration establishes no installed result.
 
 [EPIC-024](../roadmap/README.md#epic-024-restore-native-agent-workflows-and-add-manual-vm-release-acceptance)
 established the preceding ordinary v2 contract. Its original role names and

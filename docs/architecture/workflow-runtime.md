@@ -31,13 +31,17 @@ Workflows prefer re-observation over replay. Unknown or interrupted external exe
 
 The [release target contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
 defines a non-Podway release invocation with `procedure: null`, leaving unrelated
-development sessions intact. It is frozen and not yet integrated. TASK-173 owns
-preparation/QA wiring; TASK-174 owns gates/publication/recovery. Current release
-steps continue to govern until their corresponding integration lands.
+development sessions intact. [Preparation/QA handoffs](../../plugins/aquarium/skills/release-handler/references/release-preparation.md)
+implement bounded Executor delivery and independent plan/QA readiness. The same
+Coordinator directly calls QA's fresh scenario agents and delegates bounded
+remediation to one correction Executor, retaining original reports and the actual
+confirmation stop. Prepared-manifest readiness precedes claim creation; claim
+readback binds dispatch to the assessed manifest. Retarget-only heading edits
+keep their existing branch before mandatory role dispatch.
 
-The target Coordinator assigns bounded Executors, consumes original results and
-independent assessments at four release boundaries, and retains actual approvals,
-commit handoffs and inspector-selected publication actions. Evaluator reports
+The Coordinator retains actual approvals and commit handoffs. TASK-174 owns
+post-QA gates/publication/recovery integration and reserved publication
+assessments; current post-QA steps retain their authority. Evaluator reports
 remain in the handler's evidence. Existing QA records and Git/hosting objects
 support recovery without a resume manifest or new commit-leaf schema. A resumed
 publication requires applicable independent readiness before its first remaining

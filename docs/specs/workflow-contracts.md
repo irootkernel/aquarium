@@ -185,19 +185,35 @@ preserves the accepted composition and introduces no new semantic guidance.
 
 `release-handler` establishes the intended version, clean main candidate, previous release, publication state, and repository release policy. It reconciles every material delta with cumulative release notes before delegating one exact candidate to `release-qa`.
 
-The [release orchestration target contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
-is frozen but not yet integrated. Current release steps retain fresh QA scenario
-Executors and Coordinator adjudication. TASK-173 owns preparation/QA integration;
-TASK-174 owns gates/publication/recovery. The target uses existing v3 reports,
-an independent report-only Evaluator and four assessments at plan readiness,
-QA readiness, publication readiness and completion. The enclosing handler owns
-Evaluator evidence; commit-leaf inputs stay unchanged. The target preserves both
-repository-defined gate orders, original QA verdicts and confirmation authority,
-exact post-hook/gate binding, full/light evidence and Haepari's separate Job and
-consumer-cleanup outcomes. It adds no runtime requirement to the current steps.
-TASK-175/176 own integration scenarios and installed Codex observations; the
-[roadmap](../roadmap/README.md#epic-031-adopt-coordinator-evaluator-and-executor-roles-in-release-workflows)
-owns delivery state.
+The [release orchestration contract](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md)
+owns four boundaries. Implemented [preparation/QA handoffs](../../plugins/aquarium/skills/release-handler/references/release-preparation.md)
+require actual bounded Executor delivery and independent plan readiness before
+settlement commits or pre-QA gates, then QA readiness for the settled clean
+committed candidate, live remote relationship, due results and actual exact-SHA
+light confirmation. VM evidence is included there only when policy makes it due;
+planning names controller/resource, occupancy, native wait/recovery and separate
+recipe/native cleanup owners without acquiring capacity or adding a gate.
+
+The same Coordinator directly assigns fresh QA scenario Executors with original
+withholding briefs and preserves complete matrices, frozen evidence and verdicts.
+Under the handler caller, full-report-first remediation uses one correction
+Executor's actual edits, focused checks and handoff; Coordinator adjudication
+retains the actual confirmation stop. Standalone QA remains unchanged. After
+manifest preparation, independent readiness binds its current physical path,
+helper-native canonical digest and unchanged bytes before begin creates a claim.
+Only that assessed manifest is supplied, and actual claim readback must match
+before dispatch. Superseded valid manifests remain immutable; mismatches stop
+and reconcile the same operation while native exact-request recovery remains
+available without replaying dispatched scenarios or adding attempts.
+
+Retarget-only requests take the existing approved heading-edit branch before
+mandatory role dispatch, without a new Evaluator cycle, QA or release publication.
+The enclosing handler owns assessment evidence and existing commit-leaf inputs
+stay unchanged. TASK-174 retains post-QA gates/publication/recovery and reserved
+publication assessments under current owners. TASK-175/176 retain integrated
+scenarios and installed Codex observations; the [roadmap](../roadmap/README.md#epic-031-adopt-coordinator-evaluator-and-executor-roles-in-release-workflows)
+owns delivery state. Finish active releases with their installed workflow before
+updating; source integration establishes no installed result.
 
 Full release mode runs the complete repository gate after metadata changes. Light mode requires explicit test confirmation for the clean exact candidate after changelog settlement and permits only release metadata changes. Every later candidate change, including a settlement or remediation commit, requires fresh confirmation or full mode before the next QA pass or metadata step.
 

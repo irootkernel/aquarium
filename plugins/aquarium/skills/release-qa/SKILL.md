@@ -17,6 +17,29 @@ It also authorizes creation and mutation of bounded `/tmp` fixtures, fresh subag
 
 It does not authorize staging, commits, pushes, tags, releases, networked or live product scenarios, credential inspection or changes, new authentication, global installation or configuration, persistent daemons, or a second QA pass. Preserve unrelated work. Stop before remediation when a finding needs a material product choice, authority expansion, or unrelated refactor, and report that decision instead.
 
+## Enclosing release-handler caller
+
+When `release-handler` calls this leaf, the same Coordinator retains QA
+adjudication and directly assigns fresh scenario Executors. Follow its
+[preparation and QA handoffs](../release-handler/references/release-preparation.md)
+for independent readiness before full QA and, after deterministic manifest
+preparation, before `begin-confirmation` creates its claim. Supply only the
+assessed physical manifest path, compare its helper-native canonical digest and
+unchanged bytes before begin, and verify the actual claim's `manifest` and
+`manifest_digest` against that assessed binding before dispatch. Superseded valid
+manifests remain retained but are never selected. A mismatch stops dispatch and
+reconciles the same operation; native exact-request claim/settlement recovery
+remains available without replaying submitted scenarios or adding an attempt.
+
+For this caller, finish and preserve the complete original full-pass report,
+verdict and frozen evidence before remediation. One authorized correction
+Executor performs the bounded edits and focused checks and returns its actual
+handoff. The same Coordinator adjudicates that handoff and keeps the actual
+explicit-confirmation stop below; it does not remediate source itself. Enclosing
+context grants no extra effects, coverage exception or change to QA verdicts.
+Standalone invocation keeps the existing remediation and admission behavior
+without a new Evaluator cycle.
+
 ## Establish the Release Contract
 
 1. Resolve the Git root and read all applicable instructions and release policy. Inspect the worktree, conflicts, current branch, `HEAD`, local `main`, configured upstream branch, live remote `main`, existing tags, and configured hosting Releases. Record the exact candidate SHA.
@@ -188,7 +211,7 @@ For each finding give the violated baseline or candidate contract, reproduction 
 
 When the result is `PASS`, return the evidence and allow an already-authorized enclosing release workflow to continue its normal release procedure without another QA confirmation. `PASS` does not itself authorize staging, commits, pushes, tags, or publication.
 
-When a full-mode result is `FINDINGS`, complete the current QA report first, then leave QA mode and implement only the smallest safe fixes for the verified findings. Add or adjust focused regression coverage when the finding is executable, run only the focused checks needed to verify the edits, and preserve unrelated work. Do not broaden remediation into general hardening, accept speculative edge cases as new scope, update evidence documents merely to bind an intermediate candidate SHA, stage, commit, push, or start another QA pass.
+For a full-mode result of `FINDINGS`, complete the current QA report first, then leave QA mode. The remediating agent (the single correction Executor under `release-handler`, or the Coordinator for standalone invocation) implements only the smallest safe fixes for the verified findings. Add or adjust focused regression coverage when the finding is executable, run only the focused checks needed to verify the edits, and preserve unrelated work. Do not broaden remediation into general hardening, accept speculative edge cases as new scope, update evidence documents merely to bind an intermediate candidate SHA, stage, commit, push, or start another QA pass.
 
 A confirmation-mode result never authorizes remediation; apply the stop and escalation rule in the confirmation contract instead.
 
