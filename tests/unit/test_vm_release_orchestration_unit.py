@@ -1,6 +1,7 @@
 """Synthetic driver records and isolated filesystem controls, not qualification."""
 
 import json
+import os
 import signal
 import subprocess
 import sys
@@ -77,25 +78,65 @@ def test_wrong_guest_identity_precedes_all_writes(tmp_path, monkeypatch):
     assert not root.exists()
 
 
-def test_native_start_and_resume_receive_verified_environment(context):
+def test_native_start_and_resume_receive_verified_environment(context, monkeypatch):
     context, results = context
     world = context.root / "world"
     fixture.seed(world, order="before", baseline="previous", mode="full")
+    for name in ("GH_TOKEN", "GITHUB_TOKEN", "GIT_DIR", "GIT_WORK_TREE"):
+        monkeypatch.setenv(name, "synthetic-production-value")
     fake = context.root / "synthetic-codex"
     fake.write_text(
-        f"#!{sys.executable}\nimport json,os,sys\nprint(json.dumps({{'type':'thread.started','thread_id':'synthetic-thread'}}))\nprint(json.dumps({{'type':'turn.completed'}}))\nwith open(os.path.join(os.environ['AQUARIUM_RELEASE_FIXTURE_ROOT'],'selected-env.json'),'w') as f: json.dump({{k:os.environ[k] for k in ['HOME','GIT_CONFIG_GLOBAL','PATH']}},f)\n"
+        f"#!{sys.executable}\n"
+        "import json,os,sys\n"
+        "print(json.dumps({'type':'thread.started','thread_id':'synthetic-thread'}))\n"
+        "print(json.dumps({'type':'turn.completed'}))\n"
+        "with open(os.path.join(os.environ['AQUARIUM_RELEASE_FIXTURE_ROOT'],'selected-env.json'),'w') as f:\n"
+        " json.dump({'argv':sys.argv[1:],'cwd':os.getcwd(),'input':sys.stdin.read(),'env':dict(os.environ)},f)\n"
     )
     fake.chmod(0o700)
     context.codex = str(fake)
     directory = results / "synthetic-case"
+    directory.mkdir()
+    policy = ["exec", "--json", "--sandbox", "workspace-write"]
+    for path in (
+        directory,
+        world / "repo/.git",
+        world / "origin.git",
+        world / "hosting",
+    ):
+        policy += ["--add-dir", str(path)]
+
+    def check_launch(number, value, suffix):
+        selected = json.loads((world / "selected-env.json").read_text())
+        assert selected["argv"] == policy + [
+            "--output-last-message",
+            str(directory / f"operations/{number:03d}.last"),
+            *suffix,
+        ]
+        assert selected["cwd"] == str(world / "repo")
+        assert selected["input"] == value
+        env = selected["env"]
+        assert env["HOME"] == str(context.home)
+        assert env["XDG_CONFIG_HOME"] == os.environ.get(
+            "XDG_CONFIG_HOME", str(context.home / ".config")
+        )
+        assert env["PATH"].split(os.pathsep)[0] == str(world / "bin")
+        assert env["GIT_CONFIG_GLOBAL"] == os.devnull
+        assert env["GIT_CONFIG_NOSYSTEM"] == "1"
+        assert env["GIT_CONFIG_COUNT"] == "1"
+        assert env["GIT_CONFIG_KEY_0"] == "core.hooksPath"
+        assert env["GIT_CONFIG_VALUE_0"] == str(world / "hooks")
+        assert all(
+            name not in env
+            for name in ("GH_TOKEN", "GITHUB_TOKEN", "GIT_DIR", "GIT_WORK_TREE")
+        )
+
     assert (
         release.invoke(context, world, directory, "synthetic prompt", None)["thread_id"]
         == "synthetic-thread"
     )
-    selected = json.loads((world / "selected-env.json").read_text())
-    assert selected["HOME"] == str(context.home)
-    assert selected["PATH"].split(":")[0] == str(world / "bin")
-    assert selected["GIT_CONFIG_GLOBAL"] == "/dev/null"
+    check_launch(0, "synthetic prompt", ["-C", str(world / "repo"), "-"])
+    originals = {p: p.read_bytes() for p in (directory / "operations").iterdir()}
     with pytest.raises(release.lib.RecipeError, match="existing native"):
         release.invoke(context, world, directory, "duplicate", None)
     assert (
@@ -104,10 +145,146 @@ def test_native_start_and_resume_receive_verified_environment(context):
         ]
         == "synthetic-thread"
     )
+    check_launch(1, "actual synthetic reply", ["resume", "synthetic-thread", "-"])
+    assert all(p.read_bytes() == value for p, value in originals.items())
     (world / "bin/gh").write_text("changed")
     with pytest.raises(fixture.FixtureError):
         release.invoke(context, world, directory, "", "next reply")
     assert len(list((directory / "operations").glob("*.invocation.json"))) == 2
+
+
+@pytest.mark.parametrize("resume", [False, True])
+@pytest.mark.parametrize("fault", ["missing", "file", "symlink", "foreign-owner"])
+@pytest.mark.parametrize(
+    "root", ["world", "repo", "repo/.git", "origin.git", "hosting", "evidence"]
+)
+def test_unsafe_native_writable_roots_precede_effects(
+    context, monkeypatch, root, fault, resume
+):
+    ctx, results = context
+    world = ctx.root / "world"
+    fixture.seed(world, order="before", baseline="previous", mode="full")
+    directory = results / "case"
+    directory.mkdir()
+    if resume:
+        native_window(directory, 0)
+    path = (
+        directory if root == "evidence" else world if root == "world" else world / root
+    )
+    if fault == "foreign-owner":
+        stat = Path.stat
+
+        def foreign_owner(value, *args, **kwargs):
+            actual = stat(value, *args, **kwargs)
+            if value == path:
+                fields = list(actual)
+                fields[4] = os.getuid() + 1
+                return os.stat_result(fields)
+            return actual
+
+        monkeypatch.setattr(Path, "stat", foreign_owner)
+    else:
+        saved = path.with_name(path.name + ".saved")
+        path.rename(saved)
+        if fault == "file":
+            path.write_text("not a directory")
+        elif fault == "symlink":
+            path.symlink_to(saved, target_is_directory=True)
+    before = {p for p in ctx.root.rglob("*")}
+    originals = {
+        p: p.read_bytes() for p in before if p.is_file() and not p.is_symlink()
+    }
+    # Even fixture Git validation must follow the root guard.
+    monkeypatch.setattr(
+        subprocess,
+        "Popen",
+        lambda *a, **kw: pytest.fail("unsafe root launched a process"),
+    )
+    with pytest.raises(fixture.FixtureError):
+        release.invoke(ctx, world, directory, "prompt", "reply" if resume else None)
+    assert {p for p in ctx.root.rglob("*")} == before
+    assert all(p.read_bytes() == value for p, value in originals.items())
+
+
+@pytest.mark.parametrize("resume", [False, True])
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "outside-world",
+        "outside-evidence",
+        "evidence-is-world",
+        "evidence-contains-world",
+    ],
+)
+def test_native_grants_stay_inside_job_and_separate_from_world(
+    context, monkeypatch, fault, resume
+):
+    ctx, results = context
+    owned = ctx.root
+    ctx.root = owned / "job"
+    ctx.root.mkdir()
+    world = (owned if fault == "outside-world" else ctx.root) / "world"
+    fixture.seed(world, order="before", baseline="previous", mode="full")
+    directory = {
+        "outside-world": ctx.root / "evidence",
+        "outside-evidence": results / "case",
+        "evidence-is-world": world,
+        "evidence-contains-world": ctx.root,
+    }[fault]
+    directory.mkdir(exist_ok=True)
+    if resume:
+        native_window(directory, 0)
+    before = {p for p in owned.rglob("*")}
+    originals = {p: p.read_bytes() for p in before if p.is_file()}
+    monkeypatch.setattr(
+        subprocess,
+        "Popen",
+        lambda *a, **kw: pytest.fail("unsafe boundary launched a process"),
+    )
+    with pytest.raises(fixture.FixtureError):
+        release.invoke(ctx, world, directory, "prompt", "reply" if resume else None)
+    assert {p for p in owned.rglob("*")} == before
+    assert all(p.read_bytes() == value for p, value in originals.items())
+
+
+@pytest.mark.parametrize("resume", [False, True])
+@pytest.mark.parametrize(
+    "fault", ["missing", "symlink", "nonexecutable", "changed", "foreign-origin"]
+)
+def test_native_launch_revalidates_hosting_and_origin_before_writes(
+    context, monkeypatch, fault, resume
+):
+    ctx, results = context
+    world = ctx.root / "world"
+    fixture.seed(world, order="before", baseline="previous", mode="full")
+    directory = results / "case"
+    directory.mkdir()
+    if resume:
+        native_window(directory, 0)
+    gh = world / "bin/gh"
+    if fault == "missing":
+        gh.unlink()
+    elif fault == "symlink":
+        saved = gh.with_name("gh.saved")
+        gh.rename(saved)
+        gh.symlink_to(saved)
+    elif fault == "nonexecutable":
+        gh.chmod(0o600)
+    elif fault == "changed":
+        gh.write_text("changed executable bytes")
+    else:
+        fixture.git(world, "remote", "set-url", "origin", str(ctx.root / "foreign.git"))
+    before = {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+    popen = subprocess.Popen
+
+    def validated_process(argv, *args, **kwargs):
+        assert argv[0] == "git", "fixture validation must precede native launch"
+        return popen(argv, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "Popen", validated_process)
+    with pytest.raises(fixture.FixtureError):
+        release.invoke(ctx, world, directory, "prompt", "reply" if resume else None)
+    assert {p: p.read_bytes() for p in directory.rglob("*") if p.is_file()} == before
 
 
 def test_uncertain_native_window_cannot_be_redispatched(context):
@@ -803,6 +980,7 @@ def test_interrupted_invoker_retains_actual_waited_process_exit(context, monkeyp
 
     monkeypatch.setattr(subprocess.Popen, "communicate", interrupted)
     directory = results / "originals/synthetic/variant"
+    directory.mkdir(parents=True)
     with pytest.raises(KeyboardInterrupt):
         release.invoke(ctx, world, directory, "synthetic input", None)
     receipt = json.loads((directory / "operations/000.invocation.json").read_text())
@@ -844,6 +1022,7 @@ def test_genuine_launch_failure_permits_restoration_without_success(
     fake = ctx.root / "synthetic-no-thread"
     ctx.codex = str(fake)
     directory = results / "originals/synthetic/variant"
+    directory.mkdir(parents=True)
     with pytest.raises(release.lib.RecipeError):
         release.invoke(ctx, world, directory, "synthetic failed start", None)
     receipt = json.loads((directory / "operations/000.invocation.json").read_text())
@@ -888,6 +1067,7 @@ def test_launched_no_handle_exit_cannot_prove_native_settlement(
     fake.chmod(0o700)
     ctx.codex = str(fake)
     directory = results / "originals/synthetic/variant"
+    directory.mkdir(parents=True)
     with pytest.raises(release.lib.RecipeError):
         release.invoke(ctx, world, directory, "synthetic uncertain start", None)
     assert (world / "launched").read_text() == "synthetic process ran"
@@ -953,6 +1133,7 @@ def test_failed_native_window_with_known_handle_resumes_same_handle(context):
     fake.chmod(0o700)
     ctx.codex = str(fake)
     directory = results / "case"
+    directory.mkdir(parents=True)
     with pytest.raises(release.lib.RecipeError, match="incomplete"):
         release.invoke(ctx, world, directory, "synthetic start", None)
     receipt = release.invoke(ctx, world, directory, "", "synthetic recovery")

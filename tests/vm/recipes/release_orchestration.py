@@ -77,6 +77,20 @@ def invoke(
 
     lib.guard(context.root)
     lib.job_identity()
+    if directory.is_relative_to(world) or world.is_relative_to(directory):
+        raise fixture.FixtureError("native evidence must be separate from its world")
+    writable = [directory, world / "repo/.git", world / "origin.git", world / "hosting"]
+    for path in (world, world / "repo", *writable):
+        boundary = context.root if path in (world, directory) else world
+        if (
+            not path.is_absolute()
+            or path != path.resolve()
+            or path == boundary
+            or not path.is_relative_to(boundary)
+            or not path.is_dir()
+            or path.stat().st_uid != os.getuid()
+        ):
+            raise fixture.FixtureError(f"unsafe native fixture directory: {path}")
     env = fixture.native_environment(world)
     # Native Codex keeps the authorized guest login; Git remains process-isolated.
     env["HOME"] = str(context.home)
@@ -113,8 +127,10 @@ def invoke(
         "--json",
         "--sandbox",
         "workspace-write",
-        "--add-dir",
-        str(directory),
+    ]
+    for path in writable:
+        argv += ["--add-dir", str(path)]
+    argv += [
         "--output-last-message",
         str(prefix) + ".last",
     ]
