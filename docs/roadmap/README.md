@@ -86,7 +86,7 @@ This rule establishes retirement-evidence applicability only. The release's SHA-
 | EPIC-028 | Extend Epic Squad with Herdr and mixed collaboration | Completed |
 | EPIC-029 | Add directory AGENTS.md documentation indexes | Completed |
 | EPIC-030 | Unify Aquarium delivery across five agent hosts | Planned |
-| EPIC-031 | Adopt Coordinator, Evaluator and Executor roles in release workflows | In Progress |
+| EPIC-031 | Adopt Coordinator, Evaluator and Executor roles in release workflows | Completed |
 | EPIC-032 | Adopt Haepari across integrated tools | Planned |
 | EPIC-033 | Qualify the combined environment and retire the development channel | Planned |
 | EPIC-034 | Adopt Podway v0.2.15 and contract generation 2 | Completed |
@@ -972,7 +972,15 @@ cutover and Master's overall acceptance.
 
 ## EPIC-031: Adopt Coordinator, Evaluator and Executor roles in release workflows
 
-**Status:** `In Progress`
+**Status:** `Completed`
+
+Master directed early closeout on 2026-11-07 because a separate Epic proposes a
+substantial release-handler redesign. TASK-172 through TASK-175 delivered the
+implementation and focused checks. TASK-176 closes with partial actual UTM
+verification and explicit unverified scope; this lifecycle decision does not
+assert full qualification, release readiness or fulfillment of the original
+acceptance suite. See the [verification and closeout record](../../tests/vm/README.md#epic-031-verification-and-directed-closeout).
+The original scope below is retained as historical intent.
 
 Extend ordinary v3 orchestration to `release-handler`. The Coordinator retains
 scope, actual approvals, commit and publication control; Executors deliver
@@ -995,12 +1003,13 @@ on completed EPIC-024 and EPIC-026 contracts. EPIC-030 retains ownership of
 multi-host packaging and distribution and is not a prerequisite.
 Between EPIC-030 and this Epic, whichever lands second reconciles the current output inventory, shared
 release contracts and verification scenarios without assuming new host support.
-This registration changes documentation only and establishes no implemented or
-installed release-role support.
+The original registration authorized documentation only. The delivered
+implementation and partial installed observations are recorded in the canonical
+outcomes and directed closeout above.
 
 EPIC-019 supplies the completed Haepari setup, VM adapter and policy cutover through Canonical Outcomes. This Epic requires those inputs and verifies their integration with release roles using original Job/result/cleanup evidence and native queue/recovery; there is no pre-adoption manual qualification route within this Epic. EPIC-032's formal rollout follows this Epic and separately owns producer acceptance and Mulgae advisory integration. Podway, Dolgorae, Gaori and Sanho may perform their tool-owned aquarium-dev cleanup in parallel without waiting for this Epic. No second scheduler, report schema or review-lock wrapper is introduced. Assessment success, native outcome and resource return remain separate states.
 
-**Detailed SOT:** [Release orchestration dossier](../todo/TODO-RELEASE-ORCHESTRATION.md)
+**Canonical Outcomes:** [Release roles and assessments](../../plugins/aquarium/skills/release-handler/references/release-orchestration.md), [preparation and QA](../../plugins/aquarium/skills/release-handler/references/release-preparation.md), [gate convergence](../../plugins/aquarium/skills/release-handler/references/gate-convergence.md), [publication recovery](../../plugins/aquarium/skills/release-handler/references/publication-recovery.md), [verification contract](../../TESTING.md#release-orchestration-verification), and [actual verification and limits](../../tests/vm/README.md#epic-031-verification-and-directed-closeout).
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
@@ -1008,7 +1017,7 @@ EPIC-019 supplies the completed Haepari setup, VM adapter and policy cutover thr
 | TASK-173 | Integrate release preparation and QA handoffs | Delegate bounded preparation and corrections, assess exact QA-ready candidates and any policy-due original VM evidence without changing QA verdicts or confirmation authority. | Completed | TASK-172 |
 | TASK-174 | Integrate release gates, publication and recovery assessments | Support both gate/commit orders and original result binding; reconcile an existing Haepari Job before Executor replacement or redispatch and preserve cleanup evidence, convergence and publication authority. | Completed | TASK-173 |
 | TASK-175 | Prepare integrated regressions and manual verification scenarios | Prepare native-role scenarios for both gate orders, bounded release-handler startup, and applicable VM queue/manual hold/cancel/reconnect/cleanup failures without duplicate dispatch. Earlier Tasks retain focused checks. | Completed | TASK-174 |
-| TASK-176 | Verify installed release orchestration and promote outcomes | Observe native role progression against the exact installed candidate and applicable VM path, retain original Job/result/cleanup facts when adopted, promote outcomes and settle the dossier after actual acceptance. | Planned | TASK-175 |
+| TASK-176 | Verify installed release orchestration and promote outcomes | Record actual installed/native observations and their limits; close at Master's direction with remaining qualification unexecuted. | Completed | TASK-175 |
 
 ## EPIC-032: Adopt Haepari across integrated tools
 

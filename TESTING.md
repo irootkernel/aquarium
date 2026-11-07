@@ -903,10 +903,14 @@ result.
 The separately authorized manual `release-orchestration` feature suite uses the
 existing sealed host adapter. Its [operator scenario](tests/vm/recipes/scenarios/release-orchestration.md)
 and [fixed inventory](tests/vm/fixtures/release-orchestration/cases.json) prepare
-every original EPIC-031 requirement. TASK-176 still owes actual installed native
-Codex Coordinator, Executor and independent Evaluator observations, including
-actual fixture-operator decisions and original managed Job/cleanup evidence.
-No prepared fixture, source gate or synthetic report establishes those results.
+every original EPIC-031 requirement. The [actual verification and directed
+closeout record](tests/vm/README.md#epic-031-verification-and-directed-closeout)
+distinguishes installed native Codex Coordinator, Executor and independent
+Evaluator observations from helper checks, original failures and unverified
+scope. Master ended further qualification and closed the Epic with those limits;
+the complete feature inventory, final J-RA and whole-Epic integration were not
+established as passing. A prepared fixture, source gate or synthetic report cannot
+supply a missing installed result.
 
 Objective unit/E2E controls cover the new local Git/hosting/gate utility and guest
 phases: hermetic Git bootstrap, real local refs and publication readback, both

@@ -80,7 +80,10 @@ new invocations under the updated release contract. This Codex source integrates
 and [publication assessments/recovery](plugins/aquarium/skills/release-handler/references/publication-recovery.md).
 Original publication and policy-due VM cleanup evidence remain distinct from
 assessment and authority; recovery reconciles the same Job before replacement.
-Integrated scenarios and installed observations remain pending.
+[Actual UTM observations and unverified scope](tests/vm/README.md#epic-031-verification-and-directed-closeout)
+are recorded separately. Master closed EPIC-031 before full qualification because
+a separate Epic proposes a substantial release-handler redesign. This version
+has no complete feature-suite or final release-acceptance result.
 
 The development source includes explicitly invoked `$aquarium:epic-squad` for one roadmap Epic. Separate Task and Epic Evaluators assess plans and results; Task Operators deliver or independently review work, with one active Writer. Required first assessments remain due, while corrections retain applicable evidence and revisit affected scopes. Native roles inherit the Coordinator's harness, model and effort. Explicit CLI/model profiles use Herdr, including same-CLI sessions and mixed native teams, while recovery and commit handoffs preserve original assessment settings. See the [collaboration contract](plugins/aquarium/references/epic-squad-collaboration.md) and [installed verification](tests/vm/README.md#native-squad-installed-cases) for workflow details and candidate/harness-specific results.
 

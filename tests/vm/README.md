@@ -1403,11 +1403,131 @@ evidence without replacement Jobs, omitted outputs or deadline extensions.
 The feature recipe observes approved installation and verifies restoration of
 the actual starting consumers. J-RA retains its upgraded installation instead.
 Both stage consumer evidence before manual completion and retain native
-collection/cleanup/export afterward. TASK-176 owns actual installed/native
-qualification and original fixture-operator decisions; preparation proves none.
+collection/cleanup/export afterward. TASK-176's actual observations and early
+closeout are recorded below; preparation alone proves no installed behavior.
 
 J-RA adds only [release-startup](recipes/scenarios/release-acceptance.md#release-startup),
 one native release-handler plan-readiness smoke with a summary and archive/manifest.
 The ten historical scenarios remain; the current manual inventory has eleven.
 Existing Task/Epic `make test-vm` behavior stays intact. Full feature verification
 is not repeated inside that startup check.
+
+## EPIC-031 verification and directed closeout
+
+Master stopped further qualification and directed EPIC-031 and TASK-176 to close
+on 2026-11-07 because a separate Epic proposes a substantial release-handler
+redesign. The roadmap's `Completed` state records that decision. Full feature
+qualification, whole-Epic technical acceptance and release readiness were not
+established. The redesign and its acceptance remain outside these observations.
+
+TASK-172 through TASK-175 delivered bounded release roles, preparation/QA
+handoffs, both gate orders, publication assessments/recovery and reusable
+verification scenarios with their focused source checks. The installed
+observations below used the dedicated UTM macOS VM, managed Haepari allocations,
+real Codex Coordinator/Executor/independent Evaluator conversations, local Git
+repositories and a controlled hosting stand-in. The roles ran in the guest;
+publication effects stayed inside fixtures.
+
+The final exercised source was
+`3869388667f15ae987423452cd22365d2bb71275`, with artifact tree
+`5c41f2d4d63a6bee93f844dc99988fc83d9b243ca62821254cf2ef2287b3e824`
+and harness tree
+`44b070781bad3e896323ded8f4abbfba008931a122972a5182dd130c059f42ce`.
+Earlier contributions keep their own original source, combination and
+applicability bindings. These observations do not qualify a later changed
+payload.
+
+### Executed observations
+
+| Area | What the retained evidence establishes |
+| --- | --- |
+| Installation and discovery | The candidate was installed in UTM. Actual native role startup, candidate discovery and status-runtime activation were observed. Each feature allocation retained its released starting state for restoration. |
+| Release preparation and gates | Full-before-commit and commit-before-gate fixture paths ran with actual roles, QA and gate receipts. A controlled post-commit gate failure preserved the unpushed commit and stopped publication. |
+| Light mode and stale evidence | Actual light-mode paths and same-world functional drift exercised candidate-specific confirmations and invalidation. Synthetic helper branches remain separately classified. |
+| QA findings and confirmation | Actual initial findings, bounded correction, readiness assessment and confirmation were exercised. A separate neutral-change path retained direct-QA and release-basis identities, one permitted reuse and independent eligibility assessment. Original negative reports remain unchanged. |
+| Final three native cases | Publication recovery, Executor replacement and managed-resource evidence intake each ran a full fixture QA pass. Those three QA results cover their own candidates and scenarios; they do not pass the full feature inventory. |
+| Executor replacement | Actual distinct metadata Executors X and Y, intervening Coordinator settlement and the same independent Evaluator were observed. The replacement did not replay prior completed work or grant publication. |
+| Partial publication recovery | Fresh invocations reconciled before-push, before-tag, before-hosted and already-hosted boundaries. Only the next expressly authorized mutation ran. A controlled effect-then-lost-reply produced one hosted object and one create effect, with no replay or duplicate. |
+| Advanced remote | A second fixture clone advanced remote main to a proved descendant. Native recovery retained the original release, tag and hosted target rather than moving them to the descendant. |
+| Semantic completion | An independent Evaluator first accepted the matching published highlights. After an authorized controlled highlight mismatch, it returned `FAIL/rework` while structural routing still reported complete. The Coordinator consumed the negative result and stopped without repair, rollback or republication. The unchanged Validation section remained separately supported. |
+| Managed resource probes | Genuine queue/occupancy, caller wait timeout, same-key/spec/Job reconciliation, distinct host Executor recovery, queued cancellation and active cancellation were observed. Workload result, delivered evidence, consumer cleanup, native cleanup and resource return remain separate dimensions. |
+| Objective helper checks | First-release, hook/gate/convergence, missing or stale inputs, unsafe report bindings, publication ancestry/retarget and cleanup controls ran as selected helpers. Disclosed synthetic retry/native-cleanup classifications establish helper behavior only. |
+| Test-fixture correction | Five host-wrapper test children inherited the outer allocation's parent context and were correctly refused by the live anti-nesting guard. Clearing that inherited variable only in the child fixture let the five affected nodes and the explicit nested-context refusal node pass: six focused checks. The live wrapper was unchanged. |
+
+### Failures and limits retained
+
+The initial feature run failed; later source correction did not rewrite it.
+The five earlier feature allocations returned native `INCOMPLETE` with partial
+evidence, even where individual scenario observations passed. One later
+allocation expired at its manual deadline after installation but before its
+three native cases; its runtime proposal was not consumed. A subsequent prepare
+attempt refused the changed installed identity. A separate operational recovery
+restored consumers and passed only that recovery scope.
+
+Managed probes retain their original outcomes: a guard/consumer failure was
+`FAIL`; timeout/reconnect and partial-evidence runs were `INCOMPLETE`; queued
+and active cancellations were `CANCELLED`. One controlled output-withholding
+probe physically cleaned up but did not deliver its required post-cleanup
+inventory. Its delivered consumer verification remains unverified. The installed
+release-role Evaluator retained that gap and stopped readiness.
+
+Protected input content was emitted into a private native tool transcript during
+managed evidence intake. That handling failure remains unmet. A later bounded
+typed intake emitted only approved digest/count/boolean facts; its narrow result
+does not establish compliant handling for the whole run or erase the incident.
+The managed compound objective was not awarded a final whole-objective pass.
+
+Other actual failures remain in the retained originals, including the first
+orphan-clone ancestry failure with no push, readout/index assembly failures and
+the first evidence-staging attempt before the consumer receipt existed. The
+corrected explicit-main clone, scoped index repairs and later staging do not
+change those historical exits.
+
+### Unexecuted or not established at closeout
+
+- The frozen inventory contains 81 variants, including 16 native-required
+  variants and seven complete native objectives. Final whole-inventory
+  reconciliation was not completed. There is no all-81, all-16 or all-seven
+  passing claim; earlier source-record counts are not final coverage totals.
+- The separately prepared final J-RA was not submitted or executed. Its current
+  installed upgrade/preservation, complete manual inventory, Task/Epic startup
+  and bounded release-handler plan-readiness acceptance remain unverified for
+  this candidate. Feature-suite observations do not replace them.
+- Final TASK-176 completion assessment and whole-Epic integration/closeout
+  technical panels were not completed. Master's directed closure does not
+  relabel original unmet, unverified, `rework` or `evidence-needed` criteria.
+- Private effective model/effort telemetry and complete physical-process absence
+  were not established. Outer Herdr role profiles do not prove guest profiles.
+- No production release, real hosted publication, host installation, distribution
+  qualification or verification of the proposed redesign was performed.
+
+The requested outer roles were Herdr Codex GPT-6.1 Sol/high for EE/TO,
+Herdr Claude Opus 5.5/high for TE, and Herdr Cursor Agent Grok 4.7/high for SO.
+Public launch/control observations are retained separately from assignment
+metadata. TE's current native arguments explicitly selected the requested model
+and high effort; an earlier UI observation reported max effort. Effective private
+effort remains unknown. The Coordinator's exact applied model/effort was not
+established by retained launch arguments. Guest roles used their own native
+defaults and are not inferred from those outer profiles.
+
+### Retention and termination
+
+Original requests, role reports, negative judgments, failed attempts and complete
+private host archives are retained for authorized later consumers. Protected raw
+context stays private. Canonical documentation records the bounded findings
+without importing transcripts, local runtime state or raw logs. The temporary
+Epic dossier is removed after its durable contracts and these limits are linked
+from the roadmap; Git history retains the original plan.
+
+Further functional work and final J-RA were stopped at Master's direction.
+The final feature allocation's actors settled, the original native plugin
+registration and all 15 declared consumer roots were restored, consumer cleanup
+was verified and evidence staging completed. The final native outcome was
+`CANCELLED` with workload cancelled, complete declared-artifact delivery and
+verified native cleanup. Resource and global occupancy were both zero on final
+readback. All 34 delivered artifacts matched the preserved pre-cleanup originals.
+Delivery completeness does not assert full functional coverage.
+
+The development Goal was cancelled on the explicit stop, retaining its original
+criteria and history without marking them achieved. Its terminal handoff records
+the directed-closeout commit.

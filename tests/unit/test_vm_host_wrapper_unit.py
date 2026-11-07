@@ -596,6 +596,7 @@ class HostWrapperTest(unittest.TestCase):
             "AQUARIUM_VM_PROBE": "",
             "AQUARIUM_VM_CANCEL": "",
         }
+        environment.pop("HAEPARI_PARENT_CONTEXT", None)
         environment.update({key: str(value) for key, value in overrides.items()})
         command = [sys.executable, "-B", str(WRAPPER_PATH)]
         if suite_declarations is not None:
