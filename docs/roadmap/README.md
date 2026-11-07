@@ -87,7 +87,7 @@ This rule establishes retirement-evidence applicability only. The release's SHA-
 | EPIC-029 | Add directory AGENTS.md documentation indexes | Completed |
 | EPIC-030 | Unify Aquarium delivery across five agent hosts | Planned |
 | EPIC-031 | Adopt Coordinator, Evaluator and Executor roles in release workflows | Completed |
-| EPIC-032 | Adopt Haepari across integrated tools | Planned |
+| EPIC-032 | Adopt Haepari across integrated tools | In Progress |
 | EPIC-033 | Qualify the combined environment and retire the development channel | Planned |
 | EPIC-034 | Adopt Podway v0.2.15 and contract generation 2 | Completed |
 | EPIC-035 | Adopt Sorage v0.1.3 | In Progress |
@@ -1021,7 +1021,7 @@ EPIC-019 supplies the completed Haepari setup, VM adapter and policy cutover thr
 
 ## EPIC-032: Adopt Haepari across integrated tools
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Begin formal rollout after completed EPIC-031, consuming the completed EPIC-019 adapter and release-role Canonical Outcomes. TASK-091 through TASK-099 keep their existing IDs and formal producer order: Podway -> Mulgae -> Gaori -> Sorage -> Sanho -> Dolgorae -> Gul -> Seongge -> Gaebokchi. Each producer owns its implementation, local work IDs, skills, migration and native legacy detachment; Aquarium accepts a correlated real implementation return before advancing the formal rollout to the next producer.
 
@@ -1035,7 +1035,7 @@ Close this Epic after independent validation of all nine returns, promotion of a
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-091 | Freeze producer packets and accept Podway | Freeze packets from completed EPIC-019/031 outcomes, reuse the early cleanup exchange, request any remaining scope and accept actual implementation, skill/migration and native detachment evidence. | Planned | EPIC-031; TASK-090; external Podway implementation return |
+| TASK-091 | Freeze producer packets and accept Podway | Freeze packets from completed EPIC-019/031 outcomes, reuse the early cleanup exchange, request any remaining scope and accept actual implementation, skill/migration and native detachment evidence. | Completed | EPIC-031; TASK-090; external Podway implementation return |
 | TASK-092 | Delegate and accept Mulgae | Accept a released producer-owned CLI/MCP advisory-lock implementation with acquisition before live qualification, renewal, terminal release, borrower checks, native recovery and installed VM/skill/migration evidence; then adopt its released floor without an outer lock wrapper. | Planned | TASK-091; external Mulgae implementation and released CLI/skill return |
 | TASK-093 | Delegate and accept Gaori | Reuse the early cleanup exchange; request and accept remaining Gaori-owned VM tests, both native skills, waiting/output and migration evidence, and verified legacy detachment through Sorage. | Planned | TASK-092; external Gaori implementation return |
 | TASK-094 | Delegate and accept Sorage | Request and accept guest-only broker/Vault/configuration migration and skill tests while stable host Sorage remains the rollout control plane. | Planned | TASK-093; external Sorage implementation return |

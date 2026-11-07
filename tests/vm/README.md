@@ -1380,6 +1380,131 @@ Other workflows and producer paths still need their own applicable evidence;
 release acceptance remains separate. The earlier startup-only assessments and
 failed attempts retain their original scope.
 
+### Podway v0.2.16 managed qualification and EPIC-032 reuse
+
+The recovered managed `release-acceptance` allocation on Aquarium candidate
+`8bd3e3e9283f1e234694920bde80c58af86a87c9` (`utm-macos` capacity `1`, runner
+configuration digest
+`9225ae4f819bf3b1b0dbc551bc9c3d2ac1553e5f3e9c0eabeae7b4a16f2f210a`, spec digest
+`22f93f6eddb770d1582f7feba669e63448ef253e525f6e493427199a7115d00a`, submitted
+digest `944ac58b80609db6ec4646262862464a1204438cd86b6afb136e33f6fd0812ea`, input
+digest `2334b0b677e33d0eb16ed6f7f7927d4d2ec8d5dd1d1635258ffa270c0722764e`,
+starting profile digest
+`04df16201e8cff0f89d50082d162dcab00049da42aa9c1c5960e7f9a4e3e8b31`, target
+profile
+`proposed-candidate-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.16-dev-8bd3e3e9283f`
+digest `faa881f023f9b91ce1eecccc5d29ad2d305c2c95caea32fed52722cf2c65608e`, and
+recipe digest
+`4bcb10005360b57fc16e1ad593340ee53e4c0a606be0c9d0869c12051204f643`) completed
+with terminal state `finished`, workload `pass`, `complete` evidence delivery
+(all `45` exported manifest files verified against the immutable native result,
+with the `utm-macos` resource available and no new VM or Job started during
+read-only inspection), native cleanup `verified`, consumer cleanup `verified`
+(`0` violations, retaining the tested Aquarium candidate, Podway `v0.2.16`,
+paired skills, and selected candidate status runtime), and final verdict `PASS`.
+The original startup result covers `VM-UPGRADE-01`, `VM-TASK-START-01`, and
+`VM-EPIC-START-01`. This Job supplies no release-handler startup or full release
+workflow result. Both the starting profile
+(`04df16201e8cff0f89d50082d162dcab00049da42aa9c1c5960e7f9a4e3e8b31`) and the
+admitted target profile
+(`faa881f023f9b91ce1eecccc5d29ad2d305c2c95caea32fed52722cf2c65608e`) verified in
+the immutable admission snapshot pin official Haepari `v0.1.0` (`tag_commit`
+`800da97b7e2ca84a15d4ee5921702ec57bbc7d61`, `build_revision`
+`fc3b975f8a99cacb96aecc988d3adbc04dda7309`, archive
+`6667cab322f326eb390b8cab89fd292e22d7436312434e7facd66213fe1a8a18`), executable
+and controller binary
+`sha256:e1a4c0a047f9d6b6e7048fdcfea961b7bafb3a3c627786619cff3796433d6b20`
+(matching the current reconnect client byte-for-byte, with
+`haepari.release-service-plan/v1` `global_limit: 2` and
+`host_macos_guest_limit: 1`), the complete `use-haepari` skill tree
+`21ec3671639b8699fbd6e1f0ed2697c435793ee0fcf56e73a65fbea51cbe3ebf` under
+`aquarium-skill-tree-sha256/v1`, and the six frozen capabilities
+(`managed-execution/v1`, `durable-observation/v1`, `advisory-lock/v1`,
+`managed-recovery/v1`, `artifact-delivery/v1`, and `evidence-retention/v1`, with
+`compiled_backends: ["local"]` kept distinct from the registered `utm-macos`
+runner `PASS`).
+
+Both pre-workload and post-cleanup guest inspections verified official Podway
+`v0.2.16` (`e9f4b41d1d09573b7acd443b91fbfb8f378fb8e1`, `aarch64-apple-darwin`,
+CLI binary
+`sha256:249685e65402049ecad83f1ecef8efee361f6ac979bde686a9ebabd10c685cf2`,
+release archive
+`sha256:cc91c083790da53977e193b09742836a7cec68aa18864df93989fed2df645835`,
+checksum sidecar
+`sha256:4eb8b039a022c1d3c6773e71f1284002c99bc48f95b22ec843cfbd81b865bab4`,
+provenance
+`sha256:63a7b1385fa766e6b23edb5eed0d0f63cf68f1008c04a4de8e4aceacb591553e`,
+`podway.version-result/v2` `build_identity`
+`sha256:2a11e45d3dee9a64143817f2b5bb92371f87947afd0b565d6feb34876768aafe`, and
+`podway.contract-manifest/v2` digest
+`sha256:57cb8463f0f24033f9bd0437ed1943e77b21b754a888e654bd847bec13f4b91d`) and
+the complete five-file `use-podway` skill tree
+`da9196f58d712d09de459dea423a9776f07c04014ebfb835105012697a833446` under
+`aquarium-skill-tree-sha256/v1` (`SKILL.md`
+`e1b067e8e64dc1d297c295ad6f17d0db202c4763fb496dce0d98e13513710200`,
+`references/lifecycle.md`
+`736998ddb12262da2a3fca6fc90c84001207623928c9e876908fa9b9e502f4f3`,
+`references/goal.md`
+`facf835661b08da9432d3d063df8be0c064d6899e132256b55ab6155a6bf41d9`,
+`references/delegation.md`
+`ea314acd2179ede83c19e92df6cb4db20a2b55b7c7e8a1ded907dd9617be232d`, and
+`references/recovery.md`
+`ac839571e629ef05c7e4cbb5dec2e6683dfa5fde11d91fe0d77a84557d8e465c`), with all
+nine sealed release inputs reconciled as byte-equal. Four local
+`test-podway-compat` passes against that same official binary across candidates
+`c572e8075305c61ddc76714f2cdd40d1c0c609b9`,
+`b76a36b1abb192234e7b737da657ea5dfbdc3045`,
+`65f459ea07151d8e6a321b229f2f122676a49b70`, and
+`8bd3e3e9283f1e234694920bde80c58af86a87c9` verified the exact structural and
+native-graph compatibility scope for all five shipped v2 Procedures
+(`aquarium-design-v2`, `aquarium-goal-v2`, `aquarium-task-v2`,
+`aquarium-validation-v2`, and `aquarium-war-room-v2`), plus outcome lookup,
+stale-fence refusal, workspace-removal refusal, recovery/restart, and settings
+cases with clean disposable-workspace cleanup.
+
+Under the official `e9f4b41d1d09573b7acd443b91fbfb8f378fb8e1` Podway
+release-and-packaging Upgrade policy (`v0.2.16` Direct contract), operators must
+finish or abandon active sessions and retire every legacy writer before updating
+the binary; in-place live migration of an active workflow or legacy Store is not
+supported (`not_applicable`). When an older v0.2.14 or v0.2.15 Store is present,
+`v0.2.16` refuses reads, fresh writes, original-request replay, and UUID-fenced
+reset without modifying the Store or source images. Explicit `podway reset` is a
+separate destructive operation that creates a fresh workspace UUID and discards
+prior runtime history while preserving workspace configuration, custom
+Procedures, the Git index, and unrelated worktree files; it is not an in-place
+migration. The `bee2e50f3be585793d07e2a095fe51ee2dc30783` direct-SSH observations
+above already establish this upgrade contract (`Released baseline` sessions
+cancelled before replacement, `Writer refusal` without modification, and
+`Explicit fixture reset` creating a fresh UUID while preserving configuration,
+custom Procedures, and Git state) and cover the recorded standalone Task,
+one-Task Epic, and internal Epic validation fixtures (`task-commit` and
+`release-handler` coverage is not claimed from that direct-SSH record). No
+active workflow was migrated in place, and no fresh busy-session execution is
+claimed.
+
+Producer `aquarium-dev` source integration was removed in Podway commit
+`b07942e30c85055643e8a1eb759d0e225f73a385` (`V2DFC` / `V2DFC-009`, ancestor of
+`e9f4b41d1d09573b7acd443b91fbfb8f378fb8e1` and
+`475b04fd28d9836e450ad90b8d358fef22bf3cc2`), and the exact E2E retirement and
+direct-CLI checks passed on clean historical audit checkout
+`98b8de7da9ac086ea0839f5e62a29dd88dc874ae`. For `TASK-091` reuse at
+`759883a47676ad9efae2dd8ae373878a431ce031`, `git diff --name-only 8bd3e3e9283f1e234694920bde80c58af86a87c9..759883a47676ad9efae2dd8ae373878a431ce031 -- plugins/aquarium/shared plugins/aquarium/assets/podway tests/verify_podway_compatibility.py`
+reports zero changed paths, and read-only host inspection confirms the installed
+`podway` binary and all five `use-podway` skill files match the tested official
+`v0.2.16` digests byte-for-byte after the temporary extracted CLI was removed by
+original cleanup.
+
+This recovered managed `PASS` (`8bd3e3e9283f1e234694920bde80c58af86a87c9`), the
+separate earlier `INCOMPLETE` (`manual-timeout`) run, the
+`bee2e50f3be585793d07e2a095fe51ee2dc30783` direct-SSH observations above, and
+`EPIC-031` directed-closeout limits remain distinct. Later `tests/vm` harness and
+release-orchestration changes between
+`8bd3e3e9283f1e234694920bde80c58af86a87c9` and
+`759883a47676ad9efae2dd8ae373878a431ce031` are not covered by the `8bd3e3e`
+allocation, and reusing these Podway outcomes for `TASK-091` does not claim a
+new VM or provider run, current-harness release qualification, or an aggregate
+`EPIC-031`, `EPIC-032`, or `EPIC-033` pass.
+
 ## Release orchestration feature suite
 
 The [release-orchestration scenario](recipes/scenarios/release-orchestration.md)
