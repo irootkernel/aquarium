@@ -23,8 +23,8 @@ for `make test-vm-host`, automatic and manual (`manual-hold` and
 cancellation, consumer cleanup verification, and escalation boundaries.
 
 The [integrated tool rollout runbook](integrated-tool-rollout.md) owns the
-nine producer request and return contracts, Sorage correction and acceptance
-protocol, reusable cleanup and [Podway qualification outcomes](../../tests/vm/README.md#podway-v0216-managed-qualification-and-epic-032-reuse),
+Aquarium-owned Haepari workflow routing, verification through existing tool
+commands, conditional producer correction protocol, reusable cleanup and [Podway qualification outcomes](../../tests/vm/README.md#podway-v0216-managed-qualification-and-epic-032-reuse),
 and the handoff to `EPIC-033`.
 
 ## Runbook Requirements
