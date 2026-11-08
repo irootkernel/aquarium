@@ -2439,7 +2439,12 @@ def test_public_resume_separates_managed_origin_currency_from_new_adoption(
 
 
 def applied_source_case(
-    repository, family="task", kind="known", originals="capture", other_source=None
+    repository,
+    family="task",
+    kind="known",
+    originals="capture",
+    other_source=None,
+    scoped=False,
 ):
     """Exact original inputs and synthetic active native attempts; no real actors."""
     from unittest.mock import Mock
@@ -2522,6 +2527,8 @@ def applied_source_case(
         raw = (
             ASSETS / "podway/procedures" / ("aquarium-" + stem + "-v2.yaml")
         ).read_bytes()
+        if family == "design" and not scoped:
+            raw = (ROOT / "tests/fixtures/aquarium-design-v12.yaml").read_bytes()
         mapping = reference_mapping(raw)
     effects = sorted(
         {effect for node in mapping["nodes"].values() for effect in node["effects"]}
@@ -3811,3 +3818,108 @@ def test_native_recovery_fence_is_not_relabelled_as_a_planning_route(tmp_path, f
         continue_applied(case)
     assert changed.value.code == baseline.value.code
     assert changed.value.details == baseline.value.details
+
+
+def test_scoped_feature_recovers_original_sources_without_diff_approval(tmp_path):
+    case = applied_source_case(tmp_path, family="design", scoped=True)
+    _, qualification, _, _, _ = case
+    assignment = qualification["assignment"]
+    recovery = qualification["applied_source_recovery"]
+    targets = recovery["proposal"]["targets"]
+    grant = {
+        "source": "user",
+        "decision": "approved",
+        "reference": "actual feature request",
+        "work": {
+            key: assignment["work"].get(key)
+            for key in ("repository", "roadmap", "epic")
+        },
+        "paths": {
+            name: [
+                "delete"
+                if image["after"] is None
+                else "create"
+                if image["before"] is None
+                else "update"
+            ]
+            for name, image in targets.items()
+        },
+    }
+    assignment["authority"].pop("document_approval")
+    assignment["authority"]["document_write"] = grant
+    assignment["target"]["design"] = {"targets": targets, "applied": True}
+    recovery.pop("proposal")
+    recovery.pop("approval")
+    recovery["changes"] = [{"document_write": grant, "targets": targets}]
+    pending_source_node(case, "apply-documents")
+    result = continue_applied(case)
+    assert result["status"] == "dispatch-ready"
+    assert result["dispatch"]["target"]["design_context"]["accepted"] is False
+    assert (
+        result["dispatch"]["target"]["applied_source_context"]["changes"][0][
+            "document_write"
+        ]
+        == grant
+    )
+    assert result["dispatch"]["authority"]["effects"] == []
+    assignment["authority"]["document_write"] = {
+        **grant,
+        "reference": "Actual explicitly expanded feature scope",
+        "paths": {**grant["paths"], "additional.md": ["create"]},
+    }
+    result = continue_applied(case)
+    assert result["status"] == "dispatch-ready"
+    assert (
+        result["dispatch"]["target"]["applied_source_context"]["changes"][0][
+            "document_write"
+        ]
+        == grant
+    )
+    assert (
+        result["dispatch"]["authority"]["document_write"]["reference"]
+        == "Actual explicitly expanded feature scope"
+    )
+    assert result["dispatch"]["authority"]["effects"] == []
+    observed = {}
+    for name, images in targets.items():
+        path = case[0] / name
+        if images["after"] is not None:
+            path.write_bytes(path.read_bytes() + b"\nObserved user edit.\n")
+            observed[name] = {
+                "before": images["after"],
+                "after": sha256(path.read_bytes()),
+            }
+    recovery["changes"].append(
+        {
+            "document_write": assignment["authority"]["document_write"],
+            "targets": observed,
+            "origin": {"source": "user", "reference": "Observed fixture user edit"},
+        }
+    )
+    second = {}
+    for name, images in observed.items():
+        path = case[0] / name
+        if images["after"] is not None:
+            path.write_bytes(path.read_bytes() + b"\nSame-scope correction.\n")
+            second[name] = {
+                "before": images["after"],
+                "after": sha256(path.read_bytes()),
+            }
+    recovery["changes"].append(
+        {"document_write": assignment["authority"]["document_write"], "targets": second}
+    )
+    assignment["target"]["design"].update(
+        targets=second, changes=recovery["changes"][:-1]
+    )
+    result = continue_applied(case)
+    assert result["status"] == "dispatch-ready"
+    assert (
+        result["dispatch"]["target"]["applied_source_context"]["changes"]
+        == recovery["changes"]
+    )
+    assert all(
+        b"Observed user edit." in (case[0] / name).read_bytes() for name in observed
+    )
+    recovery["changes"][0]["document_write"] = {**grant, "decision": "rejected"}
+    with pytest.raises(BundleError):
+        continue_applied(case)

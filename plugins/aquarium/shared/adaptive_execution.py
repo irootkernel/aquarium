@@ -331,6 +331,41 @@ def execution_context(
         source_reader=source_reader,
     )
     binding = resolved["binding"]
+    signatures = capability_signatures()
+    scoped_digest = signatures["aquarium.design.application-approval/v3"]["fields"][
+        "application-approval-result"
+    ]["operation_digest"]
+    signatures.update(binding.get("capability_definitions", {}))
+    scoped_capable = any(
+        signatures.get(cap["signature"], {}).get("guarantee") == "application-approval"
+        and signatures.get(cap["signature"], {})
+        .get("fields", {})
+        .get("application-approval-result", {})
+        .get("operation_digest")
+        == scoped_digest
+        for row in binding["nodes"].values()
+        for cap in row["capabilities"]
+    )
+    if (
+        entrypoint == "new-feature"
+        and "document_write" in assignment["authority"]
+        and not scoped_capable
+    ):
+        raise BundleError(
+            "retained-contract",
+            "Scoped feature work needs a qualified scoped-capable source; retained bindings keep exact-diff approval",
+        )
+    if (
+        any(
+            "document_write" in change
+            for change in (recovery or continuation or {}).get("changes", [])
+        )
+        and not scoped_capable
+    ):
+        raise BundleError(
+            "retained-contract",
+            "Scoped recovery requires a scoped-capable Design binding",
+        )
     if binding["schema"] != "aquarium.procedure-binding/v2":
         raise BundleError(
             "retained-contract",
@@ -536,14 +571,42 @@ def execution_context(
                 next_owner="Coordinator current original-evidence composition",
             )
             return checked(result)
+    negative_finalization = False
     if binding["family"] == "design":
         from adaptive_design import context as design_context
+        from adaptive_design import requires_content_acceptance
 
         result["design"] = design_context(
-            repository, assignment, design_phase(document, binding, assignment, node)
+            repository,
+            assignment,
+            design_phase(document, binding, assignment, node),
+            scoped=scoped_capable,
         )
         application = result["design"].get("application", {})
-        if application.get("status") in {"approval-required", "reapproval-required"}:
+        goal_boundary = node in {
+            row["node"] for row in binding["goal_assessments"] + binding["closeout"]
+        }
+        scoped_boundary = (
+            result["design"].get("write_mode") == "scoped-worktree" and goal_boundary
+        )
+        negative_finalization = scoped_boundary and not requires_content_acceptance(
+            document, binding, node
+        )
+        if (
+            scoped_boundary
+            and not negative_finalization
+            and (
+                not result["design"].get("accepted")
+                or application.get("status") != "verified-applied"
+            )
+        ):
+            result["status"] = "document-review-required"
+            return checked(result)
+        if not negative_finalization and application.get("status") in {
+            "approval-required",
+            "reapproval-required",
+            "reconciliation-required",
+        }:
             result["status"] = application["status"]
             return checked(result)
     if binding["family"] == "diagnosis":
@@ -553,7 +616,11 @@ def execution_context(
             repository, assignment, diagnosis_phase(document, binding, assignment, node)
         )
         application = result["diagnosis"].get("application", {})
-        if application.get("status") in {"approval-required", "reapproval-required"}:
+        if application.get("status") in {
+            "approval-required",
+            "reapproval-required",
+            "reconciliation-required",
+        }:
             result["status"] = application["status"]
             return checked(result)
     handoff = handoff_context(
@@ -616,11 +683,15 @@ def execution_context(
             "Unapproved document application",
             "Unapproved clipboard replacement",
         ]
-        if result["design"].get("application", {}).get("status") == "verified-applied":
+        if (
+            negative_finalization
+            or result["design"].get("application", {}).get("status")
+            == "verified-applied"
+        ):
             dispatched["authority"]["effects"] = []
             dispatched["authority"]["excluded"].append("Document application")
             dispatched["instructions"] += (
-                "\nVerify the already applied approved bytes and available original checks only. Do not apply documents again."
+                "\nReport the current document state and available original checks only. Do not apply documents. Negative finalization grants no content acceptance or delivery authority."
             )
     if binding["family"] == "diagnosis":
         dispatched["target"]["diagnosis_context"] = copy.deepcopy(result["diagnosis"])

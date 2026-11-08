@@ -46,8 +46,8 @@ def test_current_and_prior_procedure_identities_are_exact() -> None:
         ),
         (
             "aquarium-design-v2.yaml",
-            "12",
-            "962b64d89287050754e6ae9f16f13f1ed4300a4c624b51d1ea48b3daf5380398",
+            "13",
+            "f6abe2c2996f29fa2736c41a98bc71738a3591f5765f9e54205f30e11fb3def3",
             "aquarium-design-v10.yaml",
             "932f0f1e9625a029c3d5a553ce82bd37856a57e119e612c9bd1e966cb488ccd0",
         ),
@@ -125,9 +125,13 @@ def test_role_rename_preserves_control_flow_and_immediate_prior_sources() -> Non
     for family, (version, expected) in previous.items():
         raw = (FIXTURES / f"aquarium-{family}-v{version}.yaml").read_bytes()
         assert hashlib.sha256(raw).hexdigest() == expected
-        assert control(load_procedure(f"aquarium-{family}-v2.yaml")) == control(
-            yaml.safe_load(raw)
+        # Design v13 changes application authority; retain the v12 role-only regression.
+        current = (
+            yaml.safe_load((FIXTURES / "aquarium-design-v12.yaml").read_bytes())
+            if family == "design"
+            else load_procedure(f"aquarium-{family}-v2.yaml")
         )
+        assert control(current) == control(yaml.safe_load(raw))
 
 
 PREDICATE_OPERATORS = (
@@ -724,6 +728,33 @@ def test_managed_procedure_decisions_fit_podway_v0210_option_limit() -> None:
                 path.name,
                 definition_id,
             )
+
+
+def test_managed_decisions_fit_native_guidance_and_assessment_bounds() -> None:
+    for path in sorted(PROCEDURES.glob("aquarium-*-v2.yaml")):
+        procedure = yaml.safe_load(path.read_text(encoding="utf-8"))
+        for definition_id, definition in procedure["node_definitions"].items():
+            if definition.get("type") != "decision":
+                continue
+            guidance = definition.get("evidence_guidance", [])
+            assert len(guidance) <= 8, (path.name, definition_id)
+            assert all(
+                isinstance(value, str) and 1 <= len(value) <= 200 for value in guidance
+            ), (
+                path.name,
+                definition_id,
+            )
+            if "assessment" in definition:
+                outcomes = definition["assessment"]["outcomes"]
+                assert 3 <= len(outcomes) <= 8, (path.name, definition_id)
+                assert set(outcomes.values()) == {
+                    "achieved",
+                    "not_achieved",
+                    "superseded",
+                }, (
+                    path.name,
+                    definition_id,
+                )
 
 
 def test_assessment_ordinal_routes_have_distinct_effective_destinations() -> None:

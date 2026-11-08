@@ -8,6 +8,7 @@ import json
 import os
 import re
 import stat
+import tempfile
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,10 +19,11 @@ SUPPORTED_RANGE = ">=0.51.1"
 
 # Use the selected CLI's native asset resolver, not an Aquarium-owned skill list.
 ASSET_PROBE = """
-import hashlib, json
+import hashlib, json, sys
+from pathlib import Path
 from importlib.metadata import version
-from ouroboros.codex.artifacts import resolve_packaged_codex_assets, load_packaged_codex_rules
-result = {"version": version("ouroboros-ai"), "artifacts": {}}
+from ouroboros.codex.artifacts import resolve_packaged_codex_assets, install_codex_artifacts
+result = {"version": version("ouroboros-ai"), "artifacts": {}, "raw_artifacts": {}}
 with resolve_packaged_codex_assets() as assets:
     for artifact in assets.managed_artifacts:
         source = artifact.source_path
@@ -34,10 +36,24 @@ with resolve_packaged_codex_assets() as assets:
                 raise ValueError("symlinked package asset")
             if path.is_file():
                 relative = target + "/" + path.relative_to(source).as_posix() if source.is_dir() else target
-                contents = load_packaged_codex_rules().encode("utf-8") if path == assets.rules_path else path.read_bytes()
-                result["artifacts"][relative] = hashlib.sha256(contents).hexdigest()
+                result["raw_artifacts"][relative] = hashlib.sha256(path.read_bytes()).hexdigest()
+home = Path(sys.argv[1]).resolve(strict=True)
+install_codex_artifacts(codex_dir=home)
+for path in sorted(home.rglob("*")):
+    if path.is_symlink():
+        raise ValueError("symlinked installed asset")
+    if path.is_file():
+        result["artifacts"][path.relative_to(home).as_posix()] = hashlib.sha256(path.read_bytes()).hexdigest()
 print(json.dumps(result))
 """
+
+
+class PackageAssets(dict):
+    """Native installed digests with separate package-source provenance."""
+
+    def __init__(self, installed, raw):
+        super().__init__(installed)
+        self.raw = raw
 
 
 class InvalidCodexHome(ValueError):
@@ -207,9 +223,25 @@ def packaged_assets(
     interpreter = Path(cli["executable"]).parent / "python"
     if not interpreter.is_file():
         return None
-    probe = inspector.json_probe(
-        [str(interpreter), "-I", "-c", ASSET_PROBE], cwd, timeout
-    )
+    # The parent owns cleanup even when the isolated probe times out.
+    try:
+        with tempfile.TemporaryDirectory(
+            prefix="aquarium-ouroboros-", dir="/tmp"
+        ) as scratch:
+            probe = inspector.json_probe(
+                [
+                    str(interpreter),
+                    "-I",
+                    "-B",
+                    "-c",
+                    ASSET_PROBE,
+                    str(Path(scratch).resolve()),
+                ],
+                cwd,
+                timeout,
+            )
+    except OSError:
+        return None
     result = probe.get("result")
     if (
         not probe["ok"]
@@ -218,6 +250,16 @@ def packaged_assets(
     ):
         return None
     artifacts = result.get("artifacts")
+    raw = result.get("raw_artifacts")
+    if not isinstance(raw, dict) or not raw:
+        return None
+    for manifest in (artifacts, raw):
+        if not valid_manifest(manifest):
+            return None
+    return PackageAssets(artifacts, raw)
+
+
+def valid_manifest(artifacts):
     if not isinstance(artifacts, dict) or not artifacts:
         return None
     for relative, digest in artifacts.items():
@@ -237,7 +279,7 @@ def packaged_assets(
         for kind in ("rules", "skills")
     ):
         return None
-    return artifacts
+    return True
 
 
 def inspect_artifacts(
@@ -428,7 +470,7 @@ def inspect_ouroboros(
     rows = []
     cli = inspector.inspect_ouroboros_cli(cwd, timeout)
     assets = packaged_assets(inspector, cli, cwd, timeout)
-    shared_skills = legacy_skills(assets)
+    shared_skills = legacy_skills(getattr(assets, "raw", assets))
     shared_conflicts = shared_skill_conflicts(inspector, assets, shared_skills)
     for home in homes:
         if home in failures:

@@ -8,9 +8,9 @@ Configuration checks do not verify an already-running MCP process. After a home 
 
 ## Keep Invocation Explicit
 
-These four Aquarium skills require an explicit request, except that an explicit `epic-handler` or `epic-squad` `execute` request may route to `new-feature` in the same conversation before Epic execution when the shared execution-SOT contract identifies a missing dossier or semantic owner for that same ordinary feature epic. This exception supplies the design entrypoint only. The design workflow still requires its own execution envelope, provider-operation authority, Podway lifecycle choices, exact-diff approval, and any separate commit grant. No handler implementation or Epic execution approval carries over. Other design skills remain explicit-only. An invocation authorizes only its approved goal, repository or non-repository document scope, provider operations, and local writes. It does not authorize `auto`, `run`, `ralph`, or `evolve`, implementation work, external publication, authentication, installation, or transmission of a wider source set. Obtain fresh approval before widening any of those boundaries.
+These four Aquarium skills require an explicit request, except that an explicit `epic-handler` or `epic-squad` `execute` request may route to `new-feature` in the same conversation before Epic execution when the shared execution-SOT contract identifies a missing dossier or semantic owner for that same ordinary feature epic. This exception supplies the design entrypoint only. The design workflow still requires its own execution envelope, provider-operation authority, Podway lifecycle choices, entrypoint-specific document authority, and any separate commit grant. No handler implementation or Epic execution approval carries over. Other design skills remain explicit-only. An invocation authorizes only its approved goal, repository or non-repository document scope, provider operations, and local writes. It does not authorize `auto`, `run`, `ralph`, or `evolve`, implementation work, external publication, authentication, installation, or transmission of a wider source set. Obtain fresh approval before widening any of those boundaries.
 
-Use the smallest installed upstream capability that fits the phase: `$interview` for ambiguity and trade-offs, `$pm` for product requirements, `$seed` for a validated work specification when needed, and `$qa` for artifact quality. Keep upstream-generated files in the approved draft location outside the repository. Capture its output as draft evidence, verify it against repository authority, and present Aquarium's exact proposed diff before applying any durable document change.
+Use the smallest installed upstream capability that fits the phase: `$interview` for ambiguity and trade-offs, `$pm` for product requirements, `$seed` for a validated work specification when needed, and `$qa` for artifact quality. Keep upstream-generated files in the approved draft location outside the repository. Capture its output as draft evidence, verify it against repository authority, and follow the invoking entrypoint's document-write boundary before applying durable changes.
 
 ### PM files and clipboard
 
@@ -32,9 +32,19 @@ Record bounded identifiers, digests, paths, decisions, and evidence gaps in Podw
 
 When a later task, epic, or validation workflow needs a different Podway session, follow the existing-session choice in [podway-integration.md](podway-integration.md). Preserve the current session unless the user explicitly authorizes its lifecycle action, deletion, or eligible replacement; never route by prior skill ownership.
 
+## New-feature: apply scoped documents for review
+
+An explicit new-feature request grants creation and revision of that feature's design documents. Capture the actual request reference, repository, roadmap, Epic and exact paths/operations in the existing envelope. Reuse that authority; do not ask for a second application approval. A handler route identifies the work but does not itself grant the separate provider or clipboard effects.
+
+After QA and local adjudication, apply the candidate to the working tree and validate it. Report file links, key decisions and checks. No standalone patch or displayed diff is required. Reflect user corrections within the same scope and rerun affected checks. Read current files before writing and preserve concurrent user edits. Scope expansion, a changed Epic goal or changes to existing Task membership still need their applicable user decision.
+
+Application is reviewable draft delivery. Final design acceptance binds the actual applied files and their SHA-256 values, independently of write authority and Evaluator passage. Do not commit or report implementation readiness before acceptance and any required separately authorized delivery-input commit. A changed accepted file invalidates that content acceptance, not the same-scope write grant. If a rejected design remains applied, report that state; do not reset user files automatically. Record an applicable `not-achieved` or `superseded` outcome through the negative-only Design path, without inventing content acceptance. If rejection follows the current final assessment, refresh that assessment through `reassess` before recording the negative outcome.
+
+Native Design version 13 supports this path. Older running or retained definitions keep their original contract; never invent an exact-diff approval to use a scoped grant with an old binding. Podway opt-out uses the same scoped application and applied-file review without native lifecycle effects. Provider-generated drafts remain in the approved disposable location; Aquarium applies the locally adjudicated documents.
+
 ## Propose Before Applying
 
-All four workflows must separate draft production from repository mutation:
+For new-project, refactor, war-room and retained new-feature definitions, the workflows must separate draft production from repository mutation:
 
 1. Discover authority and create a draft without repository writes.
 2. Run the applicable Ouroboros quality pass and adjudicate its output locally.
@@ -42,7 +52,7 @@ All four workflows must separate draft production from repository mutation:
 4. Obtain explicit user approval for that exact diff.
 5. Re-read the target snapshot, invalidate approval if it changed, apply only the approved diff, and run document validation.
 
-No approval is implied by skill invocation, provider approval, prior plan approval, or approval of a different file.
+For this exact-diff path, no approval is implied by skill invocation, provider approval, prior plan approval, or approval of a different file. New-feature scoped writes follow the preceding section.
 
 ## Interpret QA Outcomes
 

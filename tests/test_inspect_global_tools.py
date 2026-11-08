@@ -1443,6 +1443,7 @@ def test_ouroboros_package_asset_probe_fails_closed(tmp_path, failure):
             "skills/ouroboros-auto/SKILL.md": "b" * 64,
         },
     }
+    result["raw_artifacts"] = dict(result["artifacts"])
     if failure == "version":
         result["version"] = "0.51.17"
     elif failure == "path":
@@ -1527,9 +1528,20 @@ def test_ouroboros_asset_manifest_uses_native_rendered_rules(
     context.__enter__.return_value = assets
     module = ModuleType("ouroboros.codex.artifacts")
     module.resolve_packaged_codex_assets = lambda: context
-    module.load_packaged_codex_rules = lambda: (
-        "rendered rules with native runtime guidance"
-    )
+    rendered_rules = "rendered rules with native runtime guidance"
+    native_skill = b"upstream skill with native ../ouroboros-welcome/ link"
+
+    def install(*, codex_dir):
+        target = Path(codex_dir)
+        (target / "rules").mkdir()
+        (target / "rules/ouroboros.md").write_text(rendered_rules)
+        (target / "skills/ouroboros-auto").mkdir(parents=True)
+        (target / "skills/ouroboros-auto/SKILL.md").write_bytes(native_skill)
+
+    module.install_codex_artifacts = install
+    native_home = tmp_path / "native-home"
+    native_home.mkdir()
+    monkeypatch.setattr(sys, "argv", ["probe", str(native_home)])
     monkeypatch.setitem(sys.modules, "ouroboros.codex.artifacts", module)
     monkeypatch.setattr(importlib.metadata, "version", lambda name: "0.53.0")
     script = tmp_path / "asset_probe.py"
@@ -1538,10 +1550,14 @@ def test_ouroboros_asset_manifest_uses_native_rendered_rules(
     result = json.loads(capsys.readouterr().out)
     assert (
         result["artifacts"]["rules/ouroboros.md"]
-        == hashlib.sha256(module.load_packaged_codex_rules().encode()).hexdigest()
+        == hashlib.sha256(rendered_rules.encode()).hexdigest()
     )
     assert (
         result["artifacts"]["skills/ouroboros-auto/SKILL.md"]
+        == hashlib.sha256(native_skill).hexdigest()
+    )
+    assert (
+        result["raw_artifacts"]["skills/ouroboros-auto/SKILL.md"]
         == hashlib.sha256(b"upstream skill").hexdigest()
     )
 
@@ -2592,3 +2608,80 @@ def test_haepari_duplicate_skill_copies_degrade_only_the_paired_skill(
     assert tool["cli"]["status"] == "installed"
     assert tool["paired_skill"]["status"] == "degraded"
     assert tool["paired_skill"]["duplicate"] is True
+
+
+@pytest.mark.parametrize("ok", [True, False])
+def test_native_asset_probe_parent_cleans_scratch(tmp_path, ok):
+    import inspect_ouroboros
+
+    (tmp_path / "python").touch()
+    scratch = []
+
+    def probe(command, cwd, timeout):
+        home = Path(command[-1])
+        scratch.append(home)
+        assert home.is_dir() and home == home.resolve()
+        (home / "partial").write_text("owned output")
+        return {
+            "ok": ok,
+            "result": {
+                "version": "0.59.9",
+                "artifacts": manifest,
+                "raw_artifacts": manifest,
+            },
+        }
+
+    manifest = {
+        "rules/ouroboros.md": "a" * 64,
+        "skills/ouroboros-ooo/SKILL.md": "b" * 64,
+    }
+    inspector = mock.Mock()
+    inspector.json_probe.side_effect = probe
+    result = inspect_ouroboros.packaged_assets(
+        inspector,
+        {
+            "installed": True,
+            "version_supported": True,
+            "executable": str(tmp_path / "ooo"),
+            "version": "0.59.9",
+        },
+        Path("/"),
+        1,
+    )
+    assert bool(result) == ok
+    assert not scratch[0].exists()
+
+
+def test_native_install_digests_and_raw_legacy_provenance_are_independent(
+    tmp_path, monkeypatch
+):
+    import inspect_ouroboros
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    raw = b"../welcome/SKILL.md"
+    native = b"../ouroboros-welcome/SKILL.md"
+    name = "skills/ouroboros-ooo/SKILL.md"
+    target = tmp_path / ".codex" / name
+    target.parent.mkdir(parents=True)
+    target.write_bytes(native)
+    assets = inspect_ouroboros.PackageAssets(
+        {name: hashlib.sha256(native).hexdigest()},
+        {name: hashlib.sha256(raw).hexdigest()},
+    )
+    assert (
+        inspect_ouroboros.inspect_artifacts(tmp_path / ".codex", "skills", assets)[
+            "status"
+        ]
+        == "configured"
+    )
+    shared = tmp_path / ".agents/skills/ooo"
+    shared.mkdir(parents=True)
+    (shared / "SKILL.md").write_bytes(raw)
+    assert inspect_ouroboros.legacy_skills(assets.raw) == [str(shared)]
+    target.write_bytes(raw)
+    assert (
+        inspect_ouroboros.inspect_artifacts(tmp_path / ".codex", "skills", assets)[
+            "status"
+        ]
+        == "different"
+    )

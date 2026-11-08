@@ -332,10 +332,10 @@ inspector forwards corresponding `--podway-binding` and
 binding path from the retained native tuple before qualification; it does not
 require a bootstrap item to be selected.
 
-On the native path, `context` needs an existing session and the exact ordinary invocation context. It returns `prepared-resolved`, `dispatch-ready`, `coordinator-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, `finalization-resolved`, or Design/Diagnosis `approval-required` / `reapproval-required`, with native
+On the native path, `context` needs an existing session and the exact ordinary invocation context. It returns `prepared-resolved`, `dispatch-ready`, `coordinator-owned`, `attachment-required`, `stop-before-work`, `terminal-resolved`, `finalization-resolved`, or Design/Diagnosis `approval-required` / `reapproval-required` / `reconciliation-required` and scoped Design `document-review-required`, with native
 status/templates, active items, selected evidence, current role/capabilities,
 due phase skills, original authority and an ordinary v3 dispatch when applicable.
-The Design/Diagnosis approval statuses return no dispatch; they preserve the actual exact-diff approval and changed-target reapproval boundary. Successful read-only resolution exits 0, including those approval stops and a requested handoff stop. The early `podway-inapplicable` exit-0 branch needs no session;
+These document-authority and review statuses return no dispatch. Scoped new-feature uses actual write scope, continuous correction history and final applied-content acceptance; other entrypoints and retained definitions preserve exact-diff approval. A qualified negative-only goal/closeout can record non-achievement or supersession without content acceptance and grants no document effects. Successful read-only resolution exits 0, including these stops and a requested handoff stop. The early `podway-inapplicable` exit-0 branch needs no session and reports `document_write_mode: scoped-worktree` for new-feature or `exact-diff` for new-project/refactor;
 errors retain status/message/details and exit 2. Terminal state does not imply
 achievement. Missing topology preserves the running session; `context` does not replace it. The separate explicitly consented transition actions own that mutation. This context adapter launches no agent and performs no native mutation.
 Before start, qualification keeps exact raw requirement-source pins. On

@@ -573,3 +573,8 @@ An explicit pre-session Squad Podway opt-out takes the dependency-free branch
 before native imports, CLI discovery or source rendering. Continue the same role,
 plan, evidence, grant and overall acceptance obligations through ordinary reports.
 It does not waive an active session or authorize a detached managed handoff file.
+
+
+## Scoped new-feature document delivery
+
+For new scoped-capable Design bindings, follow [scoped new-feature delivery](adaptive-execution.md#scoped-new-feature-document-delivery) and the [document review contract](ouroboros-integration.md#new-feature-apply-scoped-documents-for-review). Apply within actual user write scope, preserve original requirements and concurrent edits, and obtain final applied-content acceptance before delivery. Other entrypoints and retained definitions keep their original exact-diff approvals. Caller and commit handoffs require accepted content, not application alone.

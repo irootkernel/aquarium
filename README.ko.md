@@ -37,7 +37,7 @@ AI 도구가 아무리 뛰어나도 하나씩 따로 쓰면 맥락, 승인, task
 - **증거에는 보존 위치가 있습니다.** Git에서 제외된 Mulgae, Gaori, Podway runtime artifact와 Sorage에서 파생된 artifact는 현재 workflow를 지원할 뿐 roadmap 이력이나 영속적인 repository authority가 되지 않습니다. Downstream correctness를 위해 장기 보존이 꼭 필요할 때만 검토된 bounded artifact를 canonical documentation 밖의 tracked package로 승격합니다.
 - **Loop에는 한계가 있습니다.** Clean review가 나오면 loop는 즉시 끝납니다. Review 예산은 반드시 소진해야 하는 횟수가 아니라 상한입니다. 직접 검증으로 종결할 수 있는 수정은 로컬에서 처리하고, 추가 판단이 필요한 변경은 승인된 확인 review를 받습니다.
 - **불변식과 테스트는 계약입니다.** Release QA는 저장소가 자체적으로 등록한 active Design Gate가 있으면 다시 실행합니다. 공통 테스트 계약은 prepare, unit, integration, E2E를 순서대로 실행하고, 전제 조건이 빠지면 건너뛰는 대신 실패하며, 새 프로젝트에는 waiver를 주지 않습니다.
-- **권한은 사용자에게 있습니다.** 도구 설치, provider로의 source 전송, staging, commit, push, publication은 각각 따로 승인을 받습니다. 설계 문서와 setup 파일은 사용자가 승인한 exact diff로만 바뀝니다. 로컬 hook은 roadmap 저장소에서 직접 실행한 shell commit을 잡아 `task-commit` 경로로 안내합니다.
+- **권한은 사용자에게 있습니다.** 도구 설치, provider로의 source 전송, staging, commit, push, publication은 각각 따로 승인을 받습니다. `new-feature`는 요청한 범위의 설계 문서를 작업 트리에 적용합니다. 실제 파일을 검토하고 수정을 요청할 수 있으며, 최종 내용을 수용한 뒤 전달을 마칩니다. 다른 설계 workflow와 setup 파일은 기존 exact diff 승인을 유지합니다. 로컬 hook은 roadmap 저장소에서 직접 실행한 shell commit을 잡아 `task-commit` 경로로 안내합니다.
 - **작업은 멈추고, 재개하고, 인계할 수 있습니다.** `task-handler`와 `epic-handler`는 plan-only 실행, 다른 에이전트로의 명시적 plan handoff, 기존 session 재개를 지원합니다. Plan만으로는 runtime state가 생기지 않습니다.
 
 이 원본은 Codex를 기준으로 작성됩니다. 각 판은 이를 자기 host에 맞게 조정합니다. Aquarium은 서로 바꿔 쓸 수 있는 도구를 추상화하는 대신 정해진 toolchain을 의도적으로 통합합니다. Codex, Dolgorae, Herdr, Podway, Sanho, Mulgae, Gaori, Sorage, Haepari, Ouroboros, Lora, Deslop, Humanizer, im-not-ai 사이의 계약은 Aquarium이 소유합니다. 각 계약은 도구를 언제 실행하고 무엇을 결정하게 할지, 그 출력을 다음 단계의 증거로 어떻게 쓸지를 정합니다.

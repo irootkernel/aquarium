@@ -1978,6 +1978,8 @@ def commit_handoff(repository, value):
 
 def design_return(assignment, design, application):
     """Carry a bounded new-feature caller back to its original collaboration owner."""
+    from adaptive_design import document_acceptance
+
     caller = object_value(design.get("caller"), "Design collaboration caller")
     if caller.get("workflow_owner") not in {
         "aquarium:epic-handler",
@@ -2005,6 +2007,11 @@ def design_return(assignment, design, application):
         resolve_profiles(caller.get("profiles", {}))
     if application.get("status") != "verified-applied":
         state = "design-delivery-pending"
+    elif "document_write" in assignment["authority"] and not document_acceptance(
+        application.get("targets", {}),
+        assignment["authority"].get("document_acceptance"),
+    ):
+        state = "document-review-required"
     elif type(design.get("commit_required")) is not bool:
         state = "delivery-input-commit-policy-required"
     elif design["commit_required"] and not design.get("delivery_commit"):

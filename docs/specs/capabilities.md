@@ -7,7 +7,7 @@ Public orchestration skills require an explicit matching request except `task-co
 | Skill | Invocation | Implemented responsibility | Boundary |
 | --- | --- | --- | --- |
 | `$aquarium:new-project` | Explicit | Produces an approved greenfield PRD and initial roadmap through Ouroboros-assisted discovery and QA | Creates design documents only; it does not implement the project |
-| `$aquarium:new-feature` | Explicit or pre-execution `epic-handler` design route | Creates or revises one feature epic in an existing canonical roadmap | A routed design preserves the existing epic identity and needs its own execution and exact-diff approvals; it does not implement the feature |
+| `$aquarium:new-feature` | Explicit or pre-execution `epic-handler` design route | Creates or revises one feature epic in an existing canonical roadmap | A routed design preserves the existing epic identity, writes within actual document scope and requires final applied-content acceptance; product execution and commits need separate authority |
 | `$aquarium:refactor` | Explicit | Creates or revises one refactor or behavior-change epic | Does not implement the refactor |
 | `$aquarium:war-room` | Explicit | Diagnoses one difficult bug, isolates root cause, and proposes the next work unit, confirms no corrective work is needed, or reports an incomplete investigation | Does not implement the fix |
 

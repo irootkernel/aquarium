@@ -4,7 +4,13 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.23 - Unreleased
 
+### Fixed
+
+- Verify Ouroboros Codex assets against the selected package's native installation output, including sibling-link rewriting, while retaining raw package provenance for legacy shared skills.
+
 ### Changed
+
+- Apply new-feature design documents within the requested scope for working-tree review and final content acceptance without a separate diff-application approval. New Design sessions require the updated managed Procedure; finish active sessions under their retained contract before upgrading. Provider, clipboard and commit authority remain separate.
 
 - Add a bounded installed `release-handler` plan-readiness startup check to managed release acceptance and a separate managed `release-orchestration` suite for full feature verification.
 - Require bounded Executor delivery and independent plan, QA-readiness, publication-readiness and publication-completion assessments in `release-handler`, including QA-neutral eligibility before equivalence approval, repository-defined gate order, post-hook commit binding, original publication and VM cleanup evidence, and same-Job recovery; finish active releases with their installed workflow before updating.

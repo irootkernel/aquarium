@@ -197,12 +197,30 @@ def _approved_original_reader(repository, assignment, recovery):
             {"proposal": recovery.get("proposal"), "approval": recovery.get("approval")}
         ]
     first_targets, targets = {}, {}
-    for change in changes:
-        approved = approved_targets(
-            change.get("proposal"),
-            change.get("approval"),
-            approval_sources=approval_sources,
-        )
+    for index, change in enumerate(changes):
+        if "document_write" in change:
+            from adaptive_design import scoped_targets
+
+            if (
+                family != "design"
+                or assignment["target"]["procedure_plan"]["entrypoint"] != "new-feature"
+            ):
+                raise BundleError(
+                    "incompatible",
+                    "Source recovery needs its original feature write grant",
+                )
+            approved = scoped_targets(
+                assignment["work"],
+                change.get("targets"),
+                change["document_write"],
+                changes=changes[:index],
+            )
+        else:
+            approved = approved_targets(
+                change.get("proposal"),
+                change.get("approval"),
+                approval_sources=approval_sources,
+            )
         if approved["status"] != "approved":
             raise BundleError(
                 approved["status"],

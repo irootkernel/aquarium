@@ -42,10 +42,17 @@ def branch(repository, entrypoint, *, opt_out=False):
             "entrypoint": entrypoint,
             "dispatch": None,
             "next_owner": "Coordinator",
+            "document_write_mode": "scoped-worktree"
+            if entrypoint == "new-feature"
+            else "exact-diff",
             "requirements": [
                 "Original entrypoint artifacts and independent grouped assessment",
                 "Approved upstream leaves and separate PM clipboard authority",
-                "Exact document diff approval and current target snapshots",
+                (
+                    "Actual document scope, current target snapshots, same-scope corrections and final applied-content acceptance"
+                    if entrypoint == "new-feature"
+                    else "Exact document diff approval and current target snapshots"
+                ),
                 "Separate delivery-input commit authority; no product implementation",
             ],
         }

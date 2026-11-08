@@ -1,4 +1,24 @@
 {
+  "sha256:268ca51077c31570142be49615a6057c49230a4f64ca6b5c9e9c480733503bde": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "13",
+      "definition": "final-assessment-candidate",
+      "authority": "Aquarium procedure-node-contracts and the versioned reference operation definition"
+    },
+    "relay_outputs": [
+      "final-assessment-summary",
+      "candidate-evidence"
+    ],
+    "delivery_items": [
+      "final-assessment-summary",
+      "candidate-evidence"
+    ]
+  },
   "sha256:0e353dfe8d9a4d25286d0235542649d4336b942bb29d8b486882f34c9d909604": {
     "roles": [
       "executor"
@@ -1715,5 +1735,78 @@
       "authority": "Shared exact suitability and established-reuse bootstrap contract",
       "definition": "suitability-bootstrap"
     }
+  },
+  "sha256:42e73ba6814be2ec1abbe316b51e1f63399575bc792bad75b32bf5daa5a7d18c": {
+    "roles": [
+      "executor"
+    ],
+    "effect": "work",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "13",
+      "definition": "application-record",
+      "authority": "Aquarium ordinary Executor handoff and Procedure node contracts"
+    },
+    "relay_outputs": [
+      "executor-handoff"
+    ],
+    "delivery_items": [
+      "application-summary",
+      "executor-handoff"
+    ]
+  },
+  "sha256:c512b527a9605542a35e1168f8deaeca321ded53c9ccca50938a1bfe177bf988": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "13",
+      "definition": "record-application-rework",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:4fb919ea83b768f2a5c5bb3fa6fcd1dc9b46f13c283d1fa7591083810b827094": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "13",
+      "definition": "record-application-evidence-needed",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
+  },
+  "sha256:cfe6735ae4974d0c5cf42380bee6239a2bc3e75b4a9ee0e3cb290901f7fe2721": {
+    "roles": [
+      "coordinator"
+    ],
+    "effect": "evidence",
+    "basis": {
+      "native_id": "aquarium-design-v2",
+      "native_version": "13",
+      "definition": "record-application-approval-gap",
+      "authority": "Aquarium procedure-node-contracts and the unchanged reference operation definition"
+    },
+    "relay_outputs": [
+      "semantic-followup-summary"
+    ],
+    "delivery_items": [
+      "semantic-followup-summary"
+    ]
   }
 }

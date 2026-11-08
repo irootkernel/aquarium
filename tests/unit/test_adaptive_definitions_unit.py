@@ -261,6 +261,13 @@ def test_reference_registry_matches_current_native_operation_declarations(monkey
             definitions = add_bootstrap(native, mapping)[0]["node_definitions"]
         else:
             definitions = source(families.get(family, family))["node_definitions"]
+        if family == "design" and name in {
+            "aquarium.design.approval/v2",
+            "aquarium.design.application-approval/v2",
+        }:
+            definitions = yaml.safe_load(
+                (ROOT / "tests/fixtures/aquarium-design-v12.yaml").read_bytes()
+            )["node_definitions"]
         assert any(
             adaptive.check_capability(definition, name)["status"] == "compatible"
             for definition in definitions.values()

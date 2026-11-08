@@ -1827,6 +1827,264 @@
           "capabilities": []
         }
       }
+    },
+    {
+      "source_sha256": "sha256:f6abe2c2996f29fa2736c41a98bc71738a3591f5765f9e54205f30e11fb3def3",
+      "id": "aquarium-design-v2",
+      "version": "13",
+      "family": "design",
+      "definitions": {
+        "context-record": {
+          "role": "executor",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "discovery-record": {
+          "role": "executor",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "draft-record": {
+          "role": "executor",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "challenge-record": {
+          "role": "executor",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "quality-record": {
+          "role": "executor",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.upstream-quality/v2",
+              "fields": {}
+            }
+          ]
+        },
+        "quality-decision": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "approval-decision": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.approval/v3",
+              "fields": {}
+            }
+          ]
+        },
+        "application-record": {
+          "role": "executor",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.application-approval/v3",
+              "fields": {}
+            }
+          ]
+        },
+        "goal-assessment": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "closeout-record": {
+          "role": "coordinator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.closeout/v2",
+              "fields": {}
+            }
+          ]
+        },
+        "evaluator-discovery-record": {
+          "role": "evaluator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.phase-assessment/v2",
+              "fields": {}
+            }
+          ]
+        },
+        "decide-discovery-assessment": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-discovery-rework": {
+          "role": "coordinator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-discovery-rework-authority": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-discovery-evidence-needed": {
+          "role": "coordinator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-discovery-evidence-needed-authority": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "evaluator-quality-record": {
+          "role": "evaluator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.quality-assessment/v2",
+              "fields": {}
+            }
+          ]
+        },
+        "decide-quality-assessment": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-quality-rework": {
+          "role": "coordinator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-quality-rework-authority": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-quality-evidence-needed": {
+          "role": "coordinator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-quality-evidence-needed-authority": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "evaluator-application-record": {
+          "role": "evaluator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.application-assessment/v2",
+              "fields": {}
+            }
+          ]
+        },
+        "decide-application-assessment": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-application-rework": {
+          "role": "coordinator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-application-rework-authority": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-application-evidence-needed": {
+          "role": "coordinator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-application-evidence-needed-authority": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "final-assessment-candidate": {
+          "role": "coordinator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "final-evaluator-assessment-record": {
+          "role": "evaluator",
+          "effects": [],
+          "capabilities": [
+            {
+              "signature": "aquarium.design.final-assessment/v2",
+              "fields": {}
+            }
+          ]
+        },
+        "confirm-design-assessment-applicability": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "confirm-application-approval": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "record-application-approval-gap": {
+          "role": "coordinator",
+          "effects": [
+            "work"
+          ],
+          "capabilities": []
+        },
+        "confirm-application-approval-gap-authority": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "applied-review": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        },
+        "unaccepted-goal-assessment": {
+          "role": "coordinator",
+          "effects": [],
+          "capabilities": []
+        }
+      }
     }
   ]
 }

@@ -1815,5 +1815,38 @@
       "Adequate unchanged established reuse records prior definition evidence and current fit truthfully, preserving normal first-due checkpoints.",
       "Material in-session basis changes require affected reassessment; recording is not agent execution or authority."
     ]
+  },
+  "aquarium.design.approval/v3": {
+    "kind": "decision",
+    "options": [
+      "approved",
+      "changes-requested"
+    ],
+    "relationships": [
+      "New-feature uses actual scoped document-write authority before application; other entrypoints retain exact-diff approval.",
+      "Current target snapshots and applied bytes must match; final new-feature content acceptance is separate and current."
+    ],
+    "guarantee": "approval"
+  },
+  "aquarium.design.application-approval/v3": {
+    "kind": "action",
+    "fields": {
+      "application-approval-result": {
+        "type": "check_result",
+        "required": true,
+        "operation_id": "aquarium-design-application-approval",
+        "operation_digest": "sha256:d8687d25b79001c68b1ced4b61218d0ab37f608b6667ae2edb6429e0a48d5015",
+        "accepted_outcomes": [
+          "pass",
+          "fail",
+          "inconclusive"
+        ]
+      }
+    },
+    "relationships": [
+      "New-feature uses actual scoped document-write authority before application; other entrypoints retain exact-diff approval.",
+      "Current target snapshots and applied bytes must match; final new-feature content acceptance is separate and current."
+    ],
+    "guarantee": "application-approval"
   }
 }

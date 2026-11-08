@@ -482,6 +482,35 @@ def user_approval(gate, observation, approval):
     return proposal
 
 
+def scoped_document_decision(gate, observation, value, decision):
+    """Verify a scoped grant or final acceptance against an actual operator message."""
+    gate.require(
+        isinstance(value, dict)
+        and value.get("source") == "user"
+        and value.get("decision") == decision
+        and bool(value.get("reference")),
+        "actual scoped document decision missing",
+    )
+    actual = []
+    for turn in observation["root"]["turns"]:
+        for item in turn.get("items", []):
+            if item.get("type") != "userMessage":
+                continue
+            parts = [
+                p["text"]
+                for p in item.get("content", [])
+                if isinstance(p, dict) and isinstance(p.get("text"), str)
+            ]
+            if isinstance(item.get("text"), str):
+                parts.append(item["text"])
+            try:
+                actual.append(json.loads("\n".join(parts)))
+            except (ValueError, TypeError):
+                pass
+    gate.require(value in actual, "scoped decision absent from actual user delivery")
+    return value
+
+
 LEAF_TOOLS = {
     "ouroboros_interview": "interview",
     "ouroboros_pm_interview": "pm",
@@ -653,7 +682,9 @@ def leaf_delivery(gate, observation, evidence, directory, leaves, request):
     }
 
 
-def oracle(gate, request, repository, case, evidence, observation, before):
+def oracle(
+    gate, request, repository, case, evidence, observation, before, *, work=None
+):
     kind = case["oracle"]
     if kind == "uppercase":
         return gate.oracle(request["tools"]["python"], repository)
@@ -663,7 +694,54 @@ def oracle(gate, request, repository, case, evidence, observation, before):
             after == before, "case changed product bytes outside its authority", "fail"
         )
         return gate.oracle(request["tools"]["python"], repository, uppercase=False)
-    proposal = user_approval(gate, observation, evidence.get("application_approval"))
+    if case.get("entrypoint") == "new-feature" and "document_write" in evidence:
+        grant = scoped_document_decision(
+            gate, observation, evidence.get("document_write"), "approved"
+        )
+        accepted = scoped_document_decision(
+            gate, observation, evidence.get("document_acceptance"), "accepted"
+        )
+        gate.require(
+            isinstance(work, dict)
+            and work.get("repository") == str(repository)
+            and grant.get("work")
+            == {key: work.get(key) for key in ("repository", "roadmap", "epic")},
+            "document scope belongs to another work unit",
+            "fail",
+        )
+        changed_paths = {
+            name
+            for name in before.keys() | after.keys()
+            if before.get(name) != after.get(name)
+        }
+        for name in changed_paths:
+            operation = (
+                "delete"
+                if after.get(name) is None
+                else "create"
+                if before.get(name) is None
+                else "update"
+            )
+            gate.require(
+                operation in grant.get("paths", {}).get(name, []),
+                "document effect outside actual scope",
+                "fail",
+            )
+        gate.require(
+            accepted.get("files") == {name: after.get(name) for name in changed_paths},
+            "final content acceptance does not match applied files",
+            "fail",
+        )
+        proposal = {
+            "targets": {
+                name: {"before": before.get(name), "after": after.get(name)}
+                for name in changed_paths
+            }
+        }
+    else:
+        proposal = user_approval(
+            gate, observation, evidence.get("application_approval")
+        )
     expected = {}
     for name, image in proposal["targets"].items():
         gate.require(
@@ -1197,9 +1275,9 @@ def run(gate, request, root):
         prompt = f"""Invoke the normally discovered installed $aquarium:{case["entrypoint"]} {case["request"]} in {repository}.
 Original criteria: {json.dumps(case["criteria"])}; full original source: VM-REQUIREMENTS.json and existing repository sources. The declared verification expectation is {json.dumps(case.get("expected_assessment"))}; a negative validation expectation does not remove original goal obligations or permit false achievement.
 Prefer an adequate existing definition, including exact qualified-known reuse; prepare a different work/evidence/Decision structure only when needed. Claim structural adaptation only for a real producer/evidence/Decision difference, preserving due suitability. Keep the separately selected fixed canonical regressions distinct. For non-Git new-project use the ordinary no-Podway branch before any native/source discovery.
-Use the authorized operator {request["authority"]["observer"]} and scope reference {request["authority"]["reference"]}. Preserve existing review, independent Evaluator, exact-diff approval and no-implementation boundaries. Ask for actual decisions; do not infer acceptance. Selected upstream leaves: {case["leaves"]}. Establish their actual live readiness before provider use; missing prerequisites remain incomplete. PM may replace the clipboard only with separately supplied explicit authority. No commit, publication or installation is authorized by this case.
+Use the authorized operator {request["authority"]["observer"]} and scope reference {request["authority"]["reference"]}. Preserve existing review, independent Evaluator, entrypoint-specific document-write and final content-review authority, and no-implementation boundaries. Ask for actual decisions; do not infer acceptance. Selected upstream leaves: {case["leaves"]}. Establish their actual live readiness before provider use; missing prerequisites remain incomplete. PM may replace the clipboard only with separately supplied explicit authority. No commit, publication or installation is authorized by this case.
 Deliver the first complete due semantic result and independent assessment, preserving future gaps. Stop at a mapped native consumer selecting actual original work and Evaluator evidence, or at the approved document application boundary; do not falsely complete the whole workflow.
-Save original role assignments, actual returned v3 reports and current ordinary qualification under {directory}; reports identify exact current assessed files as target.files (relative path to SHA-256 map). Write {evidence_file} with executor_agent,evaluator_agent,executor_assignment,evaluator_assignment,executor_result,evaluator_assessment,qualification paths. A cold validation with no corrective Executor uses only Evaluator fields. Include used_leaves and leaf_results keyed by leaf with exact path/sha256 and operation_item_id of its actual completed native public MCP/CLI call; keep complete original upstream output. Include faithful quality operation_outcome/raw_verdict, diagnosis experiments (actual hypothesis/command/result), and exact application_approval for document cases. For this VM capture, the actual operator application reply is one JSON object with schema aquarium.vm-document-decision/v1, decision approved, its reference and complete proposal. A rejected/request-changes reply or quoted proposal is not approval; do not synthesize it. Each actual role final result includes its complete report or exact path+SHA. Settle all descendants before returning. These capture files alone do not prove native execution; the driver reads public results, exact current bundles/native evidence and application oracles independently."""
+Save original role assignments, actual returned v3 reports and current ordinary qualification under {directory}; reports identify exact current assessed files as target.files (relative path to SHA-256 map). Write {evidence_file} with executor_agent,evaluator_agent,executor_assignment,evaluator_assignment,executor_result,evaluator_assessment,qualification paths. A cold validation with no corrective Executor uses only Evaluator fields. Include used_leaves and leaf_results keyed by leaf with exact path/sha256 and operation_item_id of its actual completed native public MCP/CLI call; keep complete original upstream output. Include faithful quality operation_outcome/raw_verdict, diagnosis experiments (actual hypothesis/command/result), and actual document_write plus final document_acceptance for new-feature scoped cases; retain exact application_approval for other document cases. Scoped decisions must appear as their complete JSON objects in actual operator user messages, including source, decision, reference, grant work/paths or acceptance files. Do not request or synthesize a separate diff approval for scoped new-feature. For retained exact-diff cases in this VM capture, the actual operator application reply is one JSON object with schema aquarium.vm-document-decision/v1, decision approved, its reference and complete proposal. A rejected/request-changes reply or quoted proposal is not approval; do not synthesize it. Each actual role final result includes its complete report or exact path+SHA. Settle all descendants before returning. These capture files alone do not prove native execution; the driver reads public results, exact current bundles/native evidence and application oracles independently."""
         identifier = gate.invoke(request, root, name, prompt, repository=repository)
         try:
             observation = collect(request["tools"]["codex"], repository, identifier)
@@ -1215,8 +1293,14 @@ Save original role assignments, actual returned v3 reports and current ordinary 
         upstream = leaf_delivery(
             gate, observation, evidence, directory, case["leaves"], request
         )
+        work = None
+        if case.get("entrypoint") == "new-feature" and "document_write" in evidence:
+            qualification = gate.read_json(
+                artifact(gate, directory, evidence["qualification"])
+            )
+            work = qualification["assignment"]["work"]
         application = oracle(
-            gate, request, repository, case, evidence, observation, before
+            gate, request, repository, case, evidence, observation, before, work=work
         )
         semantic = checkpoint(
             gate,

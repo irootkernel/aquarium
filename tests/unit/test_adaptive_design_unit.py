@@ -24,12 +24,16 @@ from test_adaptive_preparation_unit import Oracle, assignment
 
 
 @pytest.fixture
-def design(tmp_path):
+def design(tmp_path, request):
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     value = assignment(tmp_path, mode="prepare")
     plan = value["target"]["procedure_plan"]
     plan.update(family="design", entrypoint="new-feature")
-    raw = (ASSETS / "podway/procedures/aquarium-design-v2.yaml").read_bytes()
+    raw = (
+        (ROOT / "tests/fixtures/aquarium-design-v12.yaml")
+        if getattr(request, "param", None) == "legacy"
+        else (ASSETS / "podway/procedures/aquarium-design-v2.yaml")
+    ).read_bytes()
     source = tmp_path / "definitions/design with spaces.yaml"
     source.parent.mkdir()
     source.write_bytes(raw)
@@ -120,7 +124,11 @@ def test_nonselecting_recovery_preserves_actual_role_and_primary_decisions(
     result = consume(design)
     assert result["role"] == role
     assert result["status"] == (
-        "coordinator-owned" if role == "coordinator" else "dispatch-ready"
+        "document-review-required"
+        if node == "closeout"
+        else "coordinator-owned"
+        if role == "coordinator"
+        else "dispatch-ready"
     )
     if role == "evaluator":
         assert result["dispatch"]["authority"]["effects"] == []
@@ -319,6 +327,7 @@ def test_changed_proposal_or_target_requires_actual_reapproval(tmp_path, change)
     }
 
 
+@pytest.mark.parametrize("design", ["legacy"], indirect=True)
 def test_application_executor_waits_for_actual_exact_diff_authority(design):
     design[3]["guidance"]["node"]["graph_node_id"] = "apply-documents"
     assert consume(design)["status"] == "approval-required"
@@ -1168,3 +1177,612 @@ def test_design_default_application_preserves_user_only_approval(
         application(tmp_path, value, approval, applied=applied)["status"]
         == "approval-required"
     )
+
+
+@pytest.mark.parametrize("entrypoint", ["new-feature", "new-project", "refactor"])
+def test_scoped_writes_need_feature_entrypoint_and_new_capability(design, entrypoint):
+    from adaptive_design import context
+
+    root, data, _, _, _ = design
+    assignment = data["assignment"]
+    assignment["target"]["procedure_plan"]["entrypoint"] = entrypoint
+    value, _ = proposal(root)
+    grant = {
+        "source": "user",
+        "decision": "approved",
+        "reference": "actual request",
+        "work": {
+            key: assignment["work"].get(key)
+            for key in ("repository", "roadmap", "epic")
+        },
+        "paths": {"README.md": ["update"]},
+    }
+    assignment["authority"]["document_write"] = grant
+    assignment["target"]["design"] = {"targets": value["targets"]}
+    if entrypoint != "new-feature":
+        with pytest.raises(BundleError):
+            context(root, assignment, "application", scoped=True)
+        return
+    assert (
+        context(root, assignment, "application", scoped=False)["application"]["status"]
+        == "approval-required"
+    )
+    current = context(root, assignment, "application", scoped=True)
+    assert current["application"]["status"] == "approved-current"
+    assert current["accepted"] is False
+    (root / "README.md").write_text("Concurrent user edit")
+    assert (
+        context(root, assignment, "application", scoped=True)["application"]["status"]
+        == "reconciliation-required"
+    )
+    assert (root / "README.md").read_text() == "Concurrent user edit"
+    (root / "README.md").write_text("Approved\n")
+    assignment["target"]["design"]["applied"] = True
+    assert (
+        context(root, assignment, "application", scoped=True)["application"]["status"]
+        == "verified-applied"
+    )
+    assignment["authority"]["document_acceptance"] = {
+        "source": "user",
+        "decision": "accepted",
+        "reference": "actual acceptance",
+        "files": {"README.md": value["targets"]["README.md"]["after"]},
+    }
+    assert context(root, assignment, "application", scoped=True)["accepted"] is True
+    assignment["authority"]["document_write"]["paths"] = {}
+    with pytest.raises(BundleError):
+        context(root, assignment, "application", scoped=True)
+
+
+def test_scoped_runtime_requires_applied_content_acceptance_before_goal(design):
+    root, data, _, observation, _ = design
+    assignment = data["assignment"]
+    value, _ = proposal(root)
+    assignment["authority"]["document_write"] = {
+        "source": "user",
+        "decision": "approved",
+        "reference": "feature request",
+        "work": {
+            key: assignment["work"].get(key)
+            for key in ("repository", "roadmap", "epic")
+        },
+        "paths": {"README.md": ["update"]},
+    }
+    assignment["target"]["design"] = {"targets": value["targets"]}
+    observation["guidance"]["node"]["graph_node_id"] = "apply-documents"
+    assert consume(design)["status"] == "dispatch-ready"
+    (root / "README.md").write_text("Approved\n")
+    assignment["target"]["design"]["applied"] = True
+    observation["guidance"]["node"]["graph_node_id"] = "assess-goal"
+    assert consume(design)["status"] == "document-review-required"
+    assignment["authority"]["document_acceptance"] = {
+        "source": "user",
+        "decision": "accepted",
+        "reference": "actual content review",
+        "files": {"README.md": value["targets"]["README.md"]["after"]},
+    }
+    assert consume(design)["status"] == "coordinator-owned"
+    assignment["target"]["design"].pop("applied")
+    assert consume(design)["status"] == "document-review-required"
+    assignment["target"]["design"]["applied"] = True
+    assignment["authority"]["document_acceptance"]["files"]["README.md"] = sha256(
+        b"stale"
+    )
+    assert consume(design)["status"] == "document-review-required"
+
+
+def test_fresh_scoped_binding_does_not_fall_back_to_prior_diff_approval(design):
+    root, data, _, observation, _ = design
+    proposed, approved = proposal(root)
+    assignment = data["assignment"]
+    assignment["authority"]["document_approval"] = approved
+    assignment["target"]["design"] = {"proposal": proposed}
+    observation["guidance"]["node"]["graph_node_id"] = "apply-documents"
+    assert consume(design)["status"] == "approval-required"
+    observation["guidance"]["node"]["graph_node_id"] = "assess-goal"
+    assert consume(design)["status"] == "document-review-required"
+
+
+def feature_grant(assignment, paths):
+    return {
+        "source": "user",
+        "decision": "approved",
+        "reference": "Actual feature document request",
+        "work": {
+            key: assignment["work"].get(key)
+            for key in ("repository", "roadmap", "epic")
+        },
+        "paths": paths,
+    }
+
+
+@pytest.mark.parametrize("entrypoint", ["new-feature", "new-project", "refactor"])
+def test_opt_out_reports_the_entrypoints_document_contract(tmp_path, entrypoint):
+    from adaptive_entrypoint import branch
+
+    expected = "scoped-worktree" if entrypoint == "new-feature" else "exact-diff"
+    assert branch(tmp_path, entrypoint, opt_out=True)["document_write_mode"] == expected
+    value = assignment(tmp_path, mode="prepare")
+    value["target"]["procedure_plan"].update(family="design", entrypoint=entrypoint)
+    prepared = prepare(tmp_path, value, client=object(), opt_out=True)
+    resolved = execution_context(
+        tmp_path,
+        roots=[],
+        entrypoint=entrypoint,
+        qualification={},
+        client=object(),
+        opt_out=True,
+    )
+    for result in (prepared, resolved):
+        assert result["status"] == "podway-inapplicable"
+        assert result["dispatch"] is None
+        assert result["document_write_mode"] == expected
+
+
+def test_created_document_can_be_corrected_under_its_original_scope(design):
+    from adaptive_design import context
+
+    root, data, _, _, _ = design
+    value = data["assignment"]
+    value["authority"]["document_write"] = feature_grant(
+        value, {"dossier.md": ["create"]}
+    )
+    first = {"dossier.md": {"before": None, "after": sha256(b"First draft")}}
+    value["target"]["design"] = {"targets": first}
+    assert context(root, value, "application", scoped=True)["application"][
+        "status"
+    ] == ("approved-current")
+    (root / "dossier.md").write_bytes(b"First draft")
+    corrected = {
+        "dossier.md": {"before": sha256(b"First draft"), "after": sha256(b"Corrected")}
+    }
+    value["target"]["design"] = {
+        "targets": corrected,
+        "changes": [
+            {"document_write": value["authority"]["document_write"], "targets": first}
+        ],
+    }
+    result = context(root, value, "application", scoped=True)
+    assert result["application"]["status"] == "approved-current"
+    assert result["accepted"] is False
+    (root / "dossier.md").write_bytes(b"Concurrent user edit")
+    assert context(root, value, "application", scoped=True)["application"][
+        "status"
+    ] == ("reconciliation-required")
+    assert (root / "dossier.md").read_bytes() == b"Concurrent user edit"
+    (root / "dossier.md").write_bytes(b"Corrected")
+    value["target"]["design"]["applied"] = True
+    assert context(root, value, "application", scoped=True)["application"][
+        "status"
+    ] == ("verified-applied")
+    assert context(root, value, "application", scoped=True)["accepted"] is False
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        "no-history",
+        "existing-file",
+        "discontinuous",
+        "wrong-work",
+        "unapproved",
+        "delete",
+    ],
+)
+def test_create_revision_does_not_expand_scope(tmp_path, fault):
+    from adaptive_design import scoped_targets
+
+    value = assignment(tmp_path, mode="prepare")
+    grant = feature_grant(value, {"dossier.md": ["create"]})
+    initial = {"dossier.md": {"before": None, "after": sha256(b"First")}}
+    history = [{"document_write": copy.deepcopy(grant), "targets": initial}]
+    targets = {"dossier.md": {"before": sha256(b"First"), "after": sha256(b"Second")}}
+    if fault == "no-history":
+        history = []
+    elif fault == "existing-file":
+        initial["dossier.md"]["before"] = sha256(b"Existing user file")
+    elif fault == "discontinuous":
+        targets["dossier.md"]["before"] = sha256(b"Unrecorded edit")
+    elif fault == "wrong-work":
+        history[0]["document_write"]["work"]["epic"] = "EPIC-999"
+    elif fault == "unapproved":
+        history[0]["document_write"]["decision"] = "rejected"
+    elif fault == "delete":
+        targets["dossier.md"]["after"] = None
+    with pytest.raises(BundleError):
+        scoped_targets(value["work"], targets, grant, changes=history)
+
+
+@pytest.mark.parametrize("node", ["assess-unaccepted-goal", "closeout-unaccepted"])
+@pytest.mark.parametrize("applied", [False, True])
+def test_negative_only_design_path_does_not_require_content_acceptance(
+    design, node, applied
+):
+    root, data, _, observation, _ = design
+    value = data["assignment"]
+    value["authority"]["document_write"] = feature_grant(
+        value, {"README.md": ["update"]}
+    )
+    proposed, _ = proposal(root)
+    value["target"]["design"] = {"targets": proposed["targets"], "applied": applied}
+    if applied:
+        (root / "README.md").write_text("Approved\n")
+    observation["guidance"]["node"]["graph_node_id"] = node
+    result = consume(design)
+    assert result["status"] == "coordinator-owned"
+    assert result["design"].get("accepted", False) is False
+    assert result["dispatch"] is None
+
+
+def test_applied_acceptance_waits_for_a_current_positive_final_assessment():
+    from test_procedure_alignment_contracts import (
+        guards_match,
+        load_procedure,
+        nodes,
+        options,
+    )
+
+    document = load_procedure("aquarium-design-v2.yaml")
+    graph = nodes(document)
+    review = options(document, graph["review-applied"]["use"])
+    final = {
+        ("evaluator-design", "evaluator-goal-outcome"): "not-achieved",
+        ("evaluator-design", "evaluator-verdict"): "evidence-needed",
+        ("evaluator-design", "evaluator-unmet-criteria"): 0,
+        ("evaluator-design", "evaluator-unverified-criteria"): 1,
+    }
+    assert not guards_match(review["accepted"], final)
+    assert guards_match(review["reassess"], final)
+    assert graph["review-applied"]["routes"]["reassess"] == {
+        "to": "prepare-design-assessment",
+        "effect": "rework",
+    }
+    final.update(
+        {
+            ("evaluator-design", "evaluator-goal-outcome"): "achieved",
+            ("evaluator-design", "evaluator-verdict"): "pass",
+            ("evaluator-design", "evaluator-unverified-criteria"): 0,
+        }
+    )
+    assert guards_match(review["accepted"], final)
+    assert graph["review-applied"]["routes"]["accepted"] == {
+        "to": "assess-goal",
+        "effect": "advance",
+    }
+    for field, value in (
+        ("evaluator-verdict", "evidence-needed"),
+        ("evaluator-goal-outcome", "not-achieved"),
+        ("evaluator-unmet-criteria", 1),
+        ("evaluator-unverified-criteria", 1),
+    ):
+        stale = {**final, ("evaluator-design", field): value}
+        assert not guards_match(review["accepted"], stale)
+
+
+def test_negative_path_has_no_success_option_and_preserves_native_negative_guards():
+    from test_procedure_alignment_contracts import (
+        guards_match,
+        load_procedure,
+        nodes,
+        options,
+    )
+
+    document = load_procedure("aquarium-design-v2.yaml")
+    graph = nodes(document)
+    assert (
+        graph["review-applied"]["routes"]["not-accepted"]["to"]
+        == "assess-unaccepted-goal"
+    )
+    assert graph["review-applied"]["routes"]["reassess"] == {
+        "to": "prepare-design-assessment",
+        "effect": "rework",
+    }
+    entry = options(document, graph["review-applied"]["use"])["not-accepted"]
+    assert not guards_match(entry, {})
+    assert not guards_match(
+        entry, {("evaluator-design", "evaluator-goal-outcome"): "achieved"}
+    )
+    goal = options(document, graph["assess-unaccepted-goal"]["use"])
+    assert set(goal) == {"achieved", "not-achieved", "superseded"}
+    assert guards_match(
+        goal["achieved"],
+        {("evaluator-design", "evaluator-goal-outcome"): "achieved"},
+    )
+    assert graph["assess-unaccepted-goal"]["routes"]["achieved"] == {
+        "to": "review-applied",
+        "effect": "rework",
+    }
+    for outcome in ("not-achieved", "superseded"):
+        assert guards_match(
+            entry, {("evaluator-design", "evaluator-goal-outcome"): outcome}
+        )
+        assert not guards_match(goal[outcome], {})
+        assert not guards_match(
+            goal[outcome], {("evaluator-design", "evaluator-goal-outcome"): "achieved"}
+        )
+        assert guards_match(
+            goal[outcome], {("evaluator-design", "evaluator-goal-outcome"): outcome}
+        )
+        assert (
+            graph["assess-unaccepted-goal"]["routes"][outcome]["to"]
+            == "closeout-unaccepted"
+        )
+
+
+@pytest.mark.parametrize("node", ["assess-goal", "closeout"])
+def test_success_capable_paths_still_require_actual_acceptance(design, node):
+    _, _, _, observation, _ = design
+    observation["guidance"]["node"]["graph_node_id"] = node
+    assert consume(design)["status"] == "document-review-required"
+
+
+@pytest.mark.parametrize("design", ["legacy"], indirect=True)
+def test_retained_binding_rejects_scoped_authority_at_execution(design):
+    value = design[1]["assignment"]
+    value["authority"]["document_write"] = feature_grant(
+        value, {"README.md": ["update"]}
+    )
+    with pytest.raises(BundleError) as error:
+        consume(design)
+    assert error.value.code == "retained-contract"
+
+
+def test_current_application_phase_fallback_matches_the_shipped_definition(design):
+    import yaml
+    from adaptive_design import OPERATIONS
+    from adaptive_execution import design_phase
+
+    document = yaml.safe_load(
+        (ASSETS / "podway/procedures/aquarium-design-v2.yaml").read_bytes()
+    )
+    binding = copy.deepcopy(design[4]["binding"])
+    binding["nodes"]["apply-documents"]["capabilities"] = []
+    assert (
+        design_phase(document, binding, design[1]["assignment"], "apply-documents")
+        == "application"
+    )
+    body = document["node_definitions"]["application-record"]
+    assert OPERATIONS[sha256(canonical_json(body))] == "application"
+
+
+@pytest.mark.parametrize("owner", ["aquarium:epic-handler", "aquarium:epic-squad"])
+def test_scoped_caller_return_waits_for_applied_content_and_separate_commit(
+    design, owner
+):
+    from adaptive_design import context
+
+    root, data, _, _, _ = design
+    value = data["assignment"]
+    proposed, _ = proposal(root)
+    (root / "README.md").write_text("Approved\n")
+    value["authority"]["document_write"] = feature_grant(
+        value, {"README.md": ["update"]}
+    )
+    value["target"]["design"] = {
+        "targets": proposed["targets"],
+        "applied": True,
+        "commit_required": False,
+        "caller": {
+            "workflow_owner": owner,
+            "mode": "execute",
+            "profiles": {},
+            **{
+                key: value["work"].get(key) for key in ("repository", "roadmap", "epic")
+            },
+        },
+    }
+    current = context(root, value, "application", scoped=True)
+    assert current["collaboration_return"]["status"] == "document-review-required"
+    value["authority"]["document_acceptance"] = {
+        "source": "user",
+        "decision": "accepted",
+        "reference": "Actual file review",
+        "files": {"README.md": proposed["targets"]["README.md"]["after"]},
+    }
+    current = context(root, value, "application", scoped=True)
+    assert current["collaboration_return"]["status"] == "new-conversation-required"
+    value["target"]["design"]["commit_required"] = True
+    current = context(root, value, "application", scoped=True)
+    assert current["collaboration_return"]["status"] == "delivery-input-commit-required"
+
+
+def test_only_negative_boundaries_can_bypass_acceptance():
+    from adaptive_design import requires_content_acceptance
+
+    document = {
+        "graph": {
+            "nodes": [
+                {"id": "negative", "routes": {"stop": {"to": "close"}}},
+                {"id": "close", "terminal": True},
+            ]
+        }
+    }
+    binding = {
+        "goal_assessments": [{"node": "negative", "outcomes": {"stop": "not_achieved"}}]
+    }
+    assert requires_content_acceptance(document, binding, "close") is False
+    binding["goal_assessments"][0]["outcomes"]["done"] = "achieved"
+    assert requires_content_acceptance(document, binding, "close") is True
+    binding["goal_assessments"] = []
+    assert requires_content_acceptance(document, binding, "close") is True
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ["none", "entry", "manual", "unguarded", "reference", "optional", "extra-entry"],
+)
+def test_native_three_outcome_goal_requires_proven_negative_entry(mutation):
+    from adaptive_design import requires_content_acceptance
+    from test_procedure_alignment_contracts import load_procedure
+
+    document = load_procedure("aquarium-design-v2.yaml")
+    placements = {row["id"]: row for row in document["graph"]["nodes"]}
+    definitions = document["node_definitions"]
+    binding = {
+        "goal_assessments": [
+            {
+                "node": name,
+                "outcomes": definitions[placements[name]["use"]]["assessment"][
+                    "outcomes"
+                ],
+            }
+            for name in ("assess-goal", "assess-unaccepted-goal")
+        ]
+    }
+    boundary = "assess-unaccepted-goal"
+    if mutation == "entry":
+        document["graph"]["entry"] = boundary
+    elif mutation == "manual":
+        document["manual_rework"]["allowed_targets"].append(boundary)
+    elif mutation == "unguarded":
+        definitions[placements["review-applied"]["use"]]["options"][2]["guards"] = []
+    elif mutation == "reference":
+        definitions[placements[boundary]["use"]]["options"][0]["guards"][0]["evidence"][
+            "item"
+        ] = "another-outcome"
+    elif mutation == "optional":
+        placements[boundary]["evidence_from"][1]["required"] = False
+    elif mutation == "extra-entry":
+        document["graph"]["nodes"].append({"id": "unguarded-entry", "next": boundary})
+    for node in (boundary, "closeout-unaccepted"):
+        assert requires_content_acceptance(document, binding, node) is (
+            mutation != "none"
+        )
+    for node in ("assess-goal", "closeout"):
+        assert requires_content_acceptance(document, binding, node) is True
+
+
+def test_create_revision_requires_the_current_grant_as_well_as_history(tmp_path):
+    from adaptive_design import scoped_targets
+
+    value = assignment(tmp_path, mode="prepare")
+    grant = feature_grant(value, {"dossier.md": ["create"]})
+    first = {"dossier.md": {"before": None, "after": sha256(b"First")}}
+    second = {"dossier.md": {"before": sha256(b"First"), "after": sha256(b"Second")}}
+    history = [{"document_write": grant, "targets": first}]
+    denied = {**grant, "paths": {}}
+    with pytest.raises(BundleError):
+        scoped_targets(value["work"], second, denied, changes=history)
+    assert (
+        scoped_targets(value["work"], second, None, changes=history)["status"]
+        == "approval-required"
+    )
+
+
+def test_final_acceptance_covers_every_applied_round_and_preserves_other_edits(design):
+    from adaptive_design import context
+
+    root, data, _, _, _ = design
+    value = data["assignment"]
+    first = {
+        "one.md": {"before": None, "after": sha256(b"One")},
+        "two.md": {"before": None, "after": sha256(b"Two")},
+    }
+    grant = feature_grant(value, {"one.md": ["create"], "two.md": ["create"]})
+    value["authority"]["document_write"] = grant
+    second = {"two.md": {"before": sha256(b"Two"), "after": sha256(b"Corrected")}}
+    value["target"]["design"] = {
+        "targets": second,
+        "applied": True,
+        "changes": [{"document_write": grant, "targets": first}],
+    }
+    (root / "one.md").write_bytes(b"One")
+    (root / "two.md").write_bytes(b"Corrected")
+    acceptance = {
+        "source": "user",
+        "decision": "accepted",
+        "reference": "Actual file review",
+        "files": {"two.md": sha256(b"Corrected")},
+    }
+    value["authority"]["document_acceptance"] = acceptance
+    result = context(root, value, "application", scoped=True)
+    assert result["application"]["status"] == "verified-applied"
+    assert set(result["application"]["targets"]) == {"one.md", "two.md"}
+    assert result["accepted"] is False
+    acceptance["files"]["one.md"] = sha256(b"One")
+    assert context(root, value, "application", scoped=True)["accepted"] is True
+    (root / "one.md").write_bytes(b"Concurrent user edit")
+    assert context(root, value, "application", scoped=True)["application"][
+        "status"
+    ] == ("reconciliation-required")
+    assert (root / "one.md").read_bytes() == b"Concurrent user edit"
+
+
+@pytest.mark.parametrize("existing", [False, True])
+def test_observed_user_edit_is_preserved_while_the_session_continues(design, existing):
+    root, data, _, observation, _ = design
+    value = data["assignment"]
+    path = root / "dossier.md"
+    if existing:
+        path.write_bytes(b"Original document")
+    initial = sha256(path.read_bytes()) if existing else None
+    grant = feature_grant(value, {"dossier.md": ["update" if existing else "create"]})
+    value["authority"]["document_write"] = grant
+    first = {"dossier.md": {"before": initial, "after": sha256(b"Draft A")}}
+    value["target"]["design"] = {"targets": first}
+    observation["guidance"]["node"]["graph_node_id"] = "apply-documents"
+    assert consume(design)["status"] == "dispatch-ready"
+    path.write_bytes(b"Draft A")
+    value["target"]["design"]["changes"] = [{"document_write": grant, "targets": first}]
+    value["target"]["design"]["targets"] = {
+        "dossier.md": {"before": sha256(b"Draft A"), "after": sha256(b"Old correction")}
+    }
+    path.write_bytes(b"Draft A\nUser edit retained")
+    assert consume(design)["status"] == "reconciliation-required"
+    user_image = sha256(path.read_bytes())
+    value["target"]["design"]["changes"].append(
+        {
+            "document_write": grant,
+            "targets": {
+                "dossier.md": {"before": sha256(b"Draft A"), "after": user_image}
+            },
+            "origin": {"source": "user", "reference": "Observed fixture user edit"},
+        }
+    )
+    final = path.read_bytes() + b"\nAgent correction"
+    final_image = sha256(final)
+    value["target"]["design"]["targets"] = {
+        "dossier.md": {"before": user_image, "after": final_image}
+    }
+    result = consume(design)
+    assert result["status"] == "dispatch-ready"
+    assert result["design"]["application"]["status"] == "approved-current"
+    assert path.read_bytes() == b"Draft A\nUser edit retained"
+    path.write_bytes(final)
+    value["target"]["design"]["applied"] = True
+    observation["guidance"]["node"]["graph_node_id"] = "assess-goal"
+    assert consume(design)["status"] == "document-review-required"
+    value["authority"]["document_acceptance"] = {
+        "source": "user",
+        "decision": "accepted",
+        "reference": "Fixture final file review",
+        "files": {"dossier.md": final_image},
+    }
+    assert consume(design)["status"] == "coordinator-owned"
+    assert b"User edit retained" in path.read_bytes()
+
+
+@pytest.mark.parametrize("decision", ["rejected", "superseded"])
+def test_final_evaluator_receives_the_original_user_review_decision(design, decision):
+    root, data, _, observation, _ = design
+    value = data["assignment"]
+    proposed, _ = proposal(root)
+    (root / "README.md").write_text("Approved\n")
+    value["authority"]["document_write"] = feature_grant(
+        value, {"README.md": ["update"]}
+    )
+    review = {
+        "source": "user",
+        "decision": decision,
+        "reference": "Fixture original user decision",
+        "files": {"README.md": proposed["targets"]["README.md"]["after"]},
+    }
+    value["authority"]["document_acceptance"] = review
+    value["target"]["design"] = {"targets": proposed["targets"], "applied": True}
+    observation["guidance"]["node"]["graph_node_id"] = "evaluator-design"
+    result = consume(design)
+    assert result["status"] == "dispatch-ready"
+    assert result["dispatch"]["role"] == "evaluator"
+    assert result["dispatch"]["authority"]["document_acceptance"] == review
+    assert result["dispatch"]["target"]["design_context"]["accepted"] is False
+    assert result["dispatch"]["authority"]["effects"] == []

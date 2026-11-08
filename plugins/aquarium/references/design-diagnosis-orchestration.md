@@ -1,6 +1,6 @@
 # Design and diagnosis orchestration
 
-Design and War-room version `12` use ordinary Actions under the
+Design version `13` and War-room version `12` use ordinary Actions under the
 [v3 contract](ordinary-agent-orchestration.md). Native roles use the current
 Coordinator harness without role-snapshot, private-history or configuration
 qualification. Admitted formal snapshots keep their original
@@ -105,3 +105,8 @@ replay and settles mutating Executors before replacement, without requiring full
 executor history.
 
 For unexpected missing topology in a running session, use the shared [consented atomic supersede](adaptive-execution.md#consented-atomic-supersede) after reconciling pending effects and retaining the qualified successor. Preserve history, original findings, review ordinals and remaining grants. Declared rework, same-operation result retrieval and an approved normal successor remain under their existing authority; a missing report alone never warrants replacement.
+
+
+## Scoped new-feature document delivery
+
+For new scoped-capable Design bindings, follow [scoped new-feature delivery](adaptive-execution.md#scoped-new-feature-document-delivery) and the [document review contract](ouroboros-integration.md#new-feature-apply-scoped-documents-for-review). Apply within actual user write scope, preserve original requirements and concurrent edits, and obtain final applied-content acceptance before delivery. Other entrypoints and retained definitions keep their original exact-diff approvals. Caller and commit handoffs require accepted content, not application alone.

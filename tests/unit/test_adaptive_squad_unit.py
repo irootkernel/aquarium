@@ -217,10 +217,10 @@ LEGACY_MAPPINGS = {
 
 
 @pytest.fixture
-def design(tmp_path):
+def design(tmp_path, request):
     from test_adaptive_design_unit import design as original
 
-    return original.__wrapped__(tmp_path)
+    return original.__wrapped__(tmp_path, request)
 
 
 def reusable(family="goal"):
@@ -245,7 +245,9 @@ def proof(document, binding, route="not-required"):
 @pytest.mark.parametrize("family", LEGACY_MAPPINGS)
 def test_released_reference_mapping_bytes_remain_unchanged(family):
     source = (
-        ASSETS / "podway/procedures" / ("aquarium-" + family + "-v2.yaml")
+        ROOT / "tests/fixtures/aquarium-design-v12.yaml"
+        if family == "design"
+        else ASSETS / "podway/procedures" / ("aquarium-" + family + "-v2.yaml")
     ).read_bytes()
     assert sha256(canonical_json(reference_mapping(source))) == LEGACY_MAPPINGS[family]
 
@@ -2579,6 +2581,7 @@ def test_named_finding_affected_judgment_uses_same_correction_scope(basis):
     ],
 )
 @pytest.mark.parametrize("owner", ["aquarium:epic-squad", "aquarium:epic-handler"])
+@pytest.mark.parametrize("design", ["legacy"], indirect=True)
 def test_actual_design_application_preserves_exact_owner_and_commit_boundary(
     design, commit_policy, commit, state, owner
 ):

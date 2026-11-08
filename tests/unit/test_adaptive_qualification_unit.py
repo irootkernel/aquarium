@@ -1093,7 +1093,7 @@ def test_registered_semantic_aliases_remain_closed_and_qualified(
         ("design", "aquarium.design.application-assessment/v2"),
         ("war-room", "aquarium.diagnosis.documentation-assessment/v2"),
         ("design", "aquarium.design.upstream-quality/v2"),
-        ("design", "aquarium.design.application-approval/v2"),
+        ("design", "aquarium.design.application-approval/v3"),
         ("task", "aquarium.task.review-control/v2"),
         ("task", "aquarium.task.review-routing/v2"),
     ],

@@ -1,6 +1,7 @@
 """Objective guest-driver oracles; synthetic public deliveries are rejection controls."""
 
 import copy
+import hashlib
 import json
 import subprocess
 import sys
@@ -1244,7 +1245,7 @@ def test_run_keeps_driver_originals_outside_agent_capture_on_resume(
     monkeypatch.setattr(cases, "leaf_delivery", lambda *_: {})
     observed = []
     monkeypatch.setattr(
-        cases, "oracle", lambda *_args: observed.append(_args[-1]) or {}
+        cases, "oracle", lambda *_args, **_kwargs: observed.append(_args[-1]) or {}
     )
     monkeypatch.setattr(cases, "checkpoint", lambda *_args, **_kwargs: {})
     monkeypatch.setattr(gate, "verify_settlement", lambda *_: None)
@@ -2101,3 +2102,183 @@ def test_declared_negative_validation_preserves_supported_selected_leaf_customiz
     else:
         result = cases.reports(gate, observation, evidence, directory, repo, case)
         assert result["assessment"]["goal_outcome"] == "not-achieved"
+
+
+def test_scoped_decisions_require_the_actual_user_message():
+    decision = {
+        "source": "user",
+        "decision": "accepted",
+        "reference": "review-1",
+        "files": {"roadmap.md": "sha256:" + "a" * 64},
+    }
+    observation = {"root": {"turns": []}}
+    with pytest.raises(gate.GateError):
+        cases.scoped_document_decision(gate, observation, decision, "accepted")
+    observation["root"]["turns"] = [
+        {"items": [{"type": "userMessage", "text": json.dumps(decision)}]}
+    ]
+    assert (
+        cases.scoped_document_decision(gate, observation, decision, "accepted")
+        == decision
+    )
+    changed = {**decision, "files": {}}
+    with pytest.raises(gate.GateError):
+        cases.scoped_document_decision(gate, observation, changed, "accepted")
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        None,
+        "missing-update",
+        "stale-acceptance",
+        "missing-roadmap",
+        "wrong-epic",
+        "wrong-roadmap",
+        "wrong-repository",
+        "missing-work",
+    ],
+)
+def test_scoped_oracle_accepts_corrected_creation_and_preserves_other_scope(
+    document_case, fault
+):
+    repository, before, proposal, observation, evidence = document_case
+    created = repository / "docs/new.md"
+    created.write_text("First draft")
+    created.write_text("Corrected draft")
+    work = {
+        "repository": str(repository),
+        "roadmap": "docs/roadmap.md",
+        "epic": "EPIC-001",
+    }
+    grant = {
+        "source": "user",
+        "decision": "approved",
+        "reference": "Actual request",
+        "work": dict(work),
+        "paths": {"docs/new.md": ["create"], "docs/result.md": ["update"]},
+    }
+    accepted = {
+        "source": "user",
+        "decision": "accepted",
+        "reference": "Actual file review",
+        "files": {
+            "docs/new.md": gate.sha256(created),
+            "docs/result.md": proposal["targets"]["docs/result.md"]["after"],
+        },
+    }
+    if fault == "missing-update":
+        del grant["paths"]["docs/result.md"]
+    elif fault == "stale-acceptance":
+        accepted["files"]["docs/new.md"] = "sha256:" + "0" * 64
+    elif fault == "missing-roadmap":
+        grant["work"].pop("roadmap")
+    elif fault == "wrong-epic":
+        grant["work"]["epic"] = "EPIC-002"
+    elif fault == "wrong-roadmap":
+        grant["work"]["roadmap"] = "other-roadmap.md"
+    elif fault == "wrong-repository":
+        grant["work"]["repository"] = str(repository.parent / "other")
+    elif fault == "missing-work":
+        work = None
+    observation["root"]["turns"] = [
+        {"items": [{"type": "userMessage", "text": json.dumps(value)}]}
+        for value in (grant, accepted)
+    ]
+    evidence.update(document_write=grant, document_acceptance=accepted)
+    if fault:
+        with pytest.raises(gate.GateError):
+            cases.oracle(
+                gate,
+                {},
+                repository,
+                {"oracle": "documents", "entrypoint": "new-feature"},
+                evidence,
+                observation,
+                before,
+                work=work,
+            )
+    else:
+        result = cases.oracle(
+            gate,
+            {},
+            repository,
+            {"oracle": "documents", "entrypoint": "new-feature"},
+            evidence,
+            observation,
+            before,
+            work=work,
+        )
+        assert result["documents"]["docs/new.md"] == {
+            "before": None,
+            "after": gate.sha256(created),
+        }
+
+
+@pytest.mark.parametrize("wrong_epic", [False, True])
+def test_run_checks_scoped_grant_against_qualification_work(
+    tmp_path, monkeypatch, wrong_epic
+):
+    import native_observation
+
+    request = run_gate_double(monkeypatch, tmp_path)
+    request["development_cases"] = ["adaptive-feature"]
+    repository = tmp_path / "adaptive-feature"
+    repository.mkdir()
+    directory = tmp_path / "adaptive-feature-capture"
+    directory.mkdir()
+    work = {
+        "repository": str(repository),
+        "roadmap": "docs/roadmap.md",
+        "epic": "EPIC-001",
+    }
+    (directory / "qualification.json").write_text(
+        json.dumps({"assignment": {"work": work}})
+    )
+    grant = {
+        "source": "user",
+        "decision": "approved",
+        "reference": "Fixture actual scope",
+        "work": {**work, "epic": "EPIC-002" if wrong_epic else work["epic"]},
+        "paths": {"design.md": ["create"]},
+    }
+    digest = "sha256:" + hashlib.sha256(b"Applied design").hexdigest()
+    accepted = {
+        "source": "user",
+        "decision": "accepted",
+        "reference": "Fixture file review",
+        "files": {"design.md": digest},
+    }
+    evidence = {
+        "document_write": grant,
+        "document_acceptance": accepted,
+        "qualification": str(directory / "qualification.json"),
+        "quality": {"operation_outcome": "pass", "raw_verdict": "PASS"},
+    }
+    (directory / "semantic-evidence.json").write_text(json.dumps(evidence))
+    observation = {
+        "root": {
+            "turns": [
+                {"items": [{"type": "userMessage", "text": json.dumps(value)}]}
+                for value in (grant, accepted)
+            ]
+        }
+    }
+    monkeypatch.setattr(cases, "prerequisites", lambda *_: {})
+    monkeypatch.setattr(gate, "discover", lambda *_args, **_kwargs: None)
+
+    def invoke(*_args, **_kwargs):
+        (repository / "design.md").write_bytes(b"Applied design")
+        return "fixture-native-thread"
+
+    monkeypatch.setattr(gate, "invoke", invoke)
+    monkeypatch.setattr(native_observation, "collect", lambda *_: observation)
+    monkeypatch.setattr(cases, "reports", lambda *_: {})
+    monkeypatch.setattr(cases, "leaf_delivery", lambda *_: {})
+    monkeypatch.setattr(cases, "checkpoint", lambda *_args, **_kwargs: {})
+    monkeypatch.setattr(gate, "verify_settlement", lambda *_: None)
+    if wrong_epic:
+        with pytest.raises(gate.GateError, match="another work unit"):
+            cases.run(gate, request, tmp_path)
+    else:
+        assert cases.run(gate, request, tmp_path)["outcome"] == "pass"
