@@ -78,10 +78,30 @@ ad-hoc runs, retain the selected argv and compare it with the summary's redacted
 establish its argv. If the argv differs, or redaction prevents verifying a
 relevant argument and no other evidence binds it, leave the check unverified.
 
-For a log larger than 256 KiB, extraction scans only complete lines in the final
-256 KiB and reports `extractor_status: degraded`. Failures before that window
-may be absent from the summary. Zero extracted failures does not prove the log
-contains none, and this evidence limit does not change the child result.
+Gaori v0.1.20 analyzes the complete raw log in runs and `summarize`, including
+failures before the final 256 KiB. Log size alone does not degrade extraction.
+`degraded` reports a non-pass result without an accepted failure span, an
+extraction internal error, or truncated summary records. Zero retained failures
+still does not prove that the log contains no failure signal.
+
+Capture and summarize inference use bounded memory; extraction and excerpt
+materialization analyze the complete log, so memory grows with input size.
+Allow disk space for the complete raw artifact and, for `summarize`, its owned
+copy. Historical bounded-memory measurements do not qualify this behavior.
+Summary and excerpt limits remain in force, and raw logs remain potentially
+unredacted local evidence.
+
+For an explicitly selected existing log, delegate full-log parser detection and
+analysis to `$use-gaori`. Detection observes candidates; the caller still selects
+the parser. `summarize` infers status from log content and exits zero on successful
+analysis, which does not establish the original command's exit code. Preserve
+known artifacts instead of rerunning a command or cutting its log to fit the
+former analysis window.
+
+Status signature hashes now match decoded summary signatures even when their
+source contains invalid UTF-8. Consume the native artifacts for summary-based
+proposals and run insights; preserve provenance failures for older evidence
+instead of repairing hashes or claiming that an upgrade rewrote old runs.
 
 A Gaori `internal_error`, lost outcome, or unavailable required evidence cannot
 be reported as successful verification merely because a child may have exited

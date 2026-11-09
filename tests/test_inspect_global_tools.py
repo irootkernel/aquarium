@@ -262,7 +262,14 @@ class TestInspectGlobalTools:
 
     @pytest.mark.parametrize(
         ("version", "supported"),
-        [("v0.1.17", False), ("v0.1.18", True)],
+        [
+            ("v0.1.18", False),
+            ("v0.1.19", False),
+            ("v0.1.20", True),
+            ("v0.1.21", True),
+            ("v0.1.20-rc.1", False),
+            ("v0.2.0", False),
+        ],
     )
     def test_gaori_global_version_floor(self, version: str, supported: bool) -> None:
         executable = self.bin_directory / "gaori"

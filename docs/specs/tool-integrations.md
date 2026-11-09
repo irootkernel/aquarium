@@ -9,7 +9,7 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 | Herdr | Supervises a fresh requested static reviewer in the current local session | `>=v0.9.3`, no upper bound | Separately installed upstream `herdr` skill; selected-route caller context | Native compatibility, client, server, skill and reviewer readiness are separate; complete output and submission/activity correlation are required |
 | Sanho | Commit inspection and optional documentation synchronization | Stable `v0.2.10` through `v0.2.x` | Matching optional `use-sanho` skill | CLI, skill, workspace enrollment, doctor state, and synchronization authority are independent |
 | Mulgae | Multi-provider static review and structured finding projection | Stable `>=v0.1.26` | Native Apple Silicon macOS; Go `1.27.1+` only for installation | CLI, native configuration, provider readiness, MCP scope, source evidence publication, findings query, and extraction quality are separate |
-| Gaori | Runs existing checks and compresses their output | Stable `v0.1.18` through `v0.1.x` | Repository tester schema v2 when configured | Child exit status is pass/fail authority; parser and summary quality do not create a gate |
+| Gaori | Runs existing checks and compresses their output | Stable `v0.1.20` through `v0.1.x` | Repository tester schema v2 when configured | Child exit status is pass/fail authority; parser and summary quality do not create a gate |
 | Sorage | Brokers local Handoffs, Project Memos and Channels | Stable `v0.1.3` through `v0.1.x` | Native Apple Silicon macOS; matching optional `use-sorage` skill | CLI, initialization, Vault health, Project binding, skill, ignore state, and broker authority remain distinct |
 | Podway | Records Git-backed workflow goals, transitions, handoffs, and session lifecycle | Stable `>=v0.2.16`, no upper bound | Native Apple Silicon macOS; single Direct CLI | CLI identity, workspace, managed Procedures, current session, and optional skill are separate readiness axes |
 | Ouroboros | Supplies interview, PM, Seed, and QA leaves for explicit design workflows | Stable `>=0.51.1` | Existing `uv`; exact package version for installation | CLI, Codex rules and skills, MCP runtime, effective registration, and live exposure are independent |
@@ -117,6 +117,19 @@ Aquarium production-binary readiness requires supported global Podway, Mulgae, a
 Mulgae review is advisory. Embedded and standalone callers supply the shared purpose and Review Brief while the loaded `$use-mulgae` skill owns native source admission, execution, waiting, publication reconciliation, publication, and retention. Aquarium preserves one started operation and does not add a status-polling or liveness loop. It requires complete selected-role coverage, passing CI decision, committed publication, a successful findings query, zero locally verified unresolved findings, and no unmet or unverified completion criterion before approving completion.
 
 Gaori is optional evidence compression around a repository-owned command. The agent performing the check loads `use-gaori`, which owns native execution and waiting. Its independent `use-gaori-status` skill explains native read-only statistics and estimates; a timing query preserves an existing await and does not create a recurring observation loop. The [Gaori integration contract](../../plugins/aquarium/references/gaori-integration.md) separates the authorized command result, Gaori execution and extraction status, and Aquarium acceptance. Extraction quality does not rewrite a child result, but an internal error or missing required evidence cannot establish successful verification.
+
+Gaori v0.1.20 covers complete logs in runs, summarize, parser detection,
+rule tests and redaction samples. Size alone does not degrade extraction;
+record truncation and extraction failures still limit evidence. Analysis memory
+grows with input size while summary and excerpt output stays bounded. Config and
+rule YAML and legacy proposal selections retain their native size limits.
+Status signature hashes match decoded summary signatures for malformed UTF-8,
+allowing native proposal and insights consumers to verify current artifacts.
+CLI and both paired skills use the same selected release; old artifacts retain
+their original provenance and are not repaired by an upgrade. Existing users
+must update from earlier versions before relying on this contract. Installed
+skill functionality and UTM qualification remain separate from source checks
+and the disposable native compatibility target in `TESTING.md`.
 
 Herdr Review uses one fresh explicitly requested native reviewer in the current local Herdr session. It accepts staged, HEAD, commit and range targets through the shared static contract; workspace and dirty remain unsupported. The upstream skill owns pane and agent operations, prompt submission, waiting, output and recovery. Admission requires actual reviewer identity, submission/activity correlation, applicable target and Brief, and a complete purpose-specific report. Timeout, stalled submission or unknown state preserves that operation; never blindly resend or replace it. Close only the pane this review created after successful admission and evidence recording. Reports keep findings, criterion assessment, verification gaps, operational deviations and native operation status separate, with `backend-check-result=not-provided`. Source and Git state remain read-only; permitted external or Git-ignored review output is a review aid. The migration contract owns selected-route setup and preserved legacy state; structural validation does not establish observed native/manual qualification.
 

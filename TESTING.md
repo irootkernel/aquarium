@@ -17,6 +17,7 @@ Ruby and Python validation is limited to objective package structure and executa
 - Integration tests: `make test-int`
 - End-to-end tests: `make test-e2e`
 - Exact Podway v0.2.16 compatibility: `PODWAY_BIN=<absolute-path> make test-podway-compat`
+- Exact Gaori v0.1.20 compatibility: `GAORI_BIN=<absolute-physical-path> make test-gaori-compat`
 - Exact Sanho v0.2.10 compatibility: `SANHO_BIN=<absolute-physical-path> make test-sanho-compat`
 - Explicit manual guest acceptance: `AQUARIUM_VM_REQUEST=<absolute-request-path> make test-vm`
 
@@ -439,6 +440,48 @@ Keep candidate installation in the dedicated VM, complete development behavior
 separate from release startup smoke, and VM collection out of ordinary admission.
 Report actual observations and unperformed cases separately; source and helper
 success cannot establish installed adaptive functionality.
+
+## Gaori native compatibility
+
+Run `GAORI_BIN=<absolute-physical-executable> make test-gaori-compat` when
+changing Gaori support, its adapter or the documented analysis handoffs. This
+explicit target is outside ordinary `make test`. It requires exact v0.1.20,
+never downloads, builds or installs a tool, and records the copied executable's
+SHA-256. Record the verified source commit alongside that digest; a version
+string alone does not prove source identity.
+
+Build from the official `v0.1.20` commit
+`671b08e79d5fd8424e44d2b98864484178d2480e` using Go 1.27.1 or newer. Use a Git
+archive of that exact commit in a unique physical `/tmp` directory, with private
+`GOPATH`, `GOMODCACHE`, `GOCACHE`, `GOTMPDIR` and `TMPDIR`, plus `GOENV=off`,
+`GOWORK=off` and `GOTOOLCHAIN=local`. Build `./cmd/gaori` with `go build -trimpath`
+and an explicit output path. Dependency downloads require their own network
+authority. Use `GOFLAGS=-modcacherw` so the owned module cache can be removed
+with the rest of the build directory. Install nothing on PATH.
+
+The runner uses a private home and disposable repository/config/rules under
+`/tmp`, then removes its own fixtures. An owned enclosing Git repository checks
+that the fixture does not inherit ancestor provenance or change its index;
+`GIT_CEILING_DIRECTORIES` and `GIT_OPTIONAL_LOCKS=0` bound native Git probes.
+It covers Aquarium's actual version/config adapter; configured and ad-hoc
+execution; summarize's inferred result; early,
+middle and late failures in a log larger than 256 KiB; raw digests, absolute spans
+and redacted excerpts; full-log detection and redaction sampling without new
+artifacts; passing large logs and actual record truncation; malformed UTF-8
+failure/warning hashes and native proposal/insights consumption; full-log rule
+overmatch detection; and rejection of an oversized legacy proposal selection
+without writing a proposal. It uses synthetic logs rather than repository tests,
+credentials, provider requests or previous runtime evidence. It measures no
+memory ceiling and makes no constant-memory claim.
+
+Installed manual verification remains separate: in the dedicated UTM VM,
+verify fresh discovery of both matching skills, command and transport selection,
+large-log interpretation, existing-log diagnosis, rule/sample handoffs and status
+queries through the native skills. Keep start-once/await behavior and MCP binding
+checks intact. These cases require explicit VM-test authority and Master's
+functional observations; the compatibility target does not qualify them or
+change the host installation. The minimum-version increase requires this
+installed verification before release.
 
 ## Sanho native compatibility
 

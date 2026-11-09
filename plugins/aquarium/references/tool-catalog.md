@@ -370,9 +370,9 @@ Verify configuration, provider readiness, skill files, and MCP registration only
 
 Official source: `https://github.com/irootkernel/gaori`
 
-Supported release line: stable `v0.1.18` through `v0.1.x`. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-gaori` and `use-gaori-status` skills. Do not automatically cross into `v0.2+`. CLI JSON reports exactly `name` and a `v`-prefixed `version`; it no longer carries source commit identity. MCP `serverInfo.version` uses the internal version representation. Development producer manifests retain their separate exact source commit and executable checksum identities. Verify each transport independently: a CLI on PATH does not prove the attached server version, and a missing CLI does not disable connected MCP execution. If host initialization metadata is unavailable, report the MCP version as unverified and follow the requesting repository's pinned-tool policy.
+Supported release line: stable `v0.1.20` through `v0.1.x`. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-gaori` and `use-gaori-status` skills. Do not automatically cross into `v0.2+`. CLI JSON reports exactly `name` and a `v`-prefixed `version`; it no longer carries source commit identity. MCP `serverInfo.version` uses the internal version representation. Retained manifests from the historical development producer carry their original source commit and executable checksum identities; they do not describe a producer supplied by the supported release. Verify each transport independently: a CLI on PATH does not prove the attached server version, and a missing CLI does not disable connected MCP execution. If host initialization metadata is unavailable, report the MCP version as unverified and follow the requesting repository's pinned-tool policy.
 
-Building Gaori v0.1.18 from source requires Go 1.27.1 or newer. Check the available toolchain before proposing `go install`.
+Building Gaori v0.1.20 from source requires Go 1.27.1 or newer. Check the available toolchain before proposing `go install`.
 
 Install an approved tag:
 
@@ -402,7 +402,17 @@ Gaori is an optional execution and evidence-compression wrapper; it does not cre
 !.gaori/tester/rules/*.yaml
 ```
 
-This keeps `.gaori/toolchain.yaml`, `.gaori/rule-proposals/`, `.gaori/runs/`, and every other Gaori path local. Active rule YAML is executable extraction policy: do not create, update, stage, or commit it without the user's specific intent and review. Validate approved config or rule changes with `gaori --json config check`. When approved redaction patterns change and the user has explicitly selected an existing raw log no larger than 256 KiB, use `gaori --json config check --sample <raw-log>` to report ordered match and replaced-byte counts without emitting matched text or pattern definitions. Do not run configured tests during setup.
+This keeps `.gaori/toolchain.yaml`, `.gaori/rule-proposals/`, `.gaori/runs/`, and every other Gaori path local. Active rule YAML is executable extraction policy: do not create, update, stage, or commit it without the user's specific intent and review. Validate approved config or rule changes with `gaori --json config check`. When approved redaction patterns change and the user has explicitly selected an existing raw log, use `gaori --json config check --sample <raw-log>` to report ordered match and replaced-byte counts without emitting matched text or pattern definitions. Do not run configured tests during setup.
+
+Gaori v0.1.20 analyzes complete logs in runs, `summarize`, parser detection,
+rule tests and redaction samples. Analysis memory grows with input size; surfaced
+summaries and excerpts retain their native limits. Config and rule YAML remain
+limited to 256 KiB. Legacy `rules propose --raw-log` accepts a source of any size
+but requires a selected span of 1 to 256 KiB of original bytes. Keep rule
+proposals local until explicitly reviewed and activated through `$use-gaori`.
+Existing users must update the CLI and verify both complete paired-skill trees
+against the same release. Removed aquarium-dev producer targets are not an
+installation route; shared host retirement remains separately authorized.
 
 Leave completed evidence and proposal reconciliation to the matching `use-gaori` skill. Its `gaori --json runs list`, `gaori --json rules proposals`, and `gaori rules show --proposal <name>` paths are read-only discovery, not repair, activation, command reruns, or durable job recovery. Never inspect prior run contents or raw logs automatically during setup.
 

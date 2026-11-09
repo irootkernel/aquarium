@@ -1010,7 +1010,7 @@ def supported_gaori_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(rf"v?0\.1\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 18)
+    return bool(match and int(match.group(1)) >= 20)
 
 
 def canonical_numeric_components_at_least(

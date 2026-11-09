@@ -15,6 +15,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Require Gaori v0.1.20 or newer in the v0.1.x line and its matching skills; use complete-log analysis whose memory grows with log size, retain native evidence limits, and add an isolated compatibility target. Existing users must update from earlier versions.
+
 - Require Sanho v0.2.10 or newer in the v0.2.x line; existing users must update the CLI and verify the matching `use-sanho` skill. Guide conditional inspection and recovery through that skill, and keep retirement of removed development-channel integration separate from ordinary setup.
 
 - Apply new-feature design documents within the requested scope for working-tree review and final content acceptance without a separate diff-application approval. New Design sessions require the updated managed Procedure; finish active sessions under their retained contract before upgrading. Provider, clipboard and commit authority remain separate.
