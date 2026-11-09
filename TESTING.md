@@ -17,6 +17,7 @@ Ruby and Python validation is limited to objective package structure and executa
 - Integration tests: `make test-int`
 - End-to-end tests: `make test-e2e`
 - Exact Podway v0.2.16 compatibility: `PODWAY_BIN=<absolute-path> make test-podway-compat`
+- Exact Sanho v0.2.10 compatibility: `SANHO_BIN=<absolute-physical-path> make test-sanho-compat`
 - Explicit manual guest acceptance: `AQUARIUM_VM_REQUEST=<absolute-request-path> make test-vm`
 
 The aggregate uses recursive Make recipe calls in prepare, unit, integration, and E2E order. It stops on the first failure and retains that order under parallel Make. Every handler is non-interactive: Make disables inherited pagers, clears inherited `PYTEST_ADDOPTS`, pytest ignores user-installed plugin entry points, and whitespace validation invokes Git with `--no-pager`. The repository selects `.venv/bin/python` when present, otherwise `python3`. It selects `.venv/bin/ruff` independently when present, otherwise `ruff`; command-line overrides cannot replace those identities.
@@ -438,6 +439,71 @@ Keep candidate installation in the dedicated VM, complete development behavior
 separate from release startup smoke, and VM collection out of ordinary admission.
 Report actual observations and unperformed cases separately; source and helper
 success cannot establish installed adaptive functionality.
+
+## Sanho native compatibility
+
+Run `SANHO_BIN=<absolute-physical-executable> make test-sanho-compat` explicitly
+with Sanho v0.2.10 built from the verified official tag. Sanho publishes through
+Go installation rather than release binary assets. Record the source commit
+and the runner's executable digest together; the version string alone does not
+prove source identity. This target never downloads, builds or installs Sanho
+and is outside ordinary `make test`. Run it when changing Sanho support,
+its adapter, the compatibility runner or the documented operation handoffs.
+
+To prepare an isolated executable from a verified checkout, use Go 1.27+ and
+the following subshell from the Aquarium root. Replace the checkout placeholder;
+the command verifies the exact release commit before executing its source.
+The build may fetch public Go dependencies into the owned module cache, so
+perform it only with the appropriate network authorization. It installs nothing
+on PATH and removes only its own temporary directory when finished.
+`-modcacherw` keeps newly downloaded module directories writable for that cleanup.
+
+```sh
+(
+  set -eu
+  sanho_source=/absolute/path/to/verified/sanho
+  sanho_commit=510ac3fd3c200c6bc3402f80ed1914ec931eabd1
+  test "$(git -C "$sanho_source" rev-parse 'v0.2.10^{}')" = "$sanho_commit"
+  printf 'Sanho source: %s\n' "$sanho_commit"
+  sanho_tmp="$(mktemp -d /tmp/aquarium-sanho-build.XXXXXX)"
+  sanho_tmp="$(cd "$sanho_tmp" && pwd -P)"
+  trap 'rm -rf "$sanho_tmp"' EXIT
+  mkdir -p "$sanho_tmp/source" "$sanho_tmp/scratch"
+  git -C "$sanho_source" archive "$sanho_commit" | tar -x -C "$sanho_tmp/source"
+  (
+    cd "$sanho_tmp/source"
+    env GOENV=off GOWORK=off GOTOOLCHAIN=local GOFLAGS=-modcacherw GO111MODULE=on \
+      GOPATH="$sanho_tmp/gopath" GOMODCACHE="$sanho_tmp/modules" \
+      GOCACHE="$sanho_tmp/build" GOTMPDIR="$sanho_tmp/scratch" \
+      TMPDIR="$sanho_tmp/scratch" \
+      go build -trimpath -o "$sanho_tmp/sanho" ./cmd/sanho
+  )
+  SANHO_BIN="$sanho_tmp/sanho" make test-sanho-compat
+)
+```
+
+The physical path from `pwd -P` is required; on macOS it is normally under
+`/private/tmp`. Record the source commit together with the runner digest of the
+copied executable, calculated before execution.
+
+The runner uses private homes, isolated Git configuration and disposable local
+application/canonical remotes under `/tmp`. A fixture Git wrapper enforces config
+isolation even when adapter probes strip inherited Git variables; a conflicting
+fixture-home configuration and wrapper activity check exercise that boundary.
+The wrapper records parent process IDs so native child calls are distinguished
+from Aquarium's direct configuration probes.
+The result records the selected Git version. It covers actual status/doctor
+normalization, informational checks, warnings, foreign hook preservation and
+execution, local commits, blocked preview/push, conflict inspection, typed refusal,
+inspection availability, continue, publication to both remotes, log/show provenance
+and content, and `check --require-published`. Its informational-doctor case uses
+synthetic base-state drift from Sanho's released regression fixture; this setup
+is never recovery advice for a real workspace. Temporary data is removed on
+success or failure. The target reports failures rather than successful skips.
+
+These native CLI checks do not evaluate an installed agent's skill decisions.
+Candidate installation and manual skill verification remain separate UTM work,
+and do not complete TASK-095 or shared host retirement.
 
 ## Test Frameworks
 

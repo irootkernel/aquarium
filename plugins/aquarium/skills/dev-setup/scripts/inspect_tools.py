@@ -996,7 +996,7 @@ def supported_sanho_version(version: str | None) -> bool:
     if not version:
         return False
     match = re.fullmatch(rf"v?0\.2\.({CANONICAL_NUMERIC_COMPONENT})", version)
-    return bool(match and int(match.group(1)) >= 9)
+    return bool(match and int(match.group(1)) >= 10)
 
 
 def supported_dolgorae_version(version: str | None) -> bool:
@@ -1533,7 +1533,7 @@ def normalize_sanho_doctor(probe: dict[str, Any]) -> dict[str, Any]:
             isinstance(check, dict)
             and isinstance(check.get("name"), str)
             and bool(check["name"])
-            and check.get("severity") in {"ok", "warning", "error"}
+            and check.get("severity") in {"ok", "info", "warning"}
             for check in checks
         )
         if checks_valid:

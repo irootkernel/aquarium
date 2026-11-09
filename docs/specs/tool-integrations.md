@@ -7,7 +7,7 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 | Codex | Coordinator agent runtime, plugin host, goals, MCP registrations, and hooks | Host-provided supported Codex | Repository and user configuration | Plugin availability, trusted hook state, goals, and MCP exposure remain distinct |
 | Dolgorae | Explicit setup and delegated operations; Subagent Review does not use Dolgorae | Stable `v0.1.2` through `v0.1.x` | Optional native Apple Silicon macOS CLI; same-release `use-dolgorae` skill for delegated operations | CLI, paired skill, platform, file safety, version, and capabilities remain distinct |
 | Herdr | Supervises a fresh requested static reviewer in the current local session | `>=v0.9.3`, no upper bound | Separately installed upstream `herdr` skill; selected-route caller context | Native compatibility, client, server, skill and reviewer readiness are separate; complete output and submission/activity correlation are required |
-| Sanho | Commit inspection and optional documentation synchronization | Stable `v0.2.9` through `v0.2.x` | Matching optional `use-sanho` skill | CLI, skill, workspace enrollment, doctor state, and synchronization authority are independent |
+| Sanho | Commit inspection and optional documentation synchronization | Stable `v0.2.10` through `v0.2.x` | Matching optional `use-sanho` skill | CLI, skill, workspace enrollment, doctor state, and synchronization authority are independent |
 | Mulgae | Multi-provider static review and structured finding projection | Stable `>=v0.1.26` | Native Apple Silicon macOS; Go `1.27.1+` only for installation | CLI, native configuration, provider readiness, MCP scope, source evidence publication, findings query, and extraction quality are separate |
 | Gaori | Runs existing checks and compresses their output | Stable `v0.1.18` through `v0.1.x` | Repository tester schema v2 when configured | Child exit status is pass/fail authority; parser and summary quality do not create a gate |
 | Sorage | Brokers local Handoffs, Project Memos and Channels | Stable `v0.1.3` through `v0.1.x` | Native Apple Silicon macOS; matching optional `use-sorage` skill | CLI, initialization, Vault health, Project binding, skill, ignore state, and broker authority remain distinct |
@@ -49,6 +49,28 @@ MCP registration correctness does not prove that the active Codex session has re
 A v2 bundle target may also declare whether Mulgae's `artist` role is required. `true` requires artist alongside the six non-UI roles; `false` requires those six without artist. Setup compares the effective role selection with that intent and proposes a native configuration change under its existing approval boundary. The manifest does not select providers, models, credentials, or role assignments.
 
 Sorage supports optional global or repository-local STDIO MCP registration using the selected `sorage mcp` executable. Bundle v2 accepts Sorage in both MCP scope lists. The native release-matched skill owns explicit Handoff, Memo and Channel operations, preferring exposed MCP with same-context CLI fallback. Registration does not prove active tool exposure or authorize broker work.
+
+## Sanho operation guidance
+
+The [Sanho catalog](../../plugins/aquarium/references/tool-catalog.md#sanho)
+owns setup and response handling. The complete release-matched `use-sanho`
+skill owns operation and recovery details. v0.2.10 removes the development
+producer targets without adding product commands; existing host selections
+still need separate Aquarium-owned retirement.
+
+| Situation | Aquarium handoff |
+| --- | --- |
+| Authorized commit | Follow the paired skill's commit workflow: local status, actual Git outcome and post-hook HEAD; a freshness warning never justifies repeating a successful commit. |
+| Authorized push | Refresh status and follow native recovery within the existing target and effects. Check application and canonical publication separately after a failure. |
+| Publication prediction | Use optional `preview`; inspect `blocked` and `verdict` even at exit 0. A cached verdict does not predict a later fetch. |
+| Active or uncertain sync | Load the skill's inspection reference for conditional `sync --inspect`. Stop on `inspection_unavailable`; do not strip the flag or change filters to bypass it. |
+| Conflict recovery | Consume typed `reason`, lossless `paths` and `recovery_id`. Within the existing authorization, follow resolve, stage, commit and continue, omitting completed steps; exit 0 with conflicts is unfinished work. |
+| Provenance or recovery candidate | Load inspection guidance for `log` and `show`; preserve cached/refreshed distinctions and `source: null` for external commits. |
+| Readiness diagnosis | Accept doctor `info` as valid information; warnings still degrade readiness. Keep committed-tree preview separate from current worktree readiness. |
+
+Do not add these diagnostics to routine editing or require every optional
+command at every Git boundary. Keep initialization, destructive recovery,
+host retirement and publication within their respective authorization.
 
 ## Sorage Readiness
 

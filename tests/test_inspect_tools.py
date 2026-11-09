@@ -277,7 +277,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
     def install_fake_tools(
         self,
         malformed_sanho: bool = False,
-        sanho_version: str = "v0.2.9",
+        sanho_version: str = "v0.2.10",
         sanho_doctor_warnings: int = 0,
         mulgae_version: str = "v0.1.26",
         mulgae_output_schema: str = "mulgae-command-result.v23",
@@ -3225,7 +3225,7 @@ else:
         self.assertNotIn("secret-value", completed.stdout)
         self.assertNotIn("credential: hidden", completed.stdout)
         tools = json.loads(completed.stdout)["tools"]
-        self.assertEqual(tools["sanho"]["version"], "v0.2.9")
+        self.assertEqual(tools["sanho"]["version"], "v0.2.10")
         self.assertTrue(tools["sanho"]["version_supported"])
         self.assertEqual(tools["sanho"]["status"], "configured")
         self.assertFalse(tools["sanho"]["agent_skill"]["present"])
@@ -6538,10 +6538,18 @@ else:
             ("v0.2.8", False, "degraded"),
             ("0.2.8", False, "degraded"),
             ("v0.2.8-rc.1", False, "degraded"),
-            ("v0.2.9", True, "configured"),
-            ("0.2.9", True, "configured"),
+            ("v0.2.9", False, "degraded"),
+            ("0.2.9", False, "degraded"),
             ("v0.2.9-rc.1", False, "degraded"),
+            ("v0.2.10", True, "configured"),
+            ("0.2.10", True, "configured"),
+            ("v0.2.10-rc.1", False, "degraded"),
+            ("v0.2.10+build.1", False, "degraded"),
+            ("v0.2.11", True, "configured"),
             ("v0.2.99", True, "configured"),
+            ("v0.2.110", True, "configured"),
+            ("v0.2.010", False, "degraded"),
+            ("not-a-version", False, "degraded"),
             ("v0.3.0", False, "degraded"),
         )
         self.repository.joinpath(".sanho.json").write_text("{}\n", encoding="utf-8")
@@ -6553,15 +6561,14 @@ else:
                 sanho = json.loads(self.inspect().stdout)["tools"]["sanho"]
                 self.assertEqual(sanho["version_supported"], supported)
                 self.assertEqual(sanho["status"], status)
-                if version in {"v0.2.8", "v0.2.9"}:
-                    global_sanho = json.loads(self.inspect_global().stdout)["tools"][
-                        "sanho"
-                    ]["cli"]
-                    self.assertEqual(global_sanho["version_supported"], supported)
-                    self.assertEqual(
-                        global_sanho["status"],
-                        "installed" if supported else "degraded",
-                    )
+                global_sanho = json.loads(self.inspect_global().stdout)["tools"][
+                    "sanho"
+                ]["cli"]
+                self.assertEqual(global_sanho["version_supported"], supported)
+                self.assertEqual(
+                    global_sanho["status"],
+                    "installed" if supported else "degraded",
+                )
 
         for executable in self.bin_directory.iterdir():
             executable.unlink()
@@ -7948,6 +7955,37 @@ else:
 
         self.assertFalse(duplicate["ok"])
         self.assertEqual(duplicate["error_code"], "invalid_json")
+
+    def test_sanho_doctor_severities_follow_native_contract(self) -> None:
+        for severity, warnings, valid in (
+            ("ok", 0, True),
+            ("info", 0, True),
+            ("warning", 1, True),
+            ("warning", 0, False),
+            ("info", 1, False),
+            ("error", 0, False),
+        ):
+            with self.subTest(severity=severity, warnings=warnings):
+                result = inspect_tools.normalize_sanho_doctor(
+                    {
+                        "attempted": True,
+                        "ok": True,
+                        "exit_code": 0,
+                        "timed_out": False,
+                        "result": {
+                            "warnings": warnings,
+                            "checks": [
+                                {
+                                    "name": "base-derivation",
+                                    "severity": severity,
+                                    "detail": "private synthetic detail",
+                                }
+                            ],
+                        },
+                    }
+                )
+                self.assertEqual(result["contract_valid"], valid)
+                self.assertNotIn("private synthetic detail", json.dumps(result))
 
     def test_sanho_normalizers_emit_only_typed_aggregate_evidence(self) -> None:
         secret = "QA21_SYNTHETIC_SECRET"

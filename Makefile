@@ -146,6 +146,7 @@ PYTHON_FILES := \
 	tests/test_vm_profiles.py \
 	tests/podway_runtime_qualification.py \
 	tests/verify_podway_compatibility.py \
+	tests/verify_sanho_compatibility.py \
 	tests/unit/test_inspect_docs_unit.py \
 	tests/unit/test_aquarium_dev_contract_unit.py \
 	tests/unit/test_aquarium_dev_enrollment_unit.py \
@@ -171,7 +172,7 @@ PYTHON_FILES := \
 	tests/e2e/test_aquarium_status_cli.py \
 	tests/e2e/test_release_qa_confirmation_cli.py
 
-.PHONY: test test-requirements test-prepare test-unit test-int test-e2e test-podway-compat test-vm test-vm-host
+.PHONY: test test-requirements test-prepare test-unit test-int test-e2e test-podway-compat test-sanho-compat test-vm test-vm-host
 .PHONY: aquarium-dev-describe aquarium-dev-build
 
 aquarium-dev-describe:
@@ -212,6 +213,9 @@ test-e2e: test-requirements
 
 test-podway-compat: test-requirements
 	PODWAY_BIN="$(PODWAY_BIN)" $(PYTHON) tests/verify_podway_compatibility.py
+
+test-sanho-compat: test-requirements
+	SANHO_BIN="$(SANHO_BIN)" $(PYTHON) tests/verify_sanho_compatibility.py
 
 test-vm:
 	$(PYTHON) -B tests/vm/run_acceptance.py run

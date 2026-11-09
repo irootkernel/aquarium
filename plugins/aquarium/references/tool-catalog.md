@@ -133,9 +133,11 @@ Preparing and validating an incoming payload in a temporary location is not a ba
 
 Official source: `https://github.com/irootkernel/sanho`
 
-Supported release line: stable `v0.2.9` through `v0.2.x`. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-sanho` skill. v0.2.8 lacks local `sync --inspect`, typed sync and pull refusal details, and the corrected recovery guidance required by Aquarium. Do not automatically cross into `v0.3+`.
+Supported release line: stable `v0.2.10` through `v0.2.x`. Existing users must update the CLI and verify the matching skill. Resolve the newest non-draft, non-prerelease tag in that range. Use the same exact tag for the CLI and its optional `use-sanho` skill. v0.2.8 lacks local `sync --inspect`, typed sync and pull refusal details, and the corrected recovery guidance required by Aquarium. Do not automatically cross into `v0.3+`.
 
-Building Sanho v0.2.9 requires Go 1.27 or newer. Check the available toolchain before proposing `go install`. Sanho checks Git's `--no-lazy-fetch` and `show-ref --exists` support when an operation needs those reader controls; report an unsupported capability as an operation failure rather than treating it as empty history or documentation.
+Sanho v0.2.10 removes its Aquarium development producer and consumer-check targets; it adds no product command or JSON contract compared with v0.2.9. Use a pinned release or a checkout of the selected release tag instead of the removed producer targets. Setup does not retire existing host selections. Retirement remains a separately authorized Aquarium-owned operation; the release's [deployment guide](https://github.com/irootkernel/sanho/blob/v0.2.10/docs/deployment.md#retire-an-aquarium-development-selection) provides producer context, not Aquarium execution authority. Source removal does not establish host detachment.
+
+Building Sanho v0.2.10 requires Go 1.27 or newer. Check the available toolchain before proposing `go install`. Sanho checks Git's `--no-lazy-fetch` and `show-ref --exists` support when an operation needs those reader controls; report an unsupported capability as an operation failure rather than treating it as empty history or documentation.
 
 Install an approved tag:
 
@@ -143,7 +145,7 @@ Install an approved tag:
 go install github.com/irootkernel/sanho/cmd/sanho@<tag>
 ```
 
-The binary does not install the agent skill. Diagnose the CLI and workspace with `command -v sanho`, `sanho version --json`, `sanho status --json`, and `sanho doctor --json`; diagnose `use-sanho` independently in the Codex skill roots. Read JSON rather than inferring state from human tables or exit status alone. Doctor exits 0 when it reports warnings, so treat a positive `warnings` count as degraded even when the process succeeds. Every malformed `--json` invocation must return the stable `invalid_arguments` error envelope; parse that envelope separately from the process exit and never reinterpret it as workspace state.
+The binary does not install the agent skill. Diagnose the CLI and workspace with `command -v sanho`, `sanho version --json`, `sanho status --json`, and `sanho doctor --json`; diagnose `use-sanho` independently in the Codex skill roots. Read JSON rather than inferring state from human tables or exit status alone. Doctor accepts `ok`, `info`, and `warning` severities. Informational checks are valid and do not count as warnings. Doctor exits 0 when it reports warnings, so treat a positive `warnings` count as degraded even when the process succeeds. Every malformed `--json` invocation must return the stable `invalid_arguments` error envelope; parse that envelope separately from the process exit and never reinterpret it as workspace state.
 
 Install `use-sanho` from the complete verified `skills/use-sanho/` subtree at the selected release commit, following [Complete Paired-Skill Inventory](#complete-paired-skill-inventory). Verify `name: use-sanho` and propose the canonical target `~/.agents/skills/use-sanho`. Do not use a fixed file list as the source inventory.
 
