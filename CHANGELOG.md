@@ -4,6 +4,10 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ## v0.1.23 - Unreleased
 
+### Added
+
+- Add an Aquarium-owned Python environment managed by `dev-setup-global` for reuse across projects without changing project environments or global Python packages; existing users must prepare `aquarium-python` once after updating.
+
 ### Fixed
 
 - Verify Ouroboros Codex assets against the selected package's native installation output, including sibling-link rewriting, while retaining raw package provenance for legacy shared skills.

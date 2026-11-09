@@ -43,9 +43,9 @@ For legacy managed/admitted sessions, verify that Podway is ready before request
 
 The explicit [selected-admission path](adaptive-procedures.md#selected-admission-retention-and-recovery)
 checks compatible runtime, the exact selected source/binding, invoking entrypoint
-and selected route independently of this five-file aggregate. Its CLI needs an
-available supported Python environment with YAML and `jsonschema`; missing
-dependencies return `missing-prerequisite` without native work or installation.
+and selected route independently of this five-file aggregate. Its CLI uses the
+[shared Aquarium Python runtime](python-runtime.md); missing runtime state
+returns `missing-prerequisite` with a scoped global setup continuation, without native work or installation.
 The setup inspector loads those dependencies only for explicit selected mode.
 The selected launcher now forwards exact binding and ordinary qualification context for Task, Goal, Validation, Design and Diagnosis; changed/new bundles require current structural proof and actual ordinary suitability. Preserve
 canonical/custom/formal inspection and complete library diagnostics; unrelated

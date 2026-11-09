@@ -635,7 +635,9 @@ the order the [runbook](recipes/scenarios/release-acceptance.md) gives:
 released setups, preservation prerequisites, baseline capture, candidate
 install, skill identity over the five inventoried scopes, the
 approval-based status-runtime update through the named `dev-setup-global`
-continuation before any candidate repository setup, then managed updates,
+continuation before any candidate repository setup, the separate
+approval-based shared `aquarium-python` environment preparation through
+the same continuation, then managed updates,
 the EPIC-024 startup smokes (VM-UPGRADE-01, VM-TASK-START-01 and
 VM-EPIC-START-01 through `make test-vm`, bound to the current invocation),
 the bounded release-handler plan-readiness startup, the stale-skill failure
@@ -657,14 +659,16 @@ before rebuilding. Source originals and unrelated outputs remain in place.
 Publication stays within the 32 MiB per-archive and 256 MiB aggregate bounds,
 including interrupted retries; the controller pin is confirmed in preflight.
 Consumer cleanup checks the final inventory against the released baseline.
-It allows the retained installation, approved setup status records and native
-plugin-cache updates. It reports unrelated changes, missing entries and leftovers.
+It allows the retained installation, approved setup status records, native
+plugin-cache updates, and the candidate digest's shared Python selection,
+installer lock and environments created in recorded reply windows. Prior
+environments must remain unchanged. It reports unrelated changes, missing entries and leftovers.
 The upgraded installation remains in place.
 The suite's per-capture inventory files
 (`inventory-prior-baseline`, `inventory-post-install`, `inventory-stale-pre`,
 `inventory-stale-post`, `inventory-cleanup-before`, `inventory-post-cleanup`)
 are declared outputs, and `inventories.json` aggregates every capture across
-the phase processes. The suite's `manual.required_scenarios` are the eleven
+the phase processes. The suite's `manual.required_scenarios` are the twelve
 scenario ids of the completion record; missing observations stay
 `unobserved` and prevent PASS. The queue budget is selected from the live
 queue position before sealing (26100/52200/78300 for zero/one/two Jobs
@@ -1533,7 +1537,14 @@ closeout are recorded below; preparation alone proves no installed behavior.
 
 J-RA adds only [release-startup](recipes/scenarios/release-acceptance.md#release-startup),
 one native release-handler plan-readiness smoke with a summary and archive/manifest.
-The ten historical scenarios remain; the current manual inventory has eleven.
+The ten historical scenarios remain. With `python-runtime-approval`, the
+current manual inventory has twelve. That scenario and the existing Task/Epic
+startup scenarios are recurring release acceptance. The
+[shared Python environment](recipes/scenarios/python-runtime.md) feature cases
+are required development qualification for that change before its first
+release, and again for affected changes. They run under explicit
+candidate-bound VM-test authority, with original evidence and verified
+consumer cleanup. A J-RA PASS does not imply them.
 Existing Task/Epic `make test-vm` behavior stays intact. Full feature verification
 is not repeated inside that startup check.
 

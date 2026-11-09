@@ -13,7 +13,7 @@ Read [manifest.md](references/manifest.md), [the global setup skill](../dev-setu
 
 ## Normalize and Confirm
 
-1. Require an explicit manifest path, Python 3.10 or newer, and PyYAML 6.x. Resolve this skill's directory and run `python3 <skill-directory>/scripts/normalize_manifest.py --manifest <path>`. Do not install dependencies or parse the manifest approximately.
+1. Require an explicit manifest path. Before parsing it, use a scoped `dev-setup-global` handoff to inspect and, when approved, prepare `aquarium-python` once under the [runtime contract](../../references/python-runtime.md). This bootstrap uses only the standard library and does not read the manifest. If preparation is declined or fails, report that scoped outcome and stop before normalization. Then run `python3 -I <plugin-root>/tools/aquarium-python/runtime.py run skills/dev-setup-bundle/scripts/normalize_manifest.py --manifest <path>`. Do not install project dependencies or parse the manifest approximately. Reuse this environment during the later global setup handoff.
 2. Never create, copy, edit, stage, or commit the manifest. Preserve its absolute path and SHA-256 only for this request.
 3. Inspect applicable instructions and worktree state for every ready target. Invalid targets remain isolated failures.
 4. Show the normalized digest, ordered targets, effective tools, target MCP scopes, Sorage slug and artist intent, guidance policy, and worktree state. Confirm this exact selection before its authorized network comparisons or Sorage diagnostic side effects. A refusal stops the bundle without mutation.

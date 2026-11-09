@@ -68,6 +68,10 @@ def main():
                 {
                     "status": "missing-prerequisite",
                     "dependency": error.name,
+                    "continuation": {
+                        "skill": "aquarium:dev-setup-global",
+                        "component": "aquarium-python",
+                    },
                     "interpreter": sys.executable,
                 }
             )

@@ -10,6 +10,7 @@ Aquarium is a declarative orchestration plugin. Most product behavior is express
 | Workflow entrypoints | [`skills/`](../../plugins/aquarium/skills/) | Trigger rules, lifecycle steps, approvals, stop conditions, and handoffs |
 | Shared contracts | [`references/`](../../plugins/aquarium/references/) | Cross-skill review, evidence, design, documentation, Podway, Ouroboros, and release rules |
 | Procedure assets | [`assets/podway/procedures/`](../../plugins/aquarium/assets/podway/procedures/) | Exact project-owned Procedure v2 sources installed into target repositories |
+| Shared Python environment | [`runtime.py`](../../plugins/aquarium/tools/aquarium-python/runtime.py) | Standard-library bootstrap, user-global dependency environments and isolated helper execution; global setup owns installation |
 | Local helpers | Skill-local `scripts/` directories | Read-only inspectors, schema normalizers, publication observers, and the task commit gate |
 | Verification | [`tests/`](../../tests/) and [`Makefile`](../../Makefile) | Static invariants, unit behavior, approved legacy integration boundaries, and black-box scenarios |
 | Public product surface | Root README, privacy, terms, testing, and changelog files | Installation, user-visible behavior, disclosures, test meaning, and release history |

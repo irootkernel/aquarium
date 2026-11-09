@@ -176,6 +176,21 @@ def test_aquarium_status_component_scope_is_isolated(tmp_path, monkeypatch):
     assert inspector.method_calls == []
 
 
+def test_aquarium_python_component_is_read_only_and_scoped(tmp_path, monkeypatch):
+    inspector = mock.Mock()
+    monkeypatch.setattr(inspect_global_tools, "load_inspector", lambda: inspector)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    payload = inspect_global_tools.inspect_global(
+        str(tmp_path), 1.0, components=("aquarium-python",)
+    )
+    assert set(payload["tools"]) == {"aquarium-python"}
+    result = payload["tools"]["aquarium-python"]
+    assert result["status"] == "missing-prerequisite"
+    assert result["component"] == "aquarium-python"
+    assert not (tmp_path / ".aquarium").exists()
+    assert inspector.method_calls == []
+
+
 def test_other_component_scope_skips_aquarium_status(tmp_path, monkeypatch):
     inspector = mock.Mock()
     inspector.inspect_lora.return_value = {"status": "configured"}
@@ -302,6 +317,7 @@ class TestInspectGlobalTools:
             "ouroboros",
             "aquarium-dev",
             "aquarium-status",
+            "aquarium-python",
         }
         assert list(payload["tools"]) == list(inspect_global_tools.GLOBAL_COMPONENTS)
 

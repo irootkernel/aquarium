@@ -33,10 +33,10 @@ completion and local recovery. This adds no Evaluator, review team or Procedure 
 
 ## Offer
 
-Run an available supported Python environment with YAML and `jsonschema`:
+Run through the [shared Aquarium Python runtime](python-runtime.md):
 
 ```text
-<python> -B <plugin-root>/shared/promote_adaptive_procedure.py offer --repository <worktree> --input <closeout.json> --podway <supported-binary>
+python3 -I <plugin-root>/tools/aquarium-python/runtime.py run shared/promote_adaptive_procedure.py offer --repository <worktree> --input <closeout.json> --podway <supported-binary>
 ```
 
 `--input -` reads JSON from standard input. The ordinary closeout input contains:

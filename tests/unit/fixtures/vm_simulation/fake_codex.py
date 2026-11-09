@@ -263,6 +263,53 @@ def run_exec() -> int:
     return 2
 
 
+PYTHON_RUNTIME_APPROVAL = "Approve the proposed aquarium-python preparation."
+# Offline stand-in for the approved aquarium-python preparation: the
+# candidate's own runtime CLI runs unchanged, except that pip is replaced by
+# copies of the simulation interpreter's already installed packages.
+OFFLINE_PYTHON_INSTALL = r"""
+import importlib, runpy, shutil, subprocess, sys, venv
+from pathlib import Path
+
+runtime = sys.argv[1]
+real_run = subprocess.run
+real_create = venv.EnvBuilder.create
+
+
+def create(builder, path):
+    builder.with_pip = False
+    return real_create(builder, path)
+
+
+def run(command, *args, **kwargs):
+    if list(command[1:4]) == ["-I", "-m", "pip"]:
+        if command[4] == "install":
+            environment = Path(command[0]).parents[1]
+            site = next((environment / "lib").glob("python*/site-packages"))
+            for name in (
+                "yaml", "jsonschema", "attrs", "attr", "referencing", "rpds",
+                "jsonschema_specifications", "typing_extensions",
+            ):
+                path = Path(importlib.import_module(name).__file__)
+                if path.name == "__init__.py":
+                    shutil.copytree(
+                        path.parent,
+                        site / name,
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+                    )
+                else:
+                    shutil.copy2(path, site / path.name)
+        return subprocess.CompletedProcess(command, 0, "", "")
+    return real_run(command, *args, **kwargs)
+
+
+venv.EnvBuilder.create = create
+subprocess.run = run
+sys.argv = [runtime, "install", "--approve-install"]
+runpy.run_path(runtime, run_name="__main__")
+"""
+
+
 def read_prompt() -> str:
     return sys.stdin.read()
 
@@ -300,6 +347,29 @@ def new_turn(cwd, last_message) -> int:
         )
         close_turn(session, list(session["items"]))
         finish(session, "runtime proposal", last_message)
+        emit(
+            session,
+            [{"type": "thread.started", "thread_id": session["metadata"]["id"]}],
+        )
+        return 0
+    if "aquarium-python component" in prompt:
+        session = new_session(cwd, role="dev-setup-global-python")
+        add_item(session, {"type": "userMessage", "text": prompt})
+        add_item(
+            session,
+            {
+                "type": "agentMessage",
+                "phase": "final_answer",
+                "text": (
+                    "Proposal: prepare the shared aquarium-python environment "
+                    "under ~/.aquarium/python-runtime/ from the pinned, "
+                    "hash-checked requirements. Awaiting the operator's "
+                    "actual approval."
+                ),
+            },
+        )
+        close_turn(session, list(session["items"]))
+        finish(session, "python runtime proposal", last_message)
         emit(
             session,
             [{"type": "thread.started", "thread_id": session["metadata"]["id"]}],
@@ -352,6 +422,59 @@ def resume_session(thread_id, last_message) -> int:
         close_turn(session, session["items"][-2:])
         finish(session, "managed update completed", last_message)
         return 0
+    if session["metadata"].get("agentRole") == "dev-setup-global-python":
+        # Closed fixture sentinel, not an approval parser: any other reply,
+        # including "do not approve", leaves the proposal pending.
+        if prompt.strip() != PYTHON_RUNTIME_APPROVAL:
+            add_item(
+                session,
+                {
+                    "type": "agentMessage",
+                    "phase": "final_answer",
+                    "text": "The proposal still awaits an actual approval.",
+                },
+            )
+            close_turn(session, [session["items"][-1]])
+            finish(session, "awaiting approval", last_message)
+            return 0
+        runtime = os.path.join(
+            home,
+            ".aquarium-vm-marketplaces/artifact/plugins/aquarium/tools/"
+            "aquarium-python/runtime.py",
+        )
+        result = subprocess.run(
+            [
+                os.environ["FAKE_PYTHON_REAL"],
+                "-B",
+                "-c",
+                OFFLINE_PYTHON_INSTALL,
+                runtime,
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env={**os.environ, "HOME": home},
+        )
+        add_item(
+            session,
+            {
+                "type": "commandExecution",
+                "status": "completed",
+                "exitCode": result.returncode,
+                "command": runtime + " install --approve-install",
+            },
+        )
+        add_item(
+            session,
+            {
+                "type": "agentMessage",
+                "phase": "final_answer",
+                "text": "The approved aquarium-python preparation completed.",
+            },
+        )
+        close_turn(session, session["items"][-2:])
+        finish(session, "python runtime prepared", last_message)
+        return 0 if result.returncode == 0 else 1
     if "aquarium-status runtime" in session["items"][0].get("text", ""):
         if os.environ.get("FAKE_CODEX_RUNTIME_NO_INSTALL"):
             # Fixture-side control: the resumed turn returns without

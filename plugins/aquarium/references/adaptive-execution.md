@@ -55,16 +55,25 @@ identity, current goal, plan, approval, pending effects and remaining grants.
 After start and on every recovery boundary, run:
 
 ```bash
-python3 <installed-shared>/manage_adaptive_procedure.py context \
+python3 -I <plugin-root>/tools/aquarium-python/runtime.py run shared/manage_adaptive_procedure.py context \
   --repository <worktree> --root <approved-root> \
   --entrypoint <task-handler|epic-handler|epic-squad|epic-validator|new-feature|new-project|refactor|war-room> \
   --qualification <ordinary-context.json> --session <native-session-id> \
   --podway <supported-executable>
 ```
 
-Use an available supported interpreter with YAML and `jsonschema`. An arbitrary
-target repository's Python or an Aquarium development checkout is not a runtime
-prerequisite. `context` resolves native ID/version/digest across all approved
+Use the [shared Aquarium Python runtime](python-runtime.md) for preparation,
+qualification, admission, context and promotion helpers on the native path.
+Select opt-out and non-Git branches first: skip the helper when its result is
+already established, or invoke the public stdlib entrypoint directly as
+`python3 -E -s -B <plugin-root>/shared/prepare_adaptive_procedure.py ...` or
+`python3 -E -s -B <plugin-root>/shared/manage_adaptive_procedure.py ...` to obtain its
+`podway-inapplicable` result. Those calls require no managed environment.
+For native work, prefix each helper with
+`python3 -I <plugin-root>/tools/aquarium-python/runtime.py run` and use its
+plugin-relative script path. Missing runtime state returns the scoped global
+setup continuation; it never selects the project's Python dependencies.
+`context` resolves native ID/version/digest across all approved
 roots and revalidates current fit/suitability before returning the current native
 status, selected evidence, typed active items and mutation templates. It performs
 no progression, provider dispatch, item recording or commit.

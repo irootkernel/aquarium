@@ -19,6 +19,17 @@ Aquarium deliberately supports a defined toolchain. A healthy component never pr
 | im-not-ai | Final prose pass for Korean human-authored documentation | Stable `>=v2.3.2` | Exact selected Codex copy materialized in an isolated temporary `CODEX_HOME`, then installed in the active Codex skill root | `_workspace/` is removed after accepted text is applied; meaning and protected content must survive one fail-closed final pass |
 | Haepari | Managed local/UTM Jobs and advisory locks for Aquarium's VM verification; optional setup, with the managed release-policy path qualified by TASK-090 | Stable `v0.1.0` through `v0.1.x`; every release passes the exact archive verification the [tool catalog](../../plugins/aquarium/references/tool-catalog.md#haepari) requires | Native Apple Silicon macOS; complete same-release `use-haepari` skill | Binary, controller, resource, skill, and backend qualification are separate; compiled support is not live readiness |
 
+## Aquarium helper Python environment
+
+The [shared Python runtime contract](../../plugins/aquarium/references/python-runtime.md)
+owns `aquarium-python`, its pinned helper dependencies and the user-global
+virtual environments under `~/.aquarium/python-runtime/`. Global setup owns
+installation and repair; repository setup and adaptive workflows consume the
+matching environment without project packages. Bundle setup prepares it before
+manifest normalization. Existing users need one approved preparation after the
+plugin update. This breaking transition requires installed UTM qualification;
+source and fixture checks do not establish that result.
+
 ## Installation and Freshness
 
 Explicitly invoking `dev-setup-global` without a component list selects every supported user-global component; scoped continuations select only their named components. Automatic diagnosis includes disclosed official release, tag, and commit metadata. For Dolgorae, Sanho, Mulgae, Gaori, Sorage, Podway, and Haepari, it also includes complete Git tree metadata and commit-pinned paired-skill files in ephemeral storage. Selected Lora or Deslop includes official npm metadata for the exact `skills` installer version. This lookup authority does not cover clone, archive download, upstream-code execution, installation, replacement, initialization, Project registration, unrelated endpoints, or provider requests. The shared tool catalog owns the exact sources and comparison procedure.

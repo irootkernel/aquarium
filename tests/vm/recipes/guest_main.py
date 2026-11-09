@@ -42,6 +42,91 @@ def allowed_runtime_changes(_scope: str, path: str) -> bool:
     )
 
 
+PYTHON_RUNTIME_ROOT = ".aquarium/python-runtime"
+PYTHON_RUNTIME_TOOL = "plugins/aquarium/tools/aquarium-python"
+
+
+def python_runtime_digest(context: Context) -> str:
+    """The sealed candidate lock digest that names its environment family."""
+    return lib.sha256_file(
+        context.root / CANDIDATE_KIND / PYTHON_RUNTIME_TOOL / "requirements.txt"
+    )
+
+
+def python_environments(context: Context, digest: str) -> list[str]:
+    """Environment directories of one lock family; never follows a link."""
+    family = context.home / PYTHON_RUNTIME_ROOT / digest
+    if family.is_symlink() or not family.is_dir():
+        return []
+    return sorted(
+        entry.name
+        for entry in family.iterdir()
+        if entry.name.startswith("env-") and entry.is_dir() and not entry.is_symlink()
+    )
+
+
+def python_runtime_inspection(context: Context, cwd: Path) -> dict[str, Any]:
+    """Read-only diagnosis through the installed candidate's own runtime CLI.
+
+    The sealed and installed locks must match before the installed
+    bootstrap runs; its diagnosis creates nothing and installs nothing.
+    """
+    import subprocess
+
+    digest = python_runtime_digest(context)
+    source = context.marketplace_path(CANDIDATE_KIND) / PYTHON_RUNTIME_TOOL
+    document: dict[str, Any] = {
+        "requirements_sha256": digest,
+        "installed_source": str(source),
+        "status": None,
+    }
+    lock = source / "requirements.txt"
+    if lock.is_symlink() or not lock.is_file() or lib.sha256_file(lock) != digest:
+        document["problem"] = (
+            "the installed aquarium-python lock differs from the sealed candidate"
+        )
+        return document
+    try:
+        completed = subprocess.run(
+            [context.python, "-I", str(source / "runtime.py"), "inspect"],
+            cwd=cwd,
+            env={**os.environ, "HOME": str(context.home)},
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=300,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        document["problem"] = f"the installed runtime inspection did not run: {error}"
+        return document
+    document["exit"] = completed.returncode
+    document["stderr_tail"] = completed.stderr[-1200:]
+    try:
+        result = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        result = None
+    if not isinstance(result, dict):
+        document["problem"] = "the installed runtime inspection returned no JSON object"
+        return document
+    document["result"] = result
+    document["status"] = result.get("status")
+    if (result.get("status") == "current") != (completed.returncode == 0):
+        # A printed status never outweighs the process outcome.
+        document["problem"] = (
+            "the installed runtime inspection exit is inconsistent with its "
+            f"status ({completed.returncode}, {result.get('status')!r})"
+        )
+    environment = result.get("environment")
+    document["selected_environment"] = (
+        Path(environment).name
+        if result.get("status") == "current" and isinstance(environment, str)
+        else None
+    )
+    if result.get("requirements_sha256") != digest:
+        document["problem"] = "the inspection names another requirements digest"
+    return document
+
+
 class Context:
     """Identity first: constructing a Context never writes to the guest."""
 
@@ -1054,6 +1139,7 @@ EVIDENCE_CASES = (
     "epic-setup",
     "preservation-setup",
     "runtime-update",
+    "python-runtime-update",
     "task-startup",
     "epic-startup",
     "release-startup",
@@ -2126,7 +2212,13 @@ def evidence_members(
         )
         gaps += capture_gaps
         return members, required, gaps
-    if case in {"task-setup", "epic-setup", "preservation-setup", "runtime-update"}:
+    if case in {
+        "task-setup",
+        "epic-setup",
+        "preservation-setup",
+        "runtime-update",
+        "python-runtime-update",
+    }:
         directory = run_root / "operations" / case
         members = []
         if directory.is_dir():
@@ -2139,7 +2231,7 @@ def evidence_members(
             run_root,
             case,
             members,
-            include_last=(case == "runtime-update"),
+            include_last=case in {"runtime-update", "python-runtime-update"},
             gaps=gaps,
         )
         if case.endswith("-setup"):
@@ -2585,6 +2677,179 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
         if problem is not None:
             updated_record["problem"] = problem
         lib.write_document(results / "runtime-update.json", updated_record)
+        return 0 if approval_completed else 2
+    if phase == "python-runtime-update":
+        import run_acceptance as driver_module
+
+        record_path = results / "python-runtime-update.json"
+        if record_path.exists() or record_path.is_symlink():
+            raise lib.RecipeError(
+                "python-runtime-update record already exists; preserve the "
+                "initial record and continue with python-runtime-reply or "
+                "reconcile the existing thread instead of restarting the phase",
+                "incomplete",
+            )
+        initial_inspection = python_runtime_inspection(context, run_root)
+        if "problem" in initial_inspection:
+            raise lib.RecipeError(
+                f"aquarium-python diagnosis failed: {initial_inspection['problem']}",
+                "incomplete",
+            )
+        digest = initial_inspection["requirements_sha256"]
+        before = python_environments(context, digest)
+        prompt = (
+            "Invoke the normally discovered installed $aquarium:dev-setup-global "
+            "for only the aquarium-python component: diagnose the shared "
+            "user-global Aquarium Python environment and prepare or reuse it "
+            "for the installed plugin's requirements under its normal approval "
+            "boundary. Do not install project dependencies or change project "
+            "environments. This transaction's fixture operator is "
+            "coordinator-fixture-operator; scope authority is "
+            "epic-019-vm-test-authority. Return the concrete proposal; this "
+            "request does not accept an unseen proposal."
+        )
+        thread = driver_module.invoke(
+            runtime_request_json(), run_root, "python-runtime-update", prompt
+        )
+        after = python_environments(context, digest)
+        receipts = sorted(
+            (run_root / "operations/python-runtime-update").glob("*.invocation.json")
+        )
+        initial = json.loads(receipts[-1].read_text()) if receipts else {}
+        lib.write_document(
+            record_path,
+            {
+                "phase": "python-runtime-update",
+                "requirements_sha256": digest,
+                "initial_inspection": initial_inspection,
+                "initial_thread": thread,
+                "initial_exit": initial.get("exit"),
+                "initial_input_sha256": initial.get("input_sha256"),
+                "environments_before_initial": before,
+                "environments_created_in_initial_window": sorted(
+                    set(after) - set(before)
+                ),
+                "replies": [],
+                "note": "read NNN.last, continue with the python-runtime-reply phase",
+            },
+        )
+        return 0
+    if phase == "python-runtime-reply":
+        import run_acceptance as driver_module
+
+        record_path = results / "python-runtime-update.json"
+        recorded = lib.read_json_safe(record_path)
+        if not isinstance(recorded, dict) or not recorded.get("initial_thread"):
+            raise lib.RecipeError(
+                "python-runtime-update must precede python-runtime-reply"
+            )
+        reply_file = Path(lib.context_value("AQUARIUM_VM_REPLY_FILE"))
+        if not reply_file.is_file():
+            raise lib.RecipeError("python-runtime-reply needs the operator reply file")
+        digest = recorded.get("requirements_sha256")
+        if digest != python_runtime_digest(context):
+            raise lib.RecipeError(
+                "the recorded aquarium-python digest differs from the sealed candidate",
+                "incomplete",
+            )
+        reply_text = reply_file.read_text(encoding="utf-8")
+        before_reply = set(python_environments(context, digest))
+        invoke_error: str | None = None
+        try:
+            driver_module.invoke(
+                runtime_request_json(),
+                run_root,
+                "python-runtime-update",
+                "",
+                reply=reply_text,
+            )
+        except Exception as error:  # noqa: BLE001 - persist failed reply attempt
+            invoke_error = str(error)[-1200:]
+        receipts = sorted(
+            (run_root / "operations/python-runtime-update").glob("*.invocation.json")
+        )
+        reply_receipt = json.loads(receipts[-1].read_text()) if receipts else {}
+        after_reply = set(python_environments(context, digest))
+        created_in_reply = sorted(after_reply - before_reply)
+        before_initial = set(recorded.get("environments_before_initial", []))
+        created_in_initial = list(
+            recorded.get("environments_created_in_initial_window", [])
+        )
+        known = before_initial | set(created_in_initial)
+        for reply_record in recorded.get("replies", []):
+            if isinstance(reply_record, dict):
+                known.update(
+                    reply_record.get("environments_created_in_reply_window", [])
+                )
+        # Environments that appeared between the recorded native windows
+        # were prepared by something other than the approved workflow.
+        outside_windows = sorted(before_reply - known)
+        removed = sorted(before_initial - after_reply)
+        final_inspection = python_runtime_inspection(context, run_root)
+        selected = final_inspection.get("selected_environment")
+        initial_selected = recorded.get("initial_inspection", {}).get(
+            "selected_environment"
+        )
+        reused = selected is not None and selected == initial_selected
+        approval_completed = (
+            invoke_error is None
+            and "problem" not in final_inspection
+            and recorded.get("initial_exit") == 0
+            and reply_receipt.get("exit") == 0
+            and reply_receipt.get("thread_id") == recorded.get("initial_thread")
+            and str(reply_receipt.get("input_sha256", "")).removeprefix("sha256:")
+            == lib.sha256_file(reply_file)
+            and final_inspection.get("status") == "current"
+            and not created_in_initial
+            and not outside_windows
+            and not removed
+            and (selected in created_in_reply or reused)
+        )
+        problem = invoke_error or final_inspection.get("problem")
+        reply_entry: dict[str, Any] = {
+            "reply_thread": reply_receipt.get("thread_id"),
+            "same_thread": reply_receipt.get("thread_id")
+            == recorded.get("initial_thread"),
+            "reply_exit": reply_receipt.get("exit"),
+            "reply_input_sha256": reply_receipt.get("input_sha256"),
+            "reply_file": str(reply_file),
+            "reply_sha256": lib.sha256_file(reply_file),
+            "environments_before_reply": sorted(before_reply),
+            "environments_after_reply": sorted(after_reply),
+            "environments_created_in_reply_window": created_in_reply,
+            "final_inspection": final_inspection,
+            "selected_environment": selected,
+            "reused_selection": reused,
+            "approval_completed": approval_completed,
+        }
+        if problem is not None:
+            reply_entry["problem"] = problem
+        reply_history = [*recorded.get("replies", []), reply_entry]
+        updated_record: dict[str, Any] = {
+            **{
+                key: recorded.get(key)
+                for key in (
+                    "requirements_sha256",
+                    "initial_inspection",
+                    "initial_thread",
+                    "initial_exit",
+                    "initial_input_sha256",
+                    "environments_before_initial",
+                    "environments_created_in_initial_window",
+                )
+            },
+            "phase": "python-runtime-reply",
+            "replies": reply_history,
+            "selected_environment": selected,
+            "workflow_exit": reply_entry["reply_exit"],
+            "approval_completed": approval_completed,
+            "recipe_ran_installer": bool(outside_windows),
+            "environments_outside_windows": outside_windows,
+            "removed_prior_environments": removed,
+        }
+        if problem is not None:
+            updated_record["problem"] = problem
+        lib.write_document(record_path, updated_record)
         return 0 if approval_completed else 2
     if phase == "managed-updates":
         if fixture not in {"task", "epic", "preservation"}:
@@ -3044,6 +3309,11 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
                 and document.get("workflow_exit") == 0
                 and document.get("receipt_plugin_version") == expected_version
             ),
+            "python-runtime-update.json": lambda document: (
+                document.get("approval_completed") is True
+                and document.get("workflow_exit") == 0
+                and document.get("recipe_ran_installer") is False
+            ),
             "managed-update-task.json": lambda document: document.get("exit") == 0,
             "managed-update-epic.json": lambda document: document.get("exit") == 0,
             "managed-update-preservation.json": lambda document: (
@@ -3109,6 +3379,43 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
             )
         if skills.get("comparisons", {}).get("all_passed") is not True:
             violations.append("the retained installed skill identities do not match")
+        python_record = lib.read_json_safe(results / "python-runtime-update.json")
+        python_digest = python_runtime_digest(context)
+        python_state = python_runtime_inspection(context, run_root)
+        if (
+            "problem" in python_state
+            or python_state.get("status") != "current"
+            or python_state.get("selected_environment")
+            != python_record.get("selected_environment")
+        ):
+            violations.append(
+                "the shared Python environment is not current for the candidate "
+                "or differs from the approved selection"
+            )
+        retained = set(python_environments(context, python_digest))
+        # Only the selection, the installer lock and environments created in
+        # recorded approval windows may differ from the released baseline;
+        # prior environments stay under ordinary integrity comparison.
+        approved_environments = {
+            name
+            for reply in python_record.get("replies", [])
+            if isinstance(reply, dict)
+            for name in reply.get("environments_created_in_reply_window", [])
+            if isinstance(name, str) and re.fullmatch(r"env-[0-9a-f]{32}", name)
+        }
+        python_family = f"{PYTHON_RUNTIME_ROOT}/{python_digest}/"
+        python_allowed = {f"{python_family}current", f"{python_family}install.lock"}
+        python_prefixes = tuple(
+            f"{python_family}{name}/" for name in sorted(approved_environments)
+        )
+        for name in [
+            *python_record.get("environments_before_initial", []),
+            python_record.get("selected_environment"),
+        ]:
+            if name not in retained:
+                violations.append(
+                    f"a prior shared Python environment was removed: {name}"
+                )
         lib.assert_registration(
             context.codex,
             context.marketplace,
@@ -3130,6 +3437,13 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
                     and path in {".aquarium/status.yaml", ".aquarium/status.lock"}
                 )
                 or (
+                    scope == "user-global"
+                    and (
+                        path in python_allowed
+                        or (bool(python_prefixes) and path.startswith(python_prefixes))
+                    )
+                )
+                or (
                     scope == "shared-agents-skills"
                     and (
                         path == ".agents/skills/use-podway"
@@ -3148,7 +3462,9 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
                 "tools": tools,
                 "runtime_end_state": {
                     "selected_generation": current_name,
-                    "declared": "retain the tested Aquarium candidate, Podway v0.2.16, paired skills and selected candidate status runtime",
+                    "python_environment": python_state.get("selected_environment"),
+                    "python_requirements_sha256": python_digest,
+                    "declared": "retain the tested Aquarium candidate, Podway v0.2.16, paired skills, selected candidate status runtime and selected shared Python environment",
                 },
             },
         )
@@ -3224,6 +3540,23 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
                 "evidence_references": [
                     "results/release-acceptance/runtime-update.json",
                     "results/release-acceptance/evidence/runtime-update.tar",
+                ],
+            },
+            {
+                "id": "python-runtime-approval",
+                "status": "pass"
+                if observed(
+                    "python-runtime-update.json",
+                    lambda d: (
+                        d.get("approval_completed") is True
+                        and d.get("workflow_exit") == 0
+                        and d.get("recipe_ran_installer") is False
+                    ),
+                )
+                else "unobserved",
+                "evidence_references": [
+                    "results/release-acceptance/python-runtime-update.json",
+                    "results/release-acceptance/evidence/python-runtime-update.tar",
                 ],
             },
             {

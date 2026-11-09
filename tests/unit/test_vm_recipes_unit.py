@@ -1184,6 +1184,16 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
                 "workflow_exit": 0,
                 "receipt_plugin_version": "v0.1.21-dev.fixture",
             },
+            "python-runtime-update.json": {
+                "approval_completed": True,
+                "workflow_exit": 0,
+                "recipe_ran_installer": False,
+                "selected_environment": "env-" + "e" * 32,
+                "environments_before_initial": ["env-" + "d" * 32],
+                "replies": [
+                    {"environments_created_in_reply_window": ["env-" + "e" * 32]}
+                ],
+            },
             "managed-update-task.json": {"exit": 0},
             "managed-update-epic.json": {"exit": 0},
             "managed-update-preservation.json": {"exit": 0},
@@ -1211,10 +1221,19 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
                 ("user-global", ".aquarium/status-runtime/current"),
                 ("shared-agents-skills", ".agents/skills/use-podway/SKILL.md"),
                 ("user-global", ".aquarium/status.yaml"),
+                (
+                    "user-global",
+                    ".aquarium/python-runtime/"
+                    + "f" * 64
+                    + "/env-"
+                    + "d" * 32
+                    + "/runtime.json",
+                ),
             )
         ]
+        prior_python = len(before) - 1
         retained = copy.deepcopy(before)
-        for entry in retained[1:]:
+        for entry in retained[1:prior_python]:
             entry["sha256"] = "b" * 64
         retained.append(
             {
@@ -1224,8 +1243,27 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
                 "executable": False,
             }
         )
+        python_digest = "f" * 64
+        for relative in ("env-" + "e" * 32 + "/runtime.json", "current"):
+            retained.append(
+                {
+                    "installation_scope": "user-global",
+                    "relative_path": f".aquarium/python-runtime/{python_digest}/"
+                    + relative,
+                    "sha256": "e" * 64,
+                    "executable": False,
+                }
+            )
         variants = {"retained-upgrade": retained}
-        for name in ("content", "missing", "extra", "executable"):
+        for name in (
+            "content",
+            "missing",
+            "extra",
+            "executable",
+            "python-family",
+            "python-prior-content",
+            "python-unrecorded",
+        ):
             entries = copy.deepcopy(retained)
             if name == "content":
                 entries[0]["sha256"] = "c" * 64
@@ -1234,6 +1272,29 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
             elif name == "extra":
                 entries.append(
                     {**before[0], "relative_path": ".aquarium/unowned-leftover.txt"}
+                )
+            elif name == "python-prior-content":
+                # A pre-existing same-lock environment keeps its identity.
+                entries[prior_python]["sha256"] = "c" * 64
+            elif name == "python-unrecorded":
+                entries.append(
+                    {
+                        **before[0],
+                        "relative_path": f".aquarium/python-runtime/{python_digest}/"
+                        + "env-"
+                        + "0" * 32
+                        + "/runtime.json",
+                    }
+                )
+            elif name == "python-family":
+                # Only the candidate lock's environment family may change.
+                entries.append(
+                    {
+                        **before[0],
+                        "relative_path": ".aquarium/python-runtime/"
+                        + "0" * 64
+                        + "/current",
+                    }
                 )
             else:
                 entries[0]["executable"] = True
@@ -1262,6 +1323,23 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
             ),
             mock.patch.object(module.lib, "assert_registration"),
             mock.patch.object(
+                module, "python_runtime_digest", return_value=python_digest
+            ),
+            mock.patch.object(
+                module,
+                "python_environments",
+                return_value=["env-" + "d" * 32, "env-" + "e" * 32],
+            ) as environments,
+            mock.patch.object(
+                module,
+                "python_runtime_inspection",
+                return_value={
+                    "status": "current",
+                    "requirements_sha256": python_digest,
+                    "selected_environment": "env-" + "e" * 32,
+                },
+            ) as inspection,
+            mock.patch.object(
                 module.lib,
                 "finish",
                 side_effect=lambda _suite, outcome, _detail, **_kwargs: (
@@ -1289,10 +1367,71 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
                     )
                     observed = json.loads((root / "consumer-cleanup.json").read_text())
                     self.assertEqual(bool(observed["violations"]), expected == "failed")
+            context.snapshot.return_value = retained
+            healthy = (inspection.return_value, environments.return_value)
+            for name, inspected, listed in (
+                (
+                    "python-missing",
+                    {"status": "missing-prerequisite", "selected_environment": None},
+                    healthy[1],
+                ),
+                (
+                    "python-unapproved-selection",
+                    {**healthy[0], "selected_environment": "env-" + "d" * 32},
+                    healthy[1],
+                ),
+                ("python-prior-removed", healthy[0], ["env-" + "e" * 32]),
+            ):
+                with self.subTest(variant=name):
+                    inspection.return_value = inspected
+                    environments.return_value = listed
+                    try:
+                        code = module.run_release_acceptance(
+                            context, "consumer-cleanup", "task"
+                        )
+                    finally:
+                        inspection.return_value, environments.return_value = healthy
+                    self.assertEqual(code, 1)
+                    self.assertEqual(
+                        finish.call_args.kwargs["consumer_cleanup"], "failed"
+                    )
             baseline.unlink()
             with self.assertRaises(module.lib.RecipeError) as error:
                 module.run_release_acceptance(context, "consumer-cleanup", "task")
             self.assertEqual(error.exception.outcome, "incomplete")
+
+    def test_python_runtime_inspection_requires_a_consistent_exit(self):
+        module = self.guest_main
+        with tempfile.TemporaryDirectory(dir="/tmp") as directory:
+            root = Path(directory)
+            context = mock.MagicMock()
+            context.root = root / "job"
+            context.home = root / "home"
+            context.python = "/fixture/python"
+            installed = root / "home/marketplace/artifact"
+            context.marketplace_path.return_value = installed
+            for base in (context.root / "artifact", installed):
+                tool = base / module.PYTHON_RUNTIME_TOOL
+                tool.mkdir(parents=True)
+                (tool / "requirements.txt").write_text("pinned==1 --hash=sha256:00\n")
+            current = json.dumps(
+                {
+                    "status": "current",
+                    "environment": "/fixture/env-" + "a" * 32,
+                    "requirements_sha256": module.python_runtime_digest(context),
+                }
+            )
+            for code, expected_problem in ((0, False), (1, True), (-15, True)):
+                with (
+                    self.subTest(exit=code),
+                    mock.patch(
+                        "subprocess.run",
+                        return_value=subprocess.CompletedProcess([], code, current, ""),
+                    ),
+                ):
+                    document = module.python_runtime_inspection(context, root)
+                    self.assertEqual("problem" in document, expected_problem, document)
+                    self.assertEqual(document["exit"], code)
 
     def test_codex_identity_records_only_login_mode_from_either_stream(self):
         context = self.context_stub()

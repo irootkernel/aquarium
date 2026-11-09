@@ -130,7 +130,9 @@ class SequenceSimulationTest(unittest.TestCase):
             check=True,
         ).stdout.strip()
 
-        def plugin_tree(target: Path, version: str) -> Path:
+        def plugin_tree(
+            target: Path, version: str, python_runtime: bool = False
+        ) -> Path:
             (target / ".agents/plugins").mkdir(parents=True)
             (target / ".agents/plugins/marketplace.json").write_text(
                 json.dumps({"name": "root-kernel"})
@@ -145,6 +147,13 @@ class SequenceSimulationTest(unittest.TestCase):
             shutil.copyfile(FIXTURES / "fake_installer.py", status / "install.py")
             (status / "plugin.json").write_text(json.dumps({"version": version}))
             (status / "requirements.txt").write_text("")
+            if python_runtime:
+                # The candidate carries the real shared-runtime bootstrap.
+                shutil.copytree(
+                    REPOSITORY / "plugins/aquarium/tools/aquarium-python",
+                    plugin / "tools/aquarium-python",
+                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+                )
             assets = plugin / "assets/podway/procedures"
             assets.mkdir(parents=True)
             for procedure in (
@@ -166,7 +175,9 @@ class SequenceSimulationTest(unittest.TestCase):
             return target
 
         cls.prior = plugin_tree(cls.work / "prior", "0.1.21")
-        cls.candidate = plugin_tree(cls.work / "cand", f"0.1.21-dev.{cls.git_sha[:12]}")
+        cls.candidate = plugin_tree(
+            cls.work / "cand", f"0.1.21-dev.{cls.git_sha[:12]}", python_runtime=True
+        )
         # Committed plugin payload so the unchanged verify_candidate passes.
         # Like the real producer, the stub commits the base version and the
         # sealed candidate stamps the dev version over the committed bytes.
@@ -1610,6 +1621,10 @@ class SequenceSimulationTest(unittest.TestCase):
         self.assertEqual(
             (job / "acceptance/request.json").read_bytes(), request_before_runtime
         )
+        self._prepare_jra_python_runtime(job)
+        self.assertEqual(
+            (job / "acceptance/request.json").read_bytes(), request_before_runtime
+        )
         for fixture in ("task", "epic", "preservation"):
             self.assertEqual(
                 self._jra_run(job, "managed-updates", fixture),
@@ -1626,6 +1641,89 @@ class SequenceSimulationTest(unittest.TestCase):
             self.assertEqual(record["exit"], 0)
             self.assertEqual(record["driver_outcome"], "managed-update-observed")
         return job / "results/release-acceptance"
+
+    def _prepare_jra_python_runtime(self, job: Path) -> dict:
+        self.assertEqual(
+            self._jra_run(job, "python-runtime-update"), 0, SEQUENCE_LOG[-1]
+        )
+        reply = job / "python-runtime-reply.txt"
+        reply.write_text("Approve the proposed aquarium-python preparation.\n")
+        record_path = job / "results/release-acceptance/python-runtime-update.json"
+        self.assertEqual(
+            self._jra_run(
+                job, "python-runtime-reply", AQUARIUM_VM_REPLY_FILE=str(reply)
+            ),
+            0,
+            record_path.read_text() if record_path.is_file() else SEQUENCE_LOG[-1],
+        )
+        return json.loads(record_path.read_text())
+
+    def test_python_runtime_approval_requires_an_actual_approved_preparation(self):
+        job = self.job_root("jra-python-runtime")
+        self._reset_fake_guest_for_jra()
+        self._c10_establish_prior_for_hold("jra-python-runtime")
+        self.assertEqual(self._jra_run(job, "machine-prepare"), 0, SEQUENCE_LOG[-1])
+        self._upgrade_jra_dependency(job)
+        self.assertEqual(self._jra_run(job, "candidate-install"), 0, SEQUENCE_LOG[-1])
+        results = job / "results/release-acceptance"
+        record_path = results / "python-runtime-update.json"
+        self.assertEqual(
+            self._jra_run(job, "python-runtime-update"), 0, SEQUENCE_LOG[-1]
+        )
+        initial = json.loads(record_path.read_text())
+        family = self.home / ".aquarium/python-runtime" / initial["requirements_sha256"]
+        # Diagnosis and the proposal turn prepare nothing.
+        self.assertFalse(family.exists())
+        # A rerun keeps the create-once initial record.
+        self.assertEqual(
+            self._jra_run(job, "python-runtime-update"), 2, SEQUENCE_LOG[-1]
+        )
+        self.assertEqual(json.loads(record_path.read_text()), initial)
+        hold = job / "python-hold.txt"
+        hold.write_text("Do not approve the aquarium-python preparation yet.\n")
+        self.assertEqual(
+            self._jra_run(
+                job, "python-runtime-reply", AQUARIUM_VM_REPLY_FILE=str(hold)
+            ),
+            2,
+            SEQUENCE_LOG[-1],
+        )
+        declined = json.loads(record_path.read_text())
+        self.assertIs(declined["approval_completed"], False)
+        self.assertEqual(
+            declined["replies"][0]["final_inspection"]["status"], "missing-prerequisite"
+        )
+        self.assertFalse(family.exists())
+        approve = job / "python-approve.txt"
+        approve.write_text("Approve the proposed aquarium-python preparation.\n")
+        self.assertEqual(
+            self._jra_run(
+                job, "python-runtime-reply", AQUARIUM_VM_REPLY_FILE=str(approve)
+            ),
+            0,
+            record_path.read_text(),
+        )
+        approved = json.loads(record_path.read_text())
+        self.assertIs(approved["approval_completed"], True, approved)
+        self.assertEqual(len(approved["replies"]), 2)
+        self.assertEqual(approved["replies"][0], declined["replies"][0])
+        self.assertEqual(
+            (family / "current").read_text().strip(),
+            approved["selected_environment"],
+        )
+        # An environment prepared outside the native windows fails a later
+        # reply even when the selection itself stays healthy.
+        (family / ("env-" + "0" * 32)).mkdir()
+        self.assertEqual(
+            self._jra_run(
+                job, "python-runtime-reply", AQUARIUM_VM_REPLY_FILE=str(approve)
+            ),
+            2,
+            SEQUENCE_LOG[-1],
+        )
+        outside = json.loads(record_path.read_text())
+        self.assertIs(outside["recipe_ran_installer"], True)
+        self.assertEqual(outside["environments_outside_windows"], ["env-" + "0" * 32])
 
     def test_podway_transition_without_baseline_refuses_before_copy(self):
         job = self.job_root("jra-upgrade-no-baseline")
@@ -1716,6 +1814,25 @@ class SequenceSimulationTest(unittest.TestCase):
                 | set(runtime["generations_created_in_reply_window"])
             ),
         )
+        python = json.loads((results / "python-runtime-update.json").read_text())
+        self.assertIs(python["approval_completed"], True, python)
+        self.assertEqual(python["workflow_exit"], 0)
+        self.assertIs(python["recipe_ran_installer"], False)
+        self.assertEqual(python["initial_inspection"]["status"], "missing-prerequisite")
+        self.assertEqual(python["environments_before_initial"], [])
+        self.assertEqual(python["environments_created_in_initial_window"], [])
+        self.assertEqual(
+            python["replies"][0]["environments_created_in_reply_window"],
+            [python["selected_environment"]],
+        )
+        self.assertEqual(python["replies"][0]["final_inspection"]["status"], "current")
+        python_receipts = sorted(
+            (run_root / "operations/python-runtime-update").glob("*.invocation.json")
+        )
+        self.assertEqual(len(python_receipts), 2)
+        for path in python_receipts:
+            argv = json.loads(path.read_text())["argv"]
+            self.assertEqual(argv.count(network_override), 1, path)
         # The smoke gate runs as a subprocess without the launcher's guest
         # patch. The driver must refuse before producing an installed result.
         smoke_exit = self._jra_run(job, "startup-smokes")
@@ -1755,6 +1872,7 @@ class SequenceSimulationTest(unittest.TestCase):
         for passed in (
             "released-baseline",
             "runtime-approval",
+            "python-runtime-approval",
             "skill-identity",
             "stale-skill-failure",
             "stale-skill-restoration",
@@ -1997,7 +2115,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self.assertEqual(self._jra_run(job, "stage-evidence"), 0, SEQUENCE_LOG[-1])
         staged = json.loads((results / "stage-evidence.json").read_text())
         self.assertIs(staged["ok"], True)
-        self.assertEqual(len(staged["archives"]), 10)
+        self.assertEqual(len(staged["archives"]), 11)
         for row in staged["archives"]:
             self.assertTrue((results / f"evidence/{row['case']}.tar").is_file(), row)
             manifest = json.loads(
@@ -2048,10 +2166,23 @@ class SequenceSimulationTest(unittest.TestCase):
         self.assertIn(selected, dev_generations)
         self.assertTrue((versions / selected).exists())
         self.assertEqual(cleanup["tools"]["identity"]["result"]["version"], "v0.2.16")
+        python = json.loads((results / "python-runtime-update.json").read_text())
+        self.assertEqual(
+            cleanup["runtime_end_state"]["python_environment"],
+            python["selected_environment"],
+        )
+        self.assertTrue(
+            (
+                self.home
+                / ".aquarium/python-runtime"
+                / python["requirements_sha256"]
+                / python["selected_environment"]
+            ).is_dir()
+        )
         self.assertEqual(self._jra_run(job, "complete-template"), 0, SEQUENCE_LOG[-1])
         template = json.loads((results / "manual-complete-template.json").read_text())
         self.assertEqual({row["status"] for row in template["scenarios"]}, {"pass"})
-        self.assertEqual(len(template["scenarios"]), 11)
+        self.assertEqual(len(template["scenarios"]), 12)
 
     def test_shadowing_outcome_is_observed(self):
         job = self.job_root("jra-shadow")
@@ -2378,7 +2509,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
         staged = json.loads((results / "stage-evidence.json").read_text())
         self.assertIs(staged["ok"], False)
-        self.assertEqual(len(staged["archives"]), 10)
+        self.assertEqual(len(staged["archives"]), 11)
         for row in staged["archives"]:
             self.assertTrue((results / f"evidence/{row['case']}.tar").is_file(), row)
         startup = json.loads(
@@ -2457,7 +2588,7 @@ class SequenceSimulationTest(unittest.TestCase):
         self.assertEqual(self._jra_run(job, "stage-evidence"), 2, SEQUENCE_LOG[-1])
         staged = json.loads((results / "stage-evidence.json").read_text())
         self.assertIs(staged["ok"], False)
-        self.assertEqual(len(staged["archives"]), 10)
+        self.assertEqual(len(staged["archives"]), 11)
         self.assertEqual(self._jra_run(job, "consumer-cleanup"), 1, SEQUENCE_LOG[-1])
         self.assertEqual(
             self.result_of(job, "release-acceptance")["consumer_cleanup"], "unverified"
@@ -2635,7 +2766,7 @@ class SequenceSimulationTest(unittest.TestCase):
         staged = json.loads((results / "stage-evidence.json").read_text())
         self.assertIs(staged["ok"], False)
         by_case = {row["case"]: row for row in staged["archives"]}
-        self.assertEqual(len(staged["archives"]), 10)
+        self.assertEqual(len(staged["archives"]), 11)
         # The later cases still stage with their originals.
         for case in ("runtime-update", "task-startup", "epic-startup", "stale-skill"):
             self.assertIn(case, by_case)

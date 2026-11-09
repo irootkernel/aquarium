@@ -30,6 +30,7 @@ GLOBAL_COMPONENTS = (
     "ouroboros",
     "aquarium-dev",
     "aquarium-status",
+    "aquarium-python",
 )
 PROJECT_INSPECTOR = (
     Path(__file__).resolve().parents[2] / "dev-setup/scripts/inspect_tools.py"
@@ -542,6 +543,14 @@ def inspect_global(
             }
     if "aquarium-status" in requested_components:
         tools["aquarium-status"] = inspect_aquarium_status()
+    if "aquarium-python" in requested_components:
+        script = (
+            Path(__file__).resolve().parents[3] / "tools/aquarium-python/runtime.py"
+        )
+        spec = importlib.util.spec_from_file_location("aquarium_python_runtime", script)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        tools["aquarium-python"] = module.inspect()
     tools = {name: tools[name] for name in selected_components}
     return {
         "schema_version": SCHEMA_VERSION,

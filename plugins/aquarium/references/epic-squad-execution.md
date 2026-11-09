@@ -516,7 +516,7 @@ The Coordinator supplies the ordinary assignment, original composition, exact
 acceptance and selected grant to the pure consumer:
 
 ```bash
-python3 <installed-shared>/adaptive_squad.py \
+python3 -I <plugin-root>/tools/aquarium-python/runtime.py run shared/adaptive_squad.py \
   --repository <worktree> --handoff <ordinary-squad-commit-input.json>
 ```
 

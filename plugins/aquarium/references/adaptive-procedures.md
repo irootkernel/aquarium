@@ -230,7 +230,7 @@ means this bounded operation succeeded; exit 2 reports unresolved authority,
 `unsupported-runtime`, `runtime-failure`, input/path errors or
 `missing-prerequisite`. Native Error v2 codes remain available when the runtime
 refuses an operation. Diagnostics are returned in JSON, not mandatory report
-files. Python, PyYAML and jsonschema must exist in the selected supported helper
+files. The shared Aquarium Python runtime supplies the supported helper
 environment; this command installs nothing and assumes no target `.venv`.
 
 ## Explicit source-only composition
@@ -387,17 +387,12 @@ Binding checks cover placement references, including closeout prerequisites;
 fragment Action ports also resolve their declared native items. Cross-checking
 the shared qualifier checks binding item references against the separate native source.
 
-The helper currently requires Python and `jsonschema` from a supported
-environment. This repository supplies them through its development requirements;
-arbitrary target repositories cannot assume this checkout's `.venv` exists.
-Selected admission reports its interpreter and missing `jsonschema` or YAML
-dependency before native work. Use an available supported Python environment;
-the launcher performs no installation. The setup inspector imports adaptive
-dependencies only on its explicit selected path, preserving legacy invocations.
-All five activated families use selected runtime readiness before work. Setup
-selects an available compatible installed environment and reports missing
-prerequisites; target repositories need no development checkout. This contract
-authorizes no dependency installation or host runtime change.
+The helpers use the [shared Aquarium Python runtime](python-runtime.md).
+Preparation, qualification, selected admission and recovery run through its
+`run` command. Missing runtime state needs scoped global setup, not packages in
+the target project. Ordinary setup inspection still imports adaptive dependencies
+only on the selected path. Opted-out and non-Git paths retain their early
+standard-library branches without runtime discovery.
 
 A binding contains:
 

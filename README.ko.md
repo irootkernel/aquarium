@@ -55,7 +55,7 @@ Aquarium 플러그인 설치와 업데이트는 Codex의 플러그인 관리 기
 
 Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)하지 않습니다. `$aquarium:dev-setup-global`은 정확한 upstream source를 기준으로 user-global 도구를 진단하고 업데이트합니다. `$aquarium:dev-setup`은 canonical global skill의 존재를 신뢰하고 repository 설정과 AGENTS.md를 관리합니다. 프로젝트마다 영문 문서에는 Humanizer를, 한글 문서에는 im-not-ai를 마지막 윤문 단계로 쓸 수 있습니다. Upstream `$deslop` skill은 canonical 워크플로와 직접 phase 실행을 포함해 Task refinement가 필요한 경우에 필수입니다.
 
-Podway 기반 adaptive helper에는 PyYAML과 `jsonschema`를 갖춘 지원 Python 환경이 필요합니다. 플러그인 설치와 helper는 이 의존성을 자동 설치하지 않으므로 사용 가능한 호환 인터프리터를 선택합니다. 이 조건은 Podway opt-out이나 Git 저장소가 아닌 `new-project` 경로에는 적용되지 않습니다([Podway 설정](plugins/aquarium/references/tool-catalog.md#podway)).
+외부 패키지가 필요한 Aquarium의 Python 보조 도구는 `$aquarium:dev-setup-global`에서 준비한 사용자 공용 가상환경을 사용합니다. 여러 프로젝트에서 PyYAML과 `jsonschema`를 재사용하며 프로젝트 가상환경이나 글로벌 Python 패키지는 변경하지 않습니다. 기존 사용자는 업데이트 후 이 환경을 한 번 준비해야 합니다. 플러그인 설치만으로는 자동 설치되지 않으며 초기 실행에는 Python 3.11 이상이 필요하며 가상환경 생성에는 런타임 계약에 명시된 Apple Silicon CPython wheel 지원 범위를 따릅니다. 표준 라이브러리만 사용하는 설정 검사는 환경 준비 전에도 실행할 수 있습니다. Podway opt-out과 Git 저장소가 아닌 `new-project` 경로는 기존의 무의존 동작을 유지합니다([Python 런타임 설정](plugins/aquarium/references/python-runtime.md)).
 
 ## Development Channel
 

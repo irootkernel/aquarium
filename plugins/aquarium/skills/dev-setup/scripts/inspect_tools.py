@@ -5445,6 +5445,10 @@ def inspect_selected_podway(
             "selected_procedure": {
                 "status": "missing-prerequisite",
                 "dependency": error.name,
+                "continuation": {
+                    "skill": "aquarium:dev-setup-global",
+                    "component": "aquarium-python",
+                },
                 "interpreter": sys.executable,
             },
             "tools": {},

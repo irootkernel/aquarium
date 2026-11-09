@@ -24,7 +24,7 @@ Repository setup diagnoses managed sources from the canonical Git root using
 the exact installed plugin's inspector:
 
 ```text
-python3 <plugin-root>/skills/dev-setup/scripts/inspect_tools.py --repository <git-root> --include-podway
+python3 -I <plugin-root>/tools/aquarium-python/runtime.py run skills/dev-setup/scripts/inspect_tools.py --repository <git-root> --include-podway
 ```
 
 Use this setup probe for an authorized diagnosis or update, not at every workflow

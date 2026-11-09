@@ -937,3 +937,24 @@ AGENTS, TESTING and CHANGELOG files. Keep manual anchor/semantic review separate
 The documentation inspector's exit zero is not global PASS: retain actual status
 and diagnostics, including historic EPIC002 Cancelled UNVERIFIABLE, unwaived,
 and require no new candidate-attributable structural/roadmap/reference defect.
+
+## Shared helper Python runtime
+
+`tests/unit/test_aquarium_python_unit.py` checks isolated installer primitives
+with test-owned HOME directories and offline dependency substitutes. It covers
+read-only missing diagnosis, approval, reuse, changed locks, repair, failed
+preparation after venv creation, missing-runtime refusal, error classification,
+pip configuration isolation, concurrent installation, changed base identity,
+artifact-derived creator eligibility, reuse from newer bootstrap Python, path safety and helper execution from a non-Python project with
+conflicting imports. Global inspector tests cover the added component; adaptive
+CLI tests retain the early opt-out and missing-dependency contracts.
+
+These tests do not install a production candidate or establish skill behavior.
+Before release, qualify the exact candidate in the dedicated UTM VM under the
+[shared runtime contract](plugins/aquarium/references/python-runtime.md#upgrade-and-verification):
+follow the [installed scenario](tests/vm/recipes/scenarios/python-runtime.md) for
+first installation, reuse from multiple projects, conflicting project Python,
+repair, bundle bootstrap and actual handler startup. Retain performed and
+unperformed outcomes separately from Master's functional acceptance. This change
+adds a required one-time setup step for existing users and is breaking. Host
+installation and VM execution require their own applicable authority.

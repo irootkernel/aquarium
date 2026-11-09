@@ -20,6 +20,15 @@ The same command installs or updates. It creates an isolated Python environment 
 
 Re-run diagnosis and `~/.local/bin/aquarium-dev version`. Start a new Codex session for the plugin's MCP server. A plugin update does not update the runtime automatically; an identity mismatch requires this explicit update before the bundled MCP server can start. The existing CLI remains on its installed version. The installer does not change Git hooks, enroll checkouts, build producers, activate services, configure Codex, or change authentication. Legacy hook migration is a later, separately approved `aquarium-dev enroll` operation described in the [development contract](development-contract.md).
 
+## Aquarium Python Environment
+
+The `aquarium-python` component is owned by the exact installed plugin under
+`tools/aquarium-python/`. Read [the runtime contract](python-runtime.md) for
+standard-library diagnosis, approved installation, pinned dependencies and
+shared helper execution. It is selected by default for global setup and is a
+direct prerequisite of scoped Podway setup. Bundle setup prepares it once before
+manifest normalization, without adding a manifest tool name.
+
 ## Aquarium Production Status
 
 Source: the exact installed Aquarium plugin under `tools/aquarium-status/`. Run
@@ -573,20 +582,12 @@ missing or damaged selected material stops before begin/work with no legacy
 fallback. Existing canonical/custom/formal paths retain their own contracts.
 
 This path uses the [adaptive launcher](../shared/manage_adaptive_procedure.py)
-with an available supported Python interpreter, YAML and `jsonschema`. It reports
-missing prerequisites explicitly and does no installation. Ordinary inspector
-invocations do not import adaptive dependencies. Runtime/setup environment
-guidance selects an existing compatible installed interpreter explicitly; target
-repositories must not assume Aquarium's development `.venv` exists. Confirm that
-the selected interpreter imports YAML and `jsonschema` before using the launcher.
-An already installed isolated tool environment may supply them. Missing imports
-remain `missing-prerequisite`; repository setup does not install dependencies as
-a side effect. Aquarium currently has no global installer component that
-provisions a combined YAML and `jsonschema` environment. If no compatible
-interpreter can import both, report the diagnosed/manual prerequisite gap;
-any environment provisioning needs its own exact supported proposal and
-authority. All five families now use qualified selected-source admission; setup
-inspection itself neither starts sessions nor grants execution authority.
+through the shared [Aquarium Python runtime](python-runtime.md). Scoped Podway
+setup includes `aquarium-python` as a direct prerequisite. Missing or broken
+runtime state needs its scoped `dev-setup-global` repair; never install helper
+dependencies into a target repository or global Python packages. All five
+families use selected-source admission; setup inspection neither starts sessions
+nor grants execution authority.
 
 Tracked or untracked `root-kernel-*-v2.yaml` files retain their separately diagnosed product-rename migration. Preserve existing sessions and custom sources before an approved managed update. Never create an ownership manifest or a second source of Procedure authority.
 

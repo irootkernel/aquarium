@@ -55,7 +55,8 @@ Phase ceilings: prepare 1800, manual 21600, collect 900, cleanup
 1800, `run_seconds` 0. Expected phase durations: machine-prepare 10-15 min;
 released setups 3 × 5-10 min; preservation prerequisites ~5 min; capture
 5-10 min; candidate install and skill identity 5-10 min; runtime update and
-reply 10-20 min; managed updates 3 × 5-15 min; startup smokes 2 × 20-45 min
+reply 10-20 min; shared Python environment preparation and reply 10-20 min;
+managed updates 3 × 5-15 min; startup smokes 2 × 20-45 min
 plus replies; stale-skill 5-10 min; staging and cleanup ~10 min. The
 expected total is about 2.5-4.5 h inside the 6 h manual window.
 Abort-and-rerun checkpoint: if more than 3.5 h of the manual window
@@ -231,6 +232,53 @@ version with its generation created inside the reply window's snapshot
 diff; and the recipe itself ran no installer, because the recipe never
 drives installer repair.
 
+## f2. Shared Python environment before dependent candidate workflows
+
+Candidate adaptive helpers and selected Podway setup inspection run through
+the shared `aquarium-python` environment. Prepare it after the status runtime
+and before the managed updates of step g. This acceptance stays separate from
+the status runtime's:
+
+```sh
+/bin/sh tests/vm/recipes/guest_entry.sh --suite release-acceptance \
+  --phase python-runtime-update
+```
+
+The phase first runs the installed candidate's read-only
+`tools/aquarium-python/runtime.py inspect` and records its status, the sealed
+requirements digest and the environments that already exist for that digest.
+It then names the `$aquarium:dev-setup-global` continuation for only
+`aquarium-python`. Read the proposal at
+`<run_root>/operations/python-runtime-update/NNN.last`, then continue the same
+native thread with the operator's actual reply:
+
+```sh
+AQUARIUM_VM_REPLY_FILE=<reply-file> \
+/bin/sh tests/vm/recipes/guest_entry.sh --suite release-acceptance \
+  --phase python-runtime-reply
+```
+
+Both calls use the same native network override as the status runtime update.
+The initial record is created only once. Reply history is append-only.
+Approval completion is structural:
+
+- The initial and reply invocations exited 0 on one thread, and the reply
+  input digest matches the reply file.
+- No environment appeared during the proposal turn or outside the native
+  windows.
+- Every prior environment for the digest is retained.
+- The installed `inspect` reports `current` for the sealed digest, with a
+  selection that the reply created or that already existed at the start of
+  the phase and is reused.
+
+A declined or incomplete reply records the observation and leaves the phase
+unpassed; it never installs. The recipe never runs the installer. Step f2 and
+the existing Task/Epic startup scenarios make up the recurring release
+acceptance. [The shared Python environment scenario](python-runtime.md) owns
+the additional installed feature cases. Those cases are required development
+qualification before this change's first release, and again for affected
+changes. A J-RA PASS does not imply them.
+
 ## g. Managed updates through the candidate
 
 One exact sequence per fixture produces the declared
@@ -365,13 +413,21 @@ against the 32 MiB per-archive and 256 MiB aggregate limits, including an
 interrupted retry. The collection pin is confirmed in preflight.
 `consumer-cleanup` verifies that the tested Aquarium candidate, Podway v0.2.16,
 complete paired skill and approved candidate status runtime remain selected.
+It also verifies that the shared Python environment is current for the
+candidate's requirements digest, and that its selection is the one named by the
+latest recorded reply. The environment selected in step f2 and every
+prior environment of that digest must be retained. Under
+`.aquarium/python-runtime/`, the only allowed inventory changes are that
+digest's selection and installer lock and the environments created inside
+recorded reply windows. Prior environments stay under ordinary integrity
+comparison.
 The dedicated test VM keeps this upgraded combination. Marketplace sources stay
 in the persistent guest installation outside the disposable Job workspace.
 The post-cleanup inventory records this retained state. Temporary stale-skill
 injections are removed and their pre-scenario state is checked separately.
 Only then does
 `complete-template` emit the closed `haepari.manual-result/v1` record for
-the eleven required scenarios, and the operator submits `manual complete`.
+the twelve required scenarios, and the operator submits `manual complete`.
 Native collection and Haepari-owned cleanup follow; the host wrapper
 reconnects with the same `RUN_DIR` and exports last. Missing observations
 stay `unobserved` and prevent PASS.
