@@ -19,6 +19,8 @@ override PYTEST_ADDOPTS :=
 export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
+	plugins/aquarium/skills/version/scripts/inspect_versions.py \
+	tests/unit/test_version_inspection_unit.py \
 	plugins/aquarium/tools/aquarium-python/runtime.py \
 	tests/unit/test_aquarium_python_unit.py \
 	tests/vm/recipes/release_fixture.py \

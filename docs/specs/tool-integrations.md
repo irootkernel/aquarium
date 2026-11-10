@@ -159,3 +159,32 @@ This section freezes the accepted Haepari v0.1.0 artifact identity and the consu
 TASK-086 verified the official [Haepari v0.1.0](https://github.com/irootkernel/haepari/releases/tag/v0.1.0) release: archive SHA-256 `6667cab322f326eb390b8cab89fd292e22d7436312434e7facd66213fe1a8a18`, sidecar SHA-256 `fb0a83ea2f09694f3da61148a7dbc0e12de6cdc5963e796faa91f4d01ef1f531`, the complete packaged inventory, the executable digest, and a paired skill tree byte-identical to the `v0.1.0` tag. The binary's build basis `fc3b975f8a99cacb96aecc988d3adbc04dda7309` is the validated archive source; the release tag `800da97b7e2ca84a15d4ee5921702ec57bbc7d61` adds release metadata only, and acceptance never rebuilds to equalize them. The frozen capability output reports `managed-execution/v1`, `durable-observation/v1`, `advisory-lock/v1`, `managed-recovery/v1`, `artifact-delivery/v1` and `evidence-retention/v1`, with `compiled_backends: ["local"]` and an empty `qualified_backends`; compiled support is not live readiness, and setup must not require a nonempty qualified array. The producer's digest-bound running-VM qualification on its separate profile is accepted with its recorded limits; Aquarium's own installed combination on the registered shared VM remains TASK-088/090 evidence.
 
 The frozen Aquarium submission and result contract lives in [haepari-integration.md](../../plugins/aquarium/references/haepari-integration.md), with operator procedures in [Haepari VM operations](../ops/haepari-vm-verification.md); release-matched upstream sources are authoritative, including the [CLI and job](https://github.com/irootkernel/haepari/blob/v0.1.0/docs/contracts/cli-and-jobs.md), [resource and runner](https://github.com/irootkernel/haepari/blob/v0.1.0/docs/contracts/resource-and-runner.md), [lock](https://github.com/irootkernel/haepari/blob/v0.1.0/docs/contracts/locks.md), [configuration](https://github.com/irootkernel/haepari/blob/v0.1.0/docs/contracts/configuration.md), [managed transition](https://github.com/irootkernel/haepari/blob/v0.1.0/docs/contracts/managed-transitions.md) and [artifact and profile](https://github.com/irootkernel/haepari/blob/v0.1.0/docs/contracts/artifact-and-profile.md) contracts, with [external leases](https://github.com/irootkernel/haepari/blob/v0.1.0/docs/contracts/external-leases.md) named as the deferred boundary. TASK-089 and TASK-090 added the release-transaction suite, the release-role and producer adapter handoff (separating pre-submission request/spec/profile records from returned `job_id`, `job_revision`, and verified export/cleanup records), the `PATH`/`.venv` interpreter selection rules for `make test-vm-host` and nested `make aquarium-dev-build`, the shared outer-boundary VM occupancy rule, and the final distribution identity checks to those references, so EPIC-031 through EPIC-033 consume them there without the adoption dossier. [ADR-0010](../architecture-decision-records/0010-haepari-vm-verification-and-advisory-locks.md) records two breaking transitions. Aquarium's release operation moves to the qualified managed path, while `release-handler` retains target-repository policy selection. Existing users of a managed aquarium-status runtime complete its routine approval-based managed update before the next terminal repository setup. Haepari setup itself stays optional. TASK-090's read-only legacy-enrollment audit confirmed Aquarium's own enrollment record points to another checkout, while the current checkout has no post-commit hook (`core.hooksPath` unset); live `~/.aquarium-dev` detachment and shared retirement remain deferred to EPIC-033 (`TASK-101`). The durable design lands in the [verification architecture](../architecture/verification.md) and the [component map](../architecture/components.md), with the adoption decision and qualification limits in ADR-0010 and the [VM guide](../../tests/vm/README.md#qualified-pilot-and-limits).
+
+## Version inventory
+
+[`aquarium:version`](../../plugins/aquarium/skills/version/SKILL.md) owns the
+read-only inventory of the invoked plugin, supported CLIs and external skills.
+Its helper returns `aquarium-version-report/v1` with an observation time and
+component rows containing local evidence, official upstream metadata and a
+comparison. Individual failures remain in the report; exit zero means report
+completion, not universal probe success.
+
+The helper uses native version commands without service, provider, workspace or
+setup diagnosis. CLI paths identify the selected executable, not an attached
+MCP server. Skill presence without explicit version metadata does not prove a
+version. Only the active Codex home and shared skill root are inspected; other
+homes remain independent. The plugin row comes from the package containing the
+invoked skill, never the separate status reporter receipt.
+
+Default lookup reads official GitHub latest stable Release metadata without
+Aquarium support-range filtering. Lora follows its stable-tag/main-ref policy;
+Deslop reports its main commit as a source reference. Offline mode makes no
+network requests. The report creates no persistent registry and authorizes no
+installation or upgrade.
+
+Version report failures include safe reason codes and available exit or HTTP
+status, without raw command stderr or exception payloads. A latest-Release 404
+triggers a public release-list check; only a complete list without published
+stable releases establishes absence. Local filesystem inspection failures stay
+in their component row. Package origin is labeled from the invocation context,
+with an explicit unknown label when installation or source origin is unproven.

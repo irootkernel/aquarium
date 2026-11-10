@@ -417,3 +417,11 @@ wrapper process exit separately from GNU Make exit `2`. It passes
 the manual operator channel through `<workspace>/operator-parent-context.json`
 (`0600`) to `tests/vm/recipes/guest_entry.sh`. See [VM usage](../../tests/vm/README.md)
 and [Haepari VM operations](../ops/haepari-vm-verification.md).
+
+## Version inspection helper
+
+Run `python3 <version-skill-directory>/scripts/inspect_versions.py` for JSON
+`aquarium-version-report/v1`; add `--offline` to omit GitHub requests. The
+[version skill](../../plugins/aquarium/skills/version/SKILL.md) owns invocation
+and presentation. Rows retain local and remote failure states independently;
+invalid CLI arguments exit 2 and a completed report exits 0.

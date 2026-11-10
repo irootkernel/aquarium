@@ -80,6 +80,8 @@ Epic 실행 전에 dossier가 필요하면 실행 중인 `epic-handler`는 같�
 
 기반 구성: `$aquarium:docs-setup`은 canonical 문서 구조와 roadmap ID, 명시적으로 채택한 디렉터리 `AGENTS.md` 가이드를 관리합니다. `$aquarium:test-setup`은 저장소를 공통 테스트 계약에 등록합니다. `$aquarium:dev-setup-global`은 user-global 도구를 관리하고, `$aquarium:dev-setup`은 repository 설정과 에이전트 운영 지침을 자동 진단해 필요한 변경만 제안합니다. `$aquarium:dev-setup-bundle`은 대상별 MCP 범위, Sorage Project slug, Mulgae artist 역할 의도를 담은 v2 manifest 하나로 여러 저장소의 설정을 요청합니다.
 
+`$aquarium:version`은 현재 플러그인과 지원 도구의 설치 버전을 GitHub 최신 정식 릴리스와 비교합니다. CLI와 외부 스킬을 포함하며, 미설치나 버전 확인 불가 상태도 표시합니다. 오프라인 조회를 지원하고 도구를 설치하거나 업그레이드하지 않습니다.
+
 `$aquarium:status`는 로컬 production setup 원장과 저장소별 Go, Rust,
 Python, TypeScript, Dart의 선언 버전을 보여줍니다. 설정 결과를 기록할 때
 언어 정보를 자동으로 수집하고, 기존 기록은 `aquarium-status refresh-languages`로

@@ -6,6 +6,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Added
 
+- Add `aquarium:version` to compare the current plugin and supported tools with official GitHub releases, with offline reporting and explicit unknown versions.
+
 - Add an Aquarium-owned Python environment managed by `dev-setup-global` for reuse across projects without changing project environments or global Python packages; existing users must prepare `aquarium-python` once after updating.
 
 ### Fixed

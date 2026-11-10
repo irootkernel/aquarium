@@ -93,3 +93,9 @@ Project configuration and ordinary runtime evidence remain in the locations owne
 Aquarium does not bundle Sorage, Lora, Ouroboros, Cursor Team Kit, Humanizer, im-not-ai, or Haepari skill and documentation sources. Approved installations obtain those sources directly from their official upstream repositories or packages and store them only in the owning user-scoped tool locations.
 
 Aquarium procedures instruct agents to record bounded summaries, provider operation identifiers, revisions, exit statuses, paths, and digests in Podway rather than source contents, credentials, raw provider prompts or payloads, transcripts, generated documents, or full logs. Podway actor labels are correlation metadata, not authentication.
+
+`aquarium:version` reads local plugin metadata, PATH-selected CLI versions and
+active-home/shared skill version metadata. Unless offline, it requests official
+public GitHub release, tag and commit metadata from `api.github.com`. Requests
+send no repository source, local paths, skill contents or setup history. It
+keeps no version ledger and performs no installation, authentication or setup.

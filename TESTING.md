@@ -1067,3 +1067,19 @@ repair, bundle bootstrap and actual handler startup. Retain performed and
 unperformed outcomes separately from Master's functional acceptance. This change
 adds a required one-time setup step for existing users and is breaking. Host
 installation and VM execution require their own applicable authority.
+
+## Version inventory verification
+
+`tests/unit/test_version_inspection_unit.py` covers package identity, native
+version commands, skill metadata, offline/no-write execution, partial reports,
+release absence, failed lookups, source references and version comparison.
+HTTP and command failures use isolated fixtures; these checks do not prove
+installed skill selection or live upstream availability.
+
+Master manually verifies explicit and natural-language invocation, latest and
+offline reports, links, partial failure visibility, and absence of setup or
+upgrade actions. Check Aquarium row origin labels for installed-plugin, explicit
+source and unknown-origin invocations: installed, source package and package
+origin unknown respectively. If this needs candidate installation, use the dedicated UTM
+VM under separate VM-test authority. Record performed and unperformed cases
+separately; local helper tests do not establish functional skill acceptance.

@@ -91,6 +91,11 @@ If an Epic needs a dossier before delivery, an executing `epic-handler` continue
 
 Foundations: `$aquarium:docs-setup` governs canonical documentation structure, roadmap IDs, and explicitly adopted directory `AGENTS.md` guides. `$aquarium:test-setup` enrolls a repository in the common test contract. `$aquarium:dev-setup-global` maintains user-global tools; `$aquarium:dev-setup` automatically diagnoses repository configuration and agent guidance, proposing changes only when needed. `$aquarium:dev-setup-bundle` delegates those two scopes across several repositories from one v2 manifest with per-target MCP scope, Sorage Project slug, and Mulgae artist intent.
 
+`$aquarium:version` compares the current plugin and supported tools with their
+official GitHub latest stable releases. It includes installed CLI and external
+skill versions, reports missing or unverifiable values, and supports offline
+requests. It does not install or upgrade anything.
+
 `$aquarium:status` reports the local production setup ledger, including stored
 Go, Rust, Python, TypeScript, and Dart version declarations for each recorded
 repository. Setup records those declarations automatically; an explicit

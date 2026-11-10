@@ -25,7 +25,7 @@ The skill entrypoints form four kinds of component:
 - Auditors produce read-only findings or readiness decisions, including `epic-validator`, `mulgae-review`, `herdr-review`, and `release-qa`. `subagent-review` uses three fresh base reviewers in the Coordinator harness plus a UI/UX specialist when applicable for a selected exact target and owns no Dolgorae, Mulgae, or Herdr runtime.
 - Setup skills inspect and optionally configure tools, documentation, and tests while preserving separate proposal and apply approvals.
 
-`task-commit` permits implicit workflow invocation. `herdr-review` may also be selected from an explicit natural-language request that names both the review target and reviewer. `dev-setup` may be selected from an explicit natural-language repository setup request, including Sorage Project registration or binding, and stays within the requested component scope. All other entrypoints require their skill name or an authorized parent-workflow handoff.
+`task-commit` permits implicit workflow invocation. `herdr-review` may also be selected from an explicit natural-language request that names both the review target and reviewer. `dev-setup` may be selected from an explicit natural-language repository setup request, including Sorage Project registration or binding, and stays within the requested component scope. `version` may be selected for a natural-language request to check Aquarium and tool versions. All other entrypoints require their skill name or an authorized parent-workflow handoff.
 
 ## Squad instruction boundary
 

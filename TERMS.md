@@ -14,3 +14,8 @@ Aquarium does not bundle or remove those installations.
 Podway installation, LaunchAgent changes, workspace initialization, managed-procedure updates, session mutation, and session reset remain separate authority boundaries. A Podway procedure records caller claims and does not establish the semantic truth of tests, reviews, approvals, or completion.
 
 The software and instructions are provided without warranty. Use them only in environments and repositories where you have the required permission.
+
+A version lookup request authorizes `aquarium:version` to read local version
+metadata and disclosed official GitHub metadata, unless offline. Reported
+versions do not establish compatibility or live service health and do not
+authorize installation or upgrades.

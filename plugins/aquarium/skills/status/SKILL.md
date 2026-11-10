@@ -11,6 +11,10 @@ Use the installed `aquarium-status` runtime to report the local production setup
 ledger. This skill does not run setup, infer live tool health, repair a checkout,
 or remove records implicitly.
 
+For the current plugin and tool versions alongside GitHub latest releases, use
+[`aquarium:version`](../version/SKILL.md). The reporter version here identifies
+the separately installed status runtime, not the currently loaded plugin.
+
 ## Establish Runtime Readiness
 
 First run the `dev-setup-global` inspector scoped to `aquarium-status` so its

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Aquarium Versions"
+  short_description: "Compare installed Aquarium and tool versions with GitHub"
+  default_prompt: "Use $aquarium:version to report installed Aquarium and tool versions alongside their latest GitHub releases."
+policy:
+  allow_implicit_invocation: true
