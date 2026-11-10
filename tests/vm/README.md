@@ -1294,9 +1294,70 @@ pass, and Master's final overall EPIC-028 acceptance remains separate.
 The [manual scenario](recipes/scenarios/sorage-adoption.md) defines the managed
 `sorage-adoption` suite for old-binary backup/restore, explicit upgrade, MCP and
 skill behavior, v0.1.3 update without migration, actual Plan Mode communication,
-and consumer restoration. Qualification is pending. Submit only
+and consumer restoration. Managed suite qualification remains pending. Submit only
 with exact candidate and guest installation authority; local checks do not establish
-an installed result.
+an installed result. EPIC-035/TASK-184 may reuse the applicable observations below
+without changing its lifecycle or acceptance.
+
+### TASK-094 direct UTM Sorage observations
+
+Master authorized direct `ssh UTM` on Aquarium candidate
+`56de09526156702aead054d6817d77d5a30ab826` without installed Haepari. The
+selected private Codex home installed that candidate; the default Aquarium
+installation was not upgraded. Official Sorage `v0.1.4` source
+`403dce7bcf33742a44ec7e923ff6fb5d6824a5ba`, binary
+`sha256:838555333dac99483ed58fab5e6a79276d0ce712c69c2cd22ab64b9290c64eb6`,
+and the complete four-file `use-sorage` tree
+`15594b776f18229209eb3998df3eb209bcedb6776acd595037784596d962d628`
+were exercised against synthetic guest installations. Production broker state
+was not selected.
+
+An actual native Codex `Plan` session at `high` effort connected to Sorage MCP
+with 35 available tools. Its launch used `-a never -s read-only`; no per-tool
+approval overrides were added. Admission under Codex's default approval policy
+was not observed and remains a manual verification gap.
+Its calls separated Handoff reading, general feedback, change requests,
+revision, acceptance and processing. Acceptance alone left processing
+not started; a separate authorized file check preceded completion. Both stale
+revision and row-version proposals were refused. Memo and Channel operations
+and original-key Handoff/Memo replay-only recovery were observed. Protected
+fixture files stayed unchanged; no Git index or refs were created despite
+hostile message bodies.
+A fresh consumer with an incomplete copied skill stopped before calling Sorage.
+The default Codex `0.164.0` first returned a provider `400` before product calls;
+the same thread resumed with a guest-private official `0.167.0` runtime. The
+default guest CLI remained unchanged.
+
+The CLI-only consumer first selected old Sorage `v0.1.2` through its login-shell
+`PATH`. Replay-only returned `MEMO_REPLAY_UNAVAILABLE`/`75`, and a named Memo
+read returned `INTERNAL_ERROR`/`1` against a separate new-format restore. These
+original failures remain recorded. With the intended absolute `v0.1.4` binary,
+the receipt lookup returned `75` and the named read returned `0`; the missing
+receipt still left the original dispatch unknown. CO then interrupted that
+consumer at Master's scope correction. Its outer exit is `1`, with no final
+model report. The compatibility observation was sent to the Sorage project at
+Master's request; Aquarium does not await its disposition.
+
+Existing observations also cover matching-old-writer backup/restore and one
+explicit `v0.1.2` upgrade, compatible `v0.1.3` replacement without migration,
+three native preflight refusals with Aquarium operational probes skipped, and
+global/local/CLI-only setup selection. Original IDs, events, retained receipts
+and stored CRLF text survived the applicable transitions. The old stored Memo
+already differed from its BOM-bearing request, so BOM preservation is not
+claimed. An initial physical-equality assertion differed only on SQLite SHM;
+the native dry-run succeeded, and actual restore continued without repeating it.
+
+All owned native consumers stopped. The original one-file shared skill was
+restored with matching bytes and modes; the default binary and Codex
+configuration stayed unchanged. CO collected and verified all 10 original recipe
+outputs and 227 case files. The idle private guest root remains under CO custody
+through Epic verification and the requested owner report. The recipe's `pass`
+covers consumer restoration only and retains `functional_cases: "unverified"`.
+These scoped observations do not establish a managed Haepari Job result, full
+scenario qualification, full Task/Epic/release-handler functionality or release
+readiness. The prior quarantine, EPIC-033 combination/shared retirement and
+Master's separate manual and overall acceptance remain unchanged. Applicable
+existing results are reused; additional Sorage regression work stopped.
 
 ## Mulgae v0.1.27 adoption suite
 

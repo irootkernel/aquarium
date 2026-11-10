@@ -113,6 +113,19 @@ The established TASK-091 record below remains historical qualification, includin
 
 The [bounded Gaori observations](../../tests/vm/README.md#task-093-direct-utm-gaori-observations) cover official `v0.1.20` source `671b08e79d5fd8424e44d2b98864484178d2480e`, both complete matching skills, the existing compatibility target, configured CLI execution, completed-evidence recovery, native history queries and verified restoration. Producer cleanup `491afd8c189e84dab8a5078b1698ff479034f27f` remains applicable without another campaign. Master's direct SSH exception supplies no new managed Gaori Job result; the existing generic Haepari boundary has its separately scoped reuse basis. Full updated Aquarium workflow functionality, whole-combination qualification and shared host retirement retain their separate gates.
 
+### `TASK-094`: Sorage (`rollout-6`)
+
+The [direct UTM observations](../../tests/vm/README.md#task-094-direct-utm-sorage-observations)
+bind official Sorage `v0.1.4`, its complete skill and Aquarium candidate
+`56de09526156702aead054d6817d77d5a30ab826` to the actual native communication,
+transition, setup and restoration evidence. They reuse TASK-093's common routing.
+The selected source has no active `aquarium-dev` integration; bounded guest
+metadata found no exclusively owned legacy hook/service to remove. Original
+failures and the interrupted CLI consumer remain visible. Master requested the
+Sorage owner's disposition of the compatibility observation; it adds no Aquarium
+completion dependency. Managed suite qualification and EPIC-033 retirement
+remain separate.
+
 ## Conditional producer correction through Sorage
 
 Use Sorage only for the existing Mulgae exchange or an explicitly authorized correction of a concrete producer defect/missing native capability. Identify the failing requirement and exact evidence before requesting producer work. A generic Haepari adoption or evidence request to every team is not part of this procedure.
