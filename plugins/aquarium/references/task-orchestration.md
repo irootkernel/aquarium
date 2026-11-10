@@ -116,8 +116,11 @@ cleanup before successful Task-handler completion.
 Structural and synthetic tests do not prove installed native execution. Verify
 actual startup, failure, rework and public-handle recovery separately; every
 installation-dependent check follows the target repository's verification
-environment policy. Preserve unknown outcomes and settle mutating Executors before
-replacement. Actual overall acceptance and
+environment policy and
+[Haepari workflow verification routing](haepari-integration.md#workflow-verification-routing).
+Preserve unknown outcomes, reconcile or reconnect any active outer Job without
+terminating it to replace its caller or observer, and settle mutating Executors
+before their replacement. Actual overall acceptance and
 managed rollout retain their separate authority.
 
 After admitted review evidence, apply the [local-settlement contract](finding-disposition.md#decide-whether-a-correction-needs-another-review) before provider-rework authority. Preserve source negative rows, verify the exact correction and current criteria, then supply the complete composition to the required final Evaluator. `confirm-local-corrections-settled` checks pending repairs before ordinary Low completion. Native backend failures and missing reviewer coverage retain their existing gates.

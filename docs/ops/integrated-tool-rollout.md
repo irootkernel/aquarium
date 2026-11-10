@@ -107,6 +107,12 @@ The established TASK-091 record below remains historical qualification, includin
 
   The initial campaign released all four native grants and stopped its owned guest controller. Controlled-consumer restoration matched all 6,992 baseline inventory entries, and the original configuration, Git state and baseline native review remained intact. Its 240-file evidence archive was collected and verified. After the affected independent assessments, CO accepted the bounded `TASK-092` result under the Epic delegation, reusing unchanged checks. Whole-combination qualification and shared host retirement remain with EPIC-033.
 
+### `TASK-093`: Shared workflow routing and Gaori (`rollout-5`)
+
+[Workflow verification routing](../../plugins/aquarium/references/haepari-integration.md#workflow-verification-routing) owns the common installed-check guidance. Task, Epic, Squad, Validation and `task-verify` now reach that owner; `release-handler` retains its existing managed gate outside offline QA. The shared contract selects due checks under repository policy, reconnects the original Job, preserves independent outer control and consumer cleanup, and reuses applicable completed Task evidence during final validation. Tool repositories retain their native commands and paired skills.
+
+The [bounded Gaori observations](../../tests/vm/README.md#task-093-direct-utm-gaori-observations) cover official `v0.1.20` source `671b08e79d5fd8424e44d2b98864484178d2480e`, both complete matching skills, the existing compatibility target, configured CLI execution, completed-evidence recovery, native history queries and verified restoration. Producer cleanup `491afd8c189e84dab8a5078b1698ff479034f27f` remains applicable without another campaign. Master's direct SSH exception supplies no new managed Gaori Job result; the existing generic Haepari boundary has its separately scoped reuse basis. Full updated Aquarium workflow functionality, whole-combination qualification and shared host retirement retain their separate gates.
+
 ## Conditional producer correction through Sorage
 
 Use Sorage only for the existing Mulgae exchange or an explicitly authorized correction of a concrete producer defect/missing native capability. Identify the failing requirement and exact evidence before requesting producer work. A generic Haepari adoption or evidence request to every team is not part of this procedure.

@@ -13,7 +13,10 @@ original [v1 contract](formal-agent-orchestration-v1.md) and genuine receipts.
 
 `audit` and `re-audit` are direct report-only Evaluator assessments. Before each
 dispatch, the Coordinator or an authorized Executor executes the due repository checks
-and supplies their actual results and current candidate evidence. The Evaluator reads
+and supplies their actual results and current candidate evidence under
+[Haepari workflow verification routing](haepari-integration.md#workflow-verification-routing).
+Reuse applicable completed Task checks and rerun only affected behavior and
+required current-target gates. The Evaluator reads
 that evidence without running checks. The Coordinator records the aggregate audit and
 check result. Their checkpoint Decisions require current
 `evaluator-applicability` and passing `evaluator-checkpoint-result` before the existing

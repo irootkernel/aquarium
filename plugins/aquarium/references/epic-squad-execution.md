@@ -251,7 +251,10 @@ A changed reviewed target needs `applicability=preserved` and a digest-bound
 `applicability_evidence` artifact identifying `before`, `after`, passing outcome,
 `preserved_scope`, actual checks and `unknown_impact=false`. Unknown or unreadable
 applicability cannot pass. Check references have stable due IDs and complete
-original receipts with exact target, command and outcome. Retain earlier failures
+original receipts with exact target, command and outcome. Follow
+[Haepari workflow verification routing](haepari-integration.md#workflow-verification-routing)
+for due installed checks, original-Job reconnect, independent outer cleanup and
+final-validation check reuse. Retain earlier failures
 and explain actual execution/reuse; the consumer does not execute checks.
 
 A plain due check ID continues to accept its actual current-target passing

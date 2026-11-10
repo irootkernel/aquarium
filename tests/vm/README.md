@@ -1370,6 +1370,76 @@ whole-combination qualification or release acceptance. Master retains overall
 Epic acceptance. Native invocation identities and raw receipts remain in their
 original workflow owners rather than serving as tracked documentation authority.
 
+### TASK-093 direct UTM Gaori observations
+
+Master authorized direct `ssh UTM` verification on Aquarium base
+`3a7d742fee1ca1a38afd2c2d1243a307a6b24a1a`, replacing this Task's outer
+managed transport. Generic outer-control evidence reuses the accepted
+[TASK-090 qualified pilot](#qualified-pilot-and-limits) on
+`406f84cc58d14fbe827f81b138f6ffa268c9239b`: its guard failure kept failed
+consumer cleanup separate from verified native Job cleanup, and its observer
+disconnect and queued cancellation exercised native recovery. Inspection of the
+subsequent `tests/vm/host_wrapper.py` changes through the stated base confirmed
+that invocation, waiting, cancellation, settlement and export still use the
+selected Haepari executable independently of Gaori. This is scoped applicability
+of that boundary, without whole-candidate equality or a new managed Gaori result.
+
+Official Gaori `v0.1.20` source
+`671b08e79d5fd8424e44d2b98864484178d2480e` has no published binary assets.
+The source archive
+`sha256:48b96df53d47781fa129b45c62487929e9c1ac2f4ec9fc41e13c1a951413cef1`
+was built once with existing Go `1.27.1`, `go build -trimpath` and isolated
+guest caches, producing executable
+`sha256:2e6b8ab84ebe52062789c15d8bdeb6834dc98c4117ed69d048ac41ec6f1fc72b`.
+Native version reports `v0.1.20`; the archive binds source identity separately
+from the release's default unknown build metadata. The existing
+`GAORI_BIN=<candidate> make test-gaori-compat` passed all nine case groups once
+with exit `0`. Its required Python dependencies were prepared only in a
+disposable virtual environment and removed after collection.
+
+The complete seven-file `use-gaori` tree and one-file `use-gaori-status` skill
+came from that same official tag. A fresh guest Codex test thread listed both
+in its native catalog and loaded both entrypoints plus the applicable fallback,
+retention and recovery references. That thread was a test subject. The Squad's
+independent review roles remained separate.
+
+A portable configured-command fixture retained its original `v0.1.18` pass,
+configuration and clean Git state. Candidate preflight and retention advice
+succeeded. The configured candidate CLI command started once and returned
+`exit_code: 7`, `status: failed`, and `extractor_status: precise`, with one
+redacted failure excerpt. The expected child failure remained distinct from
+extraction quality. The command returned terminally without yielding a child
+handle; no liveness polling or MCP invocation identity was used. A native
+`runs list` query then matched the known returned artifact identities, and
+status and summary were reopened with checksum agreement. This demonstrates
+completed-evidence recovery. The separate `use-gaori-status` query returned
+`availability: available`, two terminal samples (the old pass and new failure),
+and `recent_change.availability: insufficient_samples`, without recomputation
+or an invented timing estimate.
+
+Producer cleanup `491afd8c189e84dab8a5078b1698ff479034f27f` is an ancestor of
+the selected release. On `2026-11-11` KST, the tagged `Makefile` and
+`scripts/` had no `aquarium-dev` references or `scripts/aquarium-dev`
+subtree. The producer checkout had no `core.hooksPath` override or default
+post-commit hook. Its earlier full-suite report remains historical evidence;
+no producer campaign or full-suite rerun was performed.
+
+The existing guest binary, portable configuration, Git state and four baseline
+history files were preserved, and all eight skill files were restored to their
+original bytes and modes. Initial cleanup verification detected a Codex
+configuration change: native startup had added a trusted-project entry for the
+owned disposable repository. CO removed only that entry after proving that the
+result reproduced the exact baseline bytes. The original negative observation
+was retained without rerunning the consumer or tests. CO collected and verified
+the 70-file original evidence set, then removed only this run's guest scratch
+root and private caches. No raw configuration or credentials were collected.
+Host installation and earlier Task roots were preserved.
+
+These observations establish no new managed Gaori Job, live candidate MCP
+execution, MCP re-await, full updated Aquarium workflow functionality,
+whole-combination qualification or shared host retirement. Master retains the
+separate functional and overall acceptance gates.
+
 ## Podway v0.2.16 adoption suite
 
 The current [upgrade scenario](recipes/scenarios/podway-upgrade.md) targets the

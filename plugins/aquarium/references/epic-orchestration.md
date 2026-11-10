@@ -156,9 +156,11 @@ Staging, commits, publication, installation and rollout retain their own authori
 ## Verification limits
 
 Structural and synthetic tests do not prove actual installed functionality or
-upgrade success. Follow the target repository's policy for installed checks,
-record unknown outcomes truthfully and preserve Master's separate overall
-acceptance. Ordinary work needs
+upgrade success. Follow the target repository's policy and
+[Haepari workflow verification routing](haepari-integration.md#workflow-verification-routing)
+for due installed checks, original-Job reconnect, independent outer cleanup, and
+final-validation check reuse. Record unknown outcomes truthfully and preserve
+Master's separate overall acceptance. Ordinary work needs
 no prior qualification, private history or internal model telemetry.
 
 After admitted review evidence, apply the [local-settlement contract](finding-disposition.md#decide-whether-a-correction-needs-another-review) before provider-rework authority. Preserve source negative rows, verify the exact correction and current criteria, then supply the complete composition to the required final Evaluator. `confirm-local-corrections-settled` checks pending repairs before ordinary Low completion. Native backend failures and missing reviewer coverage retain their existing gates.

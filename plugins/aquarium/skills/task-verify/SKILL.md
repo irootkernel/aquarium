@@ -45,6 +45,8 @@ Run focused checks first, then repository-required broader gates. Treat the unde
 
 When a selected check uses Gaori, read [gaori-integration.md](../../references/gaori-integration.md). The agent that performs the check must load and follow the installed `$use-gaori` skill before selecting a transport or starting work. Supply the exact repository-owned command and current target. Preserve an existing invocation across continuation and consume its terminal result through the shared contract.
 
+When the target repository's verification policy routes a selected check to installed or shared-VM execution, follow [Haepari workflow verification routing](../../references/haepari-integration.md#workflow-verification-routing) for outer occupancy, original-Job reconnect, independent outer cleanup, and direct-versus-managed evidence limits. Local-only checks stay on their native route.
+
 Return command results, evidence quality, and verification acceptance separately. Apply the shared prerequisite routing and optional direct-command fallback without recreating the native execution procedure here.
 
 Do not stage, update lifecycle documentation, invoke Mulgae, commit, or publish in this phase.

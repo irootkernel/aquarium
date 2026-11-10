@@ -481,7 +481,11 @@ queries through the native skills. Keep start-once/await behavior and MCP bindin
 checks intact. These cases require explicit VM-test authority and Master's
 functional observations; the compatibility target does not qualify them or
 change the host installation. The minimum-version increase requires this
-installed verification before release.
+installed verification before release. See the bounded
+[TASK-093 direct UTM Gaori observations](tests/vm/README.md#task-093-direct-utm-gaori-observations)
+and [integrated-tool rollout](docs/ops/integrated-tool-rollout.md#task-093-shared-workflow-routing-and-gaori-rollout-5)
+for the recorded `v0.1.20` guest compatibility run, synthetic consumer
+checkpoints, and remaining manual and live-MCP boundaries.
 
 ## Sanho native compatibility
 
