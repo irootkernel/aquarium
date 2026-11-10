@@ -11,7 +11,7 @@ from typing import Any
 import recipe_lib as lib
 
 SUITE = "mulgae-adoption"
-RELEASE_SKILL_TREE = "0bfe60db85f14831b3a222927a232c1ff9c5a8850f9a8d5d6b766a1293094579"
+RELEASE_SKILL_TREE = "a3d11762fa5f1069df60cd64ef9cf2efd538e8e1ebd1b60e61a717c7e4697085"
 
 
 def observe(context: Any) -> dict[str, Any]:
@@ -77,19 +77,19 @@ def run(context: Any, phase: str) -> int:
         if (
             not isinstance(installed, dict)
             or installed.get("candidate_sha") != candidate
-            or installed.get("tools", {}).get("version") != "v0.1.26"
+            or installed.get("tools", {}).get("version") != "v0.1.27"
             or installed.get("tools", {}).get("skill_tree_sha256") != RELEASE_SKILL_TREE
         ):
             raise lib.RecipeError(
                 "installed candidate observation is required", "incomplete"
             )
     tools = observe(context)
-    if phase == "prepare" and tools["version"] != "v0.1.25":
+    if phase == "prepare" and tools["version"] != "v0.1.26":
         raise lib.RecipeError(
-            "observe the released v0.1.25 baseline first", "incomplete"
+            "observe the released v0.1.26 baseline first", "incomplete"
         )
     if phase == "candidate" and (
-        tools["version"] != "v0.1.26"
+        tools["version"] != "v0.1.27"
         or tools["skill_tree_sha256"] != RELEASE_SKILL_TREE
     ):
         raise lib.RecipeError("Mulgae release or complete skill differs", "incomplete")

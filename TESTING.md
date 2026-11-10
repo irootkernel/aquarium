@@ -989,6 +989,26 @@ results. [DF-007](docs/deferred-feedback/README.md#df-007-retire-the-mulgae-requ
 owns the producer correction and later workaround removal.
 Historical v0.1.25 observations above retain their original applicability.
 
+### Mulgae v0.1.27 native coordination adoption
+
+Active setup regressions now enforce the stable `>=v0.1.27` floor while retaining
+command-result v23, Doctor v7, preflight v11, and Config v5 contracts. The
+updated [managed Mulgae scenario](tests/vm/recipes/scenarios/mulgae-adoption.md)
+and [recipe](tests/vm/recipes/mulgae_adoption.py) target official Mulgae `v0.1.27`
+(`c611e2ba16d0f0e873e948b2251f5bc5bda84cad`) and its six-file `use-mulgae`
+subtree (`01a202819ec58cf1adbb4d88dcf92ab0bc85d446`,
+`aquarium-skill-tree-sha256/v1`
+`a3d11762fa5f1069df60cd64ef9cf2efd538e8e1ebd1b60e61a717c7e4697085`) from the
+released `v0.1.26` baseline, covering provider-free preflight/inspection and
+invalid-grant refusal on the public Go-install binary alongside installed Task,
+Epic, standalone, and remediation-confirmation caller observations of native v3
+requirement answers without the retired `answer_omitted` override. Producer
+direct-SSH/Aqua qualification on the tag-built binary is retained with producer
+provenance and does not establish an outer managed Haepari Job `PASS` or consumer
+qualification; installed UTM execution remains pending explicit VM/live-provider
+authority and shared `utm-macos` availability. Historical `v0.1.25` and `v0.1.26`
+observations above remain unchanged.
+
 ## Podway v0.2.16 adoption
 
 The current official-artifact gate also verifies native workspace v3 permission

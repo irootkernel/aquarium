@@ -1298,6 +1298,25 @@ and consumer restoration. Qualification is pending. Submit only
 with exact candidate and guest installation authority; local checks do not establish
 an installed result.
 
+## Mulgae v0.1.27 adoption suite
+
+The [manual scenario](recipes/scenarios/mulgae-adoption.md) and
+[recipe](recipes/mulgae_adoption.py) define the managed `mulgae-adoption` suite
+from the released `v0.1.26` baseline to official Mulgae `v0.1.27`
+(`c611e2ba16d0f0e873e948b2251f5bc5bda84cad`) and its complete six-file
+`use-mulgae` skill (`01a202819ec58cf1adbb4d88dcf92ab0bc85d446`,
+`aquarium-skill-tree-sha256/v1`
+`a3d11762fa5f1069df60cd64ef9cf2efd538e8e1ebd1b60e61a717c7e4697085`), covering
+provider-free preflight/inspection and invalid-grant refusal on the public
+Go-install binary, installed Task/Epic/standalone/remediation-confirmation caller
+observations of native v3 requirement answers in an isolated guest `HAEPARI_HOME`
+(`mulgae-review` capacity `1`) without the retired `v0.1.26` `answer_omitted`
+override, and verified restoration to `v0.1.26`. Producer direct-SSH/Aqua
+observations on the tag-built binary do not establish a managed outer Job `PASS`;
+qualification is pending shared `utm-macos` availability and explicit VM/live
+authority. Historical `v0.1.25` and `v0.1.26` observations retain their original
+scope.
+
 ## Podway v0.2.16 adoption suite
 
 The current [upgrade scenario](recipes/scenarios/podway-upgrade.md) targets the

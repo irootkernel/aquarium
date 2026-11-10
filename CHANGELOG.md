@@ -17,6 +17,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Require Mulgae v0.1.27 or newer and its complete matching `use-mulgae` skill. CLI and MCP live reviews use native capacity-one `mulgae-review` (`advisory-lock/v1`) coordination in the selected private `HAEPARI_HOME`, including read-only `HAEPARI_LOCK_GRANT` borrowing, without an outer Aquarium wrapper. Retire the v0.1.26 report-based `answer_omitted` override for new runs and preserve historical records. Existing users must update the CLI and skill and provide a reachable `HAEPARI_HOME` with `mulgae-review` for live reviews.
+
 - Require stable Sorage v0.1.4 or newer in the v0.1.x line and its complete matching skill. Keep requested communication available in Plan Mode without per-tool approval overrides, reconnect MCP after updating, and distinguish compatible v0.1.3 updates from older-storage migrations.
 
 - Require Gaori v0.1.20 or newer in the v0.1.x line and its matching skills; use complete-log analysis whose memory grows with log size, retain native evidence limits, and add an isolated compatibility target. Existing users must update from earlier versions.

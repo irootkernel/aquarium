@@ -279,7 +279,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
         malformed_sanho: bool = False,
         sanho_version: str = "v0.2.10",
         sanho_doctor_warnings: int = 0,
-        mulgae_version: str = "v0.1.26",
+        mulgae_version: str = "v0.1.27",
         mulgae_output_schema: str = "mulgae-command-result.v23",
         mulgae_doctor_schema: str = "mulgae-doctor-result.v7",
         mulgae_config_version: int = 5,
@@ -3270,7 +3270,7 @@ else:
             ],
             1,
         )
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.26")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.27")
         self.assertTrue(tools["mulgae"]["version_supported"])
         expected_mulgae_status = (
             "configured"
@@ -6548,7 +6548,7 @@ else:
         self.assertTrue(tools["gaori"]["probes"]["version"]["timed_out"])
         self.assertIsNone(tools["gaori"]["version"])
         self.assertEqual(tools["gaori"]["status"], "degraded")
-        self.assertEqual(tools["mulgae"]["version"], "v0.1.26")
+        self.assertEqual(tools["mulgae"]["version"], "v0.1.27")
         self.assertFalse(tools["mulgae"]["probes"]["doctor"]["ok"])
         self.assertEqual(tools["mulgae"]["probes"]["doctor"]["exit_code"], 4)
         self.assertEqual(
@@ -6676,15 +6676,18 @@ else:
             ("0.1.24", False, "degraded"),
             ("v0.1.24+build.1", False, "degraded"),
             ("v0.1.25", False, "degraded"),
-            ("v0.1.26", True, "installed"),
-            ("0.1.26", True, "installed"),
-            ("v0.1.26+build.1", True, "installed"),
-            ("v0.1.26+darwin-arm64", True, "installed"),
+            ("v0.1.26", False, "degraded"),
+            ("0.1.26", False, "degraded"),
+            ("v0.1.27", True, "installed"),
+            ("0.1.27", True, "installed"),
+            ("v0.1.27+build.1", True, "installed"),
+            ("v0.1.27+darwin-arm64", True, "installed"),
             ("0.1.99", True, "installed"),
             ("v0.2.0", True, "installed"),
             ("v1.0.0", True, "installed"),
             ("v0.1.23-rc.1", False, "degraded"),
             ("v0.1.26-rc.1", False, "degraded"),
+            ("v0.1.27-rc.1", False, "degraded"),
             ("v0.2.0-rc.1", False, "degraded"),
             ("v1.0.0-alpha.1", False, "degraded"),
             ("v0.1.23+", False, "degraded"),
@@ -7083,7 +7086,7 @@ else:
         self.assertEqual(raw.returncode, 0)
         envelope = json.loads(raw.stdout)
         config = envelope["result"]["doctor"]["config"]
-        contract = inspect_tools.mulgae_native_contract("v0.1.26")
+        contract = inspect_tools.mulgae_native_contract("v0.1.27")
 
         config["reason_codes"] = ["future_config_reason"]
         normalized = inspect_tools.normalize_mulgae_doctor(
@@ -7321,41 +7324,48 @@ else:
             ),
             (
                 "v0.1.26",
+                "mulgae-command-result.v23",
+                "mulgae-doctor-result.v7",
+                "unsupported_native_version",
+                "degraded",
+            ),
+            (
+                "v0.1.27",
                 "mulgae-command-result.v17",
                 "mulgae-doctor-result.v7",
                 "unsupported_output_schema",
                 "degraded",
             ),
             (
-                "v0.1.26",
+                "v0.1.27",
                 "mulgae-command-result.v23",
                 "mulgae-doctor-result.v4",
                 None,
                 "degraded",
             ),
             (
-                "v0.1.26",
+                "v0.1.27",
                 "mulgae-command-result.v23",
                 "mulgae-doctor-result.v05",
                 None,
                 "degraded",
             ),
             (
-                "v0.1.26",
+                "v0.1.27",
                 "mulgae-command-result.v23",
                 "mulgae-doctor-result.v7.0",
                 None,
                 "degraded",
             ),
             (
-                "v0.1.26",
+                "v0.1.27",
                 "mulgae-command-result.v23",
                 "mulgae-doctor-result.v7",
                 None,
                 "configured",
             ),
             (
-                "v0.1.26",
+                "v0.1.27",
                 "mulgae-command-result.v24",
                 "mulgae-doctor-result.v8",
                 None,
@@ -7412,7 +7422,7 @@ else:
         self,
     ) -> None:
         self.install_fake_tools(
-            mulgae_version="v0.1.26",
+            mulgae_version="v0.1.27",
             mulgae_output_schema="mulgae-command-result.v11",
             mulgae_doctor_schema="mulgae-doctor-result.v4",
         )
@@ -7430,7 +7440,7 @@ else:
 
     def test_mulgae_future_provider_family_is_preserved(self) -> None:
         self.install_fake_tools(
-            mulgae_version="v0.1.26",
+            mulgae_version="v0.1.27",
             mulgae_output_schema="mulgae-command-result.v23",
             mulgae_doctor_schema="mulgae-doctor-result.v8",
             mulgae_provider_families=("zcode", "grok", "codex", "future_provider"),
@@ -7473,7 +7483,7 @@ else:
                 "timed_out": False,
                 "result": envelope,
             },
-            inspect_tools.mulgae_native_contract("v0.1.26"),
+            inspect_tools.mulgae_native_contract("v0.1.27"),
         )
         self.assertEqual(normalized["doctor_capability"], "supported")
         safe_doctor = normalized["result"]["doctor"]
@@ -7496,7 +7506,7 @@ else:
                 "timed_out": False,
                 "result": mismatched,
             },
-            inspect_tools.mulgae_native_contract("v0.1.26"),
+            inspect_tools.mulgae_native_contract("v0.1.27"),
         )
         self.assertEqual(normalized["doctor_capability"], "invalid")
 
@@ -8073,7 +8083,7 @@ else:
                     },
                 },
             },
-            inspect_tools.mulgae_native_contract("v0.1.26"),
+            inspect_tools.mulgae_native_contract("v0.1.27"),
         )
         podway, _ = inspect_tools.normalize_podway_envelope(
             {
@@ -8911,7 +8921,7 @@ else:
                     },
                 },
             },
-            inspect_tools.mulgae_native_contract("v0.1.26"),
+            inspect_tools.mulgae_native_contract("v0.1.27"),
         )
         self.assertEqual(normalized["doctor_capability"], "invalid")
         self.assertNotIn("doctor", normalized["result"])

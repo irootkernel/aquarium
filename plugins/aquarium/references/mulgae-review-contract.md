@@ -64,7 +64,7 @@ or advance its machine contracts:
 
 | Mulgae release | Command envelope | Doctor | Review preflight | Configuration |
 | --- | --- | --- | --- | --- |
-| Stable `>=v0.1.26` | `mulgae-command-result.v23` or later | `mulgae-doctor-result.v7` or later | `mulgae-review-preflight.v11` or later | Native supported configuration, Config v5 at the minimum |
+| Stable `>=v0.1.27` | `mulgae-command-result.v23` or later | `mulgae-doctor-result.v7` or later | `mulgae-review-preflight.v11` or later | Native supported configuration, Config v5 at the minimum |
 
 Reject prereleases and releases below the minimum. SemVer build metadata does
 not make an otherwise stable release ineligible. Do not impose an upper release
@@ -87,6 +87,37 @@ When the paired skill is optional and unavailable, disclose the gap and use the
 selected release's native help and documentation for supported execution. If
 that authority cannot be established, return the missing prerequisite rather
 than reconstructing a lifecycle from Aquarium examples.
+
+New live-provider reviews (`mulgae review`, `run_review`, and `start_review`)
+require an existing selected private `HAEPARI_HOME` providing Haepari
+`advisory-lock/v1` and a registered capacity-one `mulgae-review` lock resource
+whose maximum hold policy covers the admitted native execution and cleanup
+budget. The selected `HAEPARI_HOME` (and any intentional inherited
+`HAEPARI_LOCK_GRANT`) must reach the actual CLI or attached MCP server process.
+Local `--preflight`, receipt-bound inspection (`runs status/show/findings`),
+and provider-free no-change reviews require no lock grant or controller contact.
+Offline Mulgae Doctor and separate opt-in Haepari setup dimensions keep their
+distinct meanings; neither claims live-review lock readiness.
+
+Mulgae alone owns `mulgae-review` lock acquisition, persisted-key replay across
+observation timeouts, queued request cancellation and raced-grant release,
+in-process renewal, read-only `HAEPARI_LOCK_GRANT` borrower validation and
+monitoring, and terminal release after protected provider and extraction work
+and verified local drain end (`local_drain_state`). Neither Aquarium nor
+`$use-mulgae` adds an outer lock wrapper or second scheduler. When the
+controller is unavailable, a borrowed grant is invalid, or renewal/hold is lost,
+Mulgae fails the coordinated path without silent direct execution, stops new
+provider dispatch, requests native cancellation and drain, and blocks runtime
+cleanup with `haepari_local_drain_unverified` whenever local drain is unproven.
+Advisory grant expiry does not forcibly terminate surviving work, so overlap
+remains possible if work outlives its grant; serialization reduces competing
+reviews on the same `HAEPARI_HOME` without eliminating provider rate limits,
+containing unknown execution, or policing uncoordinated callers. Keep native
+coverage, publication, findings, CI, grant disposition, and cleanup separate.
+Partial-role failures preserve accepted role reports in the original run and
+release the lock after native termination before waiting for a user decision;
+any authorized new full review acquires a fresh FIFO grant without importing
+prior role coverage.
 
 A pending invocation represents unfinished work. It establishes neither review
 completion nor a durable run ID. Preserve its identity and delegate continuation
@@ -181,8 +212,7 @@ zero findings or operational success. Missing/corrupt support fails consumption.
 Map native `partially_met` to Aquarium `unmet`, retaining the supported and
 missing parts. Preserve all native verdicts; derive `not-applicable` only from
 approved authority. Read original role reports as well and reconcile conflicts
-under the shared intent contract. Apply the report-based assessment below only
-to the specified derived omission. Coordinator conclusions retain their
+under the shared intent contract. Coordinator conclusions retain their
 provenance and cannot replace missing provider responsibility coverage.
 Check native assessment, coverage, findings, CI, extraction and publication
 independently. Do not enable extraction, change routes or retry reviews to
@@ -193,48 +223,17 @@ runtime and existing orchestration handoffs.
 
 ### Assess criteria when native answers are omitted
 
-Mulgae accepts Markdown as the primary role report. In v0.1.26, its requirements
-instruction requests v3 JSON while the later extraction instruction requires v1
-finding JSON without a requirements field. An accepted report can therefore
-assess a criterion while its native row is `unverified`, with
-`origin=mulgae_derived` and `reason=answer_omitted`.
-
-For that exact combination, assess the criterion from its assigned owner's
-complete accepted report after the native input, candidate, publication, coverage
-and all required reads have passed the checks above. The report must explicitly
-assess the original criterion and supply sufficient evidence within the selected
-target and verification scope. Apply the intent contract's evidence, partial
-coverage and conflict rules. A supported gap is `unmet`; silence, a bare verdict
-or insufficient evidence remains `unverified`. Operator-reported checks retain
-that provenance and cannot satisfy a required independent or runtime check.
-
-Keep the native row unchanged. In the existing criterion handoff, record its
-original verdict, origin and reason separately from the Aquarium assessment,
-the accepted owner-report reference, supporting evidence and limitations. An
-Aquarium `met` based on that report does not claim a native `met` or an admitted
-structured provider answer. A coordinator's own assertion cannot supply a
-missing reviewer assessment. Existing independent Evaluator and acceptance
-requirements still apply.
-
-This path does not cover a missing criterion or owner, mismatched input or
-candidate, incomplete role coverage, unreadable/corrupt support, historical
-unavailable assessments, no-change results, extraction-disabled results, or
-provider-authored `unverified` answers. Preserve explicit native `unmet` and
-`partially_met` gaps; resolve conflicting provider assessments under the intent
-contract. Leave Mulgae's extraction policy, prompts, routes and artifacts
-unchanged. Do not start another review to obtain a different answer. Continue
-preparing and reading native requirements; a later valid native answer uses the
-ordinary path.
-
-This is a temporary consumer workaround. Mulgae must correct the conflicting
-requirements and extraction output contracts
-and verify native criterion answers in a new stable release. When adopting that
-verified release, raise Aquarium's minimum CLI and paired-skill requirement to
-the fixed version, remove this report-based omission path and its dependent
-instructions, and use the native requirements assessments again. Verify Task,
-Epic, standalone and affected-criteria confirmation callers before completing
-that adoption. A higher version number alone does not establish the fix. Retain
-historical native rows, report provenance and qualification outcomes unchanged.
+Mulgae v0.1.27 reconciles the initial requirements and extraction output
+contracts so accepted role assessments survive extraction as native v3
+requirement answers. For new runs at or above the v0.1.27 minimum, the former
+v0.1.26 report-based override for derived `answer_omitted` rows is retired:
+consume the receipt-bound native requirement answers directly, and treat any
+derived `answer_omitted` row in a new supported run as missing native coverage
+(`unverified`) rather than substituting an Aquarium `met` judgment from report
+prose. Preserve explicit native `unmet` and `partially_met` gaps and resolve
+conflicting provider assessments under the intent contract. Historical v0.1.26
+native rows, report provenance, and already-recorded judgments remain preserved
+as recorded.
 
 ## Reconcile Incomplete Reviews
 

@@ -1,5 +1,9 @@
 # Haepari adoption across integrated tools
 
+## TASK-092 migration classification
+
+Adopting Mulgae `>=v0.1.27`, its complete six-file `use-mulgae` skill (`01a202819ec58cf1adbb4d88dcf92ab0bc85d446`), the live-review `HAEPARI_HOME` + capacity-one `mulgae-review` (`advisory-lock/v1`) prerequisite, and retirement of the `v0.1.26` report-based `answer_omitted` override is a breaking migration for existing users; host CLI/skill installation and `HAEPARI_HOME` setup remain separately approved steps.
+
 ## Authority and implementation state
 
 The sole consumer is `EPIC-032`, with existing `TASK-091` through `TASK-099`. The [canonical roadmap](../roadmap/README.md) owns identity, dependencies and lifecycle. This dossier owns the remaining implementation and verification plan.

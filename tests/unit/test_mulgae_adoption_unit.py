@@ -43,7 +43,7 @@ def environment(tmp_path, monkeypatch):
         ),
     )
     state = {
-        "version": "v0.1.25",
+        "version": "v0.1.26",
         "binary_sha256": "baseline",
         "skill_tree_sha256": "baseline",
     }
@@ -66,7 +66,7 @@ def test_identity_failure_performs_no_capture(environment, monkeypatch):
 
 def test_candidate_cannot_replace_baseline(environment):
     context, results, state = environment
-    state["version"] = "v0.1.26"
+    state["version"] = "v0.1.27"
     with pytest.raises(suite.lib.RecipeError):
         suite.run(context, "candidate")
     assert list(results.iterdir()) == []
@@ -80,7 +80,7 @@ def test_restore_requires_candidate_and_original_identity(environment, monkeypat
     with pytest.raises(suite.lib.RecipeError):
         suite.run(context, "consumer-cleanup")
     state.update(
-        version="v0.1.26",
+        version="v0.1.27",
         binary_sha256="candidate",
         skill_tree_sha256=suite.RELEASE_SKILL_TREE,
     )

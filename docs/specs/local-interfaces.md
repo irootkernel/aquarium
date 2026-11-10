@@ -257,7 +257,7 @@ The hook is advisory rather than a security boundary. Indirect commits may bypas
 
 The bundled `.mcp.json` starts the installed `aquarium-dev` stdio server. Its six `aquarium_dev_*` tools map to diagnose, enroll, repair-hook, rebuild, service-plan, and service-apply and return the same JSON envelopes as the CLI, with MCP `isError` set for failures. The bundled `tools/aquarium-dev/install.py` provides read-only runtime diagnosis and an explicitly approved install/update operation; runtime identity and setup failures use `aquarium-dev-runtime/v1`, `aquarium-dev-runtime-inspection/v1`, and `aquarium-dev-runtime-error/v1`.
 
-The repository inspector excludes `.mulgaeignore` from the Mulgae configuration inventory. It admits stable Mulgae v0.1.26 or newer and command-result v23 or newer, while retaining the Doctor v7 member name `config_v3` for native Config v5 diagnostics.
+The repository inspector excludes `.mulgaeignore` from the Mulgae configuration inventory. It admits stable Mulgae v0.1.27 or newer and command-result v23 or newer, while retaining the Doctor v7 member name `config_v3` for native Config v5 diagnostics.
 
 The [qualification CLI](../../plugins/aquarium/shared/qualify_adaptive_procedure.py)
 accepts `--repository`, `--assignment <file-or->`, `--podway <exact-binary>`,
