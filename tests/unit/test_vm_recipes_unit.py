@@ -2805,7 +2805,7 @@ class SorageAdoptionRecipeTest(unittest.TestCase):
             "candidate_sha": "a" * 40,
             "capture": "candidate",
             "tools": {
-                "version": "v0.1.3",
+                "version": "v0.1.4",
                 "binary_sha256": module.RELEASE_SHA256,
                 "skill_tree_sha256": module.RELEASE_SKILL_TREE_SHA256,
             },
@@ -2855,6 +2855,9 @@ class SorageAdoptionRecipeTest(unittest.TestCase):
                 document = copy.deepcopy(self.candidate_capture(module))
                 document["tools"][key] = "wrong"
                 cases.append(json.dumps(document))
+            old_capture = self.candidate_capture(module)
+            old_capture["tools"]["version"] = "v0.1.3"
+            cases.append(json.dumps(old_capture))
             for body in cases:
                 with self.subTest(body=body):
                     (root / "candidate.json").write_text(body)
@@ -2901,6 +2904,79 @@ class SorageAdoptionRecipeTest(unittest.TestCase):
                 "verified",
             )
             self.assertEqual(finish.call_args.kwargs["consumer_cleanup"], "verified")
+
+    def test_prepare_preserves_actual_baseline_identity(self):
+        module = load_module(
+            "sorage_adoption_test", RECIPES_ROOT / "sorage_adoption.py"
+        )
+        context = mock.MagicMock()
+        context.inputs = {"candidate": {"git_sha": "a" * 40}}
+        context.snapshot.return_value = [
+            {"relative_path": "baseline", "sha256": "b" * 64}
+        ]
+        tools = {
+            "version": "v0.1.3",
+            "binary_sha256": "original-binary",
+            "skill_tree_sha256": "mixed-skill",
+            "storage_inventory": {"entries": []},
+        }
+        with (
+            tempfile.TemporaryDirectory(dir="/tmp") as directory,
+            mock.patch.object(module.lib, "verify_guest_identity"),
+            mock.patch.object(module.lib, "verify_sealed_inputs"),
+            mock.patch.object(module.lib, "guard"),
+            mock.patch.object(
+                module.lib, "results_directory", return_value=Path(directory)
+            ),
+            mock.patch.object(module, "observe", return_value=tools),
+        ):
+            self.assertEqual(module.run(context, "prepare"), 0)
+            saved = (Path(directory) / "prepare.json").read_bytes()
+            self.assertEqual(json.loads(saved)["tools"], tools)
+            with self.assertRaises(module.lib.RecipeError):
+                module.run(context, "prepare")
+            self.assertEqual((Path(directory) / "prepare.json").read_bytes(), saved)
+
+    def test_baseline_observation_rejects_invalid_native_version(self):
+        module = load_module(
+            "sorage_adoption_test", RECIPES_ROOT / "sorage_adoption.py"
+        )
+        with tempfile.TemporaryDirectory(dir="/tmp") as directory:
+            root = Path(directory)
+            binary = root / "sorage"
+            binary.write_text("synthetic installed executable")
+            context = mock.MagicMock(home=root, checkout=root)
+            with (
+                mock.patch.object(module.shutil, "which", return_value=str(binary)),
+                mock.patch.object(module.lib, "run") as run,
+                mock.patch.object(
+                    module.lib, "skill_tree_digest", return_value="baseline-skill"
+                ) as skill,
+                mock.patch.object(
+                    module, "storage_inventory", return_value={}
+                ) as storage,
+            ):
+                for payload in (
+                    {"name": "sorage"},
+                    {"name": "sorage", "version": None},
+                    {"name": "sorage", "version": ""},
+                    {"name": "sorage", "version": 14},
+                ):
+                    with self.subTest(payload=payload):
+                        run.return_value = mock.Mock(
+                            returncode=0, stdout=json.dumps(payload)
+                        )
+                        with self.assertRaises(module.lib.RecipeError):
+                            module.observe(context)
+                skill.assert_not_called()
+                storage.assert_not_called()
+                for version in ("v0.1.3", "v0.1.4"):
+                    with self.subTest(version=version):
+                        run.return_value = mock.Mock(
+                            returncode=0,
+                            stdout=json.dumps({"name": "sorage", "version": version}),
+                        )
+                        self.assertEqual(module.observe(context)["version"], version)
 
     def test_wrong_candidate_digest_is_not_executed(self):
         module = load_module(

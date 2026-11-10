@@ -1289,11 +1289,12 @@ were included in restoration. Private model, effort and operating-system
 isolation remain unconfirmed. These results supply no all-scenarios or all-harness
 pass, and Master's final overall EPIC-028 acceptance remains separate.
 
-## Sorage v0.1.3 adoption suite
+## Sorage v0.1.4 adoption suite
 
 The [manual scenario](recipes/scenarios/sorage-adoption.md) defines the managed
 `sorage-adoption` suite for old-binary backup/restore, explicit upgrade, MCP and
-skill behavior, and consumer restoration. Qualification is pending. Submit only
+skill behavior, v0.1.3 update without migration, actual Plan Mode communication,
+and consumer restoration. Qualification is pending. Submit only
 with exact candidate and guest installation authority; local checks do not establish
 an installed result.
 

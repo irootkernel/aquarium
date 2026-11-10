@@ -1112,7 +1112,7 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
     def install_fake_sorage(
         self,
         *,
-        version: str = "v0.1.3",
+        version: str = "v0.1.4",
         initialized: bool = True,
         registered: bool = True,
         project_status: str = "active",
@@ -1346,7 +1346,11 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
             ("v0.1.0", False),
             ("v0.1.1", False),
             ("v0.1.2", False),
-            ("v0.1.3", True),
+            ("v0.1.3", False),
+            ("v0.1.4", True),
+            ("0.1.4", True),
+            ("v0.1.4-rc.1", False),
+            ("v0.1.4+build", False),
             ("v0.1.01", False),
             ("v0.1.10", True),
             ("0.1.99", True),
@@ -1358,6 +1362,29 @@ print(json.dumps({{"schema_version": 2, "ok": True, "command": command, "invocat
                 self.assertEqual(
                     inspect_tools.supported_sorage_version(version), supported
                 )
+
+    def test_sorage_v013_stops_before_readiness_probes(self) -> None:
+        self.install_fake_sorage(version="v0.1.3")
+        with (
+            mock.patch.dict(os.environ, self.environment, clear=True),
+            mock.patch.object(inspect_tools.platform, "system", return_value="Darwin"),
+            mock.patch.object(inspect_tools.platform, "machine", return_value="arm64"),
+            mock.patch.object(inspect_tools, "sorage_preflight") as preflight,
+            mock.patch.object(
+                inspect_tools, "json_probe", wraps=inspect_tools.json_probe
+            ) as calls,
+        ):
+            tool = inspect_tools.inspect_sorage(
+                self.repository, NORMAL_PROBE_TIMEOUT_SECONDS, True
+            )
+        self.assertEqual(tool["status"], "degraded")
+        self.assertFalse(tool["version_supported"])
+        self.assertFalse(tool["probes"]["doctor"]["attempted"])
+        self.assertFalse(tool["probes"]["project_resolve"]["attempted"])
+        self.assertEqual(
+            [call.args[0][1] for call in calls.call_args_list], ["version"]
+        )
+        preflight.assert_not_called()
 
     def test_sorage_stderr_refusal_preserves_native_code(self) -> None:
         raw = {

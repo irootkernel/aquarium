@@ -90,7 +90,7 @@ This rule establishes retirement-evidence applicability only. The release's SHA-
 | EPIC-032 | Adopt Haepari across integrated tools | In Progress |
 | EPIC-033 | Qualify the combined environment and retire the development channel | Planned |
 | EPIC-034 | Adopt Podway v0.2.15 and contract generation 2 | Completed |
-| EPIC-035 | Adopt Sorage v0.1.3 | In Progress |
+| EPIC-035 | Adopt Sorage v0.1.4 | In Progress |
 | EPIC-036 | Adopt Mulgae v0.1.26 | Completed |
 
 ## EPIC-000: Independent Tasks
@@ -252,7 +252,7 @@ Podway owns its release, distribution, runtime-mode implementation, and source-d
 
 Adopt Sorage as an optional local document-handoff integration. Aquarium diagnoses and installs the supported CLI and paired skill, initializes the local installation with a minimal profile, and registers each selected Git repository through an explicitly approved Project creation or binding. Sorage retains authority over Project identity, the managed Vault, Handoffs, reviews, retention, deletion, backup, and derived inbox state.
 
-This historical adoption established official stable v0.1.x on native Apple Silicon macOS, starting at v0.1.2 after TASK-105, without the production-binary baseline, managed Procedures, or MCP scope. EPIC-035 owns the v0.1.3 floor and optional MCP adoption. Master cancelled development-channel integration under TASK-041 on 2026-09-09. Sorage exchanges development requirements across projects and does not need separate production and development instances; that separation would make the system substantially more complex. Existing stable Sorage setup and Project registration remain in scope.
+This historical adoption established official stable v0.1.x on native Apple Silicon macOS, starting at v0.1.2 after TASK-105, without the production-binary baseline, managed Procedures, or MCP scope. EPIC-035 owns the v0.1.4 floor, optional MCP adoption and Plan Mode communication. Master cancelled development-channel integration under TASK-041 on 2026-09-09. Sorage exchanges development requirements across projects and does not need separate production and development instances; that separation would make the system substantially more complex. Existing stable Sorage setup and Project registration remain in scope.
 
 Master explicitly accepted EPIC-009 and TASK-047 closeout on 2026-09-09. The later cross-skill regression scenarios remain with TASK-046 and are not claimed by this closeout.
 
@@ -1090,23 +1090,24 @@ and installed-upgrade verification and the complete local test gate. The
 canonical contracts retain the qualification limits and separate release
 requirements; Git history retains the settled execution dossier.
 
-## EPIC-035: Adopt Sorage v0.1.3
+## EPIC-035: Adopt Sorage v0.1.4
 
 **Status:** `In Progress`
 
-Raise the supported stable v0.1.x floor to v0.1.3, adopt native preflight and the
+Raise the supported stable v0.1.x floor to v0.1.4, adopt native preflight and the
 one-way storage upgrade, and support optional MCP and explicit Handoff/Memo/Channel
 operations. This is breaking: existing users need a matching executable/skill update
-and a separately approved storage migration. Installed qualification belongs in the
-dedicated UTM VM before support acceptance; source and unit checks are insufficient.
+and, for older storage, a separately approved migration. Installed qualification
+belongs in the dedicated UTM VM before support acceptance; source and unit checks
+are insufficient.
 
 **Detailed SOT:** [Sorage adoption dossier](../todo/TODO-SORAGE-013.md)
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-181 | Adopt release identity and native preflight | Raise the floor, verify the complete paired skill and replace private SQLite diagnosis with native status and upgrade guidance. | In Progress | External Sorage v0.1.3 release |
+| TASK-181 | Adopt release identity and native preflight | Raise the floor, verify the complete paired skill and replace private SQLite diagnosis with native status and upgrade guidance. | In Progress | External Sorage v0.1.4 release |
 | TASK-182 | Integrate Sorage MCP and bundle scope | Support global/local/effective inspection and bundle v2 selection without borrowing another tool's command grammar. | In Progress | TASK-181 |
-| TASK-183 | Align integration documentation and regression scenarios | Update public and canonical contracts, executable checks and the managed VM scenario. | In Progress | TASK-182 |
+| TASK-183 | Align integration documentation and regression scenarios | Update public and canonical contracts, executable checks and the managed VM scenario, including actual Plan Mode communication. | In Progress | TASK-182 |
 | TASK-184 | Qualify installed adoption and promote outcomes | Verify the exact committed candidate in UTM, complete independent review and actual acceptance, then promote outcomes and settle the dossier. | Planned | TASK-183 |
 
 ## EPIC-036: Adopt Mulgae v0.1.26

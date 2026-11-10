@@ -506,6 +506,8 @@
           "handoff-reporting",
           "memo-channel",
           "cli-fallback-recovery",
+          "v013-update",
+          "plan-mode-communication",
           "consumer-restoration"
         ]
       },

@@ -875,13 +875,16 @@ class TestInspectGlobalTools:
         assert payload["initialization_probe"]["reason"] == "unsupported_runtime"
         assert not doctor_marker.exists()
 
-    def test_sorage_v011_is_incompatible_before_doctor(self) -> None:
+    @pytest.mark.parametrize("version", ("v0.1.1", "v0.1.3", "v0.1.4-rc.1"))
+    def test_sorage_unsupported_version_is_refused_before_doctor(
+        self, version: str
+    ) -> None:
         doctor_marker = self.base / "doctor-ran"
         sorage = self.bin_directory / "sorage"
         sorage.write_text(
             "#!/bin/sh\n"
             'if [ "$1" = "version" ]; then\n'
-            '  printf \'%s\\n\' \'{"name":"sorage","version":"v0.1.1"}\'\n'
+            f"  printf '%s\\n' '{json.dumps({'name': 'sorage', 'version': version})}'\n"
             "  exit 0\n"
             "fi\n"
             f"touch {doctor_marker}\n"
@@ -898,7 +901,7 @@ class TestInspectGlobalTools:
             result = inspect_global_tools.inspect_global_sorage(
                 inspector, self.repository, 1.0, True
             )
-        assert result["version"] == "v0.1.1"
+        assert result["version"] == version
         assert result["initialization_status"] == "not_applicable"
         assert result["probes"]["doctor"]["reason"] == "unsupported_runtime"
         assert not doctor_marker.exists()

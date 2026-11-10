@@ -13,10 +13,10 @@ from typing import Any
 import recipe_lib as lib
 from tree_digest import TreeDigestError, inventory_entries
 
-RELEASE_SHA256 = "5940c3d7ddac3db70b559a50a2839991e4b8bff3c26a7fb50865dff06c34c8f3"
+RELEASE_SHA256 = "838555333dac99483ed58fab5e6a79276d0ce712c69c2cd22ab64b9290c64eb6"
 
 RELEASE_SKILL_TREE_SHA256 = (
-    "2f25431635a2c88ceb4b1ad85ac984ce29e858dd3fb8be686c0c3ac8abbc9ae0"
+    "15594b776f18229209eb3998df3eb209bcedb6776acd595037784596d962d628"
 )
 
 
@@ -71,6 +71,8 @@ def observe(context: Any, candidate: bool = False) -> dict[str, Any]:
         result.returncode
         or not isinstance(version, dict)
         or version.get("name") != "sorage"
+        or not isinstance(version.get("version"), str)
+        or not version["version"]
     ):
         raise lib.RecipeError("installed Sorage identity is invalid", "incomplete")
     skill = context.home / ".agents/skills/use-sorage"
@@ -131,7 +133,7 @@ def run(context: Any, phase: str) -> int:
             not isinstance(installed_tools, dict)
             or installed.get("candidate_sha") != candidate
             or installed.get("capture") != "candidate"
-            or installed_tools.get("version") != "v0.1.3"
+            or installed_tools.get("version") != "v0.1.4"
             or installed_tools.get("binary_sha256") != RELEASE_SHA256
             or installed_tools.get("skill_tree_sha256") != RELEASE_SKILL_TREE_SHA256
             or not isinstance(inventory, list)
@@ -143,15 +145,11 @@ def run(context: Any, phase: str) -> int:
                 "incomplete",
             )
     tools = observe(context, candidate=phase == "candidate")
-    if phase == "prepare" and tools["version"] != "v0.1.2":
-        raise lib.RecipeError(
-            "observe the released v0.1.2 baseline before upgrading", "incomplete"
-        )
     if phase == "candidate" and (
-        tools["version"] != "v0.1.3" or tools["binary_sha256"] != RELEASE_SHA256
+        tools["version"] != "v0.1.4" or tools["binary_sha256"] != RELEASE_SHA256
     ):
         raise lib.RecipeError(
-            "installed Sorage differs from the official v0.1.3 binary", "incomplete"
+            "installed Sorage differs from the official v0.1.4 binary", "incomplete"
         )
     aggregate_path = results / "inventories.json"
     aggregate = lib.read_json_safe(aggregate_path)

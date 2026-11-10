@@ -1,25 +1,28 @@
-# Sorage v0.1.3 adoption
+# Sorage v0.1.4 adoption
 
 ## Consumer and authority
 
 EPIC-035 and TASK-181 through TASK-184 consume this dossier. The roadmap alone owns
-identity, order and status. Master selected the minimum-v0.1.3 policy and authorized
+identity, order and status. Master selected the minimum-v0.1.4 policy and authorized
 implementation. Commit, publication, host installation and exact guest installation
 proposals retain their separate boundaries. Preserve unrelated uv.lock.
 
 ## Goal and delivery
 
-Support stable v0.1.3 through v0.1.x on Apple Silicon. Follow the
+Support stable v0.1.4 through v0.1.x on Apple Silicon. Follow the
 [tool catalog](../../plugins/aquarium/references/tool-catalog.md#sorage),
 [interfaces](../specs/local-interfaces.md) and
 [tool integration specification](../specs/tool-integrations.md#sorage-readiness).
-The official release commit is 9bf079f07728387c21450a7e1d5eab4b8f821b1d.
+The official release commit is 403dce7bcf33742a44ec7e923ff6fb5d6824a5ba.
 Use the full same-release upstream skill; do not vendor its content.
 
 This adoption is breaking. Replace private schema inspection with zero-write native
 preflight; migrate only after old-writer backup/verification and a separate restore
 drill. Global/local MCP and bundle selection preserve optional native CLI operation.
 Explicit Channel support does not change Aquarium's internal collaboration transport.
+Compatible v0.1.3 storage needs no additional migration in v0.1.4. Requested
+communication remains available in Plan Mode; project execution authority stays
+separate. The existing dossier filename preserves its original adoption identity.
 
 ## Acceptance and handoffs
 
@@ -28,7 +31,8 @@ Explicit Channel support does not change Aquarium's internal collaboration trans
 - TASK-182: three-view MCP and requested scope checks, same Installation, valid
   bundle v2 Sorage selection, unrelated configuration preservation.
 - TASK-183: focused regressions then make test; current canonical/public documents,
-  final writing passes and the managed Sorage adoption suite.
+  final writing passes and the managed Sorage adoption suite, including v013-update
+  and actual Plan Mode communication.
 - TASK-184: exact committed candidate and dependency identities, original installed
   observations for every [manual case](../../tests/vm/recipes/scenarios/sorage-adoption.md),
   verified consumer restoration, independent review and actual overall acceptance.
