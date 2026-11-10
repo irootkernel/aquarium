@@ -1313,9 +1313,62 @@ observations of native v3 requirement answers in an isolated guest `HAEPARI_HOME
 (`mulgae-review` capacity `1`) without the retired `v0.1.26` `answer_omitted`
 override, and verified restoration to `v0.1.26`. Producer direct-SSH/Aqua
 observations on the tag-built binary do not establish a managed outer Job `PASS`;
-qualification is pending shared `utm-macos` availability and explicit VM/live
-authority. Historical `v0.1.25` and `v0.1.26` observations retain their original
-scope.
+managed qualification remains unestablished. Historical `v0.1.25` and `v0.1.26`
+observations retain their original scope.
+
+### TASK-092 direct UTM caller observations
+
+Master authorized direct `ssh UTM` verification on Aquarium source checkpoint
+`cdb67cb4f61eb1d80fcedf4afb8bc934c0d6ddda`, replacing only the outer managed
+Job transport for this Task. The installed payload matched the sealed candidate
+across 208 regular files. The public Go-install Mulgae `v0.1.27` binary
+(`sha256:a2911f0da31eb4dfe53bc2604912671ef97c33814422eb3f8f42c3ad97003b1e`)
+was built from the published module with Go `1.27.1`; the complete six-file
+`use-mulgae` tree matched the release digest above. Isolated guest controllers
+supplied native `mulgae-review` locks. This establishes no managed Job result.
+
+The qualified scope includes the released `v0.1.26` Config v5 and review-history
+baseline, preserved staged and unstaged sentinels, receipt-bound result retrieval,
+and fresh discovery of the selected candidate Aquarium and paired skills.
+Provider-free and invalid-grant/controller-refusal observations used the public
+Go-install binary. Producer protocol and fault evidence retains its original
+tag-built binary and direct-transport scope.
+
+| Consumer behavior | Qualified boundary |
+| --- | --- |
+| Standalone, Task and Epic completion review | Native provider assessments retain positive, unmet and genuinely unverified evidence; missing tests and an incomplete member block the applicable completion decision. |
+| Remediation confirmation | An affected-only native provider assessment was observed, with the unaffected prior assessment retained as a separate caller judgment. No native composite was created. |
+| CLI and MCP selection | Actual CLI execution and one supplemental MCP invocation exercised the selected private installation without an Aquarium lock wrapper. |
+| Refusal and derived results | The original MCP readiness refusal and derived invalid remediation assessment remain negative evidence. Their causes were not established, and prose did not replace native unverified rows. |
+
+The supplemental MCP observation used identical guarded preflight/start arguments
+and awaited the original invocation. Native inspection reported P2 committed,
+complete coverage, structured extraction and zero findings, with one selected
+and evaluated provider-owned requirement. Input, committed fixture HEAD and
+provider configuration matched the earlier subset case. Process-scoped Codex
+`env_vars` forwarded the selected `HAEPARI_HOME`, confirmed on the actual MCP
+child; optional grant and parent context were unset. The global argument shape
+was exercised; the repository-local template's startup was not separately run.
+
+The supplement used retained candidate paths without reinstalling or changing
+global configuration. Its grant was released, its unchanged temporary input
+removed and its owned controller gracefully stopped. Fixture Git state and
+recorded binary/configuration hashes were preserved. The 32 supplemental outputs
+were collected and verified; no test or producer fault matrix was repeated.
+
+The initial campaign restored the approved `v0.1.26` binary and complete skill,
+Aquarium `v0.1.22` registration and status runtime. All 6,992 inventoried entries,
+original configuration and staged/unstaged Git state matched the released
+baseline; historical review content remained readable. Its 240-file archive and
+original failures remain in the workflow's retained local evidence. The recipe's
+`pass` covers restoration only, separately from the qualified caller evidence.
+
+CO accepted this bounded qualification under the EPIC-032 delegation. These are
+installed review-consumer observations at declared synthetic checkpoints, not
+fresh Task/Epic startup, native Podway history, complete handler execution,
+whole-combination qualification or release acceptance. Master retains overall
+Epic acceptance. Native invocation identities and raw receipts remain in their
+original workflow owners rather than serving as tracked documentation authority.
 
 ## Podway v0.2.16 adoption suite
 

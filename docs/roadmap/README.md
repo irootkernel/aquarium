@@ -1038,7 +1038,7 @@ Close after all due tool scopes and the Aquarium integration are independently a
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-091 | Freeze producer packets and accept Podway | Freeze packets from completed EPIC-019/031 outcomes, reuse the early cleanup exchange, request any remaining scope and accept actual implementation, skill/migration and native detachment evidence. | Completed | EPIC-031; TASK-090; external Podway implementation return |
-| TASK-092 | Adopt the released native Mulgae lock | Reuse the existing producer implementation exchange; adopt the actual released CLI/MCP advisory lock and matching skill, verify the due native cases and Aquarium workflow use, then update the supported floor without an outer wrapper. | In Progress | TASK-091; released Mulgae native lock and matching skill |
+| TASK-092 | Adopt the released native Mulgae lock | Reuse the existing producer implementation exchange; adopt the actual released CLI/MCP advisory lock and matching skill, verify the due native cases and Aquarium workflow use, then update the supported floor without an outer wrapper. | Completed | TASK-091; released Mulgae native lock and matching skill |
 | TASK-093 | Integrate Aquarium guidance and verify Gaori | Inspect and complete missing Haepari routing in release-handler, epic-handler and epic-squad once; verify Gaori through existing commands and both native skills, reusing completed cleanup and checks. | Planned | TASK-091 |
 | TASK-094 | Verify Sorage through Aquarium | Use existing guest-safe CLI/MCP/skill checks with synthetic broker/configuration/Vault state and recovery; preserve independent host coordination and result collection. | Planned | TASK-093 |
 | TASK-095 | Verify Sanho through Aquarium | Use existing commit/push/configuration and skill checks in disposable repositories/local remotes; reuse completed source cleanup and preserve foreign Git state. | Planned | TASK-093 |
@@ -1121,7 +1121,7 @@ Scoped installed consumer qualification is complete. Master's separate functiona
 verification and the exact release's installed acceptance remain pre-release
 obligations; no unobserved manual result is claimed.
 
-**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md), [review intent](../../plugins/aquarium/references/review-intent-contract.md), [tool catalog](../../plugins/aquarium/references/tool-catalog.md#mulgae), [testing contract](../../TESTING.md#mulgae-v0126-adoption), and [workaround retirement](../deferred-feedback/README.md#df-007-retire-the-mulgae-requirements-omission-workaround).
+**Canonical Outcomes:** [Tool integrations](../specs/tool-integrations.md), [Mulgae review contract](../../plugins/aquarium/references/mulgae-review-contract.md), [review intent](../../plugins/aquarium/references/review-intent-contract.md), [tool catalog](../../plugins/aquarium/references/tool-catalog.md#mulgae), [testing contract](../../TESTING.md#mulgae-v0126-adoption), and [later workaround retirement](../../TESTING.md#mulgae-v0127-native-coordination-adoption).
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
@@ -1133,6 +1133,7 @@ obligations; no unobserved manual result is claimed.
 Master directed finalization of the scoped adoption after agent-operated UTM
 verification. The temporary omission path preserves native assessments and uses
 explicit, evidenced owner reports for separate Aquarium judgments. Mulgae's
-producer correction and removal of that path remain owned by DF-007. Original
-incomplete and failed producer observations retain their meaning; the scoped
+later producer correction and consumer retirement are recorded in the
+[v0.1.27 adoption](../../TESTING.md#mulgae-v0127-native-coordination-adoption).
+Original incomplete and failed producer observations retain their meaning; the scoped
 consumer result does not certify the producer or replace release acceptance.

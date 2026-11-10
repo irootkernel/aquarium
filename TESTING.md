@@ -985,8 +985,8 @@ of the other provider families were not observed. This qualifies the bounded
 consumer workaround, not the producer fix. Master's actual functional results
 remain unverified until supplied; complete the applicable manual and exact
 release-acceptance gates before publication. Source checks cannot establish those
-results. [DF-007](docs/deferred-feedback/README.md#df-007-retire-the-mulgae-requirements-omission-workaround)
-owns the producer correction and later workaround removal.
+results. The later producer correction and consumer retirement are recorded in
+the [v0.1.27 adoption](#mulgae-v0127-native-coordination-adoption) below.
 Historical v0.1.25 observations above retain their original applicability.
 
 ### Mulgae v0.1.27 native coordination adoption
@@ -1004,10 +1004,16 @@ invalid-grant refusal on the public Go-install binary alongside installed Task,
 Epic, standalone, and remediation-confirmation caller observations of native v3
 requirement answers without the retired `answer_omitted` override. Producer
 direct-SSH/Aqua qualification on the tag-built binary is retained with producer
-provenance and does not establish an outer managed Haepari Job `PASS` or consumer
-qualification; installed UTM execution remains pending explicit VM/live-provider
-authority and shared `utm-macos` availability. Historical `v0.1.25` and `v0.1.26`
-observations above remain unchanged.
+provenance. The [TASK-092 direct UTM observations](tests/vm/README.md#task-092-direct-utm-caller-observations)
+record Master's authorized direct-SSH execution, native caller results and verified
+consumer restoration. The original MCP refusal and subset `invalid_assessment`
+remain negative evidence. One separately authorized MCP correction subsequently
+preserved the affected subset as native `provider/met`, verified process-scoped
+environment forwarding and settled its owned effects without repeating tests.
+The affected independent assessments passed, and CO accepted this bounded
+qualification under the EPIC-032 delegation. Neither campaign establishes an outer managed Haepari Job `PASS` or
+release acceptance. Historical `v0.1.25` and `v0.1.26` observations above remain
+unchanged.
 
 ## Podway v0.2.16 adoption
 

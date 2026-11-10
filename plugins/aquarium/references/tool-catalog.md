@@ -339,6 +339,7 @@ Treat MCP as an optional, separately approved component and prefer one user-glob
 [mcp_servers.mulgae]
 command = "<absolute-selected-mulgae-path>"
 args = ["mcp"]
+env_vars = ["HAEPARI_HOME", "HAEPARI_LOCK_GRANT", "HAEPARI_PARENT_CONTEXT"]
 required = true
 startup_timeout_sec = 30
 tool_timeout_sec = 7501
@@ -351,14 +352,17 @@ When the user explicitly chooses repository-local scope, merge this machine-spec
 command = "<absolute-selected-mulgae-path>"
 args = ["mcp", "--project-root", "<absolute-git-root>"]
 cwd = "<absolute-git-root>"
+env_vars = ["HAEPARI_HOME", "HAEPARI_LOCK_GRANT", "HAEPARI_PARENT_CONTEXT"]
 required = true
 startup_timeout_sec = 30
 tool_timeout_sec = 7501
 ```
 
+The `env_vars` list forwards the selected installation and any inherited native grant or parent context from the process that launches Codex. Set `HAEPARI_HOME` before launching that process; leave the optional grant and parent context unset when none is supplied. Do not persist borrowed grant/context values in TOML or assume a later shell export changes an already running MCP server. A separately approved explicit `env.HAEPARI_HOME` mapping may select a fixed private installation instead; preserve unrelated environment settings and keep optional native context coherent with that installation. Registration inspection verifies configuration, not the child environment or live lock readiness.
+
 Show the complete diff and target scope before approval; for a local target also show whether `.codex/config.toml` is tracked. Verify three views independently without starting the server: query the global registration from a neutral filesystem-root cwd with the active Codex home, query the local registration from the same neutral cwd with `CODEX_HOME=<absolute-git-root>/.codex`, and query the effective registration from the repository with the active Codex home. A failed named lookup may use a successful `codex mcp list --json` inventory within the same timeout budget. The supported inventory shape is a top-level array whose entries each have a unique non-empty string `name`; absence from one such inventory proves `missing`, presence means the named lookup is degraded, and a timed-out lookup or failed, malformed, or duplicate-name inventory is unverifiable. Never classify registration state from stderr wording.
 
-The effective entry must be enabled STDIO, resolve to the selected binary, be required, and use startup and tool timeouts at least as large as the proposed defaults. Global scope requires exact `args = ["mcp"]` and no fixed `cwd`; local scope requires exact `mcp --project-root <canonical-root>` arguments and repository-bound `cwd`. The 7501-second tool timeout covers the admitted two-hour review deadline plus retry and finalization margin; preserve any larger existing value. Record the Codex version and output capability separately. An observable `required: true` is verified, observable `false` is a registration mismatch, and an absent field is `required_unverifiable`; absence alone is not a mismatch because supported Codex output may omit the configured property.
+The effective entry must be enabled STDIO, resolve to the selected binary, be required, and use startup and tool timeouts at least as large as the proposed defaults. Check that its environment configuration forwards `HAEPARI_HOME` and any supplied native grant/parent context, or explicitly selects the same private installation; a missing forwarding route leaves live-review configuration incomplete without changing offline Doctor readiness. Global scope requires exact `args = ["mcp"]` and no fixed `cwd`; local scope requires exact `mcp --project-root <canonical-root>` arguments and repository-bound `cwd`. The 7501-second tool timeout covers the admitted two-hour review deadline plus retry and finalization margin; preserve any larger existing value. Record the Codex version and output capability separately. An observable `required: true` is verified, observable `false` is a registration mismatch, and an absent field is `required_unverifiable`; absence alone is not a mismatch because supported Codex output may omit the configured property.
 
 Whenever an isolated local Mulgae registration exists, an explicit bundle `local_mcp` selection confirms local scope; preserve it without asking again. If the bundle requests no Mulgae MCP, preserve the registration without proposing cleanup. For ordinary setup or an explicit global request, ask whether local scope is intentional. If confirmed, preserve it; an explicit global request then remains a scope mismatch. If not, show and separately approve removal of only the local `mulgae` table, using `CODEX_HOME=<absolute-git-root>/.codex codex mcp remove mulgae` or an equivalent exact TOML edit. Reinspect the file afterward. Delete `.codex/config.toml` only when parsed TOML has no remaining semantic content, and delete `.codex/` only when the directory is then empty; preserve comments with retained settings, every unrelated table, and every nonempty directory. Apply the shared backup policy before removal, never remove the global registration as part of local cleanup, and never stage the file during setup. Repository configuration paths must be regular non-symlink paths before `mulgae doctor` or any owning Codex CLI probe may read them.
 

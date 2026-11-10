@@ -55,8 +55,9 @@ shared host installation.
   provider-free `--preflight`, receipt-bound inspection (`runs status/show/findings`),
   and no-change reviews succeed without controller contact or lock acquisition,
   and that a coordinated review path refuses an invalid or mismatched
-  `HAEPARI_LOCK_GRANT` (`haepari_borrowed_grant_invalid`) or unavailable
-  controller without silent direct provider execution. Reuse the producer's
+  `HAEPARI_LOCK_GRANT` (`haepari_readiness_failed`, with
+  `diagnostic_summary.phase: admission`) or unavailable controller without
+  silent direct provider execution. Reuse the producer's
   `c611e2ba16d0f0e873e948b2251f5bc5bda84cad` native contention, replay,
   cancel/grant race, borrower, loss/drain and partial-role suites within their
   declared coverage rather than replaying a full fault matrix.

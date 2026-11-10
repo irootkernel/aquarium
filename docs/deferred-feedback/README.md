@@ -40,14 +40,6 @@ This index owns small actionable findings intentionally postponed from current w
 - Reason for deferral: this is an independent maintainability improvement, with no additional current behavior defect established. The current unresolved-finding defect was repaired separately; broad decomposition is unnecessary for that correction.
 - Re-entry condition: before TASK-154 or TASK-155 changes composition or commit eligibility, evaluate small extractions by concern and verify preserved contracts with the existing affected suite. The finding imposes no line-count limit, mandatory large refactor or new framework.
 
-## DF-007: Retire the Mulgae requirements omission workaround
-
-- Actionable issue: Mulgae v0.1.26's requirements instruction requested provider output v3 with requirement assessments, while its later extraction instruction required v1 finding output without them. Mulgae v0.1.27 (`c611e2ba16d0f0e873e948b2251f5bc5bda84cad`) fixed extraction to preserve native v3 requirement answers, and `TASK-092` raises Aquarium's minimum floor to `>=v0.1.27` and removes the active report-based `answer_omitted` override from the [consumer review contract](../../plugins/aquarium/references/mulgae-review-contract.md#assess-criteria-when-native-answers-are-omitted), [review intent contract](../../plugins/aquarium/references/review-intent-contract.md), and workflow specifications while preserving historical v0.1.26 rows and judgments.
-- Owner: Aquarium `EPIC-032` / `TASK-092` owns the remaining installed consumer verification of native v3 requirement answers across the four caller paths after the source-level workaround removal.
-- Producer work: Completed in Mulgae v0.1.27 (`f80eacf57d15d90ddee16a4722ed7472bfe9c246` and release tag `c611e2ba16d0f0e873e948b2251f5bc5bda84cad`, with producer MCP requirements-client qualification passing).
-- Reason for deferral: Source retirement of the active consumer override is applied in `TASK-092`, but installed consumer observations across Task, Epic, standalone, and remediation-confirmation callers in the dedicated UTM VM remain pending the `TASK-092` managed VM and live-provider gates.
-- Re-entry condition: During `TASK-092` installed UTM verification, observe native v3 requirement assessments without the retired report-based override across Task handler, Epic handler, standalone `mulgae-review`, and remediation-confirmation callers (keeping historical v0.1.26 native rows and anchor references intact), and settle this entry only after those replacement observations pass.
-
 ## DF-008: Investigate terminal observer teardown EPERM on macOS
 
 - Actionable issue: the host wrapper can report `UNKNOWN / OBSERVER_TEARDOWN_INCOMPLETE` after the native event stream ends because signaling its observer group returns `EPERM`. A later terminal query of the same Job can establish `PASS`, verified cleanup and successful export. The wrapper's earlier unknown observation must remain distinct from that native result.
