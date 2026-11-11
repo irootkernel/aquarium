@@ -1137,3 +1137,24 @@ later producer correction and consumer retirement are recorded in the
 [v0.1.27 adoption](../../TESTING.md#mulgae-v0127-native-coordination-adoption).
 Original incomplete and failed producer observations retain their meaning; the scoped
 consumer result does not certify the producer or replace release acceptance.
+
+
+## EPIC-037: Adopt Podway v0.2.17
+
+**Status:** `In Progress`
+
+Raise the stable floor to v0.2.17 without an upper bound and adopt atomic criterion
+assessment, commit-bound successor observations and their recovery contract.
+This is breaking: users need the matching CLI and complete skill, original-writer
+settlement and a separately approved fresh-runtime reset for incompatible Stores.
+Installed qualification must pass in the dedicated UTM VM before support acceptance.
+Source and local test success do not establish that result or EPIC-033 retirement.
+
+**Detailed SOT:** [Podway v0.2.17 adoption dossier](../todo/TODO-PODWAY-0217.md)
+
+| Task | Title | Summary | Status | Depends On |
+| --- | --- | --- | --- | --- |
+| TASK-189 | Align released Podway support | Raise both admission floors and pin the complete skill and upgrade contract. | In Progress | External Podway v0.2.17 release |
+| TASK-190 | Adopt atomic caller interaction | Align batch assessments, successor observations and original-request recovery. | In Progress | TASK-189 |
+| TASK-191 | Prepare official and installed regressions | Update exact artifact identity, sealed candidate/previous inputs and native/manual scenarios. | In Progress | TASK-190 |
+| TASK-192 | Qualify installed adoption and promote outcomes | Verify the committed candidate in UTM, complete independent review and actual acceptance, then settle the dossier. | Planned | TASK-191 |

@@ -2451,7 +2451,7 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
     if phase == "candidate-install":
         if request_json().get("podway_contract_generation") != 2:
             raise lib.RecipeError(
-                "verify the sealed Podway v0.2.16 upgrade first", "incomplete"
+                "verify the sealed Podway v0.2.17 upgrade first", "incomplete"
             )
         ledger = lib.run_ledger("release-acceptance")
         context.ensure_candidate_installed(ledger, predecessors=(PRIOR_KIND,))
@@ -3295,7 +3295,7 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
             "capture.json": lambda document: document.get("exit") == 0,
             "podway-upgrade.json": lambda document: (
                 document.get("identity", {}).get("result", {}).get("version")
-                == "v0.2.16"
+                == "v0.2.17"
             ),
             "candidate-install.json": lambda document: isinstance(document, dict),
             "skill-identity.json": lambda document: (
@@ -3464,7 +3464,7 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
                     "selected_generation": current_name,
                     "python_environment": python_state.get("selected_environment"),
                     "python_requirements_sha256": python_digest,
-                    "declared": "retain the tested Aquarium candidate, Podway v0.2.16, paired skills, selected candidate status runtime and selected shared Python environment",
+                    "declared": "retain the tested Aquarium candidate, Podway v0.2.17, paired skills, selected candidate status runtime and selected shared Python environment",
                 },
             },
         )

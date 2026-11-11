@@ -17,6 +17,8 @@ This file records concise shipped outcomes and the planned next stable release.
 
 ### Changed
 
+- Require Podway v0.2.17 or newer and its release-pinned skill, use atomic criterion batches and verified commit-bound successor observations, and refresh after replay or uncertain submission. Existing v0.2.16 workspaces need original-writer settlement and an explicitly approved fresh-runtime reset; their history is not migrated.
+
 - Guide Task, Epic and Squad verification through existing Haepari adapters when repository policy requires a shared VM, preserving original Job recovery, independent cleanup and reuse of applicable Task evidence.
 
 - Require Mulgae v0.1.27 or newer and its complete matching `use-mulgae` skill. CLI and MCP live reviews use native capacity-one `mulgae-review` (`advisory-lock/v1`) coordination in the selected private `HAEPARI_HOME`, including read-only `HAEPARI_LOCK_GRANT` borrowing, without an outer Aquarium wrapper. Retire the v0.1.26 report-based `answer_omitted` override for new runs and preserve historical records. Existing users must update the CLI and skill and provide a reachable `HAEPARI_HOME` with `mulgae-review` for live reviews.

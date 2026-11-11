@@ -1,0 +1,67 @@
+schema: podway.procedure/v2
+id: aquarium-agent-interaction
+version: "1"
+name: Aquarium caller interaction qualification
+purpose: Verify atomic assessment and commit-bound observations in a disposable runtime.
+goal_tracking: true
+node_definitions:
+  work:
+    type: action
+    title: Record fixture evidence
+    intent: Record the synthetic result consumed by the assessment.
+    items:
+      - id: result
+        type: text
+        prompt: Record the synthetic result.
+        required: true
+        max_length: 1000
+  assess:
+    type: decision
+    title: Assess fixture criteria
+    objective: Preserve the outcome derived from the recorded criteria.
+    prompt: Which outcome applies?
+    options:
+      - id: achieved
+        label: Achieved
+      - id: not-achieved
+        label: Not achieved
+      - id: superseded
+        label: Superseded
+    reason:
+      required: true
+    assessment:
+      target: session_goal
+      outcomes:
+        achieved: achieved
+        not-achieved: not_achieved
+        superseded: superseded
+  finish:
+    type: action
+    title: Finish fixture
+    intent: Complete after a current assessment.
+graph:
+  entry: work
+  nodes:
+    - id: work
+      use: work
+      next: assess
+    - id: assess
+      use: assess
+      evidence_from:
+        - node: work
+          required: true
+          items:
+            - result
+      routes:
+        achieved:
+          to: finish
+          effect: advance
+        not-achieved:
+          to: finish
+          effect: advance
+        superseded:
+          to: finish
+          effect: advance
+    - id: finish
+      use: finish
+      terminal: true

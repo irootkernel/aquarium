@@ -18,6 +18,49 @@ verify_podway_compatibility = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(verify_podway_compatibility)
 
 
+@pytest.mark.parametrize("sequence", [0, 2**63, 2**64 - 1])
+def test_combined_observation_preserves_unsigned_sequences(sequence):
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    observation = {"schema": runtime.OBSERVATION_SCHEMA}
+    payload = {
+        "schema": runtime.OUTPUT_SCHEMA,
+        "command": "session.begin",
+        "result": {
+            "schema": "podway.mutation-observation-result/v1",
+            "mutation_result": {"schema": "podway.session-begin-result/v2"},
+            "observation": observation,
+            "workspace_sequence": sequence,
+        },
+    }
+    completed = subprocess.CompletedProcess([], 0, json.dumps(payload).encode(), b"")
+    assert (
+        runtime.mutation_observation(
+            completed, "session.begin", "podway.session-begin-result/v2"
+        )
+        == observation
+    )
+
+
+@pytest.mark.parametrize("sequence", [True, False, -1, 2**64, 1.0, None])
+def test_combined_observation_refuses_lossy_or_invalid_sequences(sequence):
+    runtime = verify_podway_compatibility.podway_runtime_qualification
+    payload = {
+        "schema": runtime.OUTPUT_SCHEMA,
+        "command": "session.begin",
+        "result": {
+            "schema": "podway.mutation-observation-result/v1",
+            "mutation_result": {"schema": "podway.session-begin-result/v2"},
+            "observation": {"schema": runtime.OBSERVATION_SCHEMA},
+            "workspace_sequence": sequence,
+        },
+    }
+    completed = subprocess.CompletedProcess([], 0, json.dumps(payload).encode(), b"")
+    with pytest.raises(runtime.RuntimeQualificationError):
+        runtime.mutation_observation(
+            completed, "session.begin", "podway.session-begin-result/v2"
+        )
+
+
 def reversed_json(value: dict[str, object]) -> str:
     return json.dumps(dict(reversed(list(value.items()))), separators=(",", ":"))
 
@@ -1328,15 +1371,16 @@ def test_workspace_removal_replay_requires_success_with_v10_receipt() -> None:
     assert result["already_absent"] is True
     assert result["workspace_uuid"] is None
     assert (
-        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v10"
+        verify_podway_compatibility.RESULT_SCHEMA == "aquarium-podway-compatibility.v11"
     )
-    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.16"
+    assert verify_podway_compatibility.EXPECTED_VERSION == "v0.2.17"
 
 
 @pytest.mark.parametrize(
     ("name", "version", "accepted"),
     [
-        ("podway", "v0.2.16", True),
+        ("podway", "v0.2.17", True),
+        ("podway", "v0.2.16", False),
         ("podway", "v0.2.14", False),
         ("podway", "v0.2.13", False),
         ("podway", "v0.2.11", False),

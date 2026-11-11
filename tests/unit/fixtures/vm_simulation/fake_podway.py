@@ -17,7 +17,7 @@ import uuid
 
 arguments = sys.argv[1:]
 GENERATION = 2 if "--contract-generation" in arguments else 1
-VERSION = "v0.2.16" if GENERATION == 2 else "v0.2.14"
+VERSION = "v0.2.17" if GENERATION == 2 else "v0.2.14"
 
 
 def state_path() -> str:

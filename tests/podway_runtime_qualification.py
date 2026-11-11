@@ -24,8 +24,8 @@ import yaml
 OUTPUT_SCHEMA = "podway.output/v4"
 ERROR_SCHEMA = "podway.error/v2"
 OBSERVATION_SCHEMA = "podway.observation-result/v6"
-EXPECTED_VERSION = "v0.2.16"
-RELEASE_SOURCE_COMMIT = "e9f4b41d1d09573b7acd443b91fbfb8f378fb8e1"
+EXPECTED_VERSION = "v0.2.17"
+RELEASE_SOURCE_COMMIT = "31cbd110573271ea3376cb07eb961f3dc257a05d"
 COMMAND_TIMEOUT_SECONDS = 20
 # The delegated Task scenario needs 150 loop iterations and about 576s; allow
 # room for required rework coverage and variation in native command latency.
@@ -33,7 +33,7 @@ RUN_TIMEOUT_SECONDS = 900
 MAX_GRAPH_STEPS = 192
 MAX_PARALLEL_RUNTIMES = 4
 CONTRACT_MANIFEST_DIGEST = (
-    "sha256:57cb8463f0f24033f9bd0437ed1943e77b21b754a888e654bd847bec13f4b91d"
+    "sha256:f5e56e344a79022766fb69af7991c60d57e7793495b2599c1c3d3ef296309100"
 )
 
 TASK_REVIEW_ENTRY_NODES = {
@@ -944,7 +944,7 @@ def release_identity(completed: subprocess.CompletedProcess[bytes]) -> dict[str,
         or re.fullmatch(r"sha256:[0-9a-f]{64}", identity["build_identity"]) is None
     ):
         raise RuntimeQualificationError(
-            "CLI does not match the official v0.2.16 identity"
+            "CLI does not match the official v0.2.17 identity"
         )
     return identity
 
@@ -1019,6 +1019,25 @@ def output_result(
     return result
 
 
+def mutation_observation(completed, command, mutation_schema):
+    """Validate a combined response; submission history remains caller-owned."""
+    result = output_result(completed, command, "podway.mutation-observation-result/v1")
+    mutation = result.get("mutation_result")
+    observation = result.get("observation")
+    sequence = result.get("workspace_sequence")
+    if (
+        completed.returncode != 0
+        or not isinstance(mutation, dict)
+        or mutation.get("schema") != mutation_schema
+        or not isinstance(observation, dict)
+        or observation.get("schema") != OBSERVATION_SCHEMA
+        or type(sequence) is not int
+        or not 0 <= sequence <= 2**64 - 1
+    ):
+        raise RuntimeQualificationError("combined mutation observation is incompatible")
+    return observation
+
+
 def error_code(completed: subprocess.CompletedProcess[bytes]) -> str:
     payload = json_payload(completed)
     code = payload.get("code")
@@ -1072,6 +1091,7 @@ class ManagedRuntime:
         self.environment: dict[str, str] | None = None
         self.deadline: float | None = None
         self.command_sequence = 0
+        self.native_invocations = 0
         self.missing_receipt_guards: set[tuple[str, str]] = set()
         self.delegation_receipt_count = 0
         self.stale_receipt_guards: set[tuple[str, str]] = set()
@@ -1921,6 +1941,391 @@ class ManagedRuntime:
             else:
                 self.environment["HOME"] = original_home
 
+    def exercise_agent_interaction(self, fixture: Path) -> dict[str, Any]:
+        """Exercise the released caller APIs without external work or installation."""
+        assert self.sandbox is not None
+        relative = ".podway/procedures/agent-interaction.yaml"
+        (self.sandbox / relative).write_bytes(fixture.read_bytes())
+        cases = []
+        for count, assessment_status, option in (
+            (1, "unsatisfied", "not-achieved"),
+            (3, "satisfied", "achieved"),
+            (16, "not_applicable", "superseded"),
+        ):
+            if cases:
+                self.invoke_template(self.observe(), "session.reset")
+            started = self.raw(
+                [
+                    "--json",
+                    "start",
+                    "--procedure",
+                    relative,
+                    "--expect-procedure-digest",
+                    self.preview(relative)["procedure_digest"],
+                    "--task",
+                    "Qualify native caller interaction",
+                    "--idempotency-key",
+                    self.next_key("agent-start"),
+                    "--with-observation",
+                ]
+            )
+            prepared = mutation_observation(
+                started, "session.start", "podway.session-start-result/v4"
+            )
+            criteria = [
+                f"c{index}=Fixture criterion {index} is assessed."
+                for index in range(count)
+            ]
+            begin_args = ["--goal", "Qualify the fixture's native assessment contract."]
+            for criterion in criteria:
+                begin_args.extend(["--criterion", criterion])
+            began = self.invoke_template(
+                prepared,
+                "session.begin",
+                semantic_arguments=[*begin_args, "--with-observation"],
+            )
+            current = mutation_observation(
+                began, "session.begin", "podway.session-begin-result/v2"
+            )
+            if any(
+                row["command"] == "item.record_many"
+                for row in current["mutation_templates"]
+            ):
+                raise RuntimeQualificationError(
+                    "text-only fixture unexpectedly emitted a batch template"
+                )
+            record = {
+                "schema": "podway.item-record-many-input/v1",
+                "workspace_uuid": self.workspace_uuid(current),
+                "session_id": current["status"]["session"]["id"],
+                "session_revision": current["status"]["session"]["revision"],
+                "attempt_id": current["status"]["current"]["attempt"]["attempt_id"],
+                "idempotency_key": self.next_key("agent-record"),
+                "operations": [
+                    {
+                        "item_id": "result",
+                        "expected_item_revision": current["active_items"][0][
+                            "revision"
+                        ],
+                        "record": {
+                            "type": "text",
+                            "value": "Synthetic native contract evidence.",
+                        },
+                    }
+                ],
+            }
+            action_before = self.native_invocations
+            recorded = self.raw(
+                ["--json", "record", "--stdin", "--with-observation"],
+                stdin=json.dumps(record).encode(),
+            )
+            current = mutation_observation(
+                recorded, "item.record_many", "podway.item-record-many-result/v2"
+            )
+            completed = self.invoke_template(
+                current, "session.complete", semantic_arguments=["--with-observation"]
+            )
+            action_calls = self.native_invocations - action_before
+            if action_calls != 2:
+                raise RuntimeQualificationError(
+                    "normal record/complete path performed extra calls"
+                )
+            checkpoint = mutation_observation(
+                completed, "session.complete", "podway.stage-transition-result/v3"
+            )
+            template = next(
+                row
+                for row in checkpoint["mutation_templates"]
+                if row["command"] == "goal.assess_criterion"
+            )
+            batch = {
+                "schema": "podway.criterion-assessment-many-input/v1",
+                **{
+                    field: template["preconditions"][field]
+                    for field in (
+                        "workspace_uuid",
+                        "session_id",
+                        "session_revision",
+                        "attempt_id",
+                        "goal_revision",
+                    )
+                },
+                "idempotency_key": self.next_key("agent-assess"),
+                "assessments": [
+                    {
+                        "criterion_id": f"c{index}",
+                        "status": assessment_status,
+                        "reason": "Synthetic caller contract assessment.",
+                        "evidence": []
+                        if assessment_status == "not_applicable"
+                        else ["work"],
+                    }
+                    for index in range(count)
+                ],
+            }
+            if any(
+                row["command"] == "goal.assess_criteria"
+                for row in checkpoint["mutation_templates"]
+            ):
+                raise RuntimeQualificationError(
+                    "batch assessment unexpectedly emitted a template"
+                )
+            for unsupported in (
+                ["--json", "status", "--with-observation"],
+                ["--json", "version", "--identity", "--with-observation"],
+                [
+                    "--json",
+                    "start",
+                    "--preset",
+                    "small-change-v2",
+                    "--task",
+                    "Refused fixture",
+                    "--dry-run",
+                    "--with-observation",
+                ],
+                [
+                    "--json",
+                    "start",
+                    "--preset",
+                    "small-change-v2",
+                    "--task",
+                    "Refused fixture",
+                    "--on-existing",
+                    "preserve",
+                    "--with-observation",
+                ],
+            ):
+                refused = self.raw(unsupported, expected_exit=None)
+                if (
+                    refused.returncode != 2
+                    or error_code(refused) != "REQUEST_INVALID"
+                    or self.observe() != checkpoint
+                ):
+                    raise RuntimeQualificationError(
+                        "unsupported observation mode changed state"
+                    )
+            refused = self.invoke_template(
+                checkpoint,
+                "goal.assess_criterion",
+                {
+                    "<status>": assessment_status,
+                    "<reason>": "Unsupported single assessment mode.",
+                },
+                variant="c0",
+                semantic_arguments=["--with-observation"],
+                expected_exit=None,
+            )
+            if (
+                refused.returncode != 2
+                or error_code(refused) != "REQUEST_INVALID"
+                or self.observe() != checkpoint
+            ):
+                raise RuntimeQualificationError(
+                    "single assessment accepted observation mode"
+                )
+            batch["assessments"].reverse()
+            invalid_batches = []
+            for label in (
+                "empty",
+                "too-many",
+                "duplicate",
+                "citation",
+                "stale-session",
+                "stale-goal",
+                "unknown-field",
+            ):
+                invalid = json.loads(json.dumps(batch))
+                invalid["idempotency_key"] = self.next_key(label)
+                if label == "empty":
+                    invalid["assessments"] = []
+                elif label == "too-many":
+                    invalid["assessments"] *= 17
+                elif label == "duplicate":
+                    invalid["assessments"].append(invalid["assessments"][0])
+                elif label == "citation":
+                    invalid["assessments"][-1]["evidence"] = ["missing-source"]
+                elif label == "stale-session":
+                    invalid["session_revision"] += 1
+                elif label == "stale-goal":
+                    invalid["goal_revision"] += 1
+                else:
+                    invalid["unexpected"] = True
+                rejected = self.raw(
+                    [
+                        "--json",
+                        "goal",
+                        "assess-criteria",
+                        "--stdin",
+                        "--with-observation",
+                    ],
+                    stdin=json.dumps(invalid).encode(),
+                    expected_exit=None,
+                )
+                if rejected.returncode == 0 or self.observe() != checkpoint:
+                    raise RuntimeQualificationError(
+                        f"batch {label} did not roll back atomically"
+                    )
+                missing = output_result(
+                    self.raw(
+                        [
+                            "--json",
+                            "outcome",
+                            "lookup",
+                            "--idempotency-key",
+                            invalid["idempotency_key"],
+                        ]
+                    ),
+                    "outcome.lookup",
+                    "podway.outcome-lookup-result/v1",
+                )
+                if missing.get("found") is not False:
+                    raise RuntimeQualificationError(
+                        "rejected batch retained an outcome"
+                    )
+                invalid_batches.append({"case": label, "code": error_code(rejected)})
+            argv = [
+                "--json",
+                "goal",
+                "assess-criteria",
+                "--stdin",
+                "--with-observation",
+            ]
+            body = json.dumps(batch).encode()
+            goal_before = self.native_invocations
+            assessed = self.raw(argv, stdin=body)
+            current = mutation_observation(
+                assessed,
+                "goal.assess_criteria",
+                "podway.criterion-assessment-many-result/v1",
+            )
+            result = json_payload(assessed)["result"]["mutation_result"]
+            expected_outcome = {
+                "satisfied": "achieved",
+                "unsatisfied": "not_achieved",
+                "not_applicable": "superseded",
+            }[assessment_status]
+            if (
+                result.get("complete") is not True
+                or result.get("determined_outcome") != expected_outcome
+                or [row["criterion_id"] for row in result["results"]]
+                != [f"c{index}" for index in range(count)]
+            ):
+                raise RuntimeQualificationError(
+                    "batch omitted or reordered criterion results"
+                )
+            decided = self.invoke_template(
+                current,
+                "session.decide",
+                {
+                    "<reason>": "Use the fixture's declared goal outcome mapping.",
+                },
+                variant=option,
+                semantic_arguments=["--with-observation"],
+            )
+            current = mutation_observation(
+                decided, "session.decide", "podway.decision-result/v2"
+            )
+            if (
+                json_payload(decided)["result"]["mutation_result"].get("option_id")
+                != option
+            ):
+                raise RuntimeQualificationError(
+                    "decision did not use the expected declared option"
+                )
+            goal_calls = self.native_invocations - goal_before
+            if goal_calls != 2:
+                raise RuntimeQualificationError(
+                    "normal assessment/decide path performed extra calls"
+                )
+            # Replay intentionally happens after a successor mutation. Its observation
+            # is historical; only the fresh observe below may drive the next write.
+            replay = self.raw(argv, stdin=body)
+            if replay.stdout != assessed.stdout:
+                raise RuntimeQualificationError(
+                    "exact batch replay changed its stored envelope"
+                )
+            lookup = output_result(
+                self.raw(
+                    [
+                        "--json",
+                        "outcome",
+                        "lookup",
+                        "--idempotency-key",
+                        batch["idempotency_key"],
+                    ]
+                ),
+                "outcome.lookup",
+                "podway.outcome-lookup-result/v1",
+            )
+            if lookup.get("found") is not True or lookup.get("outcome", {}).get(
+                "response"
+            ) != json_payload(assessed):
+                raise RuntimeQualificationError("batch outcome is not recoverable")
+            if count > 1:
+                reordered = {
+                    **batch,
+                    "assessments": list(reversed(batch["assessments"])),
+                }
+                rejected = self.raw(
+                    argv, stdin=json.dumps(reordered).encode(), expected_exit=None
+                )
+                if (
+                    rejected.returncode == 0
+                    or error_code(rejected) != "IDEMPOTENCY_KEY_REUSED"
+                ):
+                    raise RuntimeQualificationError(
+                        "reordered assessment replay changed request identity"
+                    )
+            rejected = self.raw(argv[:-1], stdin=body, expected_exit=None)
+            if (
+                rejected.returncode == 0
+                or error_code(rejected) != "IDEMPOTENCY_KEY_REUSED"
+            ):
+                raise RuntimeQualificationError(
+                    "response mode was absent from request identity"
+                )
+            fresh = self.observe()
+            if fresh != current or fresh == mutation_observation(
+                replay,
+                "goal.assess_criteria",
+                "podway.criterion-assessment-many-result/v1",
+            ):
+                raise RuntimeQualificationError(
+                    "historical replay was mistaken for current readiness"
+                )
+            self.invoke_template(
+                fresh, "session.complete", semantic_arguments=["--with-observation"]
+            )
+            terminal = self.observe()
+            self.invoke_template(
+                terminal,
+                "session.terminal_disposition",
+                {
+                    "<reason>": "Disposable caller qualification has no external handoff."
+                },
+                variant="not-required",
+            )
+            cases.append(
+                {
+                    "action_calls": action_calls,
+                    "assessment_and_decision_calls": goal_calls,
+                    "criteria": count,
+                    "status": assessment_status,
+                    "option": option,
+                    "rejections": invalid_batches,
+                    "exact_replay": True,
+                    "fresh_observation_after_recovery": True,
+                }
+            )
+        return {
+            "cases": cases,
+            "normal_action_calls": cases[0]["action_calls"],
+            "normal_three_criteria_and_decision_calls": cases[1][
+                "assessment_and_decision_calls"
+            ],
+            "scope": "Native disposable caller contracts; no provider or installed-skill qualification.",
+        }
+
     def exercise_upgrade(self, legacy_sql: Path) -> list[dict[str, Any]]:
         assert self.sandbox is not None
         podway = self.sandbox / ".podway"
@@ -1943,6 +2348,12 @@ class ManagedRuntime:
         results = []
         for kind, expected_code, manifest, writer_version in (
             ("legacy-generation-13", "LEGACY_RUNTIME_STATE_UNSUPPORTED", None, None),
+            (
+                "v0.2.16-writer-manifest",
+                "WORKSPACE_CONTRACT_MISMATCH",
+                "sha256:57cb8463f0f24033f9bd0437ed1943e77b21b754a888e654bd847bec13f4b91d",
+                "v0.2.16",
+            ),
             (
                 "v0.2.13-writer-manifest",
                 "WORKSPACE_CONTRACT_MISMATCH",
@@ -2111,6 +2522,7 @@ class ManagedRuntime:
             raise RuntimeQualificationError(
                 "isolated runtime exceeded overall deadline"
             )
+        self.native_invocations += 1
         return bounded_process(
             [str(self.snapshot_binary), "--contract-generation", "2", *arguments],
             cwd=self.sandbox,
@@ -6676,7 +7088,7 @@ class ManagedRuntime:
                 "--summary",
                 f"qualified {procedure_id}",
                 "--reference",
-                f"official-v0.2.16-run-{self.run_index}",
+                f"official-v0.2.17-run-{self.run_index}",
                 "--idempotency-key",
                 self.next_key("terminal-disposition"),
                 "--if-workspace-uuid",
@@ -7002,6 +7414,9 @@ def qualify_runtime(binary: Path, repository: Path) -> dict[str, Any]:
             upgrade_scenarios = cleanup_probe.exercise_upgrade(
                 repository / "tests/fixtures/podway/generation-13-populated.sql"
             )
+            agent_interaction = cleanup_probe.exercise_agent_interaction(
+                repository / "tests/fixtures/podway/agent-interaction.yaml"
+            )
             raise ExpectedCleanupProbe("deliberate failure cleanup probe")
     except ExpectedCleanupProbe:
         pass
@@ -7042,6 +7457,7 @@ def qualify_runtime(binary: Path, repository: Path) -> dict[str, Any]:
         "outcome_recovery": outcome_recovery,
         "generation2_lifecycle": generation2_lifecycle,
         "integration_settings": integration_settings,
+        "agent_interaction": agent_interaction,
         "upgrade_scenarios": upgrade_scenarios,
         "workspace_removal": workspace_removal,
         "wait_scenarios": wait_scenarios,

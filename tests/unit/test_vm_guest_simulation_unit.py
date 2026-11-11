@@ -420,7 +420,7 @@ class SequenceSimulationTest(unittest.TestCase):
         upgraded["profile_id"] += "-podway-16"
         for component in upgraded["components"]:
             if component.get("name") == "podway":
-                component["version"] = "v0.2.16"
+                component["version"] = "v0.2.17"
         (profiles / "podway-candidate.json").write_text(json.dumps(upgraded))
         lock = job / "requirements/fixture-requirements.lock"
         lock.parent.mkdir(parents=True, exist_ok=True)
@@ -2165,7 +2165,7 @@ class SequenceSimulationTest(unittest.TestCase):
         selected = cleanup["runtime_end_state"]["selected_generation"]
         self.assertIn(selected, dev_generations)
         self.assertTrue((versions / selected).exists())
-        self.assertEqual(cleanup["tools"]["identity"]["result"]["version"], "v0.2.16")
+        self.assertEqual(cleanup["tools"]["identity"]["result"]["version"], "v0.2.17")
         python = json.loads((results / "python-runtime-update.json").read_text())
         self.assertEqual(
             cleanup["runtime_end_state"]["python_environment"],

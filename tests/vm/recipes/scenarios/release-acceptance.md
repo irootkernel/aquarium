@@ -166,7 +166,7 @@ writes `capture.json` (later cleanup and completion checks require that
 file; `baseline.json` alone is insufficient). The old status runtime stays
 selected through this capture.
 
-## Podway v0.2.16 transition
+## Podway v0.2.17 transition
 
 Supply `AQUARIUM_VM_PODWAY_RELEASE` with the official release input described
 by the [Podway upgrade scenario](podway-upgrade.md). The host seals the archive,
@@ -174,7 +174,7 @@ checksum, provenance, CLI and complete paired skill and selects
 `podway-candidate` for this suite. The released v0.2.14 baseline remains unchanged.
 
 After baseline capture, update the dedicated guest's CLI and paired skill to
-those sealed v0.2.16 bytes through the scoped installed setup proposal. Preserve
+those sealed v0.2.17 bytes through the scoped installed setup proposal. Preserve
 the original fixture workspaces and their admitted sessions. Then run:
 
 ```sh
@@ -411,7 +411,7 @@ archives, manifests and working files. Source originals and unrelated
 outputs remain in place. Each replacement is checked before publication
 against the 32 MiB per-archive and 256 MiB aggregate limits, including an
 interrupted retry. The collection pin is confirmed in preflight.
-`consumer-cleanup` verifies that the tested Aquarium candidate, Podway v0.2.16,
+`consumer-cleanup` verifies that the tested Aquarium candidate, Podway v0.2.17,
 complete paired skill and approved candidate status runtime remain selected.
 It also verifies that the shared Python environment is current for the
 candidate's requirements digest, and that its selection is the one named by the

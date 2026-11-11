@@ -45,7 +45,8 @@ while preserving exact bundles, findings and remaining authority.
 
 Retain a complete qualified self-contained bundle before starting. Use the
 current paired Podway skill and released native start template for that retained
-source and expected native digest. Re-observe, resolve the prepared session,
+source and expected native digest. Use the shared Podway contract's verified
+first-submission observation or re-observe, resolve the prepared session,
 and only then execute its separately authorized fenced `begin`. A matching
 definition does not establish matching work identity: reconcile actual roadmap
 identity, current goal, plan, approval, pending effects and remaining grants.
@@ -86,7 +87,9 @@ keeps Decisions, technical review operations, report assembly, acceptance and
 Git boundaries with the Coordinator. Read full selected native evidence through its
 supported pagination before work; bounded previews do not substitute for it.
 For each native item, use its actual declaration, operation ID/digest and typed
-recording contract. Re-observe after recording and use only currently available
+recording contract. Follow the shared Podway contract for atomic item/criterion
+batches and verified successor observations; refresh after recovery or conflicts.
+Use only currently available
 native transitions. A negative assessment still completes its Action and follows
 the actual negative router; it grants no effects or authority.
 

@@ -466,7 +466,7 @@ records the adopted architecture.
 
 Release acceptance requires the sealed `AQUARIUM_VM_PODWAY_RELEASE` input and
 uses `podway-candidate`. Its successful final state retains the tested Aquarium,
-Podway v0.2.16, paired skill and candidate status runtime in the dedicated VM.
+Podway v0.2.17, paired skill and candidate status runtime in the dedicated VM.
 Original baseline fixtures remain separate from fresh generation-2 candidate
 workspaces. Consumer cleanup verifies the retained installation and settles
 run-owned temporary effects. Other suites keep their declared cleanup contracts.
@@ -1503,9 +1503,9 @@ separate functional and overall acceptance gates.
 
 ## Podway v0.2.16 adoption suite
 
-The current [upgrade scenario](recipes/scenarios/podway-upgrade.md) targets the
-official v0.2.16 CLI and its release-pinned skill. It preserves historical stable
-profiles and adds a separately sealed authentic v0.2.15 input for writer-refusal
+The v0.2.16 edition of the [upgrade scenario](recipes/scenarios/podway-upgrade.md)
+targeted the official v0.2.16 CLI and its release-pinned skill. It preserved stable
+profiles and added a separately sealed authentic v0.2.15 input for writer-refusal
 and original-request replay checks. The v0.2.15 observations above retain their
 original candidate and limits. Source checks and release-input preparation do
 not establish a v0.2.16 installed result.
@@ -1871,3 +1871,16 @@ Delivery completeness does not assert full functional coverage.
 The development Goal was cancelled on the explicit stop, retaining its original
 criteria and history without marking them achieved. Its terminal handoff records
 the directed-closeout commit.
+
+
+## Podway v0.2.17 adoption suite
+
+The current [manual upgrade scenario](recipes/scenarios/podway-upgrade.md) seals
+official v0.2.17 payload and its complete release-tagged skill. Its authentic
+previous-writer fixture uses v0.2.16 while historical stable profiles stay intact.
+It requires the exact committed Aquarium candidate, scoped installation and
+runtime-discard authority, one managed Job, actual installed Task/Epic execution,
+caller recovery and verified restoration. Source/unit/native disposable checks
+alone do not establish installed acceptance. No v0.2.17 installed result has been
+recorded by this source update. Release acceptance keeps its separate exact-candidate
+and retained-upgrade contracts.

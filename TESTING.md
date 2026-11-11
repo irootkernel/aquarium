@@ -16,7 +16,7 @@ Ruby and Python validation is limited to objective package structure and executa
 - Unit tests: `make test-unit`
 - Integration tests: `make test-int`
 - End-to-end tests: `make test-e2e`
-- Exact Podway v0.2.16 compatibility: `PODWAY_BIN=<absolute-path> make test-podway-compat`
+- Exact Podway v0.2.17 compatibility: `PODWAY_BIN=<absolute-path> make test-podway-compat`
 - Exact Gaori v0.1.20 compatibility: `GAORI_BIN=<absolute-physical-path> make test-gaori-compat`
 - Exact Sanho v0.2.10 compatibility: `SANHO_BIN=<absolute-physical-path> make test-sanho-compat`
 - Explicit manual guest acceptance: `AQUARIUM_VM_REQUEST=<absolute-request-path> make test-vm`
@@ -65,13 +65,13 @@ Record the exact installed candidate and tool combination. These observations
 require the existing installation and VM-test authorization; ordinary tests do
 not install the candidate or run `make test-vm`.
 
-`test-podway-compat` is an external-artifact gate outside the ordinary `make test` aggregate. It requires a clean committed candidate and one absolute, executable, nonsymlink official v0.2.16 CLI. It records Aquarium HEAD, the executable SHA-256 and native release source/manifest identities. All five canonical Procedures pass format check, validate, vet, lint and check with warnings as errors, and preview with exact digest-fenced start suggestions. Declaration-limit and unknown-field fixtures must fail.
+`test-podway-compat` is an external-artifact gate outside the ordinary `make test` aggregate. It requires a clean committed candidate and one absolute, executable, nonsymlink official v0.2.17 CLI. It records Aquarium HEAD, the executable SHA-256 and native release source/manifest identities. All five canonical Procedures pass format check, validate, vet, lint and check with warnings as errors, and preview with exact digest-fenced start suggestions. Declaration-limit and unknown-field fixtures must fail.
 
 Each runtime is a standalone Git fixture under a physical temporary root. The helper snapshots only the verified CLI and uses Direct execution, Output v4, Error v2, observation v6 under contract generation 2 and status v5. It runs one canonical five-Procedure lifecycle pass before independent batches with at most four concurrent fixtures. Existing correction subvariants, selected-route guards, delegation receipts, required evidence, manual and semantic rework, immutable snapshots, plan attachment, paged evidence and stale-token rejection remain required. Fixture outcome checks require committed success lookup and complete-envelope replay; rejected and unknown requests must retain no outcome. Fenced workspace removal must reject the wrong UUID, preserve Git and unrelated files, and return successful already-absent readback on the identical request after deletion. Removal ends runtime outcome retention.
 
-All executed correction subvariants, assertions, generation-2 lifecycle results, per-batch cleanup and removal results are recorded in `aquarium-podway-compatibility.v10`. Scenario and command deadlines remain bounded. Every fixture root is removed on success or failure. No service, socket, runtime-mode selector, legacy account or installed writer is used. Synthetic receipts prove native guards only; provider execution and semantic assessments need separate installed functional verification.
+All executed correction subvariants, assertions, generation-2 lifecycle results, per-batch cleanup and removal results are recorded in `aquarium-podway-compatibility.v11`. Scenario and command deadlines remain bounded. Every fixture root is removed on success or failure. No service, socket, runtime-mode selector, legacy account or installed writer is used. Synthetic receipts prove native guards only; provider execution and semantic assessments need separate installed functional verification.
 
-Upgrade fixtures materialize the frozen populated generation-13 Store and generation-15 Stores with the exact v0.2.13, v0.2.14 and v0.2.15 writer manifests. All must refuse status, doctor, init and UUID-fenced reset while preserving Store and source bytes. An explicitly scoped fixture reset must create a UUID distinct from the seeded Store's UUID and preserve configuration, Procedures, ignore rules and unrelated files. Generation-2 writer errors must identify the known stored release. The manifest fixtures model writer admission; they do not prove an installed upgrade.
+Upgrade fixtures materialize the frozen populated generation-13 Store and generation-15 Stores with the exact v0.2.13, v0.2.14, v0.2.15 and v0.2.16 writer manifests. All must refuse status, doctor, init and UUID-fenced reset while preserving Store and source bytes. An explicitly scoped fixture reset must create a UUID distinct from the seeded Store's UUID and preserve configuration, Procedures, ignore rules and unrelated files. Generation-2 writer errors must identify the known stored release. The manifest fixtures model writer admission; they do not prove an installed upgrade.
 
 Goal and Validation native scenarios also read back the acceptance source,
 authority, and exact candidate before closeout. Member and pre-validation goals
@@ -87,7 +87,7 @@ Further bounded scenarios prove the serial completion contract directly. Task co
 
 War-room qualification also exercises evidence-backed no-work through draft, quality, approval, documentation and assessment. It verifies that work-classification and corrective-proposal nodes are not visited on that route. These fixture decisions prove Procedure reachability and guards; Master still verifies the diagnostic judgment and actual skill handoff.
 
-A local development binary provides development-contract evidence only. For distribution readiness, first verify the official v0.2.16 Apple Silicon archive against its published checksum, then run the same target against the extracted exact binary. The target requires no network after artifact provisioning. Podway's own exact release-candidate gate remains authoritative for Podway distribution; Aquarium's independent target proves only compatibility of the exact Aquarium candidate named by the resulting Git revision.
+A local development binary provides development-contract evidence only. For distribution readiness, first verify the official v0.2.17 Apple Silicon archive against its published checksum, then run the same target against the extracted exact binary. The target requires no network after artifact provisioning. Podway's own exact release-candidate gate remains authoritative for Podway distribution; Aquarium's independent target proves only compatibility of the exact Aquarium candidate named by the resulting Git revision.
 
 Podway skill changes also need Master's manual verification: setup must compare the complete skill tree against the catalog's fixed commit even when the runtime release changes; resuming the same authorized workspace and session must retain approval while using fresh fences; an unauthorized identity change must stop session mutations; and Codex and Podway goals must follow their own creation, completion, and blocker rules. An uncertain mutation must retain its original request and idempotency key for recovery. Plan-handoff verification must also cover a plan file changed or removed after attachment: the handler must stop before implementation, while an ordinary session without an artifact remains valid. These checks remain unverified until Master provides their outcomes. `make test` and the binary compatibility gate do not prove skill behavior.
 
@@ -221,7 +221,7 @@ meaningful application artifacts are required; success sentences are insufficien
 
 Release acceptance requires the sealed `AQUARIUM_VM_PODWAY_RELEASE` input and
 uses `podway-candidate`. Its successful final state retains the tested Aquarium,
-Podway v0.2.16, paired skill and candidate status runtime in the dedicated VM.
+Podway v0.2.17, paired skill and candidate status runtime in the dedicated VM.
 Original baseline fixtures remain separate from fresh generation-2 candidate
 workspaces. Consumer cleanup verifies the retained installation and settles
 run-owned temporary effects. Other suites keep their declared cleanup contracts.
@@ -612,7 +612,7 @@ Gaori is optional evidence compression. Each command wraps one authoritative Mak
 | `test-e2e` | `make test-e2e` | pytest | `pytest` |
 | `test-podway-compat` | `make test-podway-compat` | Mixed Python and Podway runtime output | `generic` |
 
-The Podway compatibility command inherits `PODWAY_BIN` from the Gaori process environment. The required invocation is `PODWAY_BIN=<absolute-path-to-extracted-v0.2.16-podway> gaori run test-podway-compat`; this expresses the command and environment rather than bypassing `$use-gaori`. The executing agent must load that skill and let it select the transport and completion-waiting path. An attached MCP path is eligible only when it demonstrably preserves the exact environment input. Changing the agent shell environment does not prove that an already running MCP server received it. When the native contract selects CLI, run it once and await the same process handle. Do not start or restart an MCP server or change host configuration to make MCP eligible. The configured gate allows up to 9000 seconds for the complete native runtime scenario inventory, running the canonical lifecycle alone before the independent batches with at most four executors. The existing scenario and command limits remain 900 and 20 seconds. The configured gate does not use Gaori's shorter ad-hoc default.
+The Podway compatibility command inherits `PODWAY_BIN` from the Gaori process environment. The required invocation is `PODWAY_BIN=<absolute-path-to-extracted-v0.2.17-podway> gaori run test-podway-compat`; this expresses the command and environment rather than bypassing `$use-gaori`. The executing agent must load that skill and let it select the transport and completion-waiting path. An attached MCP path is eligible only when it demonstrably preserves the exact environment input. Changing the agent shell environment does not prove that an already running MCP server received it. When the native contract selects CLI, run it once and await the same process handle. Do not start or restart an MCP server or change host configuration to make MCP eligible. The configured gate allows up to 9000 seconds for the complete native runtime scenario inventory, running the canonical lifecycle alone before the independent batches with at most four executors. The existing scenario and command limits remain 900 and 20 seconds. The configured gate does not use Gaori's shorter ad-hoc default.
 
 ## E2E Environment
 
@@ -1145,3 +1145,26 @@ source and unknown-origin invocations: installed, source package and package
 origin unknown respectively. If this needs candidate installation, use the dedicated UTM
 VM under separate VM-test authority. Record performed and unperformed cases
 separately; local helper tests do not establish functional skill acceptance.
+
+
+## Podway v0.2.17 adoption
+
+The current support floor is stable v0.2.17 with no upper bound. The official
+artifact gate pins release commit `31cbd110573271ea3376cb07eb961f3dc257a05d`
+and manifest `sha256:f5e56e344a79022766fb69af7991c60d57e7793495b2599c1c3d3ef296309100`.
+Its `aquarium-podway-compatibility.v11` result adds `agent_interaction`:
+one-, three- and sixteen-criterion batches, negative and applicability outcomes,
+atomic invalid-input refusal, commit-bound observations, original-envelope replay
+and fresh observations after recovery. Existing five-Procedure coverage remains.
+Normal action recording/completion and three-criterion assessment/decision each
+use two native calls, excluding setup, rejection probes, independent observations
+and recovery. Latency was not measured.
+
+The VM sealer pins the complete official v0.2.17 archive, checksum, provenance,
+executable and release-tagged runtime skill. The separate previous-release input
+now pins authentic v0.2.16 bytes. Historical v0.2.14 profiles and v0.2.15/v0.2.16
+qualification records retain their original meaning. Candidate installation,
+installed skill discovery and actual handler decisions require the separately
+authorized manual `podway-upgrade` suite in the dedicated UTM VM. Development
+verification restores its original consumer inventory; release acceptance retains
+its tested upgraded combination. No new installed v0.2.17 PASS is claimed here.

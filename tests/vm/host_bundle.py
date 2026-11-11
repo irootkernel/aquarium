@@ -29,8 +29,19 @@ PROFILES_ROOT = REPOSITORY / "tests/vm/profiles"
 STABLE_PROFILE_NAME = (
     "proposed-stable-haepari-0.1.0-aquarium-0.1.21-codex-0.164.0-podway-0.2.14.json"
 )
-PODWAY_RELEASE_COMMIT = "e9f4b41d1d09573b7acd443b91fbfb8f378fb8e1"
+PODWAY_RELEASE_COMMIT = "31cbd110573271ea3376cb07eb961f3dc257a05d"
 PODWAY_RELEASE_FILES = {
+    "archive.tar.gz": "4ca62ec943aa21e59c3173201c1f2e80cf274bb459dbb2ff3af0f01e34926546",
+    "archive.tar.gz.sha256": "ee9dd6295032d0e9d9ad67a11b532a0a62ad2c56a34a213434d78fd01c7f8cd0",
+    "bin/podway": "c9923c6c1fee8c31e595c8163863051ebc5d62ae651c3a947b8662cd3aa927a7",
+    "provenance.json": "703d6baf3957d95634f6d0680d95293ae8e2ef9471b37970b6ebc3c021c6b975",
+    "skills/use-podway/SKILL.md": "6949e7513cc699ef2bd445cbaf834b726ea7e25ed39141813c547b7b1f650871",
+    "skills/use-podway/references/delegation.md": "1ccc52365a6f83091a42e38fab6bb4398a78e881df1254401b20522cd2401272",
+    "skills/use-podway/references/goal.md": "dbd4f7a5188d507526bf9da216839eb22b3114a8f4d32f17edfef70027ff8846",
+    "skills/use-podway/references/lifecycle.md": "b5460fd4eb5f101cc3f63412dc2e1d52be33902f835baa1df029412e0e81d83b",
+    "skills/use-podway/references/recovery.md": "1153c6b60ddb1831b7a726ea0f1f63ca3e29962514183e0e85d3a4fe7262b83a",
+}
+PODWAY_PREVIOUS_RELEASE_FILES = {
     "archive.tar.gz": "cc91c083790da53977e193b09742836a7cec68aa18864df93989fed2df645835",
     "archive.tar.gz.sha256": "4eb8b039a022c1d3c6773e71f1284002c99bc48f95b22ec843cfbd81b865bab4",
     "bin/podway": "249685e65402049ecad83f1ecef8efee361f6ac979bde686a9ebabd10c685cf2",
@@ -40,17 +51,6 @@ PODWAY_RELEASE_FILES = {
     "skills/use-podway/references/goal.md": "facf835661b08da9432d3d063df8be0c064d6899e132256b55ab6155a6bf41d9",
     "skills/use-podway/references/lifecycle.md": "736998ddb12262da2a3fca6fc90c84001207623928c9e876908fa9b9e502f4f3",
     "skills/use-podway/references/recovery.md": "ac839571e629ef05c7e4cbb5dec2e6683dfa5fde11d91fe0d77a84557d8e465c",
-}
-PODWAY_PREVIOUS_RELEASE_FILES = {
-    "bin/podway": "dece7fecd90eaf6130b330e2cb70e98532f3e6b73950227cc2ff935a8be8e5ae",
-    "archive.tar.gz": "05e596335ce891192b181ed89dce4fa9ca5dbbe19f4cc5745ea324439e4d2598",
-    "archive.tar.gz.sha256": "c4685838a95e25292fb3a7a616ab002a266d2b08b3b976319e56c40d1f412ccb",
-    "provenance.json": "2ac7871a9dec4903883d8eee0ff713ca7a3bc9ddee04714bfc881197e55787e1",
-    "skills/use-podway/SKILL.md": "e1b067e8e64dc1d297c295ad6f17d0db202c4763fb496dce0d98e13513710200",
-    "skills/use-podway/references/delegation.md": "ea314acd2179ede83c19e92df6cb4db20a2b55b7c7e8a1ded907dd9617be232d",
-    "skills/use-podway/references/lifecycle.md": "736998ddb12262da2a3fca6fc90c84001207623928c9e876908fa9b9e502f4f3",
-    "skills/use-podway/references/goal.md": "facf835661b08da9432d3d063df8be0c064d6899e132256b55ab6155a6bf41d9",
-    "skills/use-podway/references/recovery.md": "2bd11ec4d40fc94f6049d618aa774700589ead55d7a6e0e34d095073d2d403ed",
 }
 HARNESS_ROOT = REPOSITORY / "tests/vm/recipes"
 SUITES_PATH = REPOSITORY / "tests/vm/host_suites.json"
@@ -562,7 +562,7 @@ def seal_podway_release(
     source: Path, bundle: Path, profile: dict[str, Any]
 ) -> tuple[list[str], dict[str, Any]]:
     """Seal one qualified release without changing the historical baseline."""
-    prefix = "dependencies/podway-0.2.16"
+    prefix = "dependencies/podway-0.2.17"
     copied = seal_release_files(source, bundle, prefix, PODWAY_RELEASE_FILES)
     skill_digest = skill_tree_digest_from_directory(
         bundle / prefix / "skills/use-podway"
@@ -571,22 +571,22 @@ def seal_podway_release(
     if not {"podway", "use-podway"} <= set(components):
         raise BundleError("candidate profile lacks Podway and its paired skill")
     components["podway"].update(
-        version="v0.2.16",
+        version="v0.2.17",
         executable_sha256="sha256:" + PODWAY_RELEASE_FILES["bin/podway"],
         archive_sha256=PODWAY_RELEASE_FILES["archive.tar.gz"],
-        provenance={"release_tag": "v0.2.16", "tag_commit": PODWAY_RELEASE_COMMIT},
+        provenance={"release_tag": "v0.2.17", "tag_commit": PODWAY_RELEASE_COMMIT},
     )
     components["use-podway"]["pin"] = {"commit": PODWAY_RELEASE_COMMIT}
     components["use-podway"]["skill_tree"]["sha256"] = skill_digest
     profile["profile_id"] = profile["profile_id"].replace(
-        "-podway-0.2.14-", "-podway-0.2.16-"
+        "-podway-0.2.14-", "-podway-0.2.17-"
     )
     return copied, {
         "payload_root": prefix,
-        "version": "v0.2.16",
+        "version": "v0.2.17",
         "source_commit": PODWAY_RELEASE_COMMIT,
         "contract_generation": 2,
-        "contract_manifest_digest": "sha256:57cb8463f0f24033f9bd0437ed1943e77b21b754a888e654bd847bec13f4b91d",
+        "contract_manifest_digest": "sha256:f5e56e344a79022766fb69af7991c60d57e7793495b2599c1c3d3ef296309100",
         "binary_sha256": PODWAY_RELEASE_FILES["bin/podway"],
         "skill_tree_sha256": skill_digest,
     }
@@ -791,7 +791,7 @@ def build_bundle(
             seal_release_files(
                 podway_previous_release,
                 bundle,
-                "dependencies/podway-0.2.15",
+                "dependencies/podway-0.2.16",
                 PODWAY_PREVIOUS_RELEASE_FILES,
             )
         )
@@ -853,7 +853,7 @@ def build_bundle(
         inputs["podway_upgrade"] = podway_upgrade
         if podway_previous_release is not None:
             inputs["podway_upgrade"]["previous_payload_root"] = (
-                "dependencies/podway-0.2.15"
+                "dependencies/podway-0.2.16"
             )
     (bundle / "harness/inputs.json").write_text(
         json.dumps(inputs, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

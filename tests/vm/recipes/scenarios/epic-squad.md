@@ -17,7 +17,7 @@ Use `SUITE=epic-squad MODE=manual make test-vm-host` under the approved VM-test
 authority and installed `use-haepari` contract. Supply the physical external
 `AQUARIUM_VM_PODWAY_RELEASE` described by the
 [Podway upgrade scenario](podway-upgrade.md). The existing bundle seals the
-published v0.2.16 archive, checksum, provenance, executable and complete paired
+published v0.2.17 archive, checksum, provenance, executable and complete paired
 skill. It keeps the released v0.2.14 baseline and ordinary candidate profile
 separate from `podway-candidate`. Do not install on the host.
 

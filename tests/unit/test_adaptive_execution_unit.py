@@ -1895,7 +1895,7 @@ def test_public_context_forwards_finalization_recovery_through_native_transport(
             result = {
                 "schema": "podway.version-result/v2",
                 "product": "podway",
-                "version": "v0.2.16",
+                "version": "v0.2.17",
                 "target": "aarch64-apple-darwin",
                 "build_identity": "sha256:" + "1" * 64,
                 "source_commit": None,
@@ -3243,7 +3243,7 @@ def test_public_context_continues_pending_applied_sources_through_real_native_tr
                 {
                     "schema": "podway.version-result/v2",
                     "product": "podway",
-                    "version": "v0.2.16",
+                    "version": "v0.2.17",
                     "target": "aarch64-apple-darwin",
                     "build_identity": "sha256:" + "1" * 64,
                     "source_commit": None,

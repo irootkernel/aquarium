@@ -156,7 +156,7 @@ declared snapshots available for native collection, not newer unstaged originals
 and report gaps; positively absent outputs can release an incomplete Job, while
 existing outputs that cannot be collected retain native protection.
 
-Release acceptance retains the tested Aquarium, Podway v0.2.16, paired skill
+Release acceptance retains the tested Aquarium, Podway v0.2.17, paired skill
 and candidate status runtime in the dedicated VM. Verify this final installation
 and finish run-owned consumer cleanup, then restage its actual immutable pass
 receipt and restoration inventory in the same held Job. For epic-squad,
@@ -238,4 +238,4 @@ installation, controller replacement, VM power operation or publication.
 
 ## Explicit Podway upgrade qualification
 
-Use `SUITE=podway-upgrade MODE=manual` only under the exact VM-test authority described by the [operator scenario](../../tests/vm/recipes/scenarios/podway-upgrade.md). Supply `AQUARIUM_VM_PODWAY_RELEASE` with its physical prepared release-input path in addition to the normal candidate, resource and private guest context. The selected Job retains the original v0.2.14 baseline and a separate v0.2.15 candidate profile. Seven native manual cases, actual installed skill observations and verified restoration remain required; the helper never installs tools or discards runtime state. Recover the original Job and phase captures after disconnect.
+Use `SUITE=podway-upgrade MODE=manual` only under the exact VM-test authority described by the [operator scenario](../../tests/vm/recipes/scenarios/podway-upgrade.md). Supply `AQUARIUM_VM_PODWAY_RELEASE` with its physical prepared release-input path in addition to the normal candidate, resource and private guest context. The selected Job retains the original v0.2.14 baseline and a separate v0.2.17 candidate profile with authentic v0.2.16 previous-release input. Seven native manual cases, actual installed skill observations and verified restoration remain required; the helper never installs tools or discards runtime state. Recover the original Job and phase captures after disconnect.

@@ -1173,7 +1173,7 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
             "record-setup-epic.json": {},
             "record-setup-preservation.json": {},
             "capture.json": {"exit": 0},
-            "podway-upgrade.json": {"identity": {"result": {"version": "v0.2.16"}}},
+            "podway-upgrade.json": {"identity": {"result": {"version": "v0.2.17"}}},
             "candidate-install.json": {},
             "skill-identity.json": {
                 "comparisons": {"all_passed": True},
@@ -1754,7 +1754,7 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
         )
         for name, version, digest, generation in (
             ("legacy", "v0.2.14", "b" * 64, 1),
-            ("current", "v0.2.16", "a" * 64, 2),
+            ("current", "v0.2.17", "a" * 64, 2),
         ):
             stable = {
                 "components": [
@@ -1776,7 +1776,7 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
                 inputs={
                     "prior": {"version": "0.1.22"},
                     "podway_upgrade": {
-                        "version": "v0.2.16",
+                        "version": "v0.2.17",
                         "binary_sha256": "a" * 64,
                         "contract_generation": 2,
                     },
@@ -1820,7 +1820,7 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
                 {"name": "codex", "version": "0.164.0"},
                 {
                     "name": "podway",
-                    "version": "v0.2.16",
+                    "version": "v0.2.17",
                     "executable_sha256": "sha256:" + "a" * 64,
                 },
             ]
@@ -1834,7 +1834,7 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
                 profile=lambda _: stable,
                 inputs={
                     "podway_upgrade": {
-                        "version": "v0.2.16",
+                        "version": "v0.2.17",
                         "binary_sha256": binary,
                         "contract_generation": generation,
                     }

@@ -27,6 +27,8 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 
 - [Sorage v0.1.4 adoption dossier](TODO-SORAGE-013.md) belongs to EPIC-035 and TASK-181 through TASK-184; it retains breaking-upgrade, MCP and installed qualification acceptance.
 
+- [Podway v0.2.17 adoption dossier](TODO-PODWAY-0217.md) belongs to EPIC-037 and TASK-189 through TASK-192; it retains the breaking-upgrade, caller interaction and exact installed qualification requirements.
+
 ## Unadopted TODO Candidates
 
 ### Dolgorae and Gul adoption
