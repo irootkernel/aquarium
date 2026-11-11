@@ -87,7 +87,7 @@ This rule establishes retirement-evidence applicability only. The release's SHA-
 | EPIC-029 | Add directory AGENTS.md documentation indexes | Completed |
 | EPIC-030 | Unify Aquarium delivery across five agent hosts | Planned |
 | EPIC-031 | Adopt Coordinator, Evaluator and Executor roles in release workflows | Completed |
-| EPIC-032 | Adopt Haepari across integrated tools | In Progress |
+| EPIC-032 | Adopt Haepari across integrated tools | Completed |
 | EPIC-033 | Qualify the combined environment and retire the development channel | Planned |
 | EPIC-034 | Adopt Podway v0.2.15 and contract generation 2 | Completed |
 | EPIC-035 | Adopt Sorage v0.1.4 | In Progress |
@@ -1021,19 +1021,19 @@ EPIC-019 supplies the completed Haepari setup, VM adapter and policy cutover thr
 
 ## EPIC-032: Adopt Haepari across integrated tools
 
-**Status:** `In Progress`
+**Status:** `Completed`
 
-Aquarium owns actual Haepari guidance and execution through `release-handler`, `epic-handler` and `epic-squad`. After completed EPIC-019/031 and TASK-091, inspect the existing adapter and workflow routing, complete only missing integration, and verify each tool through its supported commands and tests. No producer-side Haepari integration, adoption project or blanket evidence-return campaign is required.
+Aquarium completed the shared Haepari verification guidance and accepted bounded native evidence for Podway, Mulgae, Gaori, Sorage, Sanho, Seongge and Gaebokchi. Release, Task, Epic, Squad and Validation workflows share the verification route, original-Job recovery and consumer-cleanup contract. Local checks and offline release QA retain their existing routes. Mulgae `>=v0.1.27` owns the native CLI/MCP advisory lock; Aquarium adds no outer review-lock wrapper.
 
-TASK-093 owns the common Aquarium routing work and Gaori scope. TASK-091 through TASK-095 and TASK-098 are completed. Master deferred TASK-096 (Dolgorae) and TASK-097 (Gul) because those products are not ready for this Aquarium rollout. Their functional adoption belongs to a [future Epic candidate](../todo/README.md#dolgorae-and-gul-adoption); neither is a prerequisite for TASK-099 or this Epic's completion. TASK-099 follows completed TASK-092, TASK-093, TASK-094, TASK-095 and TASK-098, finishes Gaebokchi verification and promotes the participating-tool inventory. Keep one active local delivery Goal and complete its exact acceptance, commit and native finalization before the next.
+TASK-091 through TASK-095, TASK-098 and TASK-099 are Completed with their distinct commits, native finalizations and original evidence. Master deferred TASK-096 (Dolgorae) and TASK-097 (Gul) to the [future adoption candidate](../todo/README.md#dolgorae-and-gul-adoption), which retains their complete scope and compatible-backend requirement. Neither product is qualified by this Epic or required for its completion.
 
-Reuse completed Podway, Dolgorae, Gaori and Sanho aquarium-dev removal, original checks and time-bounded detachment evidence. The seven later blanket evidence requests were withdrawn and are not pending prerequisites. Preserve original TASK-091/M1 and existing Mulgae request history without resending. A concrete producer defect may require an authorized scoped correction; routine qualification comes from Aquarium's own source/artifact inspection and verification.
+The assembled integration review reused applicable Task results and preserved their source, binary, complete skill, profile, environment, failure, recovery and cleanup limits. Historical direct runs remain direct evidence; unobserved manual skill/workflow behavior and installed combinations remain unverified. No new aggregate managed PASS, host activation or official-distribution qualification is claimed.
 
-Required managed checks use the accepted Haepari adapter/resource/profiles with one outer VM occupancy, original-Job recovery and recipe-owned cleanup. Release QA stays offline. Reuse applicable Task results at final Epic validation; run only missing/affected checks and mandatory gates. Candidate installation-dependent verification still requires explicit dedicated-VM authority. No host mutation, product source edit or publication is granted by this plan.
+The seven blanket Sorage evidence requests remain withdrawn. Original TASK-091/M1 history and the distinct Mulgae exchange are preserved in the rollout record. A concrete producer defect still requires an explicitly authorized scoped correction.
 
-Close after the seven participating tool scopes (Podway, Mulgae, Gaori, Sorage, Sanho, Seongge and Gaebokchi) and the Aquarium integration are independently assessed, their durable contracts/identity/profile/detachment inventory is promoted, Master actually accepts the whole result and this dossier is settled. Record Dolgorae and Gul as deferred, without a qualification or completion claim. Nine producer Haepari completion reports are not a condition. EPIC-033 retains qualification of the participating combination and final common retirement, including any actual legacy references from deferred tools.
+EPIC-033 consumes the seven-tool inventory and two Deferred entries, qualifies the exact installed/upgrade combination, simplifies Haepari integration and retires shared legacy infrastructure. Every actual legacy reference, including one from a deferred product, still requires safe detachment or verified absence. The [v0.1.23 release prerequisite](#v0123-release-prerequisite) remains in force.
 
-**Detailed SOT:** [Integrated-tool rollout dossier](../todo/TODO-HAEPARI-TOOL-ROLLOUT.md)
+**Canonical Outcomes:** [Workflow verification routing](../../plugins/aquarium/references/haepari-integration.md#workflow-verification-routing), [native Mulgae coordination](../../plugins/aquarium/references/mulgae-review-contract.md), [accepted rollout records and inventory](../ops/integrated-tool-rollout.md), [test and manual-verification limits](../../TESTING.md), [original VM observations](../../tests/vm/README.md), and [deferred adoption scope](../todo/README.md#dolgorae-and-gul-adoption).
 
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |

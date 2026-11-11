@@ -23,7 +23,6 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 - [Multi-host unification dossier](TODO-MULTI-HOST-UNIFICATION.md) defines shared
   instructions, host packages, five-host qualification and the single-repository
   migration for `EPIC-030` and `TASK-162` through `TASK-171`.
-- [Integrated-tool rollout dossier](TODO-HAEPARI-TOOL-ROLLOUT.md) belongs only to EPIC-032 and existing TASK-091 through TASK-099. It reuses completed tool cleanup, plans Aquarium-owned Haepari workflow guidance and per-tool verification without a blanket producer-return campaign, retains the separate released native Mulgae lock requirement and supplies durable outcomes to EPIC-033 before its own closeout.
 - [Combination qualification and retirement dossier](TODO-HAEPARI-COMBINATION-RETIREMENT.md) belongs only to EPIC-033 and existing TASK-100 through TASK-102. It consumes the completed earlier Epics' canonical outcomes, removes unnecessary Haepari integration layers, validators and harness code, verifies the simplified full environment, retires common legacy state under exact authority and settles its own and the historical legacy dossier's references and deletion. Its accepted retirement outcomes are mandatory for v0.1.23 under the [roadmap release prerequisite](../roadmap/README.md#v0123-release-prerequisite).
 
 - [Sorage v0.1.4 adoption dossier](TODO-SORAGE-013.md) belongs to EPIC-035 and TASK-181 through TASK-184; it retains breaking-upgrade, MCP and installed qualification acceptance.

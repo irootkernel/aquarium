@@ -53,7 +53,7 @@ Read these facts from local source, released artifacts, native metadata and Aqua
 
 ## Tool-specific scope
 
-The [rollout dossier](../todo/TODO-HAEPARI-TOOL-ROLLOUT.md) owns the active per-Task checklist. Preserve actual native contracts and use the existing commands:
+The [roadmap's Canonical Outcomes](../roadmap/README.md#epic-032-adopt-haepari-across-integrated-tools) and the records below retain the completed verification scope. Preserve actual native contracts and use the existing commands:
 
 | Task | Aquarium verification scope |
 | --- | --- |
@@ -67,7 +67,7 @@ The [rollout dossier](../todo/TODO-HAEPARI-TOOL-ROLLOUT.md) owns the active per-
 
 Master deferred Dolgorae and Gul until release-ready products can enter a [separate adoption Epic](../todo/README.md#dolgorae-and-gul-adoption). Common production readiness already treats Dolgorae as optional; its Independent Review route is disabled, and current Herdr/Subagent/Mulgae execution does not depend on it. Gul adds no current execution dependency. Leave existing binaries, configuration and producer work untouched; explicit native setup/operations retain their existing contracts. This decision claims no general product qualification or permanent absence of interference.
 
-TASK-091 through TASK-095 and TASK-098 are complete with their original evidence and limits. TASK-099 follows the five completed prerequisites TASK-092, TASK-093, TASK-094, TASK-095 and TASK-098. Its inventory records the seven participating tools and the two deferred entries; neither deferral blocks its Goal or EPIC-032 closeout. Keep one active local delivery Goal. EPIC-033 still verifies every actual legacy consumer before shared retirement, including references from deferred products.
+TASK-091 through TASK-095, TASK-098 and TASK-099 are complete with their original evidence, distinct commits and native finalizations. Their inventory records the seven participating tools and two Deferred entries. Dolgorae and Gul retain their full future adoption scope. EPIC-033 verifies every actual legacy consumer before shared retirement, including references from deferred products.
 
 ## Historical Podway and native Mulgae scope
 
@@ -86,6 +86,8 @@ The established TASK-091 record below remains historical qualification, includin
 - Detach only legacy producer, controller, and development-service interfaces proved exclusive to `aquarium-dev`, preserving supported native behavior and generic features. Keep source removal (`b07942e` / `98b8de7`) separate from producer-reported inspection-time host observations (`dev.aquarium.podwayd`, daemon process, queue, and `.git/hooks/post-commit` absence) and from Podway-specific residuals retained under shared `~/.aquarium-dev/` for `EPIC-033` (`TASK-101`). If producer evidence cannot satisfy `TASK-091`'s current detachment criterion within the host-excluding envelope, stop at an explicit blocked acceptance boundary.
 
 ### `TASK-092`: Mulgae (`rollout-3`, `rollout-8`)
+
+Adopting Mulgae `>=v0.1.27`, its complete six-file `use-mulgae` skill (`01a202819ec58cf1adbb4d88dcf92ab0bc85d446`), the live-review `HAEPARI_HOME` + capacity-one `mulgae-review` (`advisory-lock/v1`) prerequisite, and retirement of the `v0.1.26` report-based `answer_omitted` override is a breaking migration for existing users; host CLI/skill installation and `HAEPARI_HOME` setup remain separately approved steps.
 
 - Reuse the already-sent TASK-092 two-part request covering (a) Haepari VM verification of installed review execution and result retrieval, native provider/role/configuration migration for the actual released Mulgae CLI and paired skill, complete `use-mulgae` verification across CLI and foreground/asynchronous MCP transports, and removal of obsolete development references while preserving the stable review runtime and host skill, and (b) released native `mulgae-review` advisory-lock integration.
 - Require a published Mulgae release and complete release-matched `use-mulgae` skill acquiring the capacity-one `mulgae-review` advisory lock once in the shared native path serving CLI and foreground/asynchronous MCP reviews, before live provider qualification, role execution, and extraction requests.
@@ -275,7 +277,7 @@ The seven participating scopes retain their own source, command, environment,
 profile and cleanup records. Their results do not form a new common managed run.
 EPIC-033 consumes these records, resolves the exact installed combination and
 upgrade path, and checks every actual legacy reference before shared removal.
-Master's overall EPIC-032 acceptance remains separate.
+EPIC-032's [Canonical Outcomes](../roadmap/README.md#epic-032-adopt-haepari-across-integrated-tools) retain the accepted scope. Whole-combination qualification and shared retirement remain EPIC-033 obligations.
 
 | Tool and original record | Exact artifact and complete skill | Actual verification and limits | Legacy disposition |
 | --- | --- | --- | --- |
