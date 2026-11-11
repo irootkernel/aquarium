@@ -785,6 +785,9 @@ def build_bundle(
             json.dumps(podway_profile, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
+        podway_upgrade["archive_sha256"] = PODWAY_RELEASE_FILES["archive.tar.gz"]
+        podway_upgrade["extract_binary"] = True
+        dependency_files.remove(podway_upgrade["payload_root"] + "/bin/podway")
         dependency_files.append("profile/podway-candidate.json")
     if podway_previous_release is not None:
         dependency_files.extend(

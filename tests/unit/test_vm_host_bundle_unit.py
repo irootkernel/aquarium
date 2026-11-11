@@ -171,7 +171,7 @@ class HostBundleTest(unittest.TestCase):
         if suite == "all" and "baseline_profile" not in overrides:
             parameters["baseline_profile"] = self.baseline()
         if (
-            suite in {"release-acceptance", "release-orchestration"}
+            suite in {"podway-upgrade", "release-acceptance", "release-orchestration"}
             and "podway_release" not in overrides
         ):
             release = (run_dir / "release-input").resolve()
@@ -292,6 +292,26 @@ class HostBundleTest(unittest.TestCase):
         self.assertEqual(
             hashlib.sha256(candidate_profile).hexdigest(),
             spec["environment"]["profile_digest"],
+        )
+
+    def test_candidate_binary_is_derived_from_the_sealed_archive(self):
+        run_dir, _ = self.build("podway-upgrade", mode="manual")
+        spec = json.loads((run_dir / "spec-0.json").read_text())
+        inputs = json.loads((run_dir / "bundle/harness/inputs.json").read_text())
+        release = inputs["podway_upgrade"]
+        prefix = release["payload_root"]
+        selected = spec["input"]["selected_files"]
+        self.assertTrue(release["extract_binary"])
+        self.assertNotIn(prefix + "/bin/podway", selected)
+        for relative in ("archive.tar.gz", "archive.tar.gz.sha256", "provenance.json"):
+            self.assertIn(prefix + "/" + relative, selected)
+        archive = run_dir / "bundle" / prefix / "archive.tar.gz"
+        self.assertEqual(
+            release["archive_sha256"], hashlib.sha256(archive.read_bytes()).hexdigest()
+        )
+        binary = run_dir / "bundle" / prefix / "bin/podway"
+        self.assertEqual(
+            release["binary_sha256"], hashlib.sha256(binary.read_bytes()).hexdigest()
         )
 
     def test_all_keeps_podway_upgrade_profile_separate(self):

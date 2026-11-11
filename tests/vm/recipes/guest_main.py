@@ -3723,6 +3723,13 @@ def main() -> int:
         else {}
     )
     try:
+        release = context.inputs.get("podway_upgrade", {})
+        if release.get("extract_binary"):
+            import podway_upgrade
+
+            lib.guard(context.root)
+            lib.verify_sealed_inputs(context.root)
+            podway_upgrade.materialize_candidate_binary(context.root, release)
         if arguments.suite == "release-orchestration":
             import release_orchestration
 

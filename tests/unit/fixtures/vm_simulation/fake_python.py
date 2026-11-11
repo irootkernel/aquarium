@@ -4,6 +4,7 @@ everything else runs the real interpreter."""
 
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
 
@@ -32,7 +33,12 @@ if len(arguments) >= 2 and arguments[:2] == ["-m", "venv"]:
     target = bin_dir / "python"
     target.write_text(
         "#!/bin/sh\nexec "
-        + json.dumps(require_absolute_env("FAKE_PYTHON_REAL"))
+        + shlex.join(
+            [
+                require_absolute_env("FAKE_PYTHON_REAL"),
+                require_absolute_env("FAKE_PYTHON_BINDING"),
+            ]
+        )
         + ' "$@"\n'
     )
     target.chmod(0o755)

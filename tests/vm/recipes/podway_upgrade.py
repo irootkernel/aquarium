@@ -6,12 +6,76 @@ native skill execution. These phases never install, reset or dispatch an agent.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
+import stat
+import tarfile
+import tempfile
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import recipe_lib as lib
+
+
+def materialize_candidate_binary(root: Path, release: dict[str, Any]) -> Path:
+    """Derive the pinned executable from the admitted official archive."""
+    relative = "dependencies/podway-0.2.17"
+    if release.get("payload_root") != relative:
+        raise lib.RecipeError("candidate release path differs from the sealed contract")
+    payload = root / relative
+    destination = payload / "bin/podway"
+    archive = payload / "archive.tar.gz"
+    for path in (root / "dependencies", payload, destination.parent):
+        if path.is_symlink() or (path.exists() and not path.is_dir()):
+            raise lib.RecipeError("candidate release directory is unsafe")
+    if archive.is_symlink() or not archive.is_file():
+        raise lib.RecipeError("candidate archive is not a regular sealed file")
+    if lib.sha256_file(archive) != release.get("archive_sha256"):
+        raise lib.RecipeError("candidate archive differs from its pinned hash")
+    if destination.is_symlink():
+        raise lib.RecipeError("candidate executable must not be a symlink")
+    if destination.exists():
+        if (
+            not destination.is_file()
+            or stat.S_IMODE(destination.stat().st_mode) != 0o755
+            or lib.sha256_file(destination) != release.get("binary_sha256")
+        ):
+            raise lib.RecipeError("existing candidate executable differs from its pin")
+        return destination
+    try:
+        with tarfile.open(archive, "r:gz") as package:
+            members = [
+                member
+                for member in package.getmembers()
+                if member.name == "podway-0.2.17-aarch64-apple-darwin/bin/podway"
+            ]
+            if len(members) != 1 or not members[0].isfile():
+                raise lib.RecipeError(
+                    "archive must contain one regular candidate executable"
+                )
+            source = package.extractfile(members[0])
+            if source is None:
+                raise lib.RecipeError("candidate executable cannot be read")
+            with source:
+                data = source.read()
+    except tarfile.TarError as error:
+        raise lib.RecipeError("candidate archive cannot be decoded") from error
+    if hashlib.sha256(data).hexdigest() != release.get("binary_sha256"):
+        raise lib.RecipeError("extracted candidate executable differs from its pin")
+    destination.parent.mkdir(mode=0o755, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix=".podway-", dir=destination.parent)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fchmod(stream.fileno(), 0o755)
+            os.fsync(stream.fileno())
+        os.link(temporary, destination)
+    finally:
+        os.unlink(temporary)
+    return destination
 
 
 def observe_tools(context: Any, stage: str) -> dict[str, Any]:

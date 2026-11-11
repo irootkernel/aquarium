@@ -3291,6 +3291,58 @@ class SequenceSimulationTest(unittest.TestCase):
         )
 
 
+class FakePythonRoutingTest(unittest.TestCase):
+    def test_created_environment_keeps_pip_offline_and_runs_normal_python(self):
+        with tempfile.TemporaryDirectory(prefix="vm-fake-python-") as directory:
+            root = Path(directory)
+            log = root / "calls.jsonl"
+            lock = root / "requirements.lock"
+            lock.write_text("pytest==9.1.1 --hash=sha256:" + "a" * 64 + "\n")
+            fake = root / "fake python $LITERAL.py"
+            shutil.copy2(FIXTURES / "fake_python.py", fake)
+            environment = {
+                "PATH": "/usr/bin:/bin",
+                "HOME": str(root),
+                "FAKE_PYTHON_REAL": sys.executable,
+                "FAKE_PYTHON_BINDING": str(fake),
+                "FAKE_PYTHON_LOG": str(log),
+                "LITERAL": "expanded",
+                "PIP_NO_INDEX": "1",
+                "PIP_CONFIG_FILE": "/dev/null",
+            }
+            created = subprocess.run(
+                [sys.executable, str(fake), "-m", "venv", str(root / "environment")],
+                check=False,
+                env=environment,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            self.assertEqual(created.returncode, 0, created.stderr)
+            python = root / "environment/bin/python"
+            installed = subprocess.run(
+                [str(python), "-m", "pip", "install", "-r", str(lock)],
+                check=False,
+                env=environment,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            self.assertEqual(installed.returncode, 0, installed.stderr)
+            calls = [json.loads(line) for line in log.read_text().splitlines()]
+            self.assertEqual(sum("pip" in call for call in calls), 1)
+            executed = subprocess.run(
+                [str(python), "-c", "print(6 * 7)"],
+                check=False,
+                env=environment,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            self.assertEqual(executed.returncode, 0, executed.stderr)
+            self.assertEqual(executed.stdout.strip(), "42")
+
+
 class FailClosedPathRootsTest(unittest.TestCase):
     """Empty or relative path roots must abort before any filesystem effect."""
 

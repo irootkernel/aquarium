@@ -1884,3 +1884,10 @@ caller recovery and verified restoration. Source/unit/native disposable checks
 alone do not establish installed acceptance. No v0.2.17 installed result has been
 recorded by this source update. Release acceptance keeps its separate exact-candidate
 and retained-upgrade contracts.
+
+To fit Haepari's preparation limit, the host transmits the official candidate
+archive. Guest preparation derives its executable inside the held Job. The host
+still validates all nine release input files. Guest preparation checks the archive and
+extracted executable against their pinned SHA-256 values before installation.
+The archive, checksum, provenance and complete paired skill remain available
+for evidence.

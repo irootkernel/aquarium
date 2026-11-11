@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import io
 import json
 import os
 import shutil
@@ -1023,7 +1024,9 @@ class GuestMainTest(unittest.TestCase):
         )
 
         class StubContext:
-            root = harness
+            def __init__(self):
+                self.root = harness
+                self.inputs = {}
 
         previous_cwd = os.getcwd()
         os.chdir(harness)
@@ -3110,6 +3113,99 @@ class SorageAdoptionRecipeTest(unittest.TestCase):
                 failures = list(root.glob("consumer-cleanup-*.json"))
                 self.assertEqual(len(failures), 1)
                 self.assertTrue(json.loads(failures[0].read_text())["violations"])
+
+
+class PodwayArchiveMaterializationTest(unittest.TestCase):
+    def setUp(self):
+        import podway_upgrade
+
+        self.module = podway_upgrade
+        self.root = Path(tempfile.mkdtemp(prefix="vm-podway-archive-"))
+        self.addCleanup(shutil.rmtree, self.root, True)
+        self.payload = self.root / "dependencies/podway-0.2.17"
+        self.payload.mkdir(parents=True)
+        self.binary = b"official candidate fixture"
+        self.release = {
+            "payload_root": "dependencies/podway-0.2.17",
+            "binary_sha256": hashlib.sha256(self.binary).hexdigest(),
+        }
+
+    def archive(self, *, kind=tarfile.REGTYPE, duplicate=False):
+        path = self.payload / "archive.tar.gz"
+        with tarfile.open(path, "w:gz") as package:
+            for _ in range(2 if duplicate else 1):
+                member = tarfile.TarInfo(
+                    "podway-0.2.17-aarch64-apple-darwin/bin/podway"
+                )
+                member.type = kind
+                member.mode = 0o755
+                if kind == tarfile.REGTYPE:
+                    member.size = len(self.binary)
+                    package.addfile(member, io.BytesIO(self.binary))
+                else:
+                    member.linkname = "../../../outside"
+                    package.addfile(member)
+        self.release["archive_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        return path
+
+    def test_extracts_pinned_binary_and_reuses_it_without_writes(self):
+        self.archive()
+        path = self.module.materialize_candidate_binary(self.root, self.release)
+        self.assertEqual(path.read_bytes(), self.binary)
+        self.assertEqual(path.stat().st_mode & 0o777, 0o755)
+        stamp = path.stat().st_mtime_ns
+        self.assertEqual(
+            self.module.materialize_candidate_binary(self.root, self.release), path
+        )
+        self.assertEqual(path.stat().st_mtime_ns, stamp)
+
+    def test_refuses_changed_archive_before_creating_binary(self):
+        self.archive().write_bytes(b"changed")
+        with self.assertRaises(self.module.lib.RecipeError):
+            self.module.materialize_candidate_binary(self.root, self.release)
+        self.assertFalse((self.payload / "bin").exists())
+
+    def test_refuses_wrong_extracted_hash_before_creating_binary(self):
+        self.archive()
+        self.release["binary_sha256"] = "0" * 64
+        with self.assertRaises(self.module.lib.RecipeError):
+            self.module.materialize_candidate_binary(self.root, self.release)
+        self.assertFalse((self.payload / "bin").exists())
+
+    def test_preserves_an_existing_mismatched_binary(self):
+        self.archive()
+        path = self.payload / "bin/podway"
+        path.parent.mkdir()
+        path.write_bytes(b"existing")
+        path.chmod(0o755)
+        with self.assertRaises(self.module.lib.RecipeError):
+            self.module.materialize_candidate_binary(self.root, self.release)
+        self.assertEqual(path.read_bytes(), b"existing")
+
+    def test_refuses_link_and_duplicate_archive_members(self):
+        for kind, duplicate in (
+            (tarfile.SYMTYPE, False),
+            (tarfile.LNKTYPE, False),
+            (tarfile.REGTYPE, True),
+        ):
+            with self.subTest(kind=kind, duplicate=duplicate):
+                self.archive(kind=kind, duplicate=duplicate)
+                with self.assertRaises(self.module.lib.RecipeError):
+                    self.module.materialize_candidate_binary(self.root, self.release)
+                self.assertFalse((self.payload / "bin").exists())
+
+    def test_refuses_escaped_destination_and_symlinked_parent(self):
+        self.archive()
+        with self.assertRaises(self.module.lib.RecipeError):
+            self.module.materialize_candidate_binary(
+                self.root, {**self.release, "payload_root": "../outside"}
+            )
+        outside = self.root / "outside"
+        outside.mkdir()
+        (self.payload / "bin").symlink_to(outside, target_is_directory=True)
+        with self.assertRaises(self.module.lib.RecipeError):
+            self.module.materialize_candidate_binary(self.root, self.release)
+        self.assertEqual(list(outside.iterdir()), [])
 
 
 if __name__ == "__main__":
