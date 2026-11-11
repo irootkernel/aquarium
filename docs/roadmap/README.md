@@ -1044,7 +1044,7 @@ Close after all due tool scopes and the Aquarium integration are independently a
 | TASK-095 | Verify Sanho through Aquarium | Record bounded native CLI and complete skill identities, reused migration/cleanup, and preserved foreign Git state. [Rollout record](../ops/integrated-tool-rollout.md#task-095-sanho). | Completed | TASK-093 |
 | TASK-096 | Verify Dolgorae through Aquarium | Use actual released lifecycle/configuration/skill and recovery checks under independent Haepari supervision; reuse completed source cleanup and unchanged results. | Planned | TASK-093 |
 | TASK-097 | Verify Gul through Aquarium | Use existing UI/backend/configuration checks and actual skill/manual scope with an exact compatible Dolgorae backend and test-only endpoints. | Planned | TASK-093; exact compatible Dolgorae backend (TASK-096 if its candidate is required) |
-| TASK-098 | Verify Seongge through Aquarium | Use existing input/result/configuration/package/skill checks with the exact supported backend and applicable migration/manual scope; preserve missing live evidence. | Planned | TASK-093; exact supported backend |
+| TASK-098 | Verify Seongge through Aquarium | Record the exact source-built CLI and complete skill, 11 offline behavior/migration/recovery cases, supported backend evidence and preserved manual/live limits. [Rollout record](../ops/integrated-tool-rollout.md#task-098-seongge). | Completed | TASK-093; exact supported backend |
 | TASK-099 | Verify Gaebokchi and finish the inventory | Reuse or complete provider/account/output/configuration checks and promote the complete accepted tool/skill/profile/detachment inventory for EPIC-033. | Planned | TASK-092 through TASK-098 |
 
 ## EPIC-033: Qualify the combined environment and retire the development channel

@@ -555,6 +555,17 @@ and do not complete TASK-095 or shared host retirement. The
 binds its current native invocation and reused producer evidence, with explicit
 manual and host limits.
 
+## Seongge rollout verification
+
+[TASK-098's rollout record](docs/ops/integrated-tool-rollout.md#task-098-seongge)
+binds one exact-source offline build and 11 selected existing native behavior
+cases to their source, binary and skill identities. The existing private fixtures
+cover input/result/configuration, recovery and applicable historical-store
+preservation. Synthetic outcomes remain non-certifying; the selected lane does
+not establish a full producer gate, fresh live qualification, dynamic/manual
+skill functionality, installation or a managed Job result. Original producer
+evidence retains its source and dirty-state limits.
+
 ## Test Frameworks
 
 | Language and layer | Framework | Dependency evidence | Command | Waiver |

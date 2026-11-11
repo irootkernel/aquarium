@@ -171,6 +171,54 @@ the existing native `sanhod` stays outside the removal scope. These observations
 establish neither permanent host absence nor shared retirement. Whole-combination
 qualification and Master's overall Epic acceptance remain separate.
 
+### `TASK-098`: Seongge
+
+The selected source is `be5845749f2d7731ee55465530f44261badd6422`, tree
+`020e85f8d484116105f0d35a3c94ee5087baf615`. Its changes after code commit
+`024507843209fc510f39c3dd97bfc6f9b2ecc7be` are documentation only. Seongge
+has no published release or installation command. The complete source-distributed
+skill is one `skills/use-seongge/SKILL.md` file, SHA-256
+`3b8a8bae73379e3a37776b3c277656254d006144d820a897766167980a04d7a8`.
+The producer's existing executable has `vcs.modified=true` and was preserved;
+it was not selected as evidence of the current source.
+
+One offline archive build used Go `1.27.1` and private source, caches and temporary
+directories. The resulting CLI is
+`sha256:522823ff7e60a7f452934eb46f8f5c2d2568fb91fd12d95fec6acc7511f25bb6`;
+its existing schema decoder is
+`sha256:c07a104a80e5a7106f8ca722bec53a41a233dfb3d51288d8c83c941d065ab70b`.
+All 724 archived source files still matched after execution. One invocation of
+11 existing pytest cases passed with no skips. It covered the synthetic
+capture/preparation/authorization/check/export journey, non-destructive
+configuration, retrieval versus assessment, evidence fences, tamper refusal,
+explicit retry and successful-node reuse, changed-input refusal, historical
+readback, unsupported-setting refusal and legacy-parent adjudication into a
+readable successor while preserving the parent bytes. Existing fixtures selected
+the archive-relative binaries and trapped provider/network calls.
+
+The native synthetic results retain `incomplete`, `fail` and `needs_review`
+outcomes with `release_gate: not_evaluated`; successful retrieval is not an
+assessment pass. The Coordinator used the complete source skill to interpret
+these results. Original Codex `0.165.0` / `gpt-6.1-sol` / `low` and ZCode
+`0.16.9` / `account:zai-individual-coding-plan/GLM-5.3` / `low` qualification
+records retain their measured `macos-arm64` scope. Claude remains expressly
+deferred. The historical clean `3886637` aggregate predates the current code;
+later dirty results, including the current-code unit runs, and four intermediate
+failures keep their original limits. No full producer suite, live qualification,
+calibration or dynamic agent/manual skill verification was repeated.
+
+TASK-093's routing is reused. Current source has no active `aquarium-dev`
+integration; the bounded observation found none of the three named producer Git
+hooks or Seongge's shared `current`, `bin` and `artifacts` entries. These facts
+supply no permanent host-absence or shared-retirement claim. Owned build/source,
+new executables, fixtures and caches were removed after retaining bounded original
+synthetic results and the existing shareable export. Cleanup first encountered
+read-only modes copied from the Go cache; restoring owner-write permission only
+on those private copies allowed removal without another test run. Producer source
+and its original executable remain unchanged. No installation, new UTM or managed
+Haepari PASS is claimed. Remaining manual and whole-combination verification,
+shared retirement and Master's overall Epic acceptance retain their own gates.
+
 ## Conditional producer correction through Sorage
 
 Use Sorage only for the existing Mulgae exchange or an explicitly authorized correction of a concrete producer defect/missing native capability. Identify the failing requirement and exact evidence before requesting producer work. A generic Haepari adoption or evidence request to every team is not part of this procedure.
