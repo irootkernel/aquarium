@@ -550,7 +550,10 @@ success or failure. The target reports failures rather than successful skips.
 
 These native CLI checks do not evaluate an installed agent's skill decisions.
 Candidate installation and manual skill verification remain separate UTM work,
-and do not complete TASK-095 or shared host retirement.
+and do not complete TASK-095 or shared host retirement. The
+[TASK-095 rollout record](docs/ops/integrated-tool-rollout.md#task-095-sanho)
+binds its current native invocation and reused producer evidence, with explicit
+manual and host limits.
 
 ## Test Frameworks
 

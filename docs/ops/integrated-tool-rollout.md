@@ -126,6 +126,51 @@ Sorage owner's disposition of the compatibility observation; it adds no Aquarium
 completion dependency. Managed suite qualification and EPIC-033 retirement
 remain separate.
 
+### `TASK-095`: Sanho
+
+Sanho's source removal is retained at producer `TASK-011` commit
+`a96f2d885705b3f82a5e905f2b5d30ac8c4a9f1b`. Official `v0.2.10` is
+`510ac3fd3c200c6bc3402f80ed1914ec931eabd1`, tree
+`5c79332a9630ebe06ab7458caac59a49d5b4cf2f`. Producer `80d3451faa69e09c073f5aef7d0c0960eaf60b79`
+changes only CHANGELOG after that release. TASK-093's common routing and the
+existing producer exchange are reused without another request.
+
+The original Gaori `all` (`make test`) result remains exit `0`, including its
+`git_dirty: true` metadata. Its retained tested-tree binding equals the released
+Sanho tree; QA candidate `36f9f001b67995d1804795845647090de1c07c1a` differs only
+by version/date metadata. The original aggregate supplies migration and native
+Git coverage. H08 separately retains its installed CLI, default/custom hook
+failure and recovery, rejected-push ref preservation and cleanup results.
+Its binary `ab0c75e8b4274bad4aea79f5e553851ad4019cad7a62e3ed07d1e6338bb62188`
+remains distinct from the new verification executable.
+
+One current `SANHO_BIN=<owned-executable> make test-sanho-compat` invocation
+passed all 11 scenarios against the official release source and unchanged
+Aquarium Sanho integration inputs from `32dc411b4a81fc9ad9f4966c508954b1030b14e8`.
+The executable built from that source is
+`sha256:374ce50741f9e08c8138490c67f74f7c1aadd60e028daa535e172899e13b512a`;
+all 169 archived source files still matched the official tag after the build.
+The check covers local commit/provenance, foreign hooks, status/doctor
+normalization, blocked preview/push, typed conflict and inspection refusals,
+resolution/continue, both local remotes and publication/history/content policy.
+Git test traffic was restricted to file remotes. The Coordinator applied the
+complete unchanged `use-sanho` guidance when interpreting these native outcomes.
+The runner's fixtures and the owned build, source and caches were removed.
+
+All five `use-sanho` files match the release, current source and installed skill;
+the release's skill Git subtree is `1d1f45523d7f170fa9ea28d58eeb8a28d59a1249`.
+Native CLI integration and skill identity are recorded; dynamic agent/manual
+skill judgments remain unverified. Original H01-H07 scope skips and the incomplete
+QA-root attempt remain preserved. At TASK-095 observation, host and guest CLIs
+were `v0.2.9`, below Aquarium's `v0.2.10` floor; their updates remain separate.
+No new installation, UTM or managed Haepari PASS is claimed.
+
+The bounded legacy observation found no named Sanho producer Git hooks.
+Shared `current/sanho`, `bin/sanho` and artifact residuals remain for EPIC-033;
+the existing native `sanhod` stays outside the removal scope. These observations
+establish neither permanent host absence nor shared retirement. Whole-combination
+qualification and Master's overall Epic acceptance remain separate.
+
 ## Conditional producer correction through Sorage
 
 Use Sorage only for the existing Mulgae exchange or an explicitly authorized correction of a concrete producer defect/missing native capability. Identify the failing requirement and exact evidence before requesting producer work. A generic Haepari adoption or evidence request to every team is not part of this procedure.
