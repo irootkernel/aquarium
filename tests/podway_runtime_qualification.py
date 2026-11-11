@@ -80,6 +80,7 @@ SUCCESS_OPTIONS = {
     "approve-closeout": "approved",
     "approve-stopped-closeout": "approved",
     "approve-diff": "approved",
+    "review-applied": "accepted",
     "classify-scope": "task",
     "decide-cause": "established",
     "decide-evidence": "clean",
