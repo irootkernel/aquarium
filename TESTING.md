@@ -566,6 +566,24 @@ not establish a full producer gate, fresh live qualification, dynamic/manual
 skill functionality, installation or a managed Job result. Original producer
 evidence retains its source and dirty-state limits.
 
+## Gaebokchi and participating-tool verification
+
+[TASK-099's rollout record](docs/ops/integrated-tool-rollout.md#task-099-gaebokchi)
+binds the clean source-built CLI and complete two-file skill to applicable
+producer TASK-043/044/045 evidence. Native source, tests, Makefile and dependency
+inputs are unchanged from the documented 44-E2E gate. TASK-099 adds provider-free
+identity/help observations and current documentation checks; it runs no new
+product build, test or account query. The original helper failure, conditional
+skips and measured provider/platform scope remain preserved. Skill identity does
+not establish dynamic/manual functionality or published-release qualification.
+
+The [participating inventory](docs/ops/integrated-tool-rollout.md#participating-verification-inventory)
+retains all seven tools' separate artifact/skill identities, environments,
+profiles, native results, cleanup and manual limits for EPIC-033. Dolgorae and Gul
+remain Deferred to a separate adoption Epic. Their deferral does not exempt
+actual legacy references from shared-removal checks. Final Epic validation reuses
+applicable Task evidence and executes only changed or missing required checks.
+
 ## Test Frameworks
 
 | Language and layer | Framework | Dependency evidence | Command | Waiver |

@@ -8,7 +8,7 @@ This plan claims no runtime result and authorizes no implementation, host deleti
 
 ## Goal and canonical inputs
 
-Qualify the full accepted tool/skill combination and its upgrade path, then retire common aquarium-dev source and approved host state after all consumers detach. Individual pilot and tool qualification remain their original facts; they do not prove the combined candidate. Final verification does not reopen earlier Epics or transfer unfinished criteria from them.
+Qualify the accepted participating tool/skill combination and its upgrade path, then retire common aquarium-dev source and approved host state after all actual consumers detach. Master deferred Dolgorae/Gul functional adoption under EPIC-032's TASK-096/TASK-097 to a [separate future Epic candidate](README.md#dolgorae-and-gul-adoption); those products are excluded from this combination's functional qualification and do not block entry. The participating tools are Podway, Mulgae, Gaori, Sorage, Sanho, Seongge and Gaebokchi, with the existing Haepari coordination contract. Any actual legacy enrollment, process, lease, hook or channel reference from a deferred tool still needs safe detachment or verified absence before shared removal. Individual pilot and tool qualification remain their original facts; they do not prove the combined candidate. Final verification does not reopen earlier Epics or transfer unfinished functional-adoption criteria from them.
 
 Aquarium v0.1.23 must not be released until this Epic fulfills the [roadmap release prerequisite](../roadmap/README.md#v0123-release-prerequisite). Both full and light releases require verified consumer detachment, common source removal, separately approved final host cleanup, the required final-candidate observations and actual overall acceptance and closeout. Passing tests or accepting the four early cleanup reports alone cannot satisfy that condition.
 
@@ -42,7 +42,7 @@ Each producer inventories its current source and host references. Podway, Dolgor
 
 Reuse those original cleanup exchanges and the evidence accepted by EPIC-032. Early completion establishes only its verified scope; it does not waive remaining producer criteria or this Epic's exact combined-candidate checks. Final shared retirement waits for the full accepted consumer inventory, including Aquarium, with no remaining users or recovery obligations.
 
-Aquarium's pilot can detach its own legacy enrollment under the corresponding authority, while retaining the shared manager for remaining tools. In TASK-090's read-only audit, Aquarium's own enrollment record pointed to another checkout, while the active checkout had no post-commit hook (`core.hooksPath` unset), so live `~/.aquarium-dev` detachment was deferred to TASK-101 under Master's `~/.aquarium-dev` non-mutation boundary. Final shared retirement occurs only after every producer return shows successful migration and either completed host detachment or verified absence of an enrollment.
+Aquarium's pilot can detach its own legacy enrollment under the corresponding authority, while retaining the shared manager for remaining tools. In TASK-090's read-only audit, Aquarium's own enrollment record pointed to another checkout, while the active checkout had no post-commit hook (`core.hooksPath` unset), so live `~/.aquarium-dev` detachment was deferred to TASK-101 under Master's `~/.aquarium-dev` non-mutation boundary. Final shared retirement requires current evidence that every actual legacy consumer is safely detached or demonstrably not enrolled, including deferred Dolgorae/Gul references. This requires neither their full functional adoption nor a new producer-return campaign; reuse original evidence and inspect only changed or missing facts under the applicable effects authority.
 
 Before deleting `~/.aquarium-dev/`, perform a fresh inventory of enrollments, queued requests, active workers, generation leases, development services, hooks, launchers, symlinks, shell PATH/config references, plugin MCP declarations, and status/setup consumers. Resolve in-flight users and the chosen evidence/backup policy. Shared launcher/runtime removal and the final directory deletion are explicit host effects, separate from repository source cleanup.
 
@@ -58,7 +58,7 @@ At closeout, promote the accepted source identity, actual acceptance reference a
 
 Implement and document:
 
-- [ ] Reconcile all nine accepted tool-verification scopes with the same frozen Haepari contract and current Aquarium candidate, rejecting inconsistent identities, missing skill sources and stale profiles.
+- [ ] Reconcile the seven participating accepted tool-verification scopes with the same frozen Haepari contract and current Aquarium candidate, rejecting inconsistent identities, missing skill sources and stale profiles. Preserve Dolgorae/Gul as explicitly deferred to their separate adoption candidate; verify their non-participation and any actual legacy detachment obligations without requiring functional adoption.
 - [ ] Identify redundant Aquarium layers, validators, harness code and tests across the completed adoption and rollout. Give each retained component a concrete consumer requirement and identify deletions or simplifications for TASK-101.
 - [ ] Identify the supported native transition for the previous released plugin's channel launch path. Rehearse the disabled-channel interim host combination and its upgrade in the dedicated VM, retaining exact operation, component and verification identities for TASK-101's separate approval.
 - [ ] Resolve combined-candidate failures through this Epic's owned-correction or durable producer correction protocol. Accept exact corrected returns and re-verify affected cases; do not reopen earlier Epics or remove shared legacy infrastructure while qualification remains incomplete.
@@ -116,7 +116,7 @@ Do not:
 
 Verify and complete:
 
-- [ ] All producer return criteria, combined installed/migration checks, cleanup and non-regression requirements are met with exact evidence.
+- [ ] All due participating-product, combined installed/migration, actual legacy-detachment, cleanup and non-regression requirements are met with exact evidence. Deferred Dolgorae/Gul functional adoption remains with its separate future Epic.
 - [ ] Documentation/link checks pass and all accepted runtime facts are accurately classified. Any required unresolved evidence keeps the epic incomplete.
 
 ## Epic completion and dossier deletion

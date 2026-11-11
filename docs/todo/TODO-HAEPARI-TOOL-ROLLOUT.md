@@ -8,17 +8,19 @@ Adopting Mulgae `>=v0.1.27`, its complete six-file `use-mulgae` skill (`01a20281
 
 The sole consumer is `EPIC-032`, with existing `TASK-091` through `TASK-099`. The [canonical roadmap](../roadmap/README.md) owns identity, dependencies and lifecycle. This dossier owns the remaining implementation and verification plan.
 
+Master deferred TASK-096 (Dolgorae) and TASK-097 (Gul) on 2026-11-11 because those products are not ready for this rollout. Their functional adoption is excluded from current EPIC-032 and EPIC-033 combination qualification and belongs to the [future adoption candidate](README.md#dolgorae-and-gul-adoption). Preserve their original checklists below and every completed Task's original source pins, assessments and native records. Deferral grants no qualification or completion claim. The current participating inventory contains Podway, Mulgae, Gaori, Sorage, Sanho, Seongge and Gaebokchi.
+
 Master clarified that Aquarium guides actual Haepari use through its release, Task and Epic workflows. This replaces the former plan to obtain nine producer-owned Haepari adoption or evidence returns. TASK-091 remains completed under its original acceptance, source commit and native finalization. Its original reports, frozen packets and historical failures are preserved; they are not rewritten as judgments of this revised plan.
 
 Read completed EPIC-019/031 Canonical Outcomes and the current [tool specifications](../specs/tool-integrations.md), [tool catalog](../../plugins/aquarium/references/tool-catalog.md#haepari), [Haepari integration](../../plugins/aquarium/references/haepari-integration.md), [workflow contracts](../specs/workflow-contracts.md), [Haepari VM operations](../ops/haepari-vm-verification.md), [TESTING.md](../../TESTING.md), and [VM test guide](../../tests/vm/README.md). They supply the existing adapter, profile, native Job/cleanup and release-role contracts.
 
 ## Delivery order and real dependencies
 
-After completed TASK-091, start with TASK-093's shared Aquarium routing and Gaori scope, then select ready work among TASK-094 through TASK-098 using actual tool/backend prerequisites. TASK-092 waits for Mulgae's released native lock and matching skill; it does not block unrelated Aquarium work. Record the selected order in the execution envelope and Context Brief. Keep one active local delivery Goal, with exact Task acceptance, its distinct commit grant and native finalization before the next local Goal.
+TASK-091 through TASK-095 and TASK-098 are completed. TASK-093 supplied the common routing, and TASK-092 adopted the released native Mulgae lock and matching skill. Keep their accepted results and original limits. Record the revised order in the execution envelope and Context Brief. Keep one active local delivery Goal, with exact Task acceptance, its distinct commit grant and native finalization before the next local Goal.
 
-Gul needs its declared compatible Dolgorae backend. Seongge needs its actual supported backend. Resolve exact identities before the affected verification; add the member dependency if that member's candidate is required. Existing compatible released backends can satisfy these prerequisites without a new producer project.
+Dolgorae and Gul are deferred and introduce no current execution or qualification dependency. Their future adoption must resolve Gul's exact compatible Dolgorae backend and the original product/skill requirements. Seongge's completed verification retains its actual supported backend identities and measured scope.
 
-Gaebokchi verification may be prepared or covered by applicable earlier managed work. Admit TASK-099's final delivery Goal after TASK-092 through TASK-098 complete; finish its remaining Gaebokchi scope and the all-tool accepted inventory there. Whole-Epic completion still requires every due tool scope, independent integration assessment and Master's actual overall acceptance.
+Gaebokchi verification may be prepared or covered by applicable earlier work. TASK-099's prerequisites are completed TASK-092, TASK-093, TASK-094, TASK-095 and TASK-098; deferred TASK-096 and TASK-097 do not block admission. Finish Gaebokchi's remaining scope and the seven participating tools' accepted inventory, explicitly retaining the two deferred entries without qualification claims. Whole-Epic completion still requires every current due scope, independent integration assessment and Master's actual overall acceptance.
 
 ## Aquarium-owned execution and evidence
 
@@ -118,10 +120,14 @@ The original checklist below records the completed work's scope. The revised rem
 
 ### TASK-096: Verify Dolgorae through Aquarium
 
+Deferred by Master; the retained checklist is future adoption scope, not a current EPIC-032 acceptance gate. Re-entry belongs to the [separate adoption candidate](README.md#dolgorae-and-gul-adoption).
+
 - [ ] Use the product's actual released controller/broker/CLI and complete `use-dolgorae`; cover applicable durable run/session/configuration preservation and native recovery.
 - [ ] Retain independent Haepari Job observation/collection/cleanup when Dolgorae cannot supervise work. Preserve stable host/provider accounts and reuse its source-removal result.
 
 ### TASK-097: Verify Gul through Aquarium
+
+Deferred by Master; the retained checklist is future adoption scope, not a current EPIC-032 acceptance gate. Re-entry requires release-ready Gul and its compatible Dolgorae backend under the [separate adoption candidate](README.md#dolgorae-and-gul-adoption).
 
 - [ ] Resolve its exact compatible Dolgorae backend and existing application/web verification commands. Use test endpoints and applicable configuration migration and GUI observations.
 - [ ] Inventory actual shipped skills, using source-backed `not_applicable` where absent. Keep the host production backend outside test fixtures and retain legacy absence/removal facts.
@@ -136,12 +142,12 @@ The original checklist below records the completed work's scope. The revised rem
 - [ ] Use existing provider/account selection, usage output, configuration migration and redaction checks with synthetic fixtures by default.
 - [ ] Use only authorized guest accounts for any due live case. Never copy host `~/.codex` or alternative account homes into fixtures or bundles.
 - [ ] Inventory actual skills and legacy applicability without inventing absent skills.
-- [ ] After TASK-092 through TASK-098 complete, finish Gaebokchi's remaining checks and promote the all-tool source/binary/skill/profile, verification-limit and detachment inventory for EPIC-033. Reuse earlier exact results.
+- [ ] After completed TASK-092, TASK-093, TASK-094, TASK-095 and TASK-098, finish Gaebokchi's remaining checks and promote the seven participating tools' source/binary/skill/profile, verification-limit and detachment inventory for EPIC-033. Record TASK-096 and TASK-097 as deferred and link their future adoption owner. Reuse earlier exact results; no Dolgorae/Gul functional qualification is due.
 
 ## Epic acceptance, handoff and dossier deletion
 
-- [ ] Aquarium's release/Task/Epic workflow guidance and all due per-tool verification scopes are complete. Nine external producer Haepari adoption reports are not an acceptance condition.
+- [ ] Aquarium's release/Task/Epic workflow guidance and all seven participating per-tool verification scopes are complete. TASK-096 and TASK-097 remain Deferred with a future adoption owner, not Completed. Nine external producer Haepari adoption reports are not an acceptance condition.
 - [ ] TASK-092 includes the actual released native Mulgae CLI/MCP lock and complete skill, with its required native fault/borrower/recovery evidence and advisory limits.
 - [ ] Independently assess the assembled Aquarium integration. Reuse applicable Task results, original checks and settled findings; rerun only affected or genuinely missing cases and mandatory gates. Preserve unverified manual scope.
-- [ ] Promote durable workflow/tool guidance, accepted identities, test/cleanup limits and legacy detachment facts to their canonical owners. EPIC-033 consumes those outcomes and the conditional correction protocol, not nine outstanding evidence requests.
+- [ ] Promote durable workflow/tool guidance, accepted identities, test/cleanup limits and legacy detachment facts to their canonical owners. EPIC-033 consumes the participating combination, explicit deferred entries and conditional correction protocol. Its final shared retirement still checks every actual legacy consumer, including deferred tools, without requiring their full functional adoption or nine outstanding evidence requests.
 - [ ] Obtain Master's actual overall acceptance, replace this Epic's Detailed SOT with Canonical Outcomes and settle this dossier and its navigation under the exact closeout grant. EPIC-033 retains whole-combination qualification and shared retirement.

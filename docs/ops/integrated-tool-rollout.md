@@ -33,7 +33,7 @@ Bounded read-only source inspection across the remaining five integrated tool re
 
 [`tests/vm/README.md`](../../tests/vm/README.md#podway-v0216-managed-qualification-and-epic-032-reuse) records the reused Podway qualification outcomes: the recovered managed Haepari `release-acceptance` `PASS` on Aquarium candidate `8bd3e3e9283f1e234694920bde80c58af86a87c9` (original upgrade and Task/Epic startup cases; no release-handler startup or full release workflow result), the four local `test-podway-compat` passes against official `v0.2.16` (`e9f4b41d1d09573b7acd443b91fbfb8f378fb8e1`, binary `sha256:249685e65402049ecad83f1ecef8efee361f6ac979bde686a9ebabd10c685cf2`, `podway.version-result/v2` `build_identity` `sha256:2a11e45d3dee9a64143817f2b5bb92371f87947afd0b565d6feb34876768aafe`, contract manifest `sha256:57cb8463f0f24033f9bd0437ed1943e77b21b754a888e654bd847bec13f4b91d`, complete `use-podway` skill tree `da9196f58d712d09de459dea423a9776f07c04014ebfb835105012697a833446`, verifying the five shipped v2 Procedures `aquarium-design-v2`, `aquarium-goal-v2`, `aquarium-task-v2`, `aquarium-validation-v2`, and `aquarium-war-room-v2`), bounded applicability verification from `8bd3e3e9283f1e234694920bde80c58af86a87c9` to `759883a47676ad9efae2dd8ae373878a431ce031`, and the separate `bee2e50f3be585793d07e2a095fe51ee2dc30783` direct-SSH standalone Task, one-Task Epic, and internal Epic validation fixture follow-up. Each retained run keeps its own original candidate and scope without erasing the separate earlier `INCOMPLETE` (`manual-timeout`) run or implying an aggregate `EPIC-031`, `EPIC-032`, or `EPIC-033` pass. The frozen `M1` runbook snapshot (`sha256:63b83078494fb3fb31537a060d161d8ac82d7ae52f66d811714d92398c136b67`) and sent request body (`sha256:c8bea02328b59a36e0faf3e1df8cdd371ff826e7d051df0e3863305afa2ee13e`) remain unchanged historical records; subsequent guide updates document post-`M1` evidence reconciliation without amending the prior native request. Per-operation Sorage Handoff, Project, and Haepari Job identities stay in retained runtime handoffs rather than tracked documentation.
 
-Across all nine Tasks, detach only producer-owned legacy hooks, callers, and services whose identity and exclusive `aquarium-dev` channel use are proved, while preserving foreign hooks, stable binaries and skills, and shared `~/.aquarium-dev/` infrastructure still needed by consumers until `EPIC-033` (`TASK-101`). Do not import `EPIC-033` final shared-removal criteria into `TASK-091` through `TASK-099` by assumption. Evidence inspection grants no host-retirement authority. Task acceptance must block if its own detachment criterion cannot be satisfied within the active execution envelope.
+For participating tool Tasks, detach only producer-owned legacy hooks, callers, and services whose identity and exclusive `aquarium-dev` channel use are proved, while preserving foreign hooks, stable binaries and skills, and shared `~/.aquarium-dev/` infrastructure still needed by consumers until `EPIC-033` (`TASK-101`). Deferred Dolgorae/Gul functional adoption is not due here; any actual legacy references from those tools remain in EPIC-033's shared-removal inventory. Do not import final shared-removal criteria into individual tool acceptance by assumption. Evidence inspection grants no host-retirement authority. Task acceptance must block if its own current detachment criterion cannot be satisfied within the active execution envelope.
 
 ## Aquarium verification procedure
 
@@ -60,12 +60,14 @@ The [rollout dossier](../todo/TODO-HAEPARI-TOOL-ROLLOUT.md) owns the active per-
 | TASK-093 | Common workflow guidance plus Gaori configured commands, exit/output/evidence, wait/reconnect, configuration/history and both native skills; independent Haepari failure recovery. |
 | TASK-094 | Sorage CLI/MCP, synthetic Project/Handoff/revision/review/configuration/Vault behavior and recovery with disposable guest state; independent collection/reporting. |
 | TASK-095 | Sanho commit/push policy, configuration/state and full skill using disposable repositories/local remotes; preserve foreign hooks and Git state. |
-| TASK-096 | Dolgorae's actual controller/broker/CLI, session/configuration preservation, recovery and complete skill; Haepari supervision remains independent. |
-| TASK-097 | Gul application/web assets, exact compatible Dolgorae backend, test endpoints, configuration and actual GUI scope; no host production backend. |
+| TASK-096 | Deferred: Dolgorae lifecycle/configuration/recovery and complete skill adoption move to the separate future Epic candidate. |
+| TASK-097 | Deferred: Gul application/backend/configuration/GUI adoption moves to the separate future Epic candidate with a compatible Dolgorae release. |
 | TASK-098 | Seongge input/result/configuration, exact supported backend, actual package/skills and applicable migration/manual scope; no unapproved live campaign. |
-| TASK-099 | Gaebokchi selection/output/configuration/redaction with synthetic fixtures or authorized guest accounts; after TASK-092 through TASK-098, complete the all-tool inventory. |
+| TASK-099 | Gaebokchi selection/output/configuration/redaction with synthetic fixtures or authorized guest accounts; after TASK-092 through TASK-095 and TASK-098, complete the seven participating tools' inventory and retain the two deferred entries. |
 
-Resolve Gul/Seongge backend compatibility before affected execution. Keep a member dependency if its candidate is actually required. TASK-092 waits only for its released native implementation and required evidence; unrelated Aquarium work can proceed. Keep one active local delivery Goal and record the selected order before admission. Gaebokchi checks may be prepared or covered earlier; TASK-099's final inventory still waits for every due tool scope.
+Master deferred Dolgorae and Gul until release-ready products can enter a [separate adoption Epic](../todo/README.md#dolgorae-and-gul-adoption). Common production readiness already treats Dolgorae as optional; its Independent Review route is disabled, and current Herdr/Subagent/Mulgae execution does not depend on it. Gul adds no current execution dependency. Leave existing binaries, configuration and producer work untouched; explicit native setup/operations retain their existing contracts. This decision claims no general product qualification or permanent absence of interference.
+
+TASK-091 through TASK-095 and TASK-098 are complete with their original evidence and limits. TASK-099 follows the five completed prerequisites TASK-092, TASK-093, TASK-094, TASK-095 and TASK-098. Its inventory records the seven participating tools and the two deferred entries; neither deferral blocks its Goal or EPIC-032 closeout. Keep one active local delivery Goal. EPIC-033 still verifies every actual legacy consumer before shared retirement, including references from deferred products.
 
 ## Historical Podway and native Mulgae scope
 
@@ -218,6 +220,75 @@ on those private copies allowed removal without another test run. Producer sourc
 and its original executable remain unchanged. No installation, new UTM or managed
 Haepari PASS is claimed. Remaining manual and whole-combination verification,
 shared retirement and Master's overall Epic acceptance retain their own gates.
+
+### `TASK-099`: Gaebokchi
+
+The selected clean source is `0b78864b874e7b473cb6db08fd49bfc6e58eaff5`, tree
+`3dd0d16be3a3519ae79059da4f501921ec370172`. The installed executable is
+`sha256:950602a108256c1c17f47f783d557030db62a417fdd8e183eae1d07fbfc2d205`.
+Its Go build metadata binds that exact revision with `vcs.modified=false`, Go
+`1.27.1` and `darwin/arm64`. Provider-free `version --json` and `--help` returned
+`0`; the version is `v0.1.2-0.20261022175238-0b78864b874e`. Published `v0.1.1`
+predates target selection, aliases and the optional skill. The current executable
+is a source-built candidate, with no published-release qualification claimed.
+
+The complete source and installed `use-gaebokchi` trees match across two regular
+files, without symlinks or extra files. `SKILL.md` is SHA-256
+`faea5ec7dda424bccd6c678b07e1f7de09bba696f6983df8712fdc7092814e42`;
+`agents/openai.yaml` is
+`e12e4aa8f3e3b4064992b036b6168b3ae98c025fb7f6362dd1c3ba4c61de8799`.
+The source skill Git subtree is `8cbfc80ebf0c8f0ca99e5fb00ffa787fc137af35`.
+CO applied the full skill to the provider-free observations and existing evidence.
+Identity and offline native coverage do not establish dynamic/manual skill
+functionality.
+
+Producer TASK-043/044/045 records supply the original synthetic account/provider
+selection, aliases, target forms, configuration compatibility and ordering,
+table/terminal/JSON output, safe diagnostics and environment filtering, failure
+rows/exits, unselected-provider isolation, cancellation and temporary cleanup.
+TASK-045 records successful `make test` and `go test ./... -count=1` at
+`d1868895aa630615afb7c01e54e73e770ad87230`: Go `1.27.1`, `darwin/arm64`,
+offline dependency settings, Ginkgo race/randomized coverage and 44/44 executable
+E2E specs with six fake provider paths and private homes. Git comparison through
+the selected source found no native code, test, Makefile or dependency changes.
+Those inputs and coverage remain applicable; no product build or test was
+repeated. Original measured provider/platform qualifications remain historical.
+
+The initial helper `make test` exit `2` in the ZCode SEA-asset fixture retains its
+unknown cause and fail-fast limits. The subsequent original successful gates do
+not erase it. Conditional options/scripts skips also retain their original scope.
+Gaebokchi is a one-shot command with no durable history/store migration surface;
+configuration preservation is the applicable compatibility scope. No snapshot,
+account/configuration read, provider query, login migration, installation or new
+live qualification ran in TASK-099.
+
+TASK-093's common routing is reused. Current source has no active `aquarium-dev`
+integration. On `2026-11-11T05:03:59Z`, the three named producer Git hooks and
+Gaebokchi's shared `current`, `bin` and `artifacts` paths were absent. These six
+path observations establish no general service/process absence or shared
+retirement. No execution fixture was created; version/help completed and CO
+retains the bounded original evidence for integration. Host state is unchanged.
+
+## Participating verification inventory
+
+The seven participating scopes retain their own source, command, environment,
+profile and cleanup records. Their results do not form a new common managed run.
+EPIC-033 consumes these records, resolves the exact installed combination and
+upgrade path, and checks every actual legacy reference before shared removal.
+Master's overall EPIC-032 acceptance remains separate.
+
+| Tool and original record | Exact artifact and complete skill | Actual verification and limits | Legacy disposition |
+| --- | --- | --- | --- |
+| [Podway / TASK-091](#task-091-podway-rollout-7) | Official `v0.2.16` at `e9f4b41d1d09573b7acd443b91fbfb8f378fb8e1`; CLI, build identity, contract manifest and five-file `use-podway` digests retained above. | Original four compatibility runs, managed `release-acceptance` on `8bd3e3e`, its two exact profile digests, and separate `bee2e50` direct-UTM observations remain distinct. Preserve older-Store refusal, explicit reset/preservation, prior timeout and release-handler gaps. Native/consumer cleanup and 45-file collection retain their original managed scope. | Source removal and bounded caller/service observations accepted; shared generations, enrollment and controller residuals retained for EPIC-033. |
+| [Mulgae / TASK-092](#task-092-mulgae-rollout-3-rollout-8) | Official `v0.1.27` at `c611e2ba16d0f0e873e948b2251f5bc5bda84cad`; six-file skill subtree and digest, tag-built versus public Go-install binaries remain separately identified above and in the [caller observations](../../tests/vm/README.md#task-092-direct-utm-caller-observations). | Producer SSH/Aqua native lock/fault suite and Aquarium direct-UTM Go `1.27.1` caller work use their original binaries and isolated capacity-one locks. Preserve partial/negative review results, advisory limits and exact affected-only correction; no mixed-run or managed PASS. Original grants/controllers settled; 6,992-entry restoration and 240-file plus 32-file evidence retained. | Source and time-bounded host absence retained; stable runtime/skill untouched. |
+| [Gaori / TASK-093](#task-093-shared-workflow-routing-and-gaori-rollout-5) | Official `v0.1.20` at `671b08e79d5fd8424e44d2b98864484178d2480e`; [archive/binary identities](../../tests/vm/README.md#task-093-direct-utm-gaori-observations), full seven-file `use-gaori` and one-file `use-gaori-status` trees from that tag. | Direct UTM, Go `1.27.1`, nine compatibility groups; configured CLI failure `7` stays distinct from precise extraction and completed-evidence recovery. Both skills were discovered/loaded by the guest subject. Generic outer-control evidence reuses TASK-090's exact applicability; no live candidate MCP/re-await or full workflow PASS. Original eight skill files, configuration and history restored; 70-file evidence retained. | Cleanup commit `491afd8c189e84dab8a5078b1698ff479034f27f` and bounded hook/source absence retained. |
+| [Sorage / TASK-094](#task-094-sorage-rollout-6) | Official `v0.1.4` at `403dce7bcf33742a44ec7e923ff6fb5d6824a5ba`; [binary and four-file skill digests](../../tests/vm/README.md#task-094-direct-utm-sorage-observations). | Direct UTM private candidate, Codex Plan/high/read-only/never, 35 MCP tools; synthetic transitions, stale-fence refusals, replay recovery, setup and restoration. Preserve default-runtime `400`, old-CLI errors, interrupted consumer/unknown dispatch, default-approval/manual and managed-suite gaps. Ten recipe outputs and 227 case files retained; idle private root remains in CO custody after consumers stopped and baseline restoration. | Selected source has no active integration; bounded guest hook/service absence retained. No production broker effect or awaited producer disposition. |
+| [Sanho / TASK-095](#task-095-sanho) | Official `v0.2.10` at `510ac3fd3c200c6bc3402f80ed1914ec931eabd1`; exact new executable and five-file skill subtree above. | One 11-case local file-remote compatibility invocation plus original aggregate/migration and H08 installed evidence. Preserve original dirty-state binding, distinct H08 binary, H01-H07 skips and incomplete QA-root attempt. Host/guest `v0.2.9` remain below the tested floor; no new installation/manual or managed PASS. Owned build/source/caches/fixtures removed. | Source removal and bounded hook absence retained; shared selectors/artifacts remain for EPIC-033. Native `sanhod` preserved. |
+| [Seongge / TASK-098](#task-098-seongge) | Exact source `be5845749f2d7731ee55465530f44261badd6422`, two archive-built executable digests and complete one-file source skill above; no published/global installation. | Offline Go `1.27.1`, one 11-case pytest invocation; exact original Codex/GLM measured backend tuples retained above. Synthetic negative outcomes remain non-certifying, Claude deferred; no current full/live/calibration/manual/managed PASS. Read-only copied-cache cleanup failure and bounded recovery preserved; original outputs/export retained, owned execution root removed. | Same-source integration absence and six bounded hook/shared-path observations retained. |
+| [Gaebokchi / TASK-099](#task-099-gaebokchi) | Clean source `0b78864b874e7b473cb6db08fd49bfc6e58eaff5`, installed source-built CLI and matching two-file skill digests above. | Provider-free identity/help plus zero-native-delta reuse of producer TASK-043/044/045, including original 44-E2E gate at Go `1.27.1`/darwin-arm64. Preserve SEA helper failure, conditional skips and published-release/manual/live limits. No new fixture, build or product tests. | Same-source integration absence and six bounded hook/shared-path observations; no shared deletion. |
+| [Dolgorae / TASK-096](../todo/README.md#dolgorae-and-gul-adoption) | Deferred; no current functional or installed-combination qualification. | Future adoption requires a release-ready product and separate Epic. Existing optional setup and disabled Independent Review leave ordinary Aquarium execution independent. No producer operation or waiting. | Preserve original source-removal `7802485ab6499e698c984a34afa3cdf79ea57a96`; actual residual references remain an EPIC-033 removal check. |
+| [Gul / TASK-097](../todo/README.md#dolgorae-and-gul-adoption) | Deferred; exact compatible Dolgorae/backend and skill inventory belong to the future adoption Epic. | No current execution dependency or qualification claim; producer work untouched. | Original bounded source absence at `731264ace7b5cbfe4cf1e0b030835b6f5f119c41` remains historical; actual references still checked before shared removal. |
+
 
 ## Conditional producer correction through Sorage
 

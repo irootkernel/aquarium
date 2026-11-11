@@ -30,4 +30,36 @@ For a dossier linked only from a task in the standing `EPIC-000`, settle its dur
 
 ## Unadopted TODO Candidates
 
-There are no current unadopted TODO candidates. A work-definition workflow promotes an approved candidate by allocating the next roadmap-local epic and task IDs, applying the shared dossier threshold, and moving or linking only the resulting approved documents in one reviewed change.
+### Dolgorae and Gul adoption
+
+Master deferred EPIC-032's TASK-096 and TASK-097 until Dolgorae and Gul are ready
+for adoption together with Aquarium. A separate future Epic will select exact
+released artifacts, compatible Gul/Dolgorae interfaces and complete applicable
+skills, then verify native lifecycle/configuration preservation, recovery and
+Gul's actual application/backend behavior. Preserve the original deferred Task
+scope and prior cleanup evidence; neither Task is completed by this decision.
+
+Retained adoption scope:
+
+- Dolgorae: use the actual released controller/broker/CLI and complete
+  `use-dolgorae`; verify durable run/session/configuration preservation and native
+  recovery. Preserve stable host/provider accounts and reuse source-removal
+  evidence. Retain independent Haepari Job observation, collection and cleanup
+  when Dolgorae cannot supervise work.
+- Gul: select the exact compatible Dolgorae backend and existing application/web
+  checks; verify test endpoints, applicable configuration migration and actual GUI
+  behavior. Inventory shipped skills with evidenced `not_applicable` where absent,
+  preserve legacy absence/removal facts and keep host production backends outside
+  fixtures.
+
+Re-entry requires Master's adoption decision and release-ready compatible
+products. This candidate allocates no Epic or Task IDs and starts no producer
+work, installation or verification campaign. Dolgorae remains optional in common
+Aquarium readiness, its Independent Review route remains disabled, and Gul adds
+no dependency to current execution. Existing explicit setup/operation contracts
+remain available. Any actual legacy references still need safe detachment or
+verified absence before EPIC-033 removes shared infrastructure.
+
+A work-definition workflow promotes an approved candidate by allocating the next
+roadmap-local Epic and Task IDs, applying the shared dossier threshold, and moving
+or linking only the resulting approved documents in one reviewed change.
