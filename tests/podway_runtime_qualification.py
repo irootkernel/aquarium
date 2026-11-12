@@ -2039,6 +2039,10 @@ class ManagedRuntime:
                 for row in checkpoint["mutation_templates"]
                 if row["command"] == "goal.assess_criterion"
             )
+            criterion_ids = [
+                row["criterion_id"]
+                for row in checkpoint["guidance"]["goal"]["criteria"]
+            ]
             batch = {
                 "schema": "podway.criterion-assessment-many-input/v1",
                 **{
@@ -2054,14 +2058,14 @@ class ManagedRuntime:
                 "idempotency_key": self.next_key("agent-assess"),
                 "assessments": [
                     {
-                        "criterion_id": f"c{index}",
+                        "criterion_id": criterion_id,
                         "status": assessment_status,
                         "reason": "Synthetic caller contract assessment.",
                         "evidence": []
                         if assessment_status == "not_applicable"
                         else ["work"],
                     }
-                    for index in range(count)
+                    for criterion_id in criterion_ids
                 ],
             }
             if any(
@@ -2126,23 +2130,39 @@ class ManagedRuntime:
                 )
             batch["assessments"].reverse()
             invalid_batches = []
-            for label in (
-                "empty",
-                "too-many",
-                "duplicate",
-                "citation",
-                "stale-session",
-                "stale-goal",
-                "unknown-field",
+            for label, expected_code in (
+                ("empty", "REQUEST_INVALID"),
+                ("too-many", "REQUEST_INVALID"),
+                ("duplicate", "REQUEST_INVALID"),
+                (
+                    "citation",
+                    "REQUEST_INVALID"
+                    if assessment_status == "not_applicable"
+                    else "CRITERION_CITATION_INVALID",
+                ),
+                ("stale-session", "SESSION_REVISION_CONFLICT"),
+                ("stale-goal", "GOAL_REVISION_STALE"),
+                ("unknown-field", "REQUEST_INVALID"),
             ):
                 invalid = json.loads(json.dumps(batch))
                 invalid["idempotency_key"] = self.next_key(label)
                 if label == "empty":
                     invalid["assessments"] = []
                 elif label == "too-many":
-                    invalid["assessments"] *= 17
+                    # Goals also cap declarations at 16; overflow IDs cannot all
+                    # be declared. Avoid conflating this case with duplicate IDs.
+                    invalid["assessments"].extend(
+                        {
+                            **invalid["assessments"][0],
+                            "criterion_id": f"overflow-{index}",
+                        }
+                        for index in range(17 - len(invalid["assessments"]))
+                    )
                 elif label == "duplicate":
-                    invalid["assessments"].append(invalid["assessments"][0])
+                    if len(invalid["assessments"]) == 1:
+                        invalid["assessments"].append(invalid["assessments"][0])
+                    else:
+                        invalid["assessments"][-1] = invalid["assessments"][0]
                 elif label == "citation":
                     invalid["assessments"][-1]["evidence"] = ["missing-source"]
                 elif label == "stale-session":
@@ -2162,9 +2182,13 @@ class ManagedRuntime:
                     stdin=json.dumps(invalid).encode(),
                     expected_exit=None,
                 )
-                if rejected.returncode == 0 or self.observe() != checkpoint:
+                if (
+                    rejected.returncode == 0
+                    or error_code(rejected) != expected_code
+                    or self.observe() != checkpoint
+                ):
                     raise RuntimeQualificationError(
-                        f"batch {label} did not roll back atomically"
+                        f"batch {label} did not return {expected_code} without mutation"
                     )
                 missing = output_result(
                     self.raw(
@@ -2192,6 +2216,26 @@ class ManagedRuntime:
                 "--with-observation",
             ]
             body = json.dumps(batch).encode()
+            for flag in ("--if-goal-revision", "--idempotency-key"):
+                probe = {**batch, "idempotency_key": self.next_key("cli-identity")}
+                value = (
+                    str(probe["goal_revision"])
+                    if flag == "--if-goal-revision"
+                    else probe["idempotency_key"]
+                )
+                refused = self.raw(
+                    [*argv, flag, value],
+                    stdin=json.dumps(probe).encode(),
+                    expected_exit=None,
+                )
+                if (
+                    refused.returncode != 2
+                    or error_code(refused) != "REQUEST_INVALID"
+                    or self.observe() != checkpoint
+                ):
+                    raise RuntimeQualificationError(
+                        "batch accepted CLI-owned identity alongside stdin"
+                    )
             goal_before = self.native_invocations
             assessed = self.raw(argv, stdin=body)
             current = mutation_observation(
@@ -2208,8 +2252,7 @@ class ManagedRuntime:
             if (
                 result.get("complete") is not True
                 or result.get("determined_outcome") != expected_outcome
-                or [row["criterion_id"] for row in result["results"]]
-                != [f"c{index}" for index in range(count)]
+                or [row["criterion_id"] for row in result["results"]] != criterion_ids
             ):
                 raise RuntimeQualificationError(
                     "batch omitted or reordered criterion results"
@@ -2314,6 +2357,7 @@ class ManagedRuntime:
                     "status": assessment_status,
                     "option": option,
                     "rejections": invalid_batches,
+                    "stdin_owned_fences": True,
                     "exact_replay": True,
                     "fresh_observation_after_recovery": True,
                 }

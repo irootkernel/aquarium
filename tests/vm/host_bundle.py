@@ -570,6 +570,7 @@ def seal_podway_release(
     components = {row["name"]: row for row in profile["components"]}
     if not {"podway", "use-podway"} <= set(components):
         raise BundleError("candidate profile lacks Podway and its paired skill")
+    baseline_version = components["podway"]["version"].removeprefix("v")
     components["podway"].update(
         version="v0.2.17",
         executable_sha256="sha256:" + PODWAY_RELEASE_FILES["bin/podway"],
@@ -578,8 +579,11 @@ def seal_podway_release(
     )
     components["use-podway"]["pin"] = {"commit": PODWAY_RELEASE_COMMIT}
     components["use-podway"]["skill_tree"]["sha256"] = skill_digest
-    profile["profile_id"] = profile["profile_id"].replace(
-        "-podway-0.2.14-", "-podway-0.2.17-"
+    profile["profile_id"] = (
+        profile["profile_id"].replace(
+            f"-podway-{baseline_version}-", "-podway-0.2.17-", 1
+        )
+        + "-podway-upgrade"
     )
     return copied, {
         "payload_root": prefix,
@@ -659,9 +663,9 @@ def build_bundle(
         "release-acceptance",
         "release-orchestration",
     }
-    if "release-orchestration" in names and baseline_profile is None:
+    if dependency_suites.intersection(names) and baseline_profile is None:
         raise BundleError(
-            "release-orchestration requires an explicit matching released baseline profile"
+            "Podway upgrade suites require an explicit matching released baseline profile"
         )
     if baseline_profile is not None and (
         not baseline_profile.is_absolute()
@@ -705,8 +709,31 @@ def build_bundle(
         )
     if dependency_suites.intersection(names) and podway_release is None:
         raise BundleError("selected suite requires the verified Podway release input")
-    if podway_previous_release is not None and "podway-upgrade" not in names:
-        raise BundleError("previous Podway release requires the podway-upgrade suite")
+    if podway_previous_release is not None and not dependency_suites.intersection(
+        names
+    ):
+        raise BundleError("previous Podway release requires a manual dependency suite")
+    if "podway-upgrade" in names and podway_previous_release is None:
+        raise BundleError("podway-upgrade requires the sealed previous Podway release")
+    if "release-acceptance" in names:
+        baseline_podway = next(
+            row for row in stable_profile["components"] if row["name"] == "podway"
+        )
+        version = baseline_podway["version"].removeprefix("v")
+        expected_binary = (
+            PODWAY_RELEASE_FILES["bin/podway"]
+            if version == "0.2.17"
+            else PODWAY_PREVIOUS_RELEASE_FILES["bin/podway"]
+            if version == "0.2.16" and podway_previous_release is not None
+            else None
+        )
+        if version != "0.2.14" and (
+            expected_binary is None
+            or baseline_podway["executable_sha256"] != "sha256:" + expected_binary
+        ):
+            raise BundleError(
+                "release baseline requires its matching sealed Podway input"
+            )
     suite_modes: dict[str, str] = {}
     for name in names:
         declared = suite_map[name]["modes"]
@@ -858,6 +885,11 @@ def build_bundle(
             inputs["podway_upgrade"]["previous_payload_root"] = (
                 "dependencies/podway-0.2.16"
             )
+            inputs["podway_upgrade"]["previous_release"] = {
+                "version": "v0.2.16",
+                "binary_sha256": PODWAY_PREVIOUS_RELEASE_FILES["bin/podway"],
+                "contract_generation": 2,
+            }
     (bundle / "harness/inputs.json").write_text(
         json.dumps(inputs, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )

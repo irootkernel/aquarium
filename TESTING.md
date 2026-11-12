@@ -25,9 +25,9 @@ The aggregate uses recursive Make recipe calls in prepare, unit, integration, an
 
 ## Podway generation-2 installed qualification
 
-`SUITE=podway-upgrade MODE=manual make test-vm-host` prepares EPIC-034's separately authorized installed-upgrade verification. `AQUARIUM_VM_PODWAY_RELEASE` names the physical external release input described by the [operator scenario](tests/vm/recipes/scenarios/podway-upgrade.md). The host seals the exact official archive, checksum, provenance, executable and complete upstream skill files and binds a separate Podway candidate profile. It preserves the previously qualified baseline and ordinary candidate profiles. `SUITE=all` includes this suite and requires its input as well.
+`SUITE=podway-upgrade MODE=manual make test-vm-host` prepares the separately authorized installed-upgrade verification. Supply `AQUARIUM_VM_BASELINE_PROFILE` matching the host's installed released combination. `AQUARIUM_VM_PODWAY_RELEASE` and `AQUARIUM_VM_PODWAY_PREVIOUS_RELEASE` name the physical candidate and previous release inputs described by the [operator scenario](tests/vm/recipes/scenarios/podway-upgrade.md). The host seals the exact official archive, checksum, provenance, executable and complete upstream skill files and binds a separate Podway candidate profile. It preserves the previously qualified baseline and ordinary candidate profiles. `SUITE=all` includes this suite and requires its input as well.
 
-The seven native manual cases cover real released state, unchanged writer refusal, explicitly approved fresh-runtime reset, installed discovery, actual Task/Epic startup and verified consumer restoration. The preparation/candidate captures check identities only; restoration PASS covers its filesystem postcondition only. Skill correctness requires native manual results and Master's actual functional observations. Missing exact-candidate or installed evidence leaves EPIC-034 unaccepted. Ordinary `make test` neither installs the candidate nor submits a VM Job.
+The seven native manual cases cover real released state, unchanged writer refusal, explicitly approved fresh-runtime reset, installed discovery, actual Task/Epic startup and verified consumer restoration. The preparation/candidate captures check identities only; restoration PASS covers its filesystem postcondition only. Skill correctness requires native manual results and Master's actual functional observations. Missing exact-candidate or installed evidence leaves the current adoption unaccepted. Ordinary `make test` neither installs the candidate nor submits a VM Job.
 
 ## Stage Mapping
 
@@ -219,8 +219,11 @@ meaningful application artifacts are required; success sentences are insufficien
 
 ## Host-submitted managed VM suites
 
-Release acceptance requires the sealed `AQUARIUM_VM_PODWAY_RELEASE` input and
-uses `podway-candidate`. Its successful final state retains the tested Aquarium,
+Release acceptance requires `AQUARIUM_VM_BASELINE_PROFILE` for the host's
+installed released combination and the sealed `AQUARIUM_VM_PODWAY_RELEASE`
+input. A v0.2.16 baseline also requires `AQUARIUM_VM_PODWAY_PREVIOUS_RELEASE`.
+The host refuses missing or mismatched writer inputs before Job submission.
+The suite uses `podway-candidate`. Its successful final state retains the tested Aquarium,
 Podway v0.2.17, paired skill and candidate status runtime in the dedicated VM.
 Original baseline fixtures remain separate from fresh generation-2 candidate
 workspaces. Consumer cleanup verifies the retained installation and settles
@@ -1091,8 +1094,9 @@ gate orders and mismatch rejection, lost-reply effects, per-invocation hosting
 identity/environment, original-result correlation, unsafe/missing evidence,
 interrupted staging, preserved restoration history and native-required coverage.
 The same validated immutable `AQUARIUM_VM_BASELINE_PROFILE` input serves feature,
-release-acceptance and scoped probe callers; absence preserves old defaults.
-Feature qualification requires an explicit matching current released baseline.
+release-acceptance and scoped probe callers. All four Podway upgrade consumers
+require an explicit matching current released baseline; scoped probes retain
+their historical defaults when no profile is supplied.
 These tests invoke no provider, controller, VM or automated LLM evaluator.
 
 J-RA separately adds `VM-RELEASE-START-01` / `release-startup` after installed

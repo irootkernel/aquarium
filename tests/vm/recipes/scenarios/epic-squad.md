@@ -18,8 +18,10 @@ authority and installed `use-haepari` contract. Supply the physical external
 `AQUARIUM_VM_PODWAY_RELEASE` described by the
 [Podway upgrade scenario](podway-upgrade.md). The existing bundle seals the
 published v0.2.17 archive, checksum, provenance, executable and complete paired
-skill. It keeps the released v0.2.14 baseline and ordinary candidate profile
-separate from `podway-candidate`. Do not install on the host.
+skill. Follow the linked scenario to derive the candidate executable in the guest.
+Supply `AQUARIUM_VM_BASELINE_PROFILE` for the actual installed released combination.
+Historical v0.2.14 profiles and the ordinary candidate remain separate from
+`podway-candidate`. Do not install on the host.
 
 Persist the exact spec, request key, run directory, candidate SHA, guest context,
 resource and shared Haepari home before submitting once. Recover that same Job

@@ -1,8 +1,9 @@
 # Podway v0.2.17 installed upgrade
 
 This manual suite qualifies the exact Aquarium candidate with the
-official Podway v0.2.17 CLI and complete `use-podway` tree. It keeps the qualified
-v0.2.14 baseline profiles unchanged. It does not replace a release's separate
+official Podway v0.2.17 CLI and complete `use-podway` tree. Supply an explicit
+baseline profile matching the host's installed released combination. Historical
+v0.2.14 profiles remain unchanged. It does not replace a release's separate
 release-acceptance gate or turn preparation checks into installed acceptance.
 
 ## Authority and sealed inputs
@@ -38,7 +39,9 @@ Use the unchanged official v0.2.17 archive, checksum file and provenance; `bin/p
 from release commit `31cbd110573271ea3376cb07eb961f3dc257a05d`.
 The host sealer checks every file's pinned digest before and after copying,
 rejects extra or unsafe files, and performs no installation or upstream-code
-execution. The archive is unsigned and not notarized.
+execution. Selected transport omits the duplicate candidate executable; the guest
+derives it from the sealed archive and checks both pinned digests before use.
+The archive is unsigned and not notarized.
 
 Follow the [host-submission runbook](../../../../docs/ops/haepari-vm-verification.md)
 for the existing shared home, registered resource, private guest context, accepted
@@ -46,7 +49,9 @@ fixture lock, calculated queue budget and new empty physical run directory. Add:
 
 ```sh
 AQUARIUM_VM_CANDIDATE_SHA="<exact-committed-sha>" \
+AQUARIUM_VM_BASELINE_PROFILE="<physical-current-released-profile.json>" \
 AQUARIUM_VM_PODWAY_RELEASE="<physical-absolute-release-input>" \
+AQUARIUM_VM_PODWAY_PREVIOUS_RELEASE="<physical-v0.2.16-release-input>" \
 make test-vm-host SUITE=podway-upgrade MODE=manual \
   HAEPARI="<verified-haepari-bin>" RESOURCE="utm-macos" \
   RUN_DIR="<new-empty-physical-run-dir>" GUEST_CONTEXT="<private-guest-context.json>"
@@ -64,7 +69,9 @@ separately at `dependencies/podway-0.2.16/`. Use its actual executable to create
 populated fixture and retain an original successful mutation request and key.
 After switching that fixture to v0.2.17, verify that reads, fresh writes and exact
 original-request replay refuse without changing the old Store. This authentic
-previous-writer fixture is additional to the preserved v0.2.14 baseline.
+previous-writer fixture is separate from the original released-state fixtures.
+The historical v0.2.14 profiles and qualification records remain available;
+they do not replace the current baseline.
 
 ## Native caller scenarios
 
@@ -83,8 +90,8 @@ establish these agent decisions. Keep the original baseline and restoration evid
 The suite's `prepare` phase verifies the dedicated guest, sealed inputs, actual
 released CLI digest and installed skill identities before capturing
 `results/podway-upgrade/prepared.json`. Its original-writer identity call uses
-v0.2.14 grammar. Preserve that file and the original inventory; reconnect the
-same Job instead of recapturing a baseline.
+the selected release's grammar. Preserve that file and the original inventory.
+Reconnect the same Job instead of recapturing a baseline.
 
 Operate from the held Job's `<workspace>/harness`, with its saved workload
 environment and `HAEPARI_PARENT_CONTEXT` as described in the host runbook.
@@ -97,9 +104,9 @@ Complete the following native manual scenarios with original evidence:
 | Scenario | Required observation |
 | --- | --- |
 | `released-baseline` | Create meaningful fixture state through the released installed Aquarium/Podway combination. Include a real admitted session, custom valid Procedure, tracked configuration, staged and unstaged work, and an unrelated sentinel. Record original identities, bytes and installed skill discovery. Finish or explicitly abandon each session through its original writer before replacing that writer; retain the original settlement observations. |
-| `writer-refusal` | Install the exact candidate plugin, official CLI and paired skill through the scoped approved setup proposals. Use generation 2 to observe the retained v0.2.14 fixture. Require `WORKSPACE_CONTRACT_MISMATCH`, details v2 naming `v0.2.14` and its stored manifest, and unchanged Store/source bytes. Verify a UUID-fenced reset is refused without effect. Retain the request and original error. |
+| `writer-refusal` | Install the exact candidate plugin, official CLI and paired skill through the scoped approved setup proposals. Use generation 2 on the populated fixture created by the sealed v0.2.16 writer. Require `WORKSPACE_CONTRACT_MISMATCH`, details v2 naming `v0.2.16` and its stored manifest, and unchanged Store/source bytes for reads, fresh writes and exact original-request replay. Verify a UUID-fenced reset is refused without effect. Retain the requests and original errors. |
 | `approved-runtime-reset` | Review and approve history loss for each exact disposable fixture. Run the native unfenced reset-all once with its stable key. Retain its committed outcome lookup and confirm a new workspace UUID, no current session and unchanged configuration, Procedures, Git staging, custom sources and unrelated files. No old history is represented as converted or preserved. |
-| `skill-discovery` | Capture fresh native discovery and load the actual installed skill. Verify generation 2, observation v6, status v5, executable lifecycle templates, supported semantic arguments and no generation-1 fallback. Exercise setup and current citation/recovery guidance through the installed sources. A pasted skill or standalone acknowledgement does not establish functionality. |
+| `skill-discovery` | Capture fresh native discovery and load the actual installed skill. Verify generation 2, observation v6, status v5, executable lifecycle templates, supported semantic arguments and no generation-1 fallback. Perform every [native caller scenario](#native-caller-scenarios): atomic batches, all six observation wrappers, negative assessment, invalid-entry rollback, exact replay and lookup followed by fresh observation, stdin-owned fences and outcome-to-option mapping. Retain original requests, responses and first-submission history. Exercise setup and citation/recovery guidance through the installed sources. A pasted skill or standalone acknowledgement does not establish functionality. |
 | `task-startup` | Invoke the installed Task handler in a fresh Codex conversation. Observe actual initial Executor/Evaluator delivery and Coordinator progression with native generation-2 evidence, without attributing a delegated decision to Master. Retain the public handles, complete results and the fixture's actual checks. |
 | `epic-startup` | Invoke the installed Epic handler in a fresh conversation and observe first-member delivery, independent evaluation and semantic progression. Stop at the approved startup boundary with later criteria open; retain the original results and remaining authority. |
 | `consumer-restoration` | Settle every run-owned native handle, then restore the exact original CLI, paired skill, released plugin registration and consumer inventory through the approved restoration path. Preserve original observations for collection; remove only this run's owned temporary effects. Verify restoration before native manual completion. |

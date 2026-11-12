@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import ExitStack
 from pathlib import Path
 from unittest import mock
 
@@ -168,23 +169,47 @@ class HostBundleTest(unittest.TestCase):
             "artifact_manifest": self.manifest,
         }
         parameters.update(overrides)
-        if suite == "all" and "baseline_profile" not in overrides:
-            parameters["baseline_profile"] = self.baseline()
         if (
-            suite in {"podway-upgrade", "release-acceptance", "release-orchestration"}
-            and "podway_release" not in overrides
+            suite
+            in {
+                "all",
+                "podway-upgrade",
+                "epic-squad",
+                "release-acceptance",
+                "release-orchestration",
+            }
+            and "baseline_profile" not in overrides
         ):
-            release = (run_dir / "release-input").resolve()
-            hashes = {}
-            for relative in self.module.PODWAY_RELEASE_FILES:
-                path = release / relative
-                path.parent.mkdir(parents=True, exist_ok=True)
-                path.write_bytes(f"synthetic {relative}\n".encode())
-                hashes[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
-            parameters["podway_release"] = release
-            with mock.patch.object(self.module, "PODWAY_RELEASE_FILES", hashes):
-                record = self.module.build_bundle(**parameters)
-        else:
+            parameters["baseline_profile"] = self.baseline()
+        with ExitStack() as patches:
+            for argument, inventory, suites in (
+                (
+                    "podway_release",
+                    "PODWAY_RELEASE_FILES",
+                    {
+                        "podway-upgrade",
+                        "epic-squad",
+                        "release-acceptance",
+                        "release-orchestration",
+                    },
+                ),
+                (
+                    "podway_previous_release",
+                    "PODWAY_PREVIOUS_RELEASE_FILES",
+                    {"podway-upgrade", "all"},
+                ),
+            ):
+                if suite not in suites or argument in overrides:
+                    continue
+                release = (run_dir / argument).resolve()
+                hashes = {}
+                for relative in getattr(self.module, inventory):
+                    path = release / relative
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(f"synthetic {relative}\n".encode())
+                    hashes[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
+                parameters[argument] = release
+                patches.enter_context(mock.patch.object(self.module, inventory, hashes))
             record = self.module.build_bundle(**parameters)
         return run_dir, record
 
@@ -203,9 +228,45 @@ class HostBundleTest(unittest.TestCase):
         path.write_text(json.dumps(document, indent=2) + "\n")
         return path
 
-    def test_feature_suite_requires_explicit_released_baseline(self):
+    def test_upgrade_suites_require_explicit_released_baseline(self):
+        for suite in (
+            "podway-upgrade",
+            "epic-squad",
+            "release-acceptance",
+            "release-orchestration",
+        ):
+            with self.subTest(suite=suite), self.assertRaises(self.module.BundleError):
+                self.build(suite, mode="manual", baseline_profile=None)
+
+    def test_upgrade_requires_previous_input_before_sealing(self):
         with self.assertRaises(self.module.BundleError):
-            self.build("release-orchestration", mode="manual")
+            self.build("podway-upgrade", mode="manual", podway_previous_release=None)
+
+    def test_release_baseline_refuses_missing_or_mismatched_writer_input(self):
+        for fault in ("missing", "wrong-digest"):
+            profile = self.baseline()
+            document = json.loads(profile.read_text())
+            podway = next(
+                row for row in document["components"] if row["name"] == "podway"
+            )
+            podway.update(version="v0.2.16", executable_sha256="sha256:" + "a" * 64)
+            profile.write_text(json.dumps(document))
+            parameters = {"baseline_profile": profile}
+            release = self.work / f"baseline-{fault}-previous"
+            hashes = {}
+            for relative in self.module.PODWAY_PREVIOUS_RELEASE_FILES:
+                path = release / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(f"previous {relative}\n".encode())
+                hashes[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
+            if fault == "wrong-digest":
+                parameters["podway_previous_release"] = release
+            with (
+                self.subTest(fault=fault),
+                mock.patch.object(self.module, "PODWAY_PREVIOUS_RELEASE_FILES", hashes),
+                self.assertRaises(self.module.BundleError),
+            ):
+                self.build("release-acceptance", mode="manual", **parameters)
 
     def test_feature_and_release_acceptance_seal_exact_optional_profile(self):
         for name in ("release-orchestration", "release-acceptance", "manual-hold"):
@@ -313,6 +374,45 @@ class HostBundleTest(unittest.TestCase):
         self.assertEqual(
             release["binary_sha256"], hashlib.sha256(binary.read_bytes()).hexdigest()
         )
+
+    def test_previous_release_identity_is_bound_to_sealed_inputs(self):
+        release = Path(
+            tempfile.mkdtemp(prefix="previous-input-", dir=self.work)
+        ).resolve()
+        hashes = {}
+        for relative in self.module.PODWAY_PREVIOUS_RELEASE_FILES:
+            path = release / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(f"previous {relative}\n".encode())
+            hashes[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
+        profile = self.baseline()
+        document = json.loads(profile.read_text())
+        podway = next(row for row in document["components"] if row["name"] == "podway")
+        podway.update(
+            version="v0.2.16", executable_sha256="sha256:" + hashes["bin/podway"]
+        )
+        profile.write_text(json.dumps(document))
+        with mock.patch.object(self.module, "PODWAY_PREVIOUS_RELEASE_FILES", hashes):
+            run_dir, _ = self.build(
+                "release-acceptance",
+                mode="manual",
+                podway_previous_release=release,
+                baseline_profile=profile,
+            )
+        inputs = json.loads((run_dir / "bundle/harness/inputs.json").read_text())
+        upgrade = inputs["podway_upgrade"]
+        self.assertEqual(
+            upgrade["previous_release"],
+            {
+                "version": "v0.2.16",
+                "binary_sha256": hashes["bin/podway"],
+                "contract_generation": 2,
+            },
+        )
+        spec = json.loads((run_dir / "spec-0.json").read_text())
+        prefix = upgrade["previous_payload_root"]
+        for relative in hashes:
+            self.assertIn(prefix + "/" + relative, spec["input"]["selected_files"])
 
     def test_all_keeps_podway_upgrade_profile_separate(self):
         release = Path(

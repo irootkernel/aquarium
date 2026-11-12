@@ -1749,6 +1749,67 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
         with self.assertRaises(self.guest_main.lib.RecipeError):
             self.guest_main.baseline_combination_from_profile(broken)
 
+    def test_candidate_install_requires_completed_upgrade_before_touching_baseline(
+        self,
+    ):
+        from types import SimpleNamespace
+
+        for case, marker, version in (
+            ("baseline-generation-two", False, None),
+            ("marker-without-evidence", True, None),
+            ("wrong-release", True, "v0.2.16"),
+            ("complete-upgrade", True, "v0.2.17"),
+        ):
+            with self.subTest(case=case):
+                root = self.work / f"install-prerequisite-{case}"
+                results = root / "results/release-acceptance"
+                results.mkdir(parents=True)
+                request = root / "acceptance/request.json"
+                request.parent.mkdir()
+                request.write_text(
+                    json.dumps(
+                        {
+                            "podway_contract_generation": 2,
+                            "separate_candidate_fixtures": marker,
+                        }
+                    )
+                )
+                baseline = root / "acceptance-run/task/unrelated-work.txt"
+                baseline.parent.mkdir(parents=True)
+                baseline.write_bytes(b"original baseline fixture")
+                if version is not None:
+                    (results / "podway-upgrade.json").write_text(
+                        json.dumps({"identity": {"result": {"version": version}}})
+                    )
+                reached_installer = RuntimeError()
+                installer = mock.Mock(side_effect=reached_installer)
+                context = SimpleNamespace(
+                    root=root,
+                    inputs={"podway_upgrade": {"version": "v0.2.17"}},
+                    ensure_candidate_installed=installer,
+                )
+                with (
+                    mock.patch.object(self.guest_main.lib, "guard"),
+                    mock.patch.object(
+                        self.guest_main.lib, "results_directory", return_value=results
+                    ),
+                    mock.patch.object(self.guest_main.lib, "run_ledger"),
+                ):
+                    if case == "complete-upgrade":
+                        with self.assertRaises(RuntimeError) as raised:
+                            self.guest_main.run_release_acceptance(
+                                context, "candidate-install", ""
+                            )
+                        self.assertIs(raised.exception, reached_installer)
+                        installer.assert_called_once()
+                    else:
+                        with self.assertRaises(self.guest_main.lib.RecipeError):
+                            self.guest_main.run_release_acceptance(
+                                context, "candidate-install", ""
+                            )
+                        installer.assert_not_called()
+                self.assertEqual(baseline.read_bytes(), b"original baseline fixture")
+
     def test_acceptance_request_retains_sealed_original_generation(self):
         from types import SimpleNamespace
 
@@ -1757,6 +1818,7 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
         )
         for name, version, digest, generation in (
             ("legacy", "v0.2.14", "b" * 64, 1),
+            ("previous", "v0.2.16", "c" * 64, 2),
             ("current", "v0.2.17", "a" * 64, 2),
         ):
             stable = {
@@ -1782,6 +1844,11 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
                         "version": "v0.2.17",
                         "binary_sha256": "a" * 64,
                         "contract_generation": 2,
+                        "previous_release": {
+                            "version": "v0.2.16",
+                            "binary_sha256": "c" * 64,
+                            "contract_generation": 2,
+                        },
                     },
                 },
                 profile=lambda _, stable=stable: stable,
@@ -1809,7 +1876,7 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
             self.assertEqual(self.guest_main.acceptance_request(context), path)
             self.assertEqual(path.read_bytes(), original)
 
-    def test_current_baseline_without_matching_sealed_generation_refuses(self):
+    def test_baseline_without_matching_sealed_generation_refuses(self):
         from types import SimpleNamespace
 
         driver = load_module(
@@ -1817,38 +1884,49 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
             REPOSITORY / "tests/vm/run_acceptance.py",
         )
 
-        stable = {
-            "components": [
-                {"name": "aquarium-plugin", "version": "0.1.22"},
-                {"name": "codex", "version": "0.164.0"},
-                {
-                    "name": "podway",
+        for previous in (False, True):
+            stable = {
+                "components": [
+                    {"name": "aquarium-plugin", "version": "0.1.22"},
+                    {"name": "codex", "version": "0.164.0"},
+                    {
+                        "name": "podway",
+                        "version": "v0.2.16" if previous else "v0.2.17",
+                        "executable_sha256": "sha256:" + "a" * 64,
+                    },
+                ]
+            }
+            for fault in ("wrong-bytes", "invalid-generation", "missing-release"):
+                release = {
                     "version": "v0.2.17",
-                    "executable_sha256": "sha256:" + "a" * 64,
-                },
-            ]
-        }
-        for name, binary, generation in (
-            ("wrong-bytes", "b" * 64, 2),
-            ("invalid-generation", "a" * 64, True),
-        ):
-            context = SimpleNamespace(
-                root=self.work / name,
-                profile=lambda _: stable,
-                inputs={
-                    "podway_upgrade": {
-                        "version": "v0.2.17",
-                        "binary_sha256": binary,
-                        "contract_generation": generation,
-                    }
-                },
-            )
-            with (
-                mock.patch.dict(sys.modules, {"run_acceptance": driver}),
-                self.assertRaises((self.guest_main.lib.RecipeError, driver.GateError)),
-            ):
-                self.guest_main.acceptance_request(context)
-            self.assertFalse(context.root.exists())
+                    "binary_sha256": "a" * 64,
+                    "contract_generation": 2,
+                    "previous_release": {
+                        "version": "v0.2.16",
+                        "binary_sha256": "a" * 64,
+                        "contract_generation": 2,
+                    },
+                }
+                selected = release["previous_release"] if previous else release
+                if fault == "wrong-bytes":
+                    selected["binary_sha256"] = "b" * 64
+                elif fault == "invalid-generation":
+                    selected["contract_generation"] = True
+                else:
+                    selected["version"] = "v0.2.18"
+                context = SimpleNamespace(
+                    root=self.work / f"generation-{previous}-{fault}",
+                    profile=lambda _, stable=stable: stable,
+                    inputs={"podway_upgrade": release},
+                )
+                with (
+                    mock.patch.dict(sys.modules, {"run_acceptance": driver}),
+                    self.assertRaises(
+                        (self.guest_main.lib.RecipeError, driver.GateError)
+                    ),
+                ):
+                    self.guest_main.acceptance_request(context)
+                self.assertFalse(context.root.exists())
 
     def test_skill_tree_digest_uses_the_profile_algorithm(self):
         # The digest comes from the candidate checkout's validator, so a

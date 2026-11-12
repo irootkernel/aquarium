@@ -131,8 +131,11 @@ Observe `fixture-check`, leave the demonstration's `discovery-check` unobserved,
 then finish consumer cleanup and verify all five declared outputs before
 completion. That truthful demonstration yields native INCOMPLETE, not PASS.
 
-For release acceptance, supply `AQUARIUM_VM_PODWAY_RELEASE`, use
-`MODE=manual SUITE=release-acceptance`, and follow the
+For release acceptance, supply `AQUARIUM_VM_BASELINE_PROFILE` and
+`AQUARIUM_VM_PODWAY_RELEASE`. A v0.2.16 baseline also requires
+`AQUARIUM_VM_PODWAY_PREVIOUS_RELEASE`; the host refuses missing or mismatched
+writer inputs before submitting a Job. Use `MODE=manual SUITE=release-acceptance`
+and follow the
 [complete operator runbook](../../tests/vm/recipes/scenarios/release-acceptance.md).
 It owns the phase commands, fixed profiles, model-use budget, actual proposal and
 result decisions, eleven required scenarios, ten bounded evidence archives and
@@ -238,4 +241,4 @@ installation, controller replacement, VM power operation or publication.
 
 ## Explicit Podway upgrade qualification
 
-Use `SUITE=podway-upgrade MODE=manual` only under the exact VM-test authority described by the [operator scenario](../../tests/vm/recipes/scenarios/podway-upgrade.md). Supply `AQUARIUM_VM_PODWAY_RELEASE` with its physical prepared release-input path in addition to the normal candidate, resource and private guest context. The selected Job retains the original v0.2.14 baseline and a separate v0.2.17 candidate profile with authentic v0.2.16 previous-release input. Seven native manual cases, actual installed skill observations and verified restoration remain required; the helper never installs tools or discards runtime state. Recover the original Job and phase captures after disconnect.
+Use `SUITE=podway-upgrade MODE=manual` only under the exact VM-test authority described by the [operator scenario](../../tests/vm/recipes/scenarios/podway-upgrade.md). Supply physical paths for `AQUARIUM_VM_BASELINE_PROFILE`, matching the host's installed released combination, `AQUARIUM_VM_PODWAY_RELEASE` and `AQUARIUM_VM_PODWAY_PREVIOUS_RELEASE`, in addition to the normal candidate, resource and private guest context. The selected Job retains that original baseline and a separate v0.2.17 candidate profile with authentic sealed v0.2.16 previous-release input. Historical v0.2.14 profiles remain unchanged. Seven native manual cases, actual installed skill observations and verified restoration remain required; the helper never installs tools or discards runtime state. Recover the original Job and phase captures after disconnect.

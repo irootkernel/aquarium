@@ -479,6 +479,7 @@ class SequenceSimulationTest(unittest.TestCase):
                     "harness_tree_sha256": digest(harness),
                     "fixture_requirements": "requirements/fixture-requirements.lock",
                     "podway_upgrade": {
+                        "version": "v0.2.17",
                         "source_commit": "sim-podway-16",
                         "contract_manifest_digest": "sim-manifest-16",
                         "contract_generation": 2,

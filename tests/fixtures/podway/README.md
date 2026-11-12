@@ -9,7 +9,7 @@ compatibility helper materializes it only in its disposable fixture to check
 unchanged legacy refusal and an explicitly scoped destructive reset. This is
 rejected historical input, not current DDL or a production conversion path.
 
-The direct-writer fixtures use the current generation-15 Store with its writer-manifest digest set to the exact v0.2.13 or v0.2.14 manifest. The schemas share generation 15. These are rejected historical writer identities, not an upgrade conversion path. Generation-2 refusal must name the known stored release and preserve the Store and source bytes. Actual installed upgrade and skill functionality require separate UTM verification.
+The direct-writer fixtures use the current generation-15 Store with its writer-manifest digest set to the exact v0.2.13, v0.2.14, v0.2.15 or v0.2.16 manifest. The schemas share generation 15. These are rejected historical writer identities, not an upgrade conversion path. Generation-2 refusal must name the known stored release and preserve the Store and source bytes. Actual installed upgrade and skill functionality require separate UTM verification.
 
 
 `agent-interaction.yaml` is a synthetic goal-tracking fixture for the official

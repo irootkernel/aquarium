@@ -1686,10 +1686,18 @@ def acceptance_request(context: Context) -> Path:
     )
     release = context.inputs.get("podway_upgrade", {})
     generation = 1
-    if combination["podway"] == release.get("version") and baseline_podway.get(
-        "executable_sha256"
-    ) == "sha256:" + release.get("binary_sha256", ""):
-        generation = release.get("contract_generation")
+    matching_release = next(
+        (
+            candidate
+            for candidate in (release, release.get("previous_release", {}))
+            if combination["podway"] == candidate.get("version")
+            and baseline_podway.get("executable_sha256")
+            == "sha256:" + candidate.get("binary_sha256", "")
+        ),
+        None,
+    )
+    if matching_release is not None:
+        generation = matching_release.get("contract_generation")
     elif combination["podway"] != "v0.2.14":
         raise lib.RecipeError(
             "baseline requires its matching sealed Podway contract generation",
@@ -2449,9 +2457,18 @@ def run_release_acceptance(context: Context, phase: str, fixture: str) -> int:
         lib.write_document(results / "podway-upgrade.json", tools)
         return 0
     if phase == "candidate-install":
-        if request_json().get("podway_contract_generation") != 2:
+        document = request_json()
+        upgrade = lib.read_json_safe(results / "podway-upgrade.json")
+        if (
+            document.get("podway_contract_generation") != 2
+            or document.get("separate_candidate_fixtures") is not True
+            or not isinstance(upgrade, dict)
+            or upgrade.get("identity", {}).get("result", {}).get("version")
+            != context.inputs["podway_upgrade"]["version"]
+        ):
             raise lib.RecipeError(
-                "verify the sealed Podway v0.2.17 upgrade first", "incomplete"
+                "verify the sealed Podway upgrade and prepare separate candidate fixtures first",
+                "incomplete",
             )
         ledger = lib.run_ledger("release-acceptance")
         context.ensure_candidate_installed(ledger, predecessors=(PRIOR_KIND,))

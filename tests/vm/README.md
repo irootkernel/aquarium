@@ -464,8 +464,11 @@ records the adopted architecture.
 
 ## Host-submitted managed VM suites
 
-Release acceptance requires the sealed `AQUARIUM_VM_PODWAY_RELEASE` input and
-uses `podway-candidate`. Its successful final state retains the tested Aquarium,
+Release acceptance requires `AQUARIUM_VM_BASELINE_PROFILE` for the host's
+installed released combination and the sealed `AQUARIUM_VM_PODWAY_RELEASE`
+input. A v0.2.16 baseline also requires `AQUARIUM_VM_PODWAY_PREVIOUS_RELEASE`.
+The host refuses missing or mismatched writer inputs before Job submission.
+The suite uses `podway-candidate`. Its successful final state retains the tested Aquarium,
 Podway v0.2.17, paired skill and candidate status runtime in the dedicated VM.
 Original baseline fixtures remain separate from fresh generation-2 candidate
 workspaces. Consumer cleanup verifies the retained installation and settles
@@ -1721,9 +1724,10 @@ owns the full manual development feature suite and its
 `SUITE=release-orchestration MODE=manual` through the existing host adapter with
 the exact committed candidate, matching harness, sealed Podway input and an
 explicit immutable `AQUARIUM_VM_BASELINE_PROFILE` matching the actual current
-released combination. The optional existing-profile input also serves
-release-acceptance and scoped probes; absent input preserves historical defaults
-and does not make them proof of a current-baseline obligation.
+released combination. This input is required for all four Podway upgrade
+consumers: `podway-upgrade`, `epic-squad`, `release-acceptance` and
+`release-orchestration`. Scoped probes may also supply it; their historical
+defaults do not prove a current-baseline obligation.
 
 The feature suite declares 13 case archives, 13 manifests and eight JSON outputs,
 34 total. Complete original evidence and per-variant native/fixture/reused/
@@ -1878,6 +1882,11 @@ the directed-closeout commit.
 The current [manual upgrade scenario](recipes/scenarios/podway-upgrade.md) seals
 official v0.2.17 payload and its complete release-tagged skill. Its authentic
 previous-writer fixture uses v0.2.16 while historical stable profiles stay intact.
+Supply an explicit `AQUARIUM_VM_BASELINE_PROFILE` for the host's installed released
+combination and both candidate and previous release inputs. The sealer records
+the previous writer's pinned version, binary and contract generation so
+release acceptance can identify its baseline before upgrading. The Podway
+candidate profile has a distinct ID even when the baseline already uses v0.2.17.
 It requires the exact committed Aquarium candidate, scoped installation and
 runtime-discard authority, one managed Job, actual installed Task/Epic execution,
 caller recovery and verified restoration. Source/unit/native disposable checks

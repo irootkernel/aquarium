@@ -22,7 +22,7 @@ Do not create the handoff file, a Codex goal, or a Podway session before the use
 After approval in an execution-capable turn:
 
 1. Re-read the approved plan, repository instructions, roadmap identity, Git state, Podway readiness, and any recoverable approval. Stop if the plan or authority cannot be reconstructed exactly.
-2. Start or resume the matching prepared Procedure through the normal shared Podway contract, re-observe it, and use the current fenced `session.begin` template to create the goal, ordered criteria, attempt, and actor.
+2. Start or resume the matching prepared Procedure through the normal shared Podway contract. Use a verified first-submission successor observation or re-observe it, then use the current fenced `session.begin` template to create the goal, ordered criteria, attempt, and actor.
 3. Derive the only plan path as `.podway/runtime/handoffs/<initial-session-id>/plan.md`, where `<initial-session-id>` is the UUID returned for the first handoff session. Never accept a caller-supplied file name or derive the path from task prose.
 4. Require `.podway/runtime` and every existing path component to be real directories without symlinks. Create the session directory with private directory permissions and the file with private file permissions. Write the exact approved Markdown plan atomically, with no transcript, source dump, credentials, raw logs, provider payloads, or added narrative. Reject content larger than 65,536 UTF-8 bytes.
 5. Never overwrite different bytes. An existing regular file at the exact path is idempotent only when its complete SHA-256 and byte size match the approved plan; otherwise stop with the conflicting path and digests.

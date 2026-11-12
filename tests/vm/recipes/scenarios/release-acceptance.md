@@ -45,6 +45,9 @@ silently:
 
 ```sh
 AQUARIUM_VM_FIXTURE_REQUIREMENTS=<absolute-path-to-the-accepted-hash-locked-file> \
+  AQUARIUM_VM_BASELINE_PROFILE=<physical-current-released-profile.json> \
+  AQUARIUM_VM_PODWAY_RELEASE=<physical-v0.2.17-release-input> \
+  AQUARIUM_VM_PODWAY_PREVIOUS_RELEASE=<physical-v0.2.16-release-input> \
   AQUARIUM_VM_QUEUE_SECONDS=<26100|52200|78300> \
   make test-vm-host HAEPARI=<haepari-bin> RESOURCE=<resource-id> \
   MODE=manual SUITE=release-acceptance RUN_DIR=<run-dir> \
@@ -84,7 +87,7 @@ not restore guest installation changes.
 ## a. Machine preparation (automatic, inside the Job)
 
 `machine-prepare` verifies the sealed artifact bytes, normalizes declared
-abort residues, establishes prior-stable v0.1.21, seeds the task and epic
+abort residues, establishes the released plugin selected by the baseline profile, seeds the task and epic
 fixtures, prepares the preservation fixture, installs the hash-locked
 fixture dependencies, records the non-secret guest Codex identity before
 any model turn, and captures the prior-stage skill identity over the five
@@ -136,28 +139,33 @@ Record each thread UUID in the request with
 
 ## c. Preservation prerequisites (matching the driver's `baseline`)
 
-- The customized managed Procedure must still pass:
-  `(cd <run_root>/preservation && podway --json procedure check
+- The customized managed Procedure must still pass with the generation
+  selected in `<workspace>/acceptance/request.json`. For generation 2:
+  `(cd <run_root>/preservation && podway --contract-generation 2 --json procedure check
   --warnings-as-errors .podway/procedures/aquarium-task-v2.yaml)`, saving the
-  output to `<run_root>/podway-procedure-check.json`.
+  output to `<run_root>/podway-procedure-check.json`. For the historical v0.2.14
+  baseline, omit the selector and follow its release-tagged skill.
 - Meaningful uncommitted Git work and a historical report stay in the tree
   (machine preparation created them; commit nothing).
-- A released admitted session created through Podway v0.2.14's public CLI
-  and verified by `podway --worktree <run_root>/preservation --json observe`
-  returning `podway.observation-result/v5`, saved to
-  `<run_root>/podway-observe.json`. Session-start command, defined from the
-  installed help (`podway help`; `podway --version` is invalid syntax, and
-  the version route is `podway version [--json] [--identity]`):
+- A released admitted session created through the baseline writer's public CLI
+  and release-tagged skill, with its original observation saved to
+  `<run_root>/podway-observe.json`. Use the generation selected in
+  `<workspace>/acceptance/request.json`: v0.2.16 and v0.2.17 use generation 2
+  and `podway.observation-result/v6`; the historical v0.2.14 baseline uses
+  its original grammar and `podway.observation-result/v5`. Derive the actual
+  start and observe arguments from that installed writer's help and skill.
+  For a generation-2 baseline:
 
 ```sh
-podway --worktree <run_root>/preservation start \
+podway --contract-generation 2 --worktree <run_root>/preservation start \
   --preset sw-dev-v2 --task 'admitted baseline session' \
   --idempotency-key aquarium-vm-release-acceptance
 ```
 
-The help shape is verified read-only in the guest before submission; the
-start itself runs for the first time inside this step, and any flag or
-shape mismatch discovered there is reported as a gap, not worked around.
+Verify the help shape read-only in the guest before submission. Run start
+for the first time inside this step. For a generation-2 writer, follow its
+fenced begin template and retain the resulting observation. Report a flag or
+shape mismatch as a gap.
 
 ## d. Baseline capture
 
@@ -171,7 +179,12 @@ selected through this capture.
 Supply `AQUARIUM_VM_PODWAY_RELEASE` with the official release input described
 by the [Podway upgrade scenario](podway-upgrade.md). The host seals the archive,
 checksum, provenance, CLI and complete paired skill and selects
-`podway-candidate` for this suite. The released v0.2.14 baseline remains unchanged.
+`podway-candidate` for this suite. Follow the linked scenario to derive the
+candidate executable in the guest. Supply `AQUARIUM_VM_BASELINE_PROFILE` for the actual
+installed released combination and `AQUARIUM_VM_PODWAY_PREVIOUS_RELEASE` for
+the sealed v0.2.16 writer. Its pinned version, binary and contract generation
+identify that baseline independently of the v0.2.17 candidate. Historical
+v0.2.14 profiles remain unchanged.
 
 After baseline capture, update the dedicated guest's CLI and paired skill to
 those sealed v0.2.17 bytes through the scoped installed setup proposal. Preserve
@@ -365,7 +378,7 @@ staging and consumer cleanup cannot pass without this case.
 
 `--phase stale-skill` asserts the plant target
 `~/.codex/skills/task-handler` is absent, snapshots the five inventoried
-scopes, plants exactly the prior v0.1.21 artifact's
+scopes, plants exactly the selected released baseline artifact's
 `plugins/aquarium/skills/task-handler` tree there, observes one fresh
 native `skills/list` read, classifies the observed failure (shadowing, duplication, or an
 ignored scope, which is a reported gap and never a pass), removes the

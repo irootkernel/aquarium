@@ -51,6 +51,31 @@ def test_release_sealing_updates_only_the_selected_candidate(tmp_path, release):
     assert bundle._PROFILE_VALIDATOR.validate_profile(profile) == []
 
 
+@pytest.mark.parametrize("version", ["v0.2.14", "v0.2.16", "v0.2.17"])
+def test_release_profile_identity_tracks_the_selected_podway(
+    tmp_path, release, version
+):
+    source, profile = release
+    profile["profile_id"] = profile["profile_id"].replace(
+        "-podway-0.2.14-", f"-podway-{version.removeprefix('v')}-"
+    )
+    next(row for row in profile["components"] if row["name"] == "podway")["version"] = (
+        version
+    )
+    ordinary_id = profile["profile_id"]
+    bundle.seal_podway_release(source, tmp_path / "bundle", profile)
+    assert "-podway-0.2.17-" in profile["profile_id"]
+    assert profile["profile_id"] != ordinary_id
+
+
+def test_release_profile_keeps_custom_ids_usable(tmp_path, release):
+    source, profile = release
+    profile["profile_id"] = "proposed-candidate-current-host"
+    bundle.seal_podway_release(source, tmp_path / "bundle", profile)
+    assert profile["profile_id"] != "proposed-candidate-current-host"
+    assert bundle._PROFILE_VALIDATOR.validate_profile(profile) == []
+
+
 @pytest.mark.parametrize("mutation", ["changed", "missing", "extra", "symlink"])
 def test_release_sealing_refuses_incomplete_or_unverified_bytes(
     tmp_path, release, mutation

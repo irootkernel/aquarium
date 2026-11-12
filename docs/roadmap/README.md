@@ -92,6 +92,7 @@ This rule establishes retirement-evidence applicability only. The release's SHA-
 | EPIC-034 | Adopt Podway v0.2.15 and contract generation 2 | Completed |
 | EPIC-035 | Adopt Sorage v0.1.4 | In Progress |
 | EPIC-036 | Adopt Mulgae v0.1.26 | Completed |
+| EPIC-037 | Adopt Podway v0.2.17 | In Progress |
 
 ## EPIC-000: Independent Tasks
 

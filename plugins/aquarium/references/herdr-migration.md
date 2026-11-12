@@ -98,7 +98,8 @@ After setup hands the verified source update back, the owning workflow handler
 uses `$use-podway` for its separately authorized successor. When that successor
 follows a disposed terminal session, the handler executes its fresh plain `start`
 template. Podway atomically archives the predecessor and creates the prepared
-successor; re-observe its source snapshot and perform the separate fenced `begin`.
+successor. Use a verified first-submission successor observation or re-observe
+its source snapshot before the separate fenced `begin`.
 Do not reset first or invent a replacement flag. Preserve
 a prepared or running session unless its exact lifecycle change is authorized.
 
