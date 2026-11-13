@@ -13,6 +13,105 @@ against its exact installed candidate; the [VM guide](../../tests/vm/README.md#q
 records the observed outcomes and limits. Each release retains its own
 exact-candidate verification and distribution identity requirements.
 
+## EPIC-033 combination Job
+
+Use the existing managed adapter with `SUITE=haepari-combination MODE=manual`
+under the approved EPIC-033 VM scope. Before submission, bind the observed shared
+controller/resource and guest identity. Supply the actual host-installed released
+baseline profile, private existing-schema target profile and complete immutable
+artifact/skill tree through `AQUARIUM_VM_BASELINE_PROFILE`,
+`AQUARIUM_VM_COMBINATION_PROFILE` and `AQUARIUM_VM_COMBINATION_INPUT`. Select
+the exact committed payload with `AQUARIUM_VM_CANDIDATE_SHA`. The adapter seals
+the development recipe snapshot separately and records the host-only harness
+file hashes. Keep the official current/previous Podway release inputs distinct.
+
+The [scenario](../../tests/vm/recipes/scenarios/haepari-combination.md) supplies
+the finite phases, native prior-plugin transition, isolated clean home and
+complete original case/output map. Preserve history and use fresh
+generation-2 workspaces. Read tool versions from the private target profile;
+do not substitute stale guest defaults for actual host baseline observations.
+
+Keep P's selected input below 48MiB. Use the scenario's finite delivery record:
+pinned official Sorage/Haepari downloads and complete unpublished executables in
+whole archives or verified guest custody. A separate custody Job installs no
+baseline tools. Retain its original receipt and artifacts until last-consumer
+settlement. P verifies those bytes again before target installation; its native
+input digest covers declarations, not untransported external artifacts. Do not
+split files, use a custom server or silently substitute a different executable.
+Keep current/previous Podway inputs separate from the slim combination root.
+
+While P holds capacity, the host queues the distinct source-bound Q once.
+Finish every P case, stage originals, settle consumers, verify the retained target
+inventory, stage again and create the native manual-completion template.
+CO fills current native identity/revision fields and performs completion.
+After P's native collection/cleanup releases capacity, finish and export the
+original Q, then join P/Q receipts and events in the Task report. P never waits
+for Q's completed result. Do not resubmit either Job to recover observation.
+
+## TASK-101 transition and reduction handoff
+
+TASK-100 rehearsed this order: observe the released combination,
+disable its channel through the installed Codex public configuration interface,
+verify the interim state while the original launcher/runtime remains in place,
+then preserve and remove only the approved legacy paths before target upgrade.
+The original pre-removal observation acknowledged native boolean `false` at the
+selected plugin server key, kept the plugin/package unchanged and observed the
+original launcher/runtime present. A later interim observation reported effective
+`enabled=false`, zero exposed tools and successful ordinary status/setup without
+implicit reinstall. An unavailable runtime-status value remains unavailable;
+server-list presence alone does not establish launch or effective enablement.
+The later protected-path absence observation is a separate step.
+
+Host execution retains its separate approval and exact installed identity:
+
+1. Take the fresh passive producer/home inventory and record the current release,
+   marketplace, native configuration key and preservation decision. Include deferred
+   Dolgorae/Gul legacy references even though their functional adoption is excluded.
+2. Use the installed native `config/value/write` interface to set the observed
+   plugin's `aquarium-dev` server selector to boolean `false`, keeping the plugin
+   enabled and released package bytes intact. Verify fresh-context behavior and
+   ordinary status/setup while the original launcher/runtime still exists.
+3. Before any move or removal, inventory processes by exact executable and runtime
+   paths, including launcher and MCP consumers. Require no running actor for those
+   paths. End an active session through its supported native owner operation or
+   wait on that same operation until settled; preserve its state and never
+   invalidate a session or use a name-based kill to clear the inventory.
+4. Detach only the approved owned references/hooks/services after their consumers
+   settle. Remove the launcher/runtime next and the shared legacy root last,
+   under its explicit preservation/disposal decision. Keep production ledgers,
+   unrelated hooks, account homes and the selected Haepari installation intact.
+5. Re-observe the effective selector after any plugin upgrade. Keep original
+   failures and use the native contract for a stale override. Source retirement
+   and a later installed package require their own exact-candidate verification.
+
+Passive inventory covers enrollment/request/worker/generation-lease metadata,
+existing process/service registrations, hooks and `core.hooksPath`, launcher and
+PATH references, status/setup consumers and effective plugin declarations across
+selected Codex homes and the installed Claude edition. Deduplicate physical homes,
+complete relevant native pagination and record source, time, ownership, active or
+recovery dependency and disposition. Use an observation only when it cannot start
+a daemon; inaccessible or partial sources remain unknown. Removing source grants
+no host-state effect or producer broker operation.
+
+The [Epic dossier](../todo/TODO-HAEPARI-COMBINATION-RETIREMENT.md) owns the complete
+TASK-101 scope. The finite consumer inventory selects these reductions:
+
+| Owner | Retained requirement and TASK-101 action |
+| --- | --- |
+| Candidate builder / digest | Move the build-only capability into a host-only VM helper before deleting the legacy manager. Keep consumed manifest identifiers/fields and digest parity, then remove retired build interfaces. |
+| Host wrapper | Retain saved spec/key and installation binding, same-Job recovery, receipt-bound exports and owned observer teardown. Simplify duplicate queue/deadline policy only with an equivalent native contract. |
+| Profile / suite validation | Retain exact component/skill identity, declared suite/output paths and input safety. Consolidate duplicated native-limit checks; confirm external/dynamic callers before deleting test-only comparison helpers. |
+| Guest recipes / fixtures | Retain installation assertions, guest preservation, original evidence and consumer cleanup. Delete obsolete tests/fixtures with their removed behavior; historical age alone proves no redundancy. |
+| Setup / status / MCP consumers | Remove retired channel consumers after builder relocation, preserve ordinary setup and historical ledger rows, and update affected contracts/runbooks. Reconcile the canonical `Cancelled` lifecycle in the docs inspector without relabeling withdrawn work. |
+
+Keep the tested target in the dedicated guest. Frozen partial Task/Epic fixture
+sessions may remain as evidence after their actors settle; the native startup
+consumer contract does not require cancelling them. Preserve original archive
+members through collection. Record canonical QA recovery roots, protected
+preexisting peers and last-consumer binary custody as intentional retention,
+with their actual owners and removal conditions. Haepari's native Job cleanup
+and later last-consumer disposal remain separate from consumer settlement.
+
 ## Prerequisites and diagnosis
 
 Use the verified Haepari v0.1.0 release and complete same-release `use-haepari`

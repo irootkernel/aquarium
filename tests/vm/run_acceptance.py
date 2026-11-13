@@ -1411,6 +1411,10 @@ def case_artifact(directory, value):
         directory.is_dir() and not directory.is_symlink(),
         "case artifact directory is unavailable",
     )
+    require(
+        isinstance(value, (str, os.PathLike)),
+        "startup artifact path is unavailable",
+    )
     path = Path(value)
     require(
         path.is_absolute()
@@ -1420,6 +1424,35 @@ def case_artifact(directory, value):
         "startup artifact belongs outside its case directory",
     )
     return path
+
+
+def assignment_criterion_ids(assignment):
+    work = assignment["work"]
+    require(isinstance(work, dict), "assignment work is unavailable")
+    records = work.get("criteria", [])
+    require(
+        isinstance(records, list)
+        and all(
+            isinstance(row, dict) and isinstance(row.get("id"), str) and row["id"]
+            for row in records
+        ),
+        "assignment criterion records are invalid",
+    )
+    mapping = work.get("original_smoke_criteria", {})
+    require(
+        isinstance(mapping, dict)
+        and all(
+            isinstance(key, str) and key and isinstance(value, str) and value
+            for key, value in mapping.items()
+        ),
+        "assignment criterion mapping is invalid",
+    )
+    legacy = assignment.get("success_criteria")
+    require(
+        isinstance(legacy, list) and all(isinstance(value, str) for value in legacy),
+        "assignment success criteria are invalid",
+    )
+    return {row["id"] for row in records} | set(mapping) | set(legacy)
 
 
 def validate_native_case(observation, evidence, repository, case_root):
@@ -1452,7 +1485,7 @@ def validate_native_case(observation, evidence, repository, case_root):
             "fail",
         )
         require(
-            all(key in json.dumps(assignment["success_criteria"]) for key in CRITERIA),
+            set(CRITERIA).issubset(assignment_criterion_ids(assignment)),
             f"{role} assignment omits original smoke criteria",
         )
     handoff = returned_report(

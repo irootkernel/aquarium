@@ -88,7 +88,7 @@ This rule establishes retirement-evidence applicability only. The release's SHA-
 | EPIC-030 | Unify Aquarium delivery across five agent hosts | Planned |
 | EPIC-031 | Adopt Coordinator, Evaluator and Executor roles in release workflows | Completed |
 | EPIC-032 | Adopt Haepari across integrated tools | Completed |
-| EPIC-033 | Qualify the combined environment and retire the development channel | Planned |
+| EPIC-033 | Qualify the combined environment and retire the development channel | In Progress |
 | EPIC-034 | Adopt Podway v0.2.15 and contract generation 2 | Completed |
 | EPIC-035 | Adopt Sorage v0.1.4 | In Progress |
 | EPIC-036 | Adopt Mulgae v0.1.26 | Completed |
@@ -1050,7 +1050,7 @@ EPIC-033 consumes the seven-tool inventory and two Deferred entries, qualifies t
 
 ## EPIC-033: Qualify the combined environment and retire the development channel
 
-**Status:** `Planned`
+**Status:** `In Progress`
 
 Begin after completed EPIC-032 and consume EPIC-019, EPIC-031 and EPIC-032 Canonical Outcomes. Existing TASK-100 through TASK-102 own exact whole-combination installed/upgrade verification, shared VM and released Mulgae lock behavior, original Job evidence consumed by release assessments, common legacy source cleanup and separately approved final host removal. Individual tool qualification does not establish combined compatibility. TASK-100 owns bounded Aquarium corrections and conditional producer correction requests through EPIC-032's promoted protocol when a concrete native defect requires producer work; it verifies the corrected artifact and exact combination. Preserve native outcomes, manual gaps, meaningful prior state and production/history boundaries.
 
@@ -1064,9 +1064,13 @@ The retained legacy development dossier is this Epic's historical/migration refe
 
 The [legacy dossier](../todo/TODO-AQUARIUM-DEV.md) remains a retirement reference until this Epic's approved reference reconciliation and settlement.
 
+**Canonical Outcomes:** [TASK-100 combination observations](../../tests/vm/README.md#task-100-combination-observations), [TASK-101 transition and reduction handoff](../ops/haepari-vm-verification.md#task-101-transition-and-reduction-handoff), [Testing contract and evidence limits](../../TESTING.md).
+
+TASK-100 records native P/Q PASS, complete evidence and verified cleanup for committed Aquarium payload `c783a6d` plus separately sealed harness, profile and input bytes. The finite installed/upgrade, lock, assessment-boundary and cleanup observations preserve original negative and global/future states. Whole historical EPIC-031 and native guest-handler replacement remain unverified. The host managed Codex daemon `0.168.0` differs from the rehearsed CLI `0.167.2`. Daemon refresh and settlement of the 30 running Aquarium MCP consumers remain unrehearsed. TASK-101 requires separate host approval, native session settlement and fresh exact-path observation before removal. TASK-101 owns source reduction and retirement; TASK-102 must qualify the changed final combination before overall acceptance and closeout.
+
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
-| TASK-100 | Reconcile the full combination and upgrade path | Verify the exact installed/upgrade combination, shared VM, native review lock, release assessment inputs and cleanup; identify redundant integration layers and own bounded corrections and corrected producer returns. | Planned | EPIC-032; TASK-099 |
+| TASK-100 | Reconcile the full combination and upgrade path | Verify the exact installed/upgrade combination, shared VM, native review lock, release assessment inputs and cleanup; identify redundant integration layers and own bounded corrections and corrected producer returns. | Completed | EPIC-032; TASK-099 |
 | TASK-101 | Retire shared legacy source and simplify Haepari integration | Remove redundant layers, validators, harness code and obsolete tests alongside common legacy dependencies; preserve required behavior and production history, with final host cleanup separately approved. | Planned | TASK-100 |
 | TASK-102 | Cold-validate, promote documentation and close out | Verify the final simplified combination's managed VM, released Mulgae lock, recovery and cleanup behavior; obtain actual overall/manual acceptance, promote durable contracts and settle dossiers at last-consumer closeout. | Planned | TASK-101 |
 

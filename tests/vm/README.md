@@ -5,6 +5,76 @@ The guest-side `make test-vm` target executes the fixed cases through
 [EPIC-024](../../docs/roadmap/README.md#epic-024-restore-native-agent-workflows-and-add-manual-vm-release-acceptance).
 A passing result requires the recorded upgrade and startup observations.
 
+## EPIC-033 combination suite
+
+`make test-vm-host SUITE=haepari-combination MODE=manual` selects the bounded
+[combination scenario](recipes/scenarios/haepari-combination.md), using the
+existing wrapper, immutable inputs, recovery and collection. Explicit
+`AQUARIUM_VM_BASELINE_PROFILE`, `AQUARIUM_VM_COMBINATION_PROFILE` and
+`AQUARIUM_VM_COMBINATION_INPUT` identify the actual released baseline and the
+complete current seven-tool target. Keep using the existing inputs for official
+Podway releases and the private guest context. Profile versions are explicit;
+old profiles remain historical. See [TESTING.md](../../TESTING.md#epic-033-combined-installed-verification)
+for the focused local checks and their limits.
+
+Use a slim combination root with finite delivery declarations and complete skills.
+A separate artifact-custody preparation Job can retain the six whole unpublished
+executables without installing baseline tools. After observing baseline, P's
+`materialize` phase verifies that custody and downloads the pinned official
+Sorage/Haepari assets, retaining original receipts. Podway inputs stay separate.
+Custody/download bytes have their own identity checks and are not represented as
+native selected-input bytes. Keep custody through actual last-consumer settlement.
+
+One held Job covers baseline through verified consumer cleanup. Use a fresh owned
+guest home for clean-install coverage without resetting the persistent VM.
+Candidate generation-2 workspaces preserve older Stores and their original writer.
+All nine case archive/manifest pairs are declared outputs. Manual completion
+requires current original evidence and verified cleanup; source/helper success
+alone does not qualify the combination. The separate host-submitted Q stays
+queued until P releases capacity, and its completed result is joined afterward.
+
+## TASK-100 combination observations
+
+On 2026-11-13, the exact committed Aquarium payload `c783a6d` and separately
+sealed development harness completed the bounded combination run. The released
+baseline used Aquarium 0.1.22, Codex 0.167.2 and Podway 0.2.16; the target used
+`0.1.22-dev.c783a6dfbd0b`, official Podway 0.2.17 and the selected complete
+seven-tool/skill profile. Historical absent-tool and baseline-alignment records
+remain separate from the candidate upgrade.
+
+Both original managed callers returned native PASS with evidence complete and
+cleanup verified. The second caller was admitted while the first held capacity
+and reserved the resource only after the first finished native cleanup and
+verification. It checked the retained starting combination from its distinct
+source-bound caller; it did not rerun Gaori's functionality. All 35 first-caller
+and four second-caller exported files matched their native result hashes. The
+nine case archives totaled 197,642,240 bytes; all 2,570 archived member hashes,
+the 58-row case index and the completion template matched their recorded bytes.
+Original receipts and private identities remain in runtime custody.
+
+The guest exercised isolated clean installation, native boolean channel disable
+while the original launcher/runtime remained present, normal interim status/setup
+without implicit reinstall, target upgrade, genuine older-Store refusal and fresh
+generation-2 fixture delivery with independent initial checkpoints. Task and Epic fixtures remained unfinished at their declared
+intermediate nodes with settled actors and retained history. Nullable future
+artifact paths and structured criterion declarations used a separately selected
+measurement consumer; original collector failures remain preserved.
+
+| Consumer | Observed scope and limit |
+| --- | --- |
+| Haepari / Podway / Mulgae | Managed non-overlap, original-writer preservation/refusal, native CLI/MCP review locking, observed role invocation overlap and original invocation recovery. Expected review findings remain their original outcomes. |
+| Gaori / Sanho / Gaebokchi | Selected installed compatibility scripts; Gaebokchi version/help only, without account snapshots. |
+| Sorage / Seongge | Owned synthetic configuration reads and offline capture/lint/preflight with the actual official decoder outputs. No broker operation or live Seongge evaluation. |
+| Release fixtures | Four scoped assessment boundaries and local publication stand-ins, preserving earlier inconclusive reports. This does not complete historical whole-EPIC-031 verification. |
+| Replacement negative | Actual live Herdr support-role lineage and same-original-result recovery. Native guest-handler replacement remains unverified by that observation. |
+
+The owned clean-install home was removed after its consumers settled; the target
+combination, protected preexisting history and declared custody were retained.
+Task/Epic acceptance, host detachment, release readiness and qualification of
+changed TASK-101 bytes remain separate. The [operations handoff](../../docs/ops/haepari-vm-verification.md#task-101-transition-and-reduction-handoff)
+owns the supported next steps; the [roadmap](../../docs/roadmap/README.md) owns
+Task and Epic lifecycle state.
+
 ## Purpose and invocation
 
 Verify whether the existing installed system can accept the exact candidate and

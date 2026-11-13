@@ -409,6 +409,110 @@ def test_public_native_roles_allow_null_metadata_and_future_global_gap(native_ca
     }
 
 
+@pytest.mark.parametrize("domain", ["criteria", "original_smoke_criteria"])
+@pytest.mark.parametrize("missing", [False, True])
+def test_structured_original_criteria_bind_the_complete_due_set(
+    native_case, domain, missing
+):
+    observation, evidence, repository, case_root = native_case
+    criteria = dict(gate.CRITERIA)
+    if missing:
+        criteria.pop("existing-behavior")
+    for role in ("executor", "evaluator"):
+        path = Path(evidence[role + "_assignment"])
+        assignment = gate.read_json(path)
+        assignment["success_criteria"] = ["Meet the complete original due set"]
+        assignment["work"][domain] = (
+            [{"id": key, "meaning": meaning} for key, meaning in criteria.items()]
+            if domain == "criteria"
+            else criteria
+        )
+        write_json(path, assignment)
+    if missing:
+        with pytest.raises(gate.GateError) as caught:
+            gate.validate_native_case(observation, evidence, repository, case_root)
+        assert caught.value.outcome == "incomplete"
+    else:
+        assert gate.validate_native_case(observation, evidence, repository, case_root)
+
+
+@pytest.mark.parametrize("role", ["executor", "evaluator"])
+def test_legacy_assignment_requires_every_explicit_id(native_case, role):
+    observation, evidence, repository, case_root = native_case
+    path = Path(evidence[role + "_assignment"])
+    assignment = gate.read_json(path)
+    assignment["success_criteria"].remove("existing-behavior")
+    write_json(path, assignment)
+    with pytest.raises(gate.GateError) as caught:
+        gate.validate_native_case(observation, evidence, repository, case_root)
+    assert caught.value.outcome == "incomplete"
+
+
+@pytest.mark.parametrize(
+    ("domain", "value"),
+    [
+        ("criteria", None),
+        ("criteria", [{"id": None}]),
+        ("original_smoke_criteria", []),
+        ("original_smoke_criteria", {"uppercase-default": None}),
+        ("success_criteria", None),
+    ],
+)
+def test_malformed_criterion_declaration_cannot_fall_back_to_legacy_ids(
+    native_case, domain, value
+):
+    observation, evidence, repository, case_root = native_case
+    path = Path(evidence["executor_assignment"])
+    assignment = gate.read_json(path)
+    if domain == "success_criteria":
+        assignment[domain] = value
+    else:
+        assignment["work"][domain] = value
+    write_json(path, assignment)
+    with pytest.raises(gate.GateError) as caught:
+        gate.validate_native_case(observation, evidence, repository, case_root)
+    assert caught.value.outcome == "incomplete"
+
+
+def test_criterion_ids_in_unrelated_prose_do_not_declare_coverage(native_case):
+    observation, evidence, repository, case_root = native_case
+    path = Path(evidence["executor_assignment"])
+    assignment = gate.read_json(path)
+    assignment["success_criteria"] = [f"Consider {key} later" for key in gate.CRITERIA]
+    assignment["work"]["comment"] = list(gate.CRITERIA)
+    assignment["instructions"] = list(gate.CRITERIA)
+    write_json(path, assignment)
+    with pytest.raises(gate.GateError) as caught:
+        gate.validate_native_case(observation, evidence, repository, case_root)
+    assert caught.value.outcome == "incomplete"
+
+
+def test_partial_plan_without_evaluator_artifacts_is_incomplete(native_case):
+    observation, evidence, repository, case_root = native_case
+    evidence["evaluator_agent"] = None
+    evidence["evaluator_assignment"] = None
+    evidence["evaluator_assessment"] = None
+    with pytest.raises(gate.GateError) as caught:
+        gate.validate_native_case(observation, evidence, repository, case_root)
+    assert caught.value.outcome == "incomplete"
+
+
+@pytest.mark.parametrize("value", [None, 17, True, [], {}])
+def test_non_path_startup_artifact_is_incomplete(native_case, value):
+    observation, evidence, repository, case_root = native_case
+    evidence["evaluator_assessment"] = value
+    with pytest.raises(gate.GateError) as caught:
+        gate.validate_native_case(observation, evidence, repository, case_root)
+    assert caught.value.outcome == "incomplete"
+
+
+@pytest.mark.parametrize("representation", [str, Path])
+def test_case_artifact_preserves_string_and_path_inputs(native_case, representation):
+    _observation, evidence, _repository, case_root = native_case
+    artifact = Path(evidence["executor_result"])
+    assert gate.case_artifact(case_root, representation(artifact)) == artifact
+
+
 @pytest.mark.parametrize("role", ["executor", "evaluator"])
 @pytest.mark.parametrize("digest", ["bare", "wrong-bytes", "wrong-algorithm"])
 def test_report_digest_representation_preserves_exact_source_check(

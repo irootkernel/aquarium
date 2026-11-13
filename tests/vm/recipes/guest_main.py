@@ -3736,7 +3736,12 @@ def main() -> int:
         {"preserve_invalid_inventory": True}
         if (arguments.suite == "epic-squad" and arguments.phase == "stage-evidence")
         or arguments.suite
-        in {"sorage-adoption", "mulgae-adoption", "release-orchestration"}
+        in {
+            "sorage-adoption",
+            "mulgae-adoption",
+            "release-orchestration",
+            "haepari-combination",
+        }
         else {}
     )
     try:
@@ -3747,6 +3752,10 @@ def main() -> int:
             lib.guard(context.root)
             lib.verify_sealed_inputs(context.root)
             podway_upgrade.materialize_candidate_binary(context.root, release)
+        if arguments.suite == "haepari-combination":
+            import haepari_combination
+
+            return haepari_combination.run(context, arguments.phase)
         if arguments.suite == "release-orchestration":
             import release_orchestration
 

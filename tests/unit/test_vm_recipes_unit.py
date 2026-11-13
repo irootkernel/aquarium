@@ -58,6 +58,780 @@ raise SystemExit(1)
 """
 
 
+class CombinationRecipeTest(unittest.TestCase):
+    def setUp(self):
+        import types
+
+        self.work = Path(tempfile.mkdtemp(prefix="vm-combination-")).resolve()
+        self.addCleanup(shutil.rmtree, self.work, True)
+        self.module = load_module(
+            "vm_combination_recipe_unit", RECIPES_ROOT / "haepari_combination.py"
+        )
+        self.results = self.work / "results/haepari-combination"
+        self.results.mkdir(parents=True)
+        self.context = types.SimpleNamespace(
+            root=self.work,
+            home=self.work / "login-home",
+            checkout=REPOSITORY,
+            job={"job_id": "p-original", "lease_generation": "1"},
+            inputs={"candidate": {"git_sha": "a" * 40}},
+            profile_digest=lambda _name: "b" * 64,
+            profile=lambda _name: {"profile_id": "combination-unit", "components": []},
+        )
+
+    def index(self, status="pass"):
+        module = self.module
+        document = {**module.binding(self.context), "cases": {}}
+        for name, variants in module.CASES.items():
+            path = self.results / "originals" / name / "original.txt"
+            path.parent.mkdir(parents=True)
+            path.write_text(
+                "actual-shaped fixture original including negative outcomes"
+            )
+            document["cases"][name] = {
+                "observations": [
+                    {
+                        "variant": variant,
+                        "status": status,
+                        "evidence_class": "native-installed",
+                        "decision_reference": "unit-operator",
+                        "required": [path.relative_to(self.work).as_posix()],
+                    }
+                    for variant, _native in variants
+                ]
+            }
+        module.lib.write_document(self.results / "case-index.json", document)
+        for name in (
+            "baseline",
+            "target",
+            "clean-home-ready",
+            "clean-install",
+            "transition-upgrade",
+            "tools",
+            "busy",
+            "locks",
+            "assessments",
+            "resource-p",
+            "consumer-cleanup",
+            "inventory-post-cleanup",
+        ):
+            module.lib.write_document(
+                self.results / (name + ".json"), {"fixture": True}
+            )
+        return document
+
+    def archive(self, name="mulgae", data=b"exact executable", kind=None):
+        path = self.work / (name.replace("/", "-") + ".tar.gz")
+        with tarfile.open(path, "w:gz") as handle:
+            item = tarfile.TarInfo(name)
+            item.mode = 0o755
+            if kind is None:
+                item.size = len(data)
+                handle.addfile(item, io.BytesIO(data))
+            else:
+                item.type = kind
+                item.linkname = "../foreign"
+                handle.addfile(item)
+        row = {
+            "archive_sha256": self.module.lib.sha256_file(path),
+            "member": "mulgae",
+            "binary_bytes": len(data),
+            "binary_sha256": hashlib.sha256(data).hexdigest(),
+        }
+        return path, row
+
+    def test_whole_archive_extracts_exact_executable_only(self):
+        path, row = self.archive()
+        target = self.work / "owned/bin/mulgae"
+        self.module.extract_executable(path, target, row, whole=True)
+        self.assertEqual(b"exact executable", target.read_bytes())
+        self.assertTrue(target.stat().st_mode & 0o111)
+        with self.assertRaises(FileExistsError):
+            self.module.extract_executable(path, target, row, whole=True)
+
+    def test_archive_refuses_traversal_links_wrong_size_and_hash(self):
+        for fault in ("traversal", "symlink", "hardlink", "size", "hash"):
+            with self.subTest(fault=fault):
+                name = "../mulgae" if fault == "traversal" else "mulgae"
+                kind = (
+                    tarfile.SYMTYPE
+                    if fault == "symlink"
+                    else tarfile.LNKTYPE
+                    if fault == "hardlink"
+                    else None
+                )
+                path, row = self.archive(name=name, kind=kind)
+                if fault == "size":
+                    row["binary_bytes"] += 1
+                if fault == "hash":
+                    row["binary_sha256"] = "a" * 64
+                target = self.work / ("refused-" + fault)
+                with self.assertRaises(self.module.lib.RecipeError):
+                    self.module.extract_executable(path, target, row, whole=True)
+        self.assertFalse((self.work.parent / "mulgae").exists())
+
+    def test_custody_receipt_and_actual_binary_must_both_match(self):
+        root = self.context.home / "haepari-artifact-custody/task100-unit"
+        (root / "bin").mkdir(parents=True)
+        binary = root / "bin/mulgae"
+        binary.write_bytes(b"exact")
+        digest = self.module.lib.sha256_file(binary)
+        row = {
+            "custody_root": str(root),
+            "manifest_sha256": "a" * 64,
+            "binary_sha256": digest,
+            "binary_bytes": 5,
+        }
+        receipt = {
+            "custody_root": str(root),
+            "manifest_sha256": "a" * 64,
+            "complete": True,
+            "native_job": {
+                "installation_id": "unit-installation",
+                "job_id": "custody-original",
+                "lease_generation": 4,
+            },
+            "tools": {"mulgae": {"sha256": digest}},
+        }
+        marker = root.with_name(root.name + ".owner.json")
+        self.module.lib.write_document(
+            marker,
+            {
+                "custody_root": str(root),
+                "native_job": receipt["native_job"],
+                "input_manifest_sha256": "a" * 64,
+                "current_last_consumer": "TASK-102",
+                "cleanup_owner": "CO",
+                "cleanup_state": "intentionally retained; not removed",
+            },
+        )
+        receipt["ownership_marker"] = str(marker)
+        receipt["ownership_sha256"] = self.module.lib.sha256_file(marker)
+        path = root / "custody-receipt.json"
+        self.module.lib.write_document(path, receipt)
+        with mock.patch.dict(
+            os.environ,
+            {
+                "HAEPARI_PARENT_CONTEXT": json.dumps(
+                    [
+                        {
+                            "installation_id": "unit-installation",
+                            "job_id": "p-original",
+                            "lease_generation": 1,
+                            "nonce": "c" * 64,
+                        }
+                    ]
+                )
+            },
+        ):
+            self.assertEqual(
+                binary, self.module.custody_binary(self.context, "mulgae", row)
+            )
+            self.context.inputs["combination"] = {
+                "delivery": {"mulgae": {**row, "mode": "guest-custody"}}
+            }
+            retained = self.module.retained_custody(self.context)
+            self.assertEqual(str(root), retained[0]["custody_root"])
+            self.assertEqual("custody-original", retained[0]["native_job"]["job_id"])
+            self.assertEqual(
+                self.module.lib.sha256_file(marker), retained[0]["ownership_sha256"]
+            )
+            self.assertEqual("TASK-102", retained[0]["current_last_consumer"])
+            receipt["manifest_sha256"] = "b" * 64
+            self.module.lib.write_document(path, receipt)
+            with self.assertRaisesRegex(self.module.lib.RecipeError, "receipt/pin"):
+                self.module.custody_binary(self.context, "mulgae", row)
+            receipt["manifest_sha256"] = "a" * 64
+            self.module.lib.write_document(path, receipt)
+            binary.write_bytes(b"other")
+            with self.assertRaisesRegex(
+                self.module.lib.RecipeError, "executable differs"
+            ):
+                self.module.custody_binary(self.context, "mulgae", row)
+
+    def custody_fixture(self, suffix="six"):
+        root = self.context.home / "haepari-artifact-custody" / ("task100-" + suffix)
+        payload = self.work / ("custody-input-" + suffix)
+        payload.mkdir()
+        tools = {}
+        for name in (
+            "mulgae",
+            "gaori",
+            "sanho",
+            "seongge",
+            "schema-decode",
+            "gaebokchi",
+        ):
+            data = name.encode()
+            path = payload / (name + ".tar.gz")
+            with tarfile.open(path, "w:gz") as handle:
+                item = tarfile.TarInfo(name)
+                item.size = len(data)
+                item.mode = 0o755
+                handle.addfile(item, io.BytesIO(data))
+            tools[name] = {
+                "archive": path.name,
+                "archive_sha256": self.module.lib.sha256_file(path),
+                "member": name,
+                "binary_bytes": len(data),
+                "binary_sha256": hashlib.sha256(data).hexdigest(),
+                "source_commit": "a" * 40,
+            }
+        manifest = payload / "manifest.json"
+        manifest.write_text(
+            json.dumps(
+                {
+                    "custody_root": str(root),
+                    "expected_guest_uuid": "unit-uuid",
+                    "tools": tools,
+                }
+            )
+        )
+        parent = [
+            {
+                "installation_id": "unit-installation",
+                "job_id": "custody-original",
+                "lease_generation": 4,
+                "nonce": "c" * 64,
+            }
+        ]
+        return root, payload, tools, manifest, parent
+
+    def test_six_whole_archives_create_custody_without_installing_baseline(self):
+        root, payload, tools, manifest, parent = self.custody_fixture()
+        extract = self.module.extract_executable
+
+        def owned_extract(archive, target, row, *, whole):
+            marker = root.with_name(root.name + ".owner.json")
+            self.assertTrue(marker.is_file())
+            owner = json.loads(marker.read_text())
+            self.assertEqual("custody-original", owner["native_job"]["job_id"])
+            self.assertEqual(
+                self.module.lib.sha256_file(manifest), owner["input_manifest_sha256"]
+            )
+            self.assertNotIn("nonce", owner["native_job"])
+            self.assertEqual("d" * 64, owner["declared_selected_input_digest"])
+            self.assertNotIn("native_selected_input_digest", owner)
+            return extract(archive, target, row, whole=whole)
+
+        with (
+            mock.patch.object(self.module.lib, "verify_guest_identity"),
+            mock.patch.dict(
+                os.environ,
+                {
+                    "HAEPARI_PARENT_CONTEXT": json.dumps(parent),
+                    "AQUARIUM_CUSTODY_INPUT_DIGEST": "d" * 64,
+                },
+            ),
+            mock.patch.object(
+                self.module, "extract_executable", side_effect=owned_extract
+            ),
+        ):
+            receipt = self.module.prepare_artifact_custody(
+                manifest, payload, self.context.home
+            )
+        self.assertTrue(receipt["complete"])
+        self.assertFalse(receipt["installed_tools"])
+        self.assertEqual(set(tools), set(receipt["tools"]))
+        self.assertFalse((self.context.home / ".local").exists())
+        for name, row in tools.items():
+            self.assertEqual(
+                row["binary_sha256"], self.module.lib.sha256_file(root / "bin" / name)
+            )
+
+    def test_malformed_custody_inputs_refuse_before_persistent_root(self):
+        for fault in ("json", "object", "tools", "row", "size", "hash", "parent"):
+            with self.subTest(fault=fault):
+                root, payload, _tools, manifest, parent = self.custody_fixture(fault)
+                document = json.loads(manifest.read_text())
+                if fault == "json":
+                    manifest.write_text("{")
+                elif fault == "object":
+                    manifest.write_text("[]")
+                else:
+                    if fault == "tools":
+                        document["tools"] = []
+                    elif fault == "row":
+                        document["tools"]["mulgae"] = []
+                    elif fault == "size":
+                        document["tools"]["mulgae"]["binary_bytes"] = None
+                    elif fault == "hash":
+                        document["tools"]["mulgae"]["archive_sha256"] = "not-a-digest"
+                    manifest.write_text(json.dumps(document))
+                with (
+                    mock.patch.object(
+                        self.module.lib, "verify_guest_identity"
+                    ) as guard,
+                    mock.patch.dict(
+                        os.environ,
+                        {
+                            "HAEPARI_PARENT_CONTEXT": "{"
+                            if fault == "parent"
+                            else json.dumps(parent)
+                        },
+                    ),
+                    self.assertRaises(self.module.lib.RecipeError),
+                ):
+                    self.module.prepare_artifact_custody(
+                        manifest, payload, self.context.home
+                    )
+                guard.assert_not_called()
+                self.assertFalse(root.exists())
+                self.assertFalse(root.with_name(root.name + ".owner.json").exists())
+
+    def test_extraction_failure_retains_owned_partial_root_and_original_facts(self):
+        root, payload, _tools, manifest, parent = self.custody_fixture("partial")
+        with (
+            mock.patch.object(self.module.lib, "verify_guest_identity"),
+            mock.patch.dict(os.environ, {"HAEPARI_PARENT_CONTEXT": json.dumps(parent)}),
+            mock.patch.object(
+                self.module,
+                "extract_executable",
+                side_effect=self.module.lib.RecipeError("original fixture fault"),
+            ),
+            self.assertRaisesRegex(self.module.lib.RecipeError, "tracked partial root"),
+        ):
+            self.module.prepare_artifact_custody(manifest, payload, self.context.home)
+        self.assertTrue(root.is_dir())
+        marker = root.with_name(root.name + ".owner.json")
+        self.assertTrue(marker.is_file())
+        failure = json.loads((root / "custody-failure.json").read_text())
+        self.assertFalse(failure["complete"])
+        self.assertEqual("original fixture fault", failure["error"])
+        self.assertEqual(
+            self.module.lib.sha256_file(marker), failure["ownership_sha256"]
+        )
+        self.assertEqual("TASK-102", failure["retention"]["current_last_consumer"])
+        self.assertEqual(
+            "CO after verified last-consumer settlement",
+            failure["retention"]["cleanup_owner"],
+        )
+
+    def test_official_download_records_manifest_and_rejects_empty_checksum(self):
+        import types
+
+        for fault in ("none", "checksum", "manifest", "signature"):
+            with self.subTest(fault=fault):
+                folder = self.work / ("download-" + fault)
+                results = folder / "results"
+                results.mkdir(parents=True)
+                payload = folder / "payload"
+                payload.mkdir()
+                data = b"official binary fixture"
+                sha = hashlib.sha256(data).hexdigest()
+                row = {
+                    "mode": "official-download",
+                    "url": "https://github.com/irootkernel/sorage/releases/download/v0.1.4/sorage-v0.1.4-darwin-arm64",
+                    "checksum_url": "https://github.com/irootkernel/sorage/releases/download/v0.1.4/sorage-v0.1.4-darwin-arm64.sha256",
+                    "download_sha256": sha,
+                    "binary_sha256": sha,
+                    "binary_bytes": len(data),
+                    "source_commit": "a" * 40,
+                    "member": None,
+                }
+                delivery = {"sorage": row}
+                (payload / "delivery.json").write_text(json.dumps(delivery))
+                self.context.root = folder
+                self.context.inputs["combination"] = {
+                    "payload_root": "payload",
+                    "delivery": delivery,
+                }
+                self.module.lib.write_document(
+                    results / "baseline.json", self.module.binding(self.context)
+                )
+
+                def native(argv, *, fault=fault, sha=sha, data=data, **_kwargs):
+                    if argv[0] == "/usr/bin/codesign":
+                        return types.SimpleNamespace(
+                            returncode=1 if fault == "signature" else 0,
+                            stdout="",
+                            stderr="retained signature negative"
+                            if fault == "signature"
+                            else "",
+                        )
+                    target = Path(argv[argv.index("--output") + 1])
+                    url = argv[-1]
+                    if url.endswith(".sha256"):
+                        target.write_text(
+                            ""
+                            if fault == "checksum"
+                            else sha + "  sorage-v0.1.4-darwin-arm64\n"
+                        )
+                    elif url.endswith(".manifest.json"):
+                        target.write_text(
+                            json.dumps(
+                                {
+                                    "version": "0.1.4",
+                                    "revision": ("b" if fault == "manifest" else "a")
+                                    * 40,
+                                    "target": "darwin-arm64",
+                                    "binary": "sorage-v0.1.4-darwin-arm64",
+                                    "sha256": sha,
+                                    "signature": "ad-hoc",
+                                }
+                            )
+                        )
+                    else:
+                        target.write_bytes(data)
+                    return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+                with mock.patch.object(self.module.lib, "run", side_effect=native):
+                    if fault != "none":
+                        with self.assertRaisesRegex(
+                            self.module.lib.RecipeError,
+                            {
+                                "checksum": "checksum differs",
+                                "manifest": "manifest differs",
+                                "signature": "signature verification failed",
+                            }[fault],
+                        ):
+                            self.module.materialize(self.context, results)
+                    else:
+                        self.assertEqual(
+                            0, self.module.materialize(self.context, results)
+                        )
+                        observed = json.loads(
+                            (results / "materialization.json").read_text()
+                        )
+                        self.assertEqual(sha, observed["binaries"]["sorage"]["sha256"])
+                        signature = json.loads(
+                            (
+                                results
+                                / "originals/identity/delivery/sorage-signature.json"
+                            ).read_text()
+                        )
+                        self.assertEqual(0, signature["exit_code"])
+
+    def test_native_case_cannot_pass_with_stub_or_missing_original(self):
+        index = self.index()
+        entry = index["cases"]["clean-install"]
+        self.assertTrue(self.module.case_complete(self.context, "clean-install", entry))
+        entry["observations"][0]["evidence_class"] = "fixture-helper"
+        self.assertFalse(
+            self.module.case_complete(self.context, "clean-install", entry)
+        )
+        entry["observations"][0]["evidence_class"] = "native-installed"
+        entry["observations"][0]["required"] = ["missing-original"]
+        self.assertFalse(
+            self.module.case_complete(self.context, "clean-install", entry)
+        )
+
+    def test_duplicate_coverage_and_unbound_reuse_are_incomplete(self):
+        index = self.index()
+        entry = index["cases"]["locks"]
+        entry["observations"][0]["evidence_class"] = "reused-with-applicability"
+        self.assertFalse(self.module.case_complete(self.context, "locks", entry))
+        entry["observations"][0]["applicability"] = {"binary_sha256": "c" * 64}
+        self.assertTrue(self.module.case_complete(self.context, "locks", entry))
+        entry["observations"].append(entry["observations"][0])
+        self.assertFalse(self.module.case_complete(self.context, "locks", entry))
+
+    def test_evidence_traversal_and_symlinks_refused(self):
+        target = self.work / "original"
+        target.write_text("preserve")
+        (self.work / "link").symlink_to(target)
+        for relative in ("../outside", "/outside", "link"):
+            with (
+                self.subTest(relative=relative),
+                self.assertRaises(self.module.lib.RecipeError),
+            ):
+                self.module.regular_member(self.work, relative)
+        self.assertEqual("preserve", target.read_text())
+
+    def test_fresh_home_never_reuses_login_or_foreign_home(self):
+        self.context.home.mkdir()
+        sentinel = self.context.home / "history"
+        sentinel.write_text("preserve runtime history")
+        home = self.module.fresh_home(self.context)
+        self.assertNotEqual(home, self.context.home)
+        self.assertEqual([], list(home.iterdir()))
+        self.assertEqual(home, self.module.fresh_home(self.context))
+        owner = home.parent / "haepari-combination-clean-home.owner.json"
+        owner.write_text("{}")
+        with self.assertRaises(self.module.lib.RecipeError):
+            self.module.fresh_home(self.context)
+        self.assertEqual("preserve runtime history", sentinel.read_text())
+
+    def test_clean_install_cannot_borrow_ambient_tool(self):
+        component = {
+            "name": "gaori",
+            "role": "guest",
+            "executable_sha256": "sha256:" + "a" * 64,
+        }
+        self.context.profile = lambda _name: {"components": [component]}
+        home = self.module.fresh_home(self.context)
+        with mock.patch.object(
+            self.module.shutil, "which", return_value="/bin/sh"
+        ) as lookup:
+            with self.assertRaises(self.module.lib.RecipeError):
+                self.module.observe_tools(self.context, home, self.module.PROFILE)
+            lookup.assert_not_called()
+
+    def test_installed_plugin_metadata_and_complete_skill_bytes_are_observed(self):
+        self.context.marketplace = "unit-market"
+        cache = self.context.home / ".codex/plugins/cache/unit-market/aquarium/0.1.22"
+        (cache / "skills/example").mkdir(parents=True)
+        (cache / "skills/example/SKILL.md").write_text("complete installed fixture")
+        (cache / ".codex-plugin").mkdir()
+        metadata = cache / ".codex-plugin/plugin.json"
+        metadata.write_text('{"version":"0.1.22"}')
+        digest = self.module.lib.skill_tree_digest(REPOSITORY, cache / "skills")
+        component = {
+            "name": "aquarium-plugin",
+            "role": "guest",
+            "version": "0.1.22",
+            "skill_tree": {"sha256": digest},
+        }
+        self.context.profile = lambda _name: {"components": [component]}
+        observed = self.module.observe_tools(self.context, self.context.home, "stable")
+        self.assertEqual(digest, observed["aquarium-plugin"]["skill_tree_sha256"])
+        metadata.write_text('{"version":"0.1.21"}')
+        with self.assertRaisesRegex(self.module.lib.RecipeError, "metadata differs"):
+            self.module.observe_tools(self.context, self.context.home, "stable")
+
+    def test_staging_carries_failures_and_all_fixed_archive_pairs(self):
+        self.index(status="fail")
+        with mock.patch.object(
+            self.module.lib, "results_directory", return_value=self.results
+        ):
+            result = self.module.stage(self.context, self.results)
+        self.assertEqual(2, result)
+        for name in self.module.CASES:
+            archive = self.results / "evidence" / (name + ".tar")
+            manifest = json.loads(archive.with_suffix(".manifest.json").read_text())
+            self.assertFalse(manifest["case_complete"])
+            with tarfile.open(archive) as handle:
+                self.assertTrue(
+                    any("/originals/" in item.name for item in handle.getmembers())
+                )
+        self.assertFalse(
+            json.loads((self.results / "stage-evidence.json").read_text())["ok"]
+        )
+
+    def test_completion_requires_cleanup_and_current_archive_bytes(self):
+        self.index()
+        with mock.patch.object(
+            self.module.lib, "results_directory", return_value=self.results
+        ):
+            self.assertEqual(0, self.module.stage(self.context, self.results))
+        with self.assertRaises(self.module.lib.RecipeError):
+            self.module.complete_template(self.context, self.results)
+        self.module.lib.write_document(
+            self.results / "consumer-cleanup.json",
+            {
+                **self.module.binding(self.context),
+                "consumer_cleanup": "verified",
+            },
+        )
+        with self.assertRaises(self.module.lib.RecipeError):
+            self.module.complete_template(self.context, self.results)
+        with mock.patch.object(
+            self.module.lib, "results_directory", return_value=self.results
+        ):
+            self.assertEqual(0, self.module.stage(self.context, self.results))
+        self.module.complete_template(self.context, self.results)
+        template = json.loads(
+            (self.results / "manual-complete-template.json").read_text()
+        )
+        self.assertEqual("p-original", template["job_id"])
+        self.assertEqual(
+            set(self.module.CASES), {row["id"] for row in template["scenarios"]}
+        )
+        (self.results / "evidence/locks.tar").write_text("changed after staging")
+        with self.assertRaises(self.module.lib.RecipeError):
+            self.module.complete_template(self.context, self.results)
+
+    def test_payload_verification_refuses_extra_files_or_profile_drift(self):
+        payload = self.work / "dependencies/combination"
+        payload.mkdir(parents=True)
+        (payload / "binary").write_text("selected")
+        original = self.work / "profile/combination-original.json"
+        original.parent.mkdir()
+        original.write_text("{}")
+        self.context.inputs["combination"] = {
+            "payload_root": "dependencies/combination",
+            "candidate_profile_sha256": "b" * 64,
+            "profile_sha256": self.module.lib.sha256_file(original),
+            "files": {"binary": self.module.lib.sha256_file(payload / "binary")},
+        }
+        self.module.verify_payload(self.context)
+        (payload / "extra").write_text("unsealed")
+        with self.assertRaisesRegex(self.module.lib.RecipeError, "membership differs"):
+            self.module.verify_payload(self.context)
+        (payload / "extra").unlink()
+        self.context.profile_digest = lambda _name: "c" * 64
+        with self.assertRaisesRegex(self.module.lib.RecipeError, "profile differs"):
+            self.module.verify_payload(self.context)
+
+    def test_unsettled_cleanup_preserves_owned_home(self):
+        self.index(status="unobserved")
+        (self.results / "consumer-cleanup.json").unlink()
+        (self.results / "inventory-post-cleanup.json").unlink()
+        home = self.module.fresh_home(self.context)
+        (home / "runtime-history").write_text("original")
+        with (
+            mock.patch.object(self.module.lib, "verify_guest_identity"),
+            mock.patch.object(self.module.lib, "verify_sealed_inputs"),
+            mock.patch.object(self.module.lib, "guard"),
+            mock.patch.object(self.module, "verify_payload"),
+            mock.patch.object(
+                self.module.lib, "results_directory", return_value=self.results
+            ),
+            self.assertRaisesRegex(self.module.lib.RecipeError, "settlement/cleanup"),
+        ):
+            self.module.run(self.context, "consumer-cleanup")
+        self.assertEqual("original", (home / "runtime-history").read_text())
+
+    def test_cleanup_preserves_real_snapshot_and_keeps_custody_separate(self):
+        import copy
+
+        driver = load_module("vm_combination_snapshot_unit", MAIN_PATH)
+        self.index()
+        (self.results / "consumer-cleanup.json").unlink()
+        (self.results / "inventory-post-cleanup.json").unlink()
+        root, payload, tools, manifest, parent = self.custody_fixture("snapshot")
+        with (
+            mock.patch.object(self.module.lib, "verify_guest_identity"),
+            mock.patch.dict(os.environ, {"HAEPARI_PARENT_CONTEXT": json.dumps(parent)}),
+        ):
+            self.module.prepare_artifact_custody(manifest, payload, self.context.home)
+        self.context.inputs["combination"] = {
+            "delivery": {
+                name: {
+                    **row,
+                    "mode": "guest-custody",
+                    "custody_root": str(root),
+                    "manifest_sha256": self.module.lib.sha256_file(manifest),
+                }
+                for name, row in tools.items()
+            }
+        }
+        self.context.inputs["harness_tree_sha256"] = "e" * 64
+        clean_home = self.module.fresh_home(self.context)
+        clean_home.rmdir()
+        installed = self.context.home / ".agents/skills/example"
+        installed.mkdir(parents=True)
+        (installed / "SKILL.md").write_text("original installed skill fixture")
+        self.context.scope_roots = lambda: [
+            ("shared-agents-skills", installed, ".agents/skills/example")
+        ]
+        prior = {"phase": "before", "original": True}
+        aggregate_path = self.results / "inventories.json"
+        self.module.lib.write_document(
+            aggregate_path,
+            {
+                "schema": "aquarium.vm-suite-inventories/v1",
+                "inventories": {"before": prior},
+            },
+        )
+        observed = {}
+
+        def snapshot(*args, **kwargs):
+            entries = driver.Context.snapshot(self.context, *args, **kwargs)
+            observed["snapshot"] = (
+                self.results / "inventory-post-cleanup.json"
+            ).read_bytes()
+            observed["aggregate"] = aggregate_path.read_bytes()
+            observed["recorded"] = copy.deepcopy(self.module.lib.RECORDED_INVENTORIES)
+            return entries
+
+        self.context.snapshot = snapshot
+        parent[0]["job_id"] = self.context.job["job_id"]
+        with (
+            mock.patch.object(self.module.lib, "verify_guest_identity"),
+            mock.patch.object(self.module.lib, "verify_sealed_inputs"),
+            mock.patch.object(self.module.lib, "guard"),
+            mock.patch.object(self.module, "verify_payload"),
+            mock.patch.object(self.module, "observe_tools", return_value={}),
+            mock.patch.object(
+                self.module.lib, "results_directory", return_value=self.results
+            ),
+            mock.patch.dict(
+                self.module.lib.RECORDED_INVENTORIES,
+                {self.module.SUITE: {"before": prior}},
+                clear=True,
+            ),
+            mock.patch.dict(os.environ, {"HAEPARI_PARENT_CONTEXT": json.dumps(parent)}),
+        ):
+            self.assertEqual(0, self.module.run(self.context, "consumer-cleanup"))
+            self.assertEqual(observed["recorded"], self.module.lib.RECORDED_INVENTORIES)
+        self.assertEqual(
+            observed["snapshot"],
+            (self.results / "inventory-post-cleanup.json").read_bytes(),
+        )
+        self.assertEqual(observed["aggregate"], aggregate_path.read_bytes())
+        snapshot_document = json.loads(observed["snapshot"])
+        aggregate = json.loads(aggregate_path.read_text())
+        self.assertEqual(snapshot_document, aggregate["inventories"]["post-cleanup"])
+        self.assertEqual(
+            self.module.lib.sha256_file(MAIN_PATH), snapshot_document["recipe_digest"]
+        )
+        self.assertNotEqual(
+            self.context.inputs["harness_tree_sha256"],
+            snapshot_document["recipe_digest"],
+        )
+        cleanup = json.loads((self.results / "consumer-cleanup.json").read_text())
+        self.assertEqual(snapshot_document["entries"], cleanup["inventory"])
+        retained = cleanup["intentionally_retained_custody"][0]
+        self.assertEqual(str(root), retained["custody_root"])
+        self.assertEqual("custody-original", retained["native_job"]["job_id"])
+        self.assertEqual(
+            self.module.lib.sha256_file(Path(retained["ownership_marker"])),
+            retained["ownership_sha256"],
+        )
+        self.assertEqual(set(tools), set(retained["binaries"]))
+        self.assertEqual("TASK-102", retained["current_last_consumer"])
+
+    def test_ready_holds_manual_job_without_claiming_functional_pass(self):
+        with (
+            mock.patch.object(self.module.lib, "verify_guest_identity"),
+            mock.patch.object(self.module.lib, "verify_sealed_inputs"),
+            mock.patch.object(self.module.lib, "guard"),
+            mock.patch.object(self.module, "verify_payload"),
+            mock.patch.object(
+                self.module.lib, "results_directory", return_value=self.results
+            ),
+        ):
+            self.context.inputs["combination"] = {"fixture": "only"}
+            self.assertEqual(0, self.module.run(self.context, "ready"))
+        result = json.loads((self.results / "result.json").read_text())
+        self.assertEqual("incomplete", result["outcome"])
+        self.assertEqual("unverified", result["consumer_cleanup"])
+        index = json.loads((self.results / "case-index.json").read_text())
+        self.assertTrue(
+            all(
+                row["status"] == "unobserved"
+                for entry in index["cases"].values()
+                for row in entry["observations"]
+            )
+        )
+
+    def test_repeated_phase_refuses_before_replacing_inventory(self):
+        (self.results / "baseline.json").write_text('{"original":"failed"}')
+        with (
+            mock.patch.object(self.module.lib, "verify_guest_identity"),
+            mock.patch.object(self.module.lib, "verify_sealed_inputs"),
+            mock.patch.object(self.module.lib, "guard"),
+            mock.patch.object(self.module, "verify_payload"),
+            mock.patch.object(
+                self.module.lib, "results_directory", return_value=self.results
+            ),
+            mock.patch.object(self.module, "observe_tools") as observe,
+        ):
+            with self.assertRaisesRegex(
+                self.module.lib.RecipeError, "preserve original phase"
+            ):
+                self.module.run(self.context, "baseline")
+            observe.assert_not_called()
+
+    def test_original_phase_is_never_overwritten(self):
+        path = self.results / "baseline.json"
+        self.module.write_once(path, {"original": "failed"})
+        with self.assertRaises(FileExistsError):
+            self.module.write_once(path, {"original": "pass"})
+        self.assertEqual({"original": "failed"}, json.loads(path.read_text()))
+
+
 class TreeDigestVectorTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

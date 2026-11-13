@@ -587,6 +587,50 @@ remain Deferred to a separate adoption Epic. Their deferral does not exempt
 actual legacy references from shared-removal checks. Final Epic validation reuses
 applicable Task evidence and executes only changed or missing required checks.
 
+## EPIC-033 combined installed verification
+
+Use the `haepari-combination` manual suite through the existing managed
+`make test-vm-host` route. Its [scenario](tests/vm/recipes/scenarios/haepari-combination.md)
+defines the complete case/output map: identities, clean installation, transition
+and upgrade, seven-tool behavior, busy preservation, locks, assessment boundaries,
+P-local contention and consumer cleanup. Q executes only after P's native release;
+the host joins both Jobs afterward. Q completion is not a required output of P.
+
+Supply explicit actual-host released baseline and current combination profiles,
+the complete selected artifact/skill input root, official Podway release inputs
+and observed guest context. The existing profile schema remains unchanged.
+Committed Aquarium payload, development recipe snapshot and host-only harness
+hashes are separate identities. Fresh selected source-built bytes require current
+affected runtime checks; historical binary-bound evidence keeps its original scope.
+Codex/Python versions follow the explicit profiles rather than a historical default.
+
+The finite delivery path keeps the selected input below the native 48MiB limit.
+Official Sorage/Haepari downloads retain pinned URL/checksum/source declarations
+and actual acquisition receipts. Whole archives or declared guest custody retain
+the six unpublished executable identities; no file chunking or custom server is
+used. Podway keeps its separate sealed inputs. Focused fixtures cover invalid
+pins, unsafe archive members and custody receipt/content mismatch. External bytes
+are verified separately from the native selected-input digest. None of these
+checks establish VM delivery or installed compatibility.
+
+Focused adapter tests in `test_vm_host_bundle_unit.py`,
+`test_vm_host_wrapper_unit.py` and `test_vm_recipes_unit.py` use disposable fixtures
+to check sealing, changed-input refusal, isolated-home preservation, archive
+completeness and completion only after verified cleanup. They do not establish
+installed compatibility, live agent behavior, acceptance or host detachment. Native/manual
+results and the finite keep/delete inventory remain in the existing Task report.
+[TASK-100 observations](tests/vm/README.md#task-100-combination-observations)
+record actual export integrity and caller ordering with their original evidence
+limits. They do not accept the unfinished Task/Epic fixtures, complete historical
+whole-EPIC-031 verification, establish native guest-handler replacement or grant
+host detachment. Runtime support-role replacement and fixture-helper negatives
+retain their own scopes. `test_vm_acceptance_unit.py` covers nullable future
+artifact inputs and explicit original criterion declaration domains; prose matching
+and helper success do not establish native behavior. Reuse applicable focused
+checks for unchanged code and run only due documentation checks for a prose delta.
+The [operations guide](docs/ops/haepari-vm-verification.md#epic-033-combination-job)
+documents admission and settlement. Ordinary local checks never submit this suite.
+
 ## Test Frameworks
 
 | Language and layer | Framework | Dependency evidence | Command | Waiver |

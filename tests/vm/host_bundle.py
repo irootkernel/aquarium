@@ -320,10 +320,9 @@ def validate_suite(name: str, suite: Any, selected_files: set[str]) -> None:
         "stable",
         "candidate",
         "podway-candidate",
+        "combination-candidate",
     }:
-        raise BundleError(
-            f"{label} environment_profile must select a declared stable, candidate or podway-candidate profile"
-        )
+        raise BundleError(f"{label} environment_profile must select a declared profile")
     argv = suite.get("argv")
     if (
         not isinstance(argv, list)
@@ -627,6 +626,222 @@ def _check_fixture_lock(path: Path) -> None:
             )
 
 
+COMBINATION_BINARIES = {
+    "haepari": "official/haepari-v0.1.0/haepari",
+    "mulgae": "bin/mulgae",
+    "gaori": "bin/gaori",
+    "sorage": "official/sorage-v0.1.4/sorage-v0.1.4-darwin-arm64",
+    "sanho": "bin/sanho",
+    "seongge": "bin/seongge",
+    "schema-decode": "bin/schema-decode",
+    "gaebokchi": "bin/gaebokchi",
+}
+COMBINATION_SKILLS = (
+    "use-haepari",
+    "use-mulgae",
+    "use-gaori",
+    "use-gaori-status",
+    "use-sorage",
+    "use-sanho",
+    "use-seongge",
+    "use-gaebokchi",
+)
+
+
+OFFICIAL_COMBINATION_URLS = {
+    "haepari": "https://github.com/irootkernel/haepari/releases/download/v0.1.0/haepari-0.1.0-darwin-arm64.tar.gz",
+    "sorage": "https://github.com/irootkernel/sorage/releases/download/v0.1.4/sorage-v0.1.4-darwin-arm64",
+}
+
+
+def combination_document(path: Path) -> dict:
+    try:
+        document = json.loads(path.read_text())
+    except (OSError, ValueError) as error:
+        raise BundleError(f"unreadable combination JSON: {path.name}") from error
+    if not isinstance(document, dict):
+        raise BundleError(f"combination JSON object required: {path.name}")
+    return document
+
+
+def combination_delivery(source: Path, components: dict, files: dict) -> dict | None:
+    path = source / "delivery.json"
+    if not path.exists():
+        return None
+    delivery = combination_document(path)
+    if not isinstance(delivery, dict) or set(delivery) != set(COMBINATION_BINARIES):
+        raise BundleError(
+            "delivery must name exactly the existing combination executables"
+        )
+    for name, row in delivery.items():
+        component = components[name]
+        expected = component["executable_sha256"].removeprefix("sha256:")
+        provenance = component.get("provenance", {})
+        source_commit = (
+            provenance.get("tag_commit")
+            or provenance.get("build_revision")
+            or component.get("pin", {}).get("commit")
+        )
+        if (
+            not isinstance(row, dict)
+            or not source_commit
+            or row.get("binary_sha256") != expected
+            or row.get("source_commit") != source_commit
+            or not isinstance(row.get("binary_bytes"), int)
+            or isinstance(row["binary_bytes"], bool)
+            or row["binary_bytes"] <= 0
+        ):
+            raise BundleError(f"delivery executable/source pin differs: {name}")
+        mode = row.get("mode")
+        if name in OFFICIAL_COMBINATION_URLS and mode != "official-download":
+            raise BundleError(
+                f"selected official tool requires its pinned download: {name}"
+            )
+        common = {"mode", "binary_sha256", "binary_bytes", "source_commit"}
+        if mode == "official-download":
+            allowed = common | {"url", "checksum_url", "download_sha256", "member"}
+            if (
+                name not in OFFICIAL_COMBINATION_URLS
+                or set(row) != allowed
+                or row["url"] != OFFICIAL_COMBINATION_URLS[name]
+                or row["checksum_url"] != row["url"] + ".sha256"
+                or row["download_sha256"]
+                != (component.get("archive_sha256") if name == "haepari" else expected)
+                or row["member"]
+                != ("haepari-0.1.0-darwin-arm64/haepari" if name == "haepari" else None)
+            ):
+                raise BundleError(f"official delivery pin differs: {name}")
+        elif mode == "whole-archive":
+            if (
+                set(row) != common | {"archive", "archive_sha256", "member"}
+                or row["member"] != name
+                or not isinstance(row["archive"], str)
+                or files.get(row["archive"]) != row["archive_sha256"]
+            ):
+                raise BundleError(f"whole archive is not sealed: {name}")
+        elif mode == "guest-custody":
+            if (
+                set(row)
+                != common | {"custody_root", "manifest_file", "manifest_sha256"}
+                or not isinstance(row["manifest_file"], str)
+                or not isinstance(row["custody_root"], str)
+                or files.get(row["manifest_file"]) != row["manifest_sha256"]
+            ):
+                raise BundleError(f"custody manifest is not sealed: {name}")
+            custody = Path(row["custody_root"])
+            if (
+                not custody.is_absolute()
+                or ".." in custody.parts
+                or custody.parent.name != "haepari-artifact-custody"
+                or not custody.name.startswith("task100-")
+            ):
+                raise BundleError(
+                    "custody root is outside the disclosed Task-owned domain"
+                )
+            manifest = combination_document(source / row["manifest_file"])
+            tools = manifest.get("tools")
+            selected = tools.get(name) if isinstance(tools, dict) else None
+            if (
+                not isinstance(selected, dict)
+                or manifest.get("custody_root") != str(custody)
+                or any(
+                    selected.get(k) != row[k]
+                    for k in ("binary_sha256", "binary_bytes", "source_commit")
+                )
+            ):
+                raise BundleError(f"custody declaration differs: {name}")
+        else:
+            raise BundleError(f"unsupported combination delivery: {name}")
+    allowed_prefixes = ("skills/", "archives/")
+    allowed_records = {"delivery.json", "case-requirements.json"} | {
+        row["manifest_file"]
+        for row in delivery.values()
+        if row["mode"] == "guest-custody"
+    }
+    if any(
+        name not in allowed_records and not name.startswith(allowed_prefixes)
+        for name in files
+    ):
+        raise BundleError(
+            "slim combination root contains undeclared payload/provenance copies"
+        )
+    return delivery
+
+
+def load_combination(profile_path: Path, source: Path) -> dict[str, Any]:
+    """Validate the finite TASK-100 input against existing profile identities."""
+    if (
+        not profile_path.is_absolute()
+        or profile_path != profile_path.resolve()
+        or not profile_path.is_file()
+    ):
+        raise BundleError(
+            "combination profile must be a physical absolute regular file"
+        )
+    profile_bytes = profile_path.read_bytes()
+    try:
+        profile = json.loads(profile_bytes)
+    except ValueError as error:
+        raise BundleError("combination profile is invalid JSON") from error
+    errors = _PROFILE_VALIDATOR.validate_profile(profile)
+    if errors:
+        raise BundleError("invalid combination profile: " + "; ".join(errors))
+    components = {row["name"]: row for row in profile["components"]}
+    required = (
+        set(COMBINATION_BINARIES)
+        | (set(COMBINATION_SKILLS) - {"use-haepari"})
+        | {"aquarium-plugin", "codex", "guest-python", "podway", "use-podway"}
+    )
+    if not required <= set(components):
+        raise BundleError("combination profile lacks complete tool/skill components")
+    if not source.is_absolute() or source != source.resolve() or not source.is_dir():
+        raise BundleError("combination input must be a physical absolute directory")
+    files = {}
+    for path in source.rglob("*"):
+        if path.is_symlink() or not (path.is_dir() or path.is_file()):
+            raise BundleError("combination input contains unsafe members")
+        if path.is_file():
+            files[path.relative_to(source).as_posix()] = hashlib.sha256(
+                path.read_bytes()
+            ).hexdigest()
+    delivery = combination_delivery(source, components, files)
+    bindings = {}
+    for name, relative in COMBINATION_BINARIES.items():
+        if delivery is not None:
+            bindings[name] = {"delivery": name}
+            continue
+        expected = components[name].get("executable_sha256", "").removeprefix("sha256:")
+        if (
+            not expected
+            or files.get(relative) != expected
+            or not os.access(source / relative, os.X_OK)
+        ):
+            raise BundleError(f"combination executable differs or is missing: {name}")
+        bindings[name] = {"binary": relative}
+    for name in COMBINATION_SKILLS:
+        component = components["haepari" if name == "use-haepari" else name]
+        skill = component.get("skill_tree", {})
+        relative = f"skills/{name}"
+        tree = source / relative
+        if not tree.is_dir() or not (tree / "SKILL.md").is_file():
+            raise BundleError(f"combination complete skill is missing: {name}")
+        try:
+            digest = skill_tree_digest_from_directory(tree)
+        except ValueError as error:
+            raise BundleError(f"unsafe combination skill: {name}") from error
+        if skill.get("name") != name or digest != skill.get("sha256"):
+            raise BundleError(f"combination complete skill differs: {name}")
+        bindings[name] = {"skill": relative}
+    return {
+        "profile": profile,
+        "profile_bytes": profile_bytes,
+        "components": components,
+        "files": files,
+        "bindings": bindings,
+        "delivery": delivery,
+    }
+
+
 def build_bundle(
     run_dir: Path,
     context_path: Path,
@@ -644,6 +859,8 @@ def build_bundle(
     podway_release: Path | None = None,
     podway_previous_release: Path | None = None,
     baseline_profile: Path | None = None,
+    combination_profile: Path | None = None,
+    combination_input: Path | None = None,
 ) -> dict[str, Any]:
     context = load_guest_context(context_path)
     declarations = load_suites()
@@ -662,7 +879,24 @@ def build_bundle(
         "epic-squad",
         "release-acceptance",
         "release-orchestration",
+        "haepari-combination",
     }
+    combination = None
+    if "haepari-combination" in names:
+        if combination_profile is None or combination_input is None:
+            raise BundleError(
+                "haepari-combination requires its profile and complete input root"
+            )
+        combination = load_combination(combination_profile, combination_input)
+        for row in (combination["delivery"] or {}).values():
+            if (
+                row["mode"] == "guest-custody"
+                and Path(row["custody_root"]).parent
+                != Path(context["guest_home"]) / "haepari-artifact-custody"
+            ):
+                raise BundleError("custody root differs from selected guest home")
+    elif combination_profile is not None or combination_input is not None:
+        raise BundleError("combination inputs require the haepari-combination suite")
     if dependency_suites.intersection(names) and baseline_profile is None:
         raise BundleError(
             "Podway upgrade suites require an explicit matching released baseline profile"
@@ -733,6 +967,23 @@ def build_bundle(
         ):
             raise BundleError(
                 "release baseline requires its matching sealed Podway input"
+            )
+    if combination is not None:
+        baseline_components = {row["name"]: row for row in stable_profile["components"]}
+        for name in ("haepari", "codex", "guest-python"):
+            if (
+                name in baseline_components
+                and baseline_components[name] != combination["components"][name]
+            ):
+                raise BundleError(
+                    f"combination must preserve the observed {name} baseline identity"
+                )
+        baseline_podway = (
+            baseline_components.get("podway", {}).get("version", "").removeprefix("v")
+        )
+        if baseline_podway == "0.2.16" and podway_previous_release is None:
+            raise BundleError(
+                "combination baseline requires its original Podway writer input"
             )
     suite_modes: dict[str, str] = {}
     for name in names:
@@ -825,6 +1076,62 @@ def build_bundle(
                 PODWAY_PREVIOUS_RELEASE_FILES,
             )
         )
+    if combination is not None:
+        combined = derive_candidate_profile(
+            combination["profile"],
+            candidate_digest,
+            development_version,
+            candidate_skill_digest,
+        )
+        combined["starting_states"] = [
+            {"kind": "product_absent"},
+            {
+                "kind": "prior_version",
+                "aquarium": manifest_stable_version(stable_profile),
+            },
+        ]
+        errors = _PROFILE_VALIDATOR.validate_profile(combined)
+        if errors:
+            raise BundleError(
+                "invalid derived combination profile: " + "; ".join(errors)
+            )
+        # The released Podway input is independently sealed above. Do not silently
+        # replace a mismatching declaration with the desired release identity.
+        sealed_podway = {row["name"]: row for row in podway_profile["components"]}
+        for name in ("podway", "use-podway"):
+            declared = combination["components"][name]
+            if name == "podway":
+                if (
+                    declared.get("executable_sha256")
+                    != sealed_podway[name]["executable_sha256"]
+                    or declared.get("archive_sha256")
+                    != PODWAY_RELEASE_FILES["archive.tar.gz"]
+                    or declared.get("provenance", {}).get("tag_commit")
+                    != PODWAY_RELEASE_COMMIT
+                ):
+                    raise BundleError(
+                        "combination Podway declaration differs from the official sealed release"
+                    )
+            elif declared.get("skill_tree") != sealed_podway[name].get(
+                "skill_tree"
+            ) or declared.get("pin") != sealed_podway[name].get("pin"):
+                raise BundleError(
+                    "combination Podway skill differs from the official sealed release"
+                )
+        prefix = "dependencies/combination"
+        copied = seal_release_files(
+            combination_input, bundle, prefix, combination["files"]
+        )
+        dependency_files.extend(copied)
+        (bundle / "profile/combination-original.json").write_bytes(
+            combination["profile_bytes"]
+        )
+        (bundle / "profile/combination-candidate.json").write_text(
+            json.dumps(combined, indent=2) + "\n"
+        )
+        dependency_files.extend(
+            ["profile/combination-original.json", "profile/combination-candidate.json"]
+        )
     (bundle / "profile/candidate.json").write_text(
         json.dumps(candidate_profile, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -879,6 +1186,24 @@ def build_bundle(
         "harness_tree_sha256": harness_tree,
         "fixture_requirements": lock_relative,
     }
+    if combination is not None:
+        inputs["combination"] = {
+            "payload_root": "dependencies/combination",
+            "candidate_profile_sha256": hashlib.sha256(
+                (bundle / "profile/combination-candidate.json").read_bytes()
+            ).hexdigest(),
+            "profile_sha256": hashlib.sha256(combination["profile_bytes"]).hexdigest(),
+            "files": combination["files"],
+            "bindings": combination["bindings"],
+        }
+        if combination["delivery"] is not None:
+            inputs["combination"]["delivery"] = combination["delivery"]
+        inputs["host_harness_sha256"] = {
+            name: hashlib.sha256(
+                (Path(__file__).parent / name).read_bytes()
+            ).hexdigest()
+            for name in ("host_bundle.py", "host_wrapper.py", "host_suites.json")
+        }
     if podway_upgrade is not None:
         inputs["podway_upgrade"] = podway_upgrade
         if podway_previous_release is not None:
@@ -897,6 +1222,12 @@ def build_bundle(
     for name in selected:
         if (bundle / name).is_symlink() or not (bundle / name).is_file():
             raise BundleError(f"sealed input is missing or unsafe: {name}")
+    if combination is not None:
+        selected_bytes = sum((bundle / name).stat().st_size for name in selected)
+        if selected_bytes > 48 * 1024 * 1024:
+            raise BundleError(
+                f"combination selected input is {selected_bytes} bytes; native aggregate maximum is 50331648; preserve this unsubmitted preparation"
+            )
     for name in names:
         validate_suite(name, suite_map[name], set(selected))
     inventory_digest = tree_sha256(bundle, selected)
@@ -1015,6 +1346,8 @@ def main() -> int:
     parser.add_argument("--podway-release")
     parser.add_argument("--podway-previous-release")
     parser.add_argument("--baseline-profile", type=Path)
+    parser.add_argument("--combination-profile", type=Path)
+    parser.add_argument("--combination-input", type=Path)
     arguments = parser.parse_args()
     try:
         record = build_bundle(
@@ -1040,6 +1373,8 @@ def main() -> int:
             if arguments.podway_release
             else None,
             baseline_profile=arguments.baseline_profile,
+            combination_profile=arguments.combination_profile,
+            combination_input=arguments.combination_input,
         )
     except (BundleError, OSError, subprocess.SubprocessError) as error:
         print(f"aquarium host bundle: {error}", file=sys.stderr)

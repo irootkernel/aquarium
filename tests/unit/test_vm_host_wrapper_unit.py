@@ -2715,6 +2715,77 @@ class HostWrapperTest(unittest.TestCase):
         ):
             self.assertEqual(module.parse_arguments().baseline_profile, str(source))
 
+    def test_combination_resume_preserves_original_profile_and_input(self):
+        module = self._load_host_wrapper_module("hw_combination_profile")
+        root = Path(tempfile.mkdtemp(dir=self.work)).resolve()
+        source = root / "input"
+        source.mkdir()
+        binary = source / "gaori"
+        binary.write_text("selected current bytes")
+        profile = root / "combination.json"
+        profile.write_text('{"immutable":"explicit profile"}')
+        sealed = root / "bundle/profile/combination-original.json"
+        sealed.parent.mkdir(parents=True)
+        sealed.write_bytes(profile.read_bytes())
+        inputs = root / "bundle/harness/inputs.json"
+        inputs.parent.mkdir(parents=True)
+        inputs.write_text(
+            json.dumps(
+                {
+                    "combination": {
+                        "files": {
+                            "gaori": hashlib.sha256(binary.read_bytes()).hexdigest()
+                        }
+                    }
+                }
+            )
+        )
+        args = types.SimpleNamespace(
+            resource="r",
+            suite="haepari-combination",
+            mode="manual",
+            run_dir=str(root),
+            combination_profile=str(profile),
+            combination_input=str(source),
+        )
+        record = {
+            "resource": "r",
+            "suite": args.suite,
+            "mode": "manual",
+            "declared_suites": [args.suite],
+            "jobs": [
+                {
+                    "suite": args.suite,
+                    "spec": "spec-0.json",
+                    "request_key": "original-p",
+                    "submission_started": True,
+                    "spec_sha256": "a" * 64,
+                }
+            ],
+        }
+        module.validate_record(record, args)
+        binary.write_text("changed bytes")
+        with self.assertRaisesRegex(module.Refusal, "input differs"):
+            module.validate_record(record, args)
+        binary.write_text("selected current bytes")
+        profile.write_text(profile.read_text() + " ")
+        with self.assertRaisesRegex(
+            module.Refusal, "original sealed combination profile"
+        ):
+            module.validate_record(record, args)
+        with mock.patch.dict(
+            os.environ,
+            {
+                "AQUARIUM_VM_COMBINATION_PROFILE": str(profile),
+                "AQUARIUM_VM_COMBINATION_INPUT": str(source),
+                "AQUARIUM_VM_MODE": "manual",
+                "AQUARIUM_VM_SUITE": args.suite,
+            },
+        ):
+            parsed = module.parse_arguments()
+        self.assertEqual(str(profile), parsed.combination_profile)
+        self.assertEqual(str(source), parsed.combination_input)
+
     def test_c35_run_dir_symlink_and_wrong_mode_refused(self):
         module = self._load_host_wrapper_module("hw_refusal_rundir")
         real = tempfile.mkdtemp(prefix="vm-real-", dir=str(self.work))

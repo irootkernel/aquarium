@@ -95,6 +95,9 @@ class HostBundleTest(unittest.TestCase):
         )
         (cls.harness / "scenarios/sorage-adoption.md").write_text("Sorage cases\n")
         (cls.harness / "scenarios/mulgae-adoption.md").write_text("Mulgae cases\n")
+        (cls.harness / "scenarios/haepari-combination.md").write_text(
+            "Combination cases\n"
+        )
         (cls.harness / "scenarios/epic-squad.md").write_text("native Squad cases\n")
         (cls.harness / "scenarios/release-orchestration.md").write_text(
             "release role cases\n"
@@ -177,6 +180,7 @@ class HostBundleTest(unittest.TestCase):
                 "epic-squad",
                 "release-acceptance",
                 "release-orchestration",
+                "haepari-combination",
             }
             and "baseline_profile" not in overrides
         ):
@@ -191,6 +195,7 @@ class HostBundleTest(unittest.TestCase):
                         "epic-squad",
                         "release-acceptance",
                         "release-orchestration",
+                        "haepari-combination",
                     },
                 ),
                 (
@@ -210,8 +215,346 @@ class HostBundleTest(unittest.TestCase):
                     hashes[relative] = hashlib.sha256(path.read_bytes()).hexdigest()
                 parameters[argument] = release
                 patches.enter_context(mock.patch.object(self.module, inventory, hashes))
+            if (
+                suite in {"all", "haepari-combination"}
+                and "combination_profile" not in overrides
+            ):
+                profile, source = self.combination(
+                    parameters["baseline_profile"], parameters["podway_release"]
+                )
+                parameters.update(combination_profile=profile, combination_input=source)
             record = self.module.build_bundle(**parameters)
         return run_dir, record
+
+    def combination(self, baseline, podway_release):
+        document = json.loads(baseline.read_text())
+        components = {row["name"]: row for row in document["components"]}
+        if "guest-python" not in components:
+            document["components"].append(
+                {
+                    "name": "guest-python",
+                    "role": "guest",
+                    "installation_scope": "guest-path",
+                    "version": "3.14.8",
+                }
+            )
+        source = Path(tempfile.mkdtemp(dir=self.work)).resolve()
+        for name, relative in self.module.COMBINATION_BINARIES.items():
+            path = source / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("synthetic " + name)
+            path.chmod(0o755)
+            digest = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+            if name == "haepari":
+                components[name]["executable_sha256"] = digest
+                components[name]["controller_service"]["binary_sha256"] = digest
+                document_baseline = json.loads(baseline.read_text())
+                row = next(
+                    row
+                    for row in document_baseline["components"]
+                    if row["name"] == name
+                )
+                row.update(components[name])
+                baseline.write_text(json.dumps(document_baseline))
+            else:
+                row = {
+                    "name": name,
+                    "role": "guest",
+                    "installation_scope": "guest-path",
+                    "executable_sha256": digest,
+                    "pin": {"commit": "a" * 40},
+                }
+                document["components"].append(row)
+        for name in self.module.COMBINATION_SKILLS:
+            path = source / "skills" / name
+            path.mkdir(parents=True)
+            (path / "SKILL.md").write_text("synthetic " + name)
+            skill = {
+                "name": name,
+                "installation_scope": "shared-agents-skills",
+                "sha256": self.module.skill_tree_digest_from_directory(path),
+                "digest_algorithm": "aquarium-skill-tree-sha256/v1",
+            }
+            if name == "use-haepari":
+                components["haepari"]["skill_tree"] = skill
+                document_baseline = json.loads(baseline.read_text())
+                next(
+                    row
+                    for row in document_baseline["components"]
+                    if row["name"] == "haepari"
+                )["skill_tree"] = skill
+                baseline.write_text(json.dumps(document_baseline))
+            else:
+                document["components"].append(
+                    {
+                        "name": name,
+                        "role": "guest",
+                        "installation_scope": "shared-agents-skills",
+                        "pin": {"commit": "a" * 40},
+                        "skill_tree": skill,
+                    }
+                )
+        # Use the same release derivation as existing fixtures to create the
+        # expected private profile without copying any real installed tool.
+        sandbox = source.parent / (source.name + "-podway")
+        self.module.seal_podway_release(podway_release, sandbox, document)
+        shutil.rmtree(sandbox)
+        document["profile_id"] = "proposed-stable-synthetic-combination"
+        profile = source.parent / (source.name + "-profile.json")
+        profile.write_text(json.dumps(document))
+        return profile, source
+
+    def slim_combination(self, run):
+        raw = run / "bundle/dependencies/combination"
+        profile = run / "bundle/profile/combination-original.json"
+        components = {
+            row["name"]: row for row in json.loads(profile.read_text())["components"]
+        }
+        slim = Path(tempfile.mkdtemp(dir=self.work)).resolve()
+        shutil.copytree(raw / "skills", slim / "skills")
+        custody = "/Users/synthetic/haepari-artifact-custody/task100-unit"
+        tools = {}
+        delivery = {}
+        for name, relative in self.module.COMBINATION_BINARIES.items():
+            component = components[name]
+            row = {
+                "binary_sha256": component["executable_sha256"].removeprefix("sha256:"),
+                "binary_bytes": (raw / relative).stat().st_size,
+                "source_commit": component.get("provenance", {}).get("tag_commit")
+                or component.get("pin", {}).get("commit"),
+            }
+            if name in self.module.OFFICIAL_COMBINATION_URLS:
+                url = self.module.OFFICIAL_COMBINATION_URLS[name]
+                delivery[name] = {
+                    **row,
+                    "mode": "official-download",
+                    "url": url,
+                    "checksum_url": url + ".sha256",
+                    "download_sha256": component.get("archive_sha256")
+                    if name == "haepari"
+                    else row["binary_sha256"],
+                    "member": "haepari-0.1.0-darwin-arm64/haepari"
+                    if name == "haepari"
+                    else None,
+                }
+            else:
+                tools[name] = row
+                delivery[name] = {
+                    **row,
+                    "mode": "guest-custody",
+                    "custody_root": custody,
+                    "manifest_file": "custody-manifest.json",
+                }
+        manifest = slim / "custody-manifest.json"
+        manifest.write_text(json.dumps({"custody_root": custody, "tools": tools}))
+        digest = hashlib.sha256(manifest.read_bytes()).hexdigest()
+        for row in delivery.values():
+            if row["mode"] == "guest-custody":
+                row["manifest_sha256"] = digest
+        (slim / "delivery.json").write_text(json.dumps(delivery))
+        return profile, slim
+
+    def test_slim_delivery_seals_declarations_and_full_skills_without_raw_binaries(
+        self,
+    ):
+        run, _ = self.build("haepari-combination", mode="manual")
+        profile, slim = self.slim_combination(run)
+        loaded = self.module.load_combination(profile, slim)
+        self.assertEqual(set(self.module.COMBINATION_BINARIES), set(loaded["delivery"]))
+        self.assertFalse(
+            any(
+                name.startswith(("bin/", "official/", "containers/"))
+                for name in loaded["files"]
+            )
+        )
+        new, _ = self.build(
+            "haepari-combination",
+            mode="manual",
+            baseline_profile=run / "bundle/profile/stable.json",
+            combination_profile=profile,
+            combination_input=slim,
+        )
+        inputs = json.loads((new / "bundle/harness/inputs.json").read_text())
+        self.assertEqual(loaded["delivery"], inputs["combination"]["delivery"])
+        self.assertEqual(
+            json.loads(profile.read_text())["components"],
+            json.loads((new / "bundle/profile/combination-original.json").read_text())[
+                "components"
+            ],
+        )
+
+    def test_slim_delivery_rejects_invalid_pins_urls_and_unsealed_custody(self):
+        run, _ = self.build("haepari-combination", mode="manual")
+        for fault in ("binary", "source", "url", "manifest"):
+            with self.subTest(fault=fault):
+                profile, slim = self.slim_combination(run)
+                path = slim / "delivery.json"
+                delivery = json.loads(path.read_text())
+                if fault == "binary":
+                    delivery["mulgae"]["binary_sha256"] = "a" * 64
+                elif fault == "source":
+                    delivery["sanho"]["source_commit"] = "b" * 40
+                elif fault == "url":
+                    delivery["sorage"]["url"] = "https://example.invalid/artifact"
+                else:
+                    delivery["gaori"]["manifest_sha256"] = "c" * 64
+                path.write_text(json.dumps(delivery))
+                with self.assertRaises(self.module.BundleError):
+                    self.module.load_combination(profile, slim)
+
+    def test_slim_delivery_refuses_malformed_json_and_wrong_object_shapes(self):
+        run, _ = self.build("haepari-combination", mode="manual")
+        for fault in (
+            "delivery-json",
+            "delivery-object",
+            "delivery-row",
+            "custody-json",
+            "custody-object",
+            "custody-tools",
+            "custody-row",
+        ):
+            with self.subTest(fault=fault):
+                profile, slim = self.slim_combination(run)
+                path = slim / "delivery.json"
+                delivery = json.loads(path.read_text())
+                if fault == "delivery-json":
+                    path.write_text("{")
+                elif fault == "delivery-object":
+                    path.write_text("[]")
+                elif fault == "delivery-row":
+                    delivery["mulgae"] = []
+                    path.write_text(json.dumps(delivery))
+                else:
+                    manifest = slim / "custody-manifest.json"
+                    value = json.loads(manifest.read_text())
+                    if fault == "custody-json":
+                        manifest.write_text("{")
+                    elif fault == "custody-object":
+                        manifest.write_text("[]")
+                    else:
+                        if fault == "custody-tools":
+                            value["tools"] = []
+                        else:
+                            value["tools"]["mulgae"] = []
+                        manifest.write_text(json.dumps(value))
+                    digest = hashlib.sha256(manifest.read_bytes()).hexdigest()
+                    for row in delivery.values():
+                        if row["mode"] == "guest-custody":
+                            row["manifest_sha256"] = digest
+                    path.write_text(json.dumps(delivery))
+                with self.assertRaises(self.module.BundleError):
+                    self.module.load_combination(profile, slim)
+
+    def test_slim_delivery_rejects_raw_duplicate_payload_and_modified_skill(self):
+        run, _ = self.build("haepari-combination", mode="manual")
+        for fault in ("payload", "skill"):
+            with self.subTest(fault=fault):
+                profile, slim = self.slim_combination(run)
+                if fault == "payload":
+                    (slim / "bin").mkdir()
+                    (slim / "bin/mulgae").write_text("undeclared duplicate")
+                else:
+                    (slim / "skills/use-gaori/reference-extra.md").write_text(
+                        "unmatched full tree"
+                    )
+                with self.assertRaises(self.module.BundleError):
+                    self.module.load_combination(profile, slim)
+
+    def test_combination_requires_both_explicit_inputs(self):
+        with self.assertRaisesRegex(
+            self.module.BundleError, "profile and complete input"
+        ):
+            self.build("haepari-combination", mode="manual", combination_profile=None)
+
+    def test_combination_seals_full_inputs_and_separate_host_provenance(self):
+        run, record = self.build("haepari-combination", mode="manual")
+        inputs = json.loads((run / "bundle/harness/inputs.json").read_text())
+        profile = json.loads(
+            (run / "bundle/profile/combination-candidate.json").read_text()
+        )
+        self.assertEqual([], load_validator().validate_profile(profile))
+        self.assertEqual(
+            {"product_absent", "prior_version"},
+            {state["kind"] for state in profile["starting_states"]},
+        )
+        self.assertEqual(
+            inputs["combination"]["candidate_profile_sha256"],
+            hashlib.sha256(
+                (run / "bundle/profile/combination-candidate.json").read_bytes()
+            ).hexdigest(),
+        )
+        for relative, digest in inputs["combination"]["files"].items():
+            self.assertEqual(
+                digest,
+                hashlib.sha256(
+                    (run / "bundle/dependencies/combination" / relative).read_bytes()
+                ).hexdigest(),
+            )
+        self.assertEqual(
+            {"host_bundle.py", "host_wrapper.py", "host_suites.json"},
+            set(inputs["host_harness_sha256"]),
+        )
+        spec = json.loads((run / record["jobs"][0]["spec"]).read_text())
+        self.assertEqual(profile["profile_id"], spec["environment"]["profile_id"])
+        self.assertNotIn(
+            "results/haepari-combination/q-result.json",
+            spec["workload"]["required_outputs"],
+        )
+
+    def test_combination_refuses_changed_binary_skill_and_unsafe_members(self):
+        for fault in ("binary", "skill-reference", "symlink", "missing-component"):
+            with self.subTest(fault=fault):
+                run, _record = self.build("haepari-combination", mode="manual")
+                source = run / "bundle/dependencies/combination"
+                profile = run / "bundle/profile/combination-original.json"
+                if fault == "binary":
+                    (source / "bin/gaori").write_text("other candidate")
+                elif fault == "skill-reference":
+                    (source / "skills/use-gaori/unpinned-reference.md").write_text(
+                        "changed complete tree"
+                    )
+                elif fault == "symlink":
+                    (source / "foreign-link").symlink_to(source / "bin/gaori")
+                else:
+                    document = json.loads(profile.read_text())
+                    document["components"] = [
+                        row
+                        for row in document["components"]
+                        if row["name"] != "use-gaori-status"
+                    ]
+                    profile.write_text(json.dumps(document))
+                with self.assertRaises(self.module.BundleError):
+                    self.module.load_combination(profile, source)
+
+    def test_combination_consumes_current_explicit_codex_version(self):
+        baseline = self.baseline()
+        document = json.loads(baseline.read_text())
+        next(row for row in document["components"] if row["name"] == "codex")[
+            "version"
+        ] = "0.167.2"
+        baseline.write_text(json.dumps(document))
+        run, _record = self.build(
+            "haepari-combination", mode="manual", baseline_profile=baseline
+        )
+        profile = json.loads(
+            (run / "bundle/profile/combination-candidate.json").read_text()
+        )
+        self.assertEqual(
+            "0.167.2",
+            next(row for row in profile["components"] if row["name"] == "codex")[
+                "version"
+            ],
+        )
+
+    def test_baseline_still_requires_released_plugin_provenance(self):
+        profile = self.baseline()
+        document = json.loads(profile.read_text())
+        next(row for row in document["components"] if row["name"] == "aquarium-plugin")[
+            "provenance"
+        ] = {}
+        profile.write_text(json.dumps(document))
+        with self.assertRaises(self.module.BundleError):
+            self.build("install", baseline_profile=profile)
 
     def baseline(self):
         document = json.loads(

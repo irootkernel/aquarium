@@ -168,6 +168,40 @@ def validate_record(record: dict[str, Any], args: Any) -> None:
             or source.read_bytes() != sealed.read_bytes()
         ):
             raise Refusal("resume requires the original sealed baseline profile")
+    supplied_combination = getattr(args, "combination_profile", None)
+    if supplied_combination:
+        source = Path(supplied_combination)
+        sealed = Path(args.run_dir) / "bundle/profile/combination-original.json"
+        if (
+            source != source.resolve()
+            or not source.is_file()
+            or source.read_bytes() != sealed.read_bytes()
+        ):
+            raise Refusal("resume requires the original sealed combination profile")
+    supplied_input = getattr(args, "combination_input", None)
+    if supplied_input:
+        root = Path(supplied_input)
+        inputs = json.loads(
+            (Path(args.run_dir) / "bundle/harness/inputs.json").read_text()
+        )
+        expected = inputs.get("combination", {}).get("files", {})
+        if root != root.resolve() or not root.is_dir() or not expected:
+            raise Refusal("resume requires the original combination input")
+        members = list(root.rglob("*"))
+        if any(
+            path.is_symlink() or not (path.is_dir() or path.is_file())
+            for path in members
+        ):
+            raise Refusal("resume combination input contains unsafe members")
+        actual = {
+            path.relative_to(root).as_posix(): hashlib.sha256(
+                path.read_bytes()
+            ).hexdigest()
+            for path in members
+            if path.is_file()
+        }
+        if actual != expected:
+            raise Refusal("resume combination input differs from the sealed original")
     for key in ("resource", "suite"):
         if record.get(key) != getattr(args, key):
             raise Refusal(
@@ -1367,6 +1401,12 @@ def main() -> int:
                 podway_release=Path(args.podway_release)
                 if getattr(args, "podway_release", None)
                 else None,
+                combination_profile=Path(args.combination_profile)
+                if getattr(args, "combination_profile", None)
+                else None,
+                combination_input=Path(args.combination_input)
+                if getattr(args, "combination_input", None)
+                else None,
                 baseline_profile=Path(args.baseline_profile)
                 if getattr(args, "baseline_profile", None)
                 else None,
@@ -1455,6 +1495,12 @@ def parse_arguments() -> Any:
         os.environ.get("AQUARIUM_VM_FIXTURE_REQUIREMENTS") or None
     )
     arguments.baseline_profile = os.environ.get("AQUARIUM_VM_BASELINE_PROFILE") or None
+    arguments.combination_profile = (
+        os.environ.get("AQUARIUM_VM_COMBINATION_PROFILE") or None
+    )
+    arguments.combination_input = (
+        os.environ.get("AQUARIUM_VM_COMBINATION_INPUT") or None
+    )
     if arguments.probe and arguments.probe not in PROBE_KINDS:
         raise Refusal(f"unknown probe kind: {arguments.probe}")
     if arguments.mode not in {"auto", "manual"}:
