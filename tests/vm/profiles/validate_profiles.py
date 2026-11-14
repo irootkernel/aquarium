@@ -132,17 +132,6 @@ MACHINE_LOCAL_KEYS = frozenset(
         "migration_passed",
     }
 )
-IDENTITY_KEYS = frozenset(
-    {
-        "installation_id",
-        "resource_id",
-        "resource_revision",
-        "known_resource_ids",
-        "service_plan",
-        "effective_settings",
-    }
-)
-
 PROFILE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9.-]*[a-z0-9]$")
 SEMVER_RE = re.compile(
     r"^v?(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
@@ -277,20 +266,11 @@ def _validate_service_plan(plan: Any, label: str, errors: list[str]) -> None:
     instance = plan.get("instance")
     if not isinstance(instance, str) or not SERVICE_INSTANCE_RE.fullmatch(instance):
         errors.append(f"{label}.instance must be a valid service instance id")
-    global_limit = plan.get("global_limit")
-    if (
-        not isinstance(global_limit, int)
-        or isinstance(global_limit, bool)
-        or global_limit < 1
-    ):
-        errors.append(f"{label}.global_limit must be a positive integer")
-    host_limit = plan.get("host_macos_guest_limit")
-    if (
-        not isinstance(host_limit, int)
-        or isinstance(host_limit, bool)
-        or host_limit not in {1, 2}
-    ):
-        errors.append(f"{label}.host_macos_guest_limit must be 1 or 2")
+    _validate_limit_values(
+        {key: plan.get(key) for key in ("global_limit", "host_macos_guest_limit")},
+        label,
+        errors,
+    )
 
 
 def _validate_component(component: Any, index: int, errors: list[str]) -> None:
@@ -675,60 +655,6 @@ def validate_inventory(document: Any) -> list[str]:
     return errors
 
 
-def _inventory_entry_key(entry: dict[str, Any]) -> tuple[str, str] | None:
-    scope = entry.get("installation_scope")
-    path = entry.get("relative_path")
-    if isinstance(scope, str) and isinstance(path, str):
-        return (scope, path)
-    return None
-
-
-def _entry_identity(key: tuple[str, str]) -> str:
-    scope, path = key
-    return f"{scope}:{path}"
-
-
-def compare_inventories(before: Any, candidate: Any) -> dict[str, list[str]]:
-    before_entries: dict[tuple[str, str], dict[str, Any]] = {}
-    for entry in before.get("entries", []):
-        if not isinstance(entry, dict):
-            continue
-        key = _inventory_entry_key(entry)
-        if key is not None:
-            before_entries[key] = entry
-    candidate_entries: dict[tuple[str, str], dict[str, Any]] = {}
-    for entry in candidate.get("entries", []):
-        if not isinstance(entry, dict):
-            continue
-        key = _inventory_entry_key(entry)
-        if key is not None:
-            candidate_entries[key] = entry
-    missing = sorted(
-        _entry_identity(key) for key in set(before_entries) - set(candidate_entries)
-    )
-    added = sorted(
-        _entry_identity(key) for key in set(candidate_entries) - set(before_entries)
-    )
-    changed = sorted(
-        _entry_identity(key)
-        for key in set(before_entries) & set(candidate_entries)
-        if before_entries[key].get("sha256") != candidate_entries[key].get("sha256")
-    )
-    executable_bit_changed = sorted(
-        _entry_identity(key)
-        for key in set(before_entries) & set(candidate_entries)
-        if before_entries[key].get("sha256") == candidate_entries[key].get("sha256")
-        and before_entries[key].get("executable")
-        != candidate_entries[key].get("executable")
-    )
-    return {
-        "missing": missing,
-        "added": added,
-        "changed": changed,
-        "executable_bit_changed": executable_bit_changed,
-    }
-
-
 def apply_override(base: Any, override: Any) -> tuple[dict[str, Any] | None, list[str]]:
     errors = validate_profile(override)
     if errors:
@@ -815,47 +741,6 @@ def skill_only_override_errors(
             )
     if override_component.get("skill_tree") == base_component.get("skill_tree"):
         errors.append(f"component {component_name} did not change its skill tree")
-    return errors
-
-
-def check_identity(recorded: Any, observed: Any) -> list[str]:
-    errors: list[str] = []
-    if not isinstance(recorded, dict) or not isinstance(observed, dict):
-        return ["recorded and observed identities must be objects"]
-    for label, value in (("recorded", recorded), ("observed", observed)):
-        unknown = sorted(set(value) - IDENTITY_KEYS)
-        if unknown:
-            errors.append(f"{label} identity has unknown keys: {', '.join(unknown)}")
-    recorded_id = recorded.get("installation_id")
-    observed_id = observed.get("installation_id")
-    if isinstance(recorded_id, str) and isinstance(observed_id, str):
-        if recorded_id != observed_id:
-            errors.append(
-                f"installation_id_mismatch: recorded {recorded_id}, observed "
-                f"{observed_id}"
-            )
-    elif isinstance(recorded_id, str) and observed_id is None:
-        errors.append("installation_id_unobserved: no surface reported the identity")
-    resource_id = recorded.get("resource_id")
-    if isinstance(resource_id, str):
-        known = observed.get("known_resource_ids")
-        if isinstance(known, list) and resource_id not in known:
-            errors.append(f"resource_unknown: {resource_id} is not registered")
-    recorded_revision = recorded.get("resource_revision")
-    observed_revision = observed.get("resource_revision")
-    if (
-        isinstance(recorded_revision, int)
-        and isinstance(observed_revision, int)
-        and recorded_revision != observed_revision
-    ):
-        errors.append(
-            f"resource_revision_changed: recorded {recorded_revision}, observed "
-            f"{observed_revision}"
-        )
-    if recorded.get("service_plan") != observed.get("service_plan"):
-        errors.append("effective_settings_drift: service plan identity changed")
-    if recorded.get("effective_settings") != observed.get("effective_settings"):
-        errors.append("settings_drift: effective settings changed")
     return errors
 
 

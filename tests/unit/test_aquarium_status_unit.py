@@ -315,6 +315,47 @@ def test_absent_ledger_is_read_only_and_returns_the_empty_state(
     assert not state.exists()
 
 
+def test_show_preserves_channel_history_without_enrollment_reads(
+    status_modules, monkeypatch
+):
+    from contextlib import nullcontext
+    from copy import deepcopy
+
+    cli = status_modules.cli
+    ledger = {
+        "file_revision": 1,
+        "repositories": [
+            {
+                "git_root": "/historical/repository",
+                "components": {
+                    "aquarium_dev": {"outcome": "ready", "version": _version("v0.1.22")}
+                },
+            }
+        ],
+    }
+    original = deepcopy(ledger)
+    monkeypatch.setattr(cli, "locked", lambda _write: nullcontext())
+    monkeypatch.setattr(cli, "read_ledger", lambda: (ledger, None))
+    monkeypatch.setattr(cli, "VERSION_OVERRIDE", ("v0.1.22", "bundled_plugin_manifest"))
+    monkeypatch.setattr(cli, "root_state", lambda _row: "missing")
+    monkeypatch.setattr(
+        Path,
+        "home",
+        lambda: pytest.fail("show must not discover legacy enrollment state"),
+    )
+    report = cli.show(False, None)
+    assert report["status"] == "complete"
+    assert report["repositories"][0]["enrollment"] == {
+        "state": "retired",
+        "project_id": None,
+    }
+    assert (
+        report["repositories"][0]["components"]
+        == ledger["repositories"][0]["components"]
+    )
+    assert ledger == original
+
+
 def test_canonical_yaml_round_trips_and_noncanonical_yaml_fails_closed(
     status_modules, tmp_path, monkeypatch
 ):
@@ -697,59 +738,3 @@ def test_source_observation_without_one_open_version_is_independently_unknown(
     assert plugin["status"] == "observed"
     assert unreleased == {"value": None, "source": "unavailable", "status": "unknown"}
     assert warning == "source_observation_unavailable"
-
-
-def _set_report_home(report, monkeypatch, home: Path):
-    monkeypatch.setattr(report.Path, "home", classmethod(lambda cls: home))
-
-
-def test_enrollment_reports_absent_without_creating_home_state(
-    status_modules, tmp_path, monkeypatch
-):
-    report = status_modules.report
-    _set_report_home(report, monkeypatch, tmp_path)
-
-    value, warning = report.enrollment({"git_root": "/checkout"})
-
-    assert value == {"state": "absent", "project_id": None}
-    assert warning is None
-    assert not (tmp_path / ".aquarium-dev").exists()
-
-
-def test_enrollment_distinguishes_enrolled_invalid_and_unreadable(
-    status_modules, tmp_path, monkeypatch
-):
-    report = status_modules.report
-    _set_report_home(report, monkeypatch, tmp_path)
-    enrollments = tmp_path / ".aquarium-dev/enrollments"
-    enrollments.mkdir(parents=True)
-    path = enrollments / "aquarium.json"
-    document = {
-        "schema": "aquarium-dev-enrollment/v1",
-        "project_id": "aquarium",
-        "checkout": "/checkout",
-        "hook_path": "/checkout/.git/hooks/post-commit",
-        "hook_block": "managed",
-        "enrolled_at": "2026-09-18T00:00:00+00:00",
-    }
-    path.write_text(json.dumps(document), encoding="utf-8")
-
-    assert report.enrollment({"git_root": "/checkout"}) == (
-        {"state": "enrolled", "project_id": "aquarium"},
-        None,
-    )
-
-    document["extra"] = True
-    path.write_text(json.dumps(document), encoding="utf-8")
-    assert report.enrollment({"git_root": "/checkout"}) == (
-        {"state": "invalid", "project_id": None},
-        "enrollment_invalid",
-    )
-
-    path.unlink()
-    enrollments.rmdir()
-    enrollments.symlink_to(tmp_path, target_is_directory=True)
-    assert report.enrollment({"git_root": "/checkout"}) == (
-        {"state": "unreadable", "project_id": None},
-        "enrollment_unreadable",
-    )

@@ -134,7 +134,7 @@ waiting for that approval.
 For every attempt created here or supplied by the bundle, submit exactly one
 `aquarium-production-status-record/v1` after the target reaches `ready`,
 `partial`, `failed`, or `declined`. Populate completion time and only settled
-`sanho` or `aquarium_dev` component observations. Run the current bundled
+`sanho` component observations. Preserve historical `aquarium_dev` records; do not manufacture a new channel observation or infer host detachment. Run the current bundled
 recorder through the verified `aquarium-status` dependency runtime so the
 recorded Aquarium version belongs to this plugin, not a stale PATH payload. Use
 `python3 <plugin-root>/tools/aquarium-status/install.py run-bundled --source

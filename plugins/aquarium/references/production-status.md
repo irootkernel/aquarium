@@ -213,16 +213,9 @@ row revisions intact.
 
 ## Show and forget contracts
 
-`show --format text|json [--refresh] [--source-root <absolute-path>]` reads the
-ledger without changing it. JSON output uses
-`aquarium-production-status-report/v2` and reports ledger state, reporter and
-source versions, independent configuration and release freshness, recorded
-rows, live root identity, and current `aquarium-dev` enrollment observations.
+JSON output uses `aquarium-production-status-report/v2` and reports ledger state, reporter/source versions, independent freshness, stored rows and live root identity. The derived `enrollment` field remains for compatibility and returns `{"state":"retired","project_id":null}`; it no longer observes enrollment files or proves host detachment.
 
-A missing ledger is an `absent` report. Invalid schema or unsafe owned paths stop
-the report. Live root state is `present`, `missing`, `identity_mismatch`, or
-`unreadable`. Enrollment state is independently `enrolled`, `absent`, `invalid`,
-`unreadable`, or `not_checked`; a bad enrollment never discards a valid row.
+A missing ledger is an `absent` report. Invalid schema or unsafe owned paths stop reporting. Live root state is `present`, `missing`, `identity_mismatch`, or `unreadable`. Historical `components.aquarium_dev` records remain readable and unchanged; retired enrollment observation is independent of those facts.
 
 Default show makes no network request. `--refresh` alone authorizes a read of
 `https://api.github.com/repos/irootkernel/aquarium/releases/latest`. Lookup failure
@@ -232,22 +225,9 @@ whose manifest names `aquarium`; it reads that manifest and CHANGELOG only. No
 source root yields `not_checked`; an invalid explicit root exits 2; a valid root
 without exactly one stable Unreleased target yields `unknown`.
 
-The physical source root must be a directory. Each component from it to the
-manifest and CHANGELOG must remain contained, owned only as an external read,
-and contain no symbolic link; each final target must be a regular file no larger
-than 1 MiB. Enrollment joins inspect only the six allowlisted project-ID files
-below `~/.aquarium-dev/enrollments/` and select a valid file whose checkout is
-the exact stored Git root; an unrelated malformed file cannot poison another
-row. Every path component must be a non-symbolic directory, and each final JSON
-must be a non-symbolic regular file no larger than 1 MiB. Violations attributable
-to the selected row yield the corresponding invalid or unreadable state without
-following the target.
+The physical source root must be a directory. Each component from it to the manifest and CHANGELOG must remain contained and without symbolic links; each target must be a regular file no larger than 1 MiB. Reporting does not read `~/.aquarium-dev/enrollments/`.
 
-The report's top-level `status` is `complete` or `partial`. A failed optional
-refresh, unreadable or invalid enrollment, or unavailable requested source
-observation makes it `partial` and adds a closed warning code without changing
-exit 0. An absent enrollment, missing recorded root, unknown optional version,
-or omitted optional observation does not by itself make the report partial.
+The report's top-level `status` is `complete` or `partial`. Failed optional refresh or unavailable requested source observation makes it `partial` and adds a closed warning code without changing exit 0. A missing recorded root, unknown optional version or omitted observation does not itself make reporting partial.
 
 Configuration freshness compares `last_full_ready` with the reporter. Release
 freshness compares the reporter with the refreshed stable release. Each result
@@ -322,14 +302,7 @@ only for an absent ledger or absent row as described above.
 - `repositories`, sorted by `git_root`; and
 - `warnings`, a sorted unique list of objects containing only `code`.
 
-Each report row contains the stored row fields plus `root_state`,
-`configuration_freshness`, `enrollment`, and `language_inventory` (the stored
-observation or null when not yet scanned). `root_state` is `present`,
-`missing`, `identity_mismatch`, or `unreadable`. `enrollment` has exactly
-`state` and `project_id`; the ID is a non-empty string only for `enrolled` and is
-otherwise null. Warning codes are `release_refresh_failed`,
-`source_observation_unavailable`, `enrollment_invalid`, and
-`enrollment_unreadable`.
+Each report row contains the stored fields plus `root_state`, `configuration_freshness`, `enrollment` and `language_inventory` (the stored observation or null). `root_state` is `present`, `missing`, `identity_mismatch` or `unreadable`. `enrollment` has exactly `state: retired` and `project_id: null`. Current warning codes are `release_refresh_failed` and `source_observation_unavailable`; the retired enrollment observer emits no warnings.
 
 `aquarium-production-status-error/v1` has exactly `schema` and `error`; `error`
 has only `code` and `message`. Exit-1 codes are `state_unsafe`,
@@ -474,7 +447,7 @@ runtime inspection envelope above. Version 5 removes Dolgorae's dedicated
 release-verification fields and CLI option. Version 6 replaces Podway daemon diagnosis with Direct CLI identity and its normalized probe. Version 7 adds the
 Haepari CLI, paired-skill, and controller-readiness member, keeping binary,
 skill, and controller verdicts separate. Version 8 adds Sorage native preflight and
-global MCP inspection. The global skill consumes structured
+global MCP inspection. TASK-101 removes the optional `aquarium-dev` selection without renaming the retained setup schema. The global skill consumes structured
 component results and never infers runtime state from prose.
 
 ## Setup ownership and retry protocol
@@ -538,7 +511,7 @@ a new row. Exact `forget` is the only row-removal operation.
 
 All state is local and user-private. Default reporting uploads nothing. Refresh
 sends only the ordinary request needed to read official release metadata. The
-source-root and enrollment joins are local reads. The ledger never stores
+source-root observation is a local read; reporting no longer reads channel enrollments. The ledger never stores
 credentials, repository source, provider output, tool logs, or raw setup
 diagnostics.
 

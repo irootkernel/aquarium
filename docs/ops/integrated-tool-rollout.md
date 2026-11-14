@@ -1,5 +1,7 @@
 # Aquarium-owned Haepari verification across integrated tools
 
+TASK-101's source retirement does not retag the producer-specific observations below. Shared-root, enrollment/hook and client/controller cleanup remain separately approved current TASK-101 obligations. Dated producer absence is not fresh host clearance; TASK-102 qualifies the final changed installation.
+
 ## Target, environment, and owner
 
 Aquarium guides Haepari use in `release-handler`, `epic-handler` and `epic-squad`. It selects the required managed verification, runs existing tool commands inside the appropriate Job, and records original results and cleanup. The supported host is Apple Silicon macOS with the declared shared Haepari installation/resource and dedicated `utm-macos` VM. Individual tool repositories do not need Haepari code, instructions, controllers or adoption projects merely to be verified this way.

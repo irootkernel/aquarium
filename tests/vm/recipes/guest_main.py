@@ -10,10 +10,12 @@ never submits a Job and never operates the VM.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import shutil
+import stat
 import sys
 from pathlib import Path
 from typing import Any
@@ -1119,6 +1121,313 @@ def run_immutability_probe(context: Context) -> int:
         "pass",
         {"sealed": verified, "consumer_state": "none created"},
         consumer_cleanup="verified",
+    )
+
+
+def retirement_preservation(
+    originals: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Observe only the original case's named paths; never enumerate a peer tree."""
+    fields = (
+        "type",
+        "device",
+        "inode",
+        "mode",
+        "uid",
+        "gid",
+        "mtime_ns",
+        "bytes",
+        "sha256",
+    )
+    expected: dict[str, dict[str, Any]] = {}
+
+    def add(
+        path: str, original: dict[str, Any], policy_type: str | None = None
+    ) -> None:
+        if (
+            not isinstance(path, str)
+            or not Path(path).is_absolute()
+            or ".." in Path(path).parts
+            or path == "/"
+        ):
+            raise lib.RecipeError("invalid original preservation path", "incomplete")
+        wanted = {
+            "original": original,
+            "current_policy": {"type": policy_type} if policy_type else {},
+        }
+        if path in expected and expected[path] != wanted:
+            raise lib.RecipeError(
+                "conflicting original preservation facts: " + path, "incomplete"
+            )
+        expected[path] = wanted
+
+    try:
+        if not originals["original_handoff"]["sha256"]:
+            raise ValueError
+        for group in ("qa", "custody"):
+            section = originals[group]
+            if not section["files"]:
+                raise ValueError
+            add(section["root"], {}, "directory")
+            for row in section["files"]:
+                wanted = {"sha256": row["sha256"]}
+                if "bytes" in row:
+                    wanted["bytes"] = row["bytes"]
+                add(row["path"], wanted, "regular_file")
+        if not originals["qa"]["directory_paths"]:
+            raise ValueError
+        for path in originals["qa"]["directory_paths"]:
+            add(path, {}, "directory")
+        for group, rows in (
+            ("legacy_preimage", "objects"),
+            ("podway_preimage", "files"),
+        ):
+            section = originals[group]
+            if len(section[rows]) != 2:
+                raise ValueError
+            for row in section[rows]:
+                if group == "legacy_preimage" and (
+                    row.get("content_read") is not False or "sha256" in row
+                ):
+                    raise ValueError
+                wanted = {key: row[key] for key in fields if key in row}
+                if "type" not in wanted or (
+                    group == "podway_preimage" and "sha256" not in wanted
+                ):
+                    raise ValueError
+                add(row["retained_path"], wanted)
+        for group in ("custody", "legacy_preimage", "podway_preimage"):
+            row = originals[group]["owner_sidecar"]
+            add(row["path"], {"sha256": row["sha256"]}, "regular_file")
+    except (KeyError, TypeError, ValueError) as error:
+        raise lib.RecipeError(
+            "original finite preservation facts incomplete or content scope invalid",
+            "incomplete",
+        ) from error
+
+    observations, violations = [], []
+    for raw, wanted in sorted(expected.items()):
+        path = Path(raw)
+        row: dict[str, Any] = {
+            "path": raw,
+            "comparison_fields": {
+                basis: sorted(values) for basis, values in wanted.items()
+            },
+        }
+        try:
+            info = path.lstat()
+            kind = (
+                "regular_file"
+                if stat.S_ISREG(info.st_mode)
+                else "directory"
+                if stat.S_ISDIR(info.st_mode)
+                else "symlink"
+                if stat.S_ISLNK(info.st_mode)
+                else "other"
+            )
+            row.update(
+                type=kind,
+                device=info.st_dev,
+                inode=info.st_ino,
+                mode=info.st_mode,
+                uid=info.st_uid,
+                gid=info.st_gid,
+                mtime_ns=info.st_mtime_ns,
+                bytes=info.st_size,
+            )
+            if "sha256" in wanted["original"] and kind == "regular_file":
+                # Resolve directories without following links or listing contents.
+                directory = os.open("/", os.O_RDONLY | os.O_DIRECTORY)
+                try:
+                    for part in path.parts[1:-1]:
+                        child = os.open(
+                            part,
+                            os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                            dir_fd=directory,
+                        )
+                        os.close(directory)
+                        directory = child
+                    fd = os.open(
+                        path.name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory
+                    )
+                    with os.fdopen(fd, "rb") as stream:
+                        observed = os.fstat(stream.fileno())
+                        if (observed.st_dev, observed.st_ino) != (
+                            info.st_dev,
+                            info.st_ino,
+                        ):
+                            raise OSError(
+                                "selected preservation file changed before read"
+                            )
+                        row["sha256"] = hashlib.file_digest(
+                            stream, "sha256"
+                        ).hexdigest()
+                finally:
+                    os.close(directory)
+        except FileNotFoundError:
+            row["absent"] = True
+        except OSError as error:
+            row["unreadable_errno"] = error.errno
+        observations.append(row)
+        mismatches = {
+            basis + "_mismatch_fields": [
+                key for key, value in values.items() if row.get(key) != value
+            ]
+            for basis, values in wanted.items()
+        }
+        if any(mismatches.values()):
+            violations.append({"path": raw, **mismatches})
+    return observations, violations
+
+
+def run_retirement_smoke(context: Context) -> int:
+    import haepari_combination
+
+    suite = "retirement-smoke"
+    results = lib.results_directory(suite)
+    sealed = lib.verify_sealed_inputs(context.root)
+    binding = context.inputs["retirement_smoke"]
+    if context.profile_digest("retained") != binding["profile_sha256"]:
+        raise lib.RecipeError(
+            "retained profile differs from sealed identity", "incomplete"
+        )
+
+    before = context.snapshot(suite, "before", profile="retained")
+    originals = binding.get("preservation")
+    protected_before, original_before_violations = retirement_preservation(originals)
+    tools = haepari_combination.observe_tools(context, context.home, "retained")
+    plugin = next(
+        row
+        for row in context.profile("retained")["components"]
+        if row["name"] == "aquarium-plugin"
+    )
+
+    def registration_identity() -> dict[str, Any]:
+        installed = lib.installed_aquarium(context.codex, context.marketplace)
+        source = context.marketplace_path(CANDIDATE_KIND)
+        registered = lib.marketplace_registrations(context.codex).get(
+            context.marketplace
+        )
+        if (
+            not isinstance(installed, dict)
+            or str(installed.get("version", "")).removeprefix("v")
+            != plugin["version"].removeprefix("v")
+            or installed.get("enabled") is not True
+            or registered != str(source)
+            or source.is_symlink()
+            or not source.is_dir()
+        ):
+            raise lib.RecipeError(
+                "native installed plugin/source differs from retained profile",
+                "incomplete",
+            )
+        source_digest = lib.tree_sha256_from_directory(source)
+        if source_digest != plugin["sealed_artifact"]["tree_sha256"]:
+            raise lib.RecipeError(
+                "retained marketplace source bytes differ", "incomplete"
+            )
+        return {
+            "installed": installed,
+            "source": registered,
+            "source_tree_sha256": source_digest,
+        }
+
+    registration = registration_identity()
+    podway_path = lib.context_value("AQUARIUM_GUEST_PODWAY")
+    if Path(podway_path).resolve() != Path(tools["podway"]["path"]).resolve():
+        raise lib.RecipeError(
+            "selected Podway differs from observed retained binary", "incomplete"
+        )
+    podway = lib.run([podway_path, "version", "--identity", "--json"], timeout=120)
+    if podway.returncode:
+        raise lib.RecipeError("retained Podway identity command failed", "incomplete")
+    try:
+        podway_version = json.loads(podway.stdout)
+    except (TypeError, ValueError) as exc:
+        raise lib.RecipeError(
+            "retained Podway identity is not JSON", "incomplete"
+        ) from exc
+    pinned_podway = next(
+        row
+        for row in context.profile("retained")["components"]
+        if row["name"] == "podway"
+    )
+    if (
+        not isinstance(podway_version, dict)
+        or podway_version.get("schema") != "podway.output/v4"
+        or podway_version.get("command") != "version"
+        or not isinstance(podway_version.get("result"), dict)
+        or podway_version["result"].get("schema") != "podway.version-result/v2"
+        or not isinstance(podway_version["result"].get("version"), str)
+        or podway_version["result"].get("version", "").removeprefix("v")
+        != pinned_podway["version"].removeprefix("v")
+    ):
+        raise lib.RecipeError(
+            "retained Podway version differs from profile", "incomplete"
+        )
+    tools_after = haepari_combination.observe_tools(context, context.home, "retained")
+    registration_after = registration_identity()
+    protected_after, original_after_violations = retirement_preservation(originals)
+    after = context.snapshot(suite, "post_cleanup", profile="retained")
+    violations = lib.postcondition_violations(
+        before, after, lambda _scope, _path: False
+    )
+    unchanged = (
+        not violations
+        and not original_before_violations
+        and not original_after_violations
+        and tools == tools_after
+        and registration == registration_after
+        and protected_before == protected_after
+    )
+    identity = {
+        "job": context.job,
+        "guest": context.identity,
+        "transported_payload": context.inputs["candidate"],
+        "executing_host_harness": context.inputs["host_harness_sha256"],
+        "sealed": sealed,
+        "retained_profile_sha256": binding["profile_sha256"],
+        "observed_guest_profile": context.profile("retained")["profile_id"],
+        "tools_before": tools,
+        "tools_after": tools_after,
+        "registration_before": registration,
+        "registration_after": registration_after,
+        "podway_version": podway_version,
+        "original_preservation": originals,
+    }
+    lib.write_document(results / "identity.json", identity)
+    lib.write_document(
+        results / "post-cleanup-inventory.json",
+        {
+            "installed": after,
+            "protected": protected_after,
+            "retained_profile_sha256": binding["profile_sha256"],
+            "original_mismatches": original_after_violations,
+        },
+    )
+    lib.write_document(
+        results / "consumer-cleanup.json",
+        {
+            "outcome": "verified" if unchanged else "failed",
+            "created_outside_job": [],
+            "removed": [],
+            "protected_before": protected_before,
+            "protected_after": protected_after,
+            "violations": violations,
+            "original_before_mismatches": original_before_violations,
+            "original_after_mismatches": original_after_violations,
+            "retained_installation": context.profile("retained")["profile_id"],
+        },
+    )
+    return lib.finish(
+        suite,
+        "pass" if unchanged else "fail",
+        {
+            "retained_profile_sha256": binding["profile_sha256"],
+            "observed_guest_profile": context.profile("retained")["profile_id"],
+            "identity": identity,
+        },
+        consumer_cleanup="verified" if unchanged else "failed",
     )
 
 
@@ -3714,6 +4023,7 @@ def main() -> int:
         "guard-failure-probe": run_guard_failure_probe,
         "immutability-probe": run_immutability_probe,
         "vm-blocked-probe": run_vm_blocked_probe,
+        "retirement-smoke": run_retirement_smoke,
     }
     try:
         context = Context()

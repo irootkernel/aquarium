@@ -20,33 +20,11 @@ covered by the existing transmission approval. After successful useful use,
 repository preservation requires specific content consent, follows original
 workflow finalization and needs a matching grant for any commit.
 
-Aquarium keeps a local production setup-status ledger at
-`~/.aquarium/status.yaml`. Terminal repository setup may record canonical
-absolute Git worktree and common-directory
-paths, a display label, attempt identifiers and times, outcome and scope, sourced
-Aquarium versions, the latest settled Sanho and `aquarium-dev` observations,
-and bounded Go, Rust, Python, TypeScript, and Dart declaration values with
-relative manifest paths and observation times. Terminal setup recording and
-an explicit `refresh-languages` command read local declaration files from
-recorded roots without running project code or making a network request.
-Declaration values must match supported version or version-range forms;
-unrecognized values are not stored. The scanner skips credential-named paths.
-The ledger is designed to exclude credentials, repository source, provider
-output, and raw diagnostics. Default reporting is offline. An explicit
-`--refresh` contacts only
-the official Aquarium GitHub latest stable Release endpoint, and an explicit
-source-root observation reads only that local Aquarium checkout's manifest and
-CHANGELOG. Default reporting may also read the six allowlisted local
-`~/.aquarium-dev/enrollments/<project-id>.json` files for supported Aquarium
-projects until it finds an exact checkout-path match for a recorded row; it
-does not enumerate other files or use the display label as identity. Rows for
-moved or deleted worktrees remain until the user explicitly
-forgets the exact row. Owned state is user-private with `0700` directories and
-`0600` files; a repository-local `.aquarium` path remains forbidden.
+The ledger excludes credentials, repository source, provider output and raw diagnostics. Default reporting is offline and no longer reads legacy enrollment files. Explicit `--refresh` contacts only the official Aquarium GitHub latest stable Release endpoint; source-root observation reads only that checkout's manifest and CHANGELOG. Moved/deleted worktree rows remain until exact-row forgetting. Owned state uses private `0700` directories and `0600` files; repository-local `.aquarium` state remains forbidden.
 
 `dev-setup-bundle` reads only the explicitly supplied local YAML manifest and the listed Git repositories needed for setup preflight. It keeps the manifest path and digest only for the active request, does not discover sibling repositories, persist the manifest, or transmit its contents, delegates the selected global union once to `dev-setup-global`, and delegates repository state to `dev-setup`.
 
-Explicitly invoking `aquarium-dev` reads only the named Git checkout and Aquarium-owned host-local state needed to diagnose the development channel. Separately approved enrollment, hook, build, managed-service activation, and launcher-installation operations may write exact committed artifacts and bounded metadata below `~/.aquarium-dev/`, the exact Aquarium-owned marker in the named checkout's native hook, and the user-local `~/.local/bin/aquarium-dev` launcher. Separately approved runtime installation or update contacts `pypi.org` and `files.pythonhosted.org` to download hash-verified binary wheels into a private virtual environment below `~/.aquarium-dev/manager/`; it uploads no repository source. For a managed service, Aquarium invokes only the immutable producer-owned controller with its project runtime root and exact target generation; that controller owns any LaunchAgent, daemon, socket, registry, log, or recovery access and returns bounded status, plan, and result metadata. The launcher inherits the caller's environment and prepends only `~/.aquarium-dev/bin`; it neither copies credentials nor creates or changes Codex authentication, plugin, or global MCP configuration. Aquarium ships its bundled MCP registration in the plugin itself. Development artifacts and diagnostics are local integration evidence and are not uploaded or promoted to release evidence by this workflow.
+The candidate removes the optional `aquarium-dev` runtime, installer, launcher and bundled MCP declaration. It performs no channel downloads or automatic host cleanup. Historical status records may still contain `aquarium_dev` observations. An older installed release may still have consumers; native transition, hook/service actions, preservation and deletion require separately approved exact effects. Source removal alone does not establish host detachment.
 
 Separately approved `aquarium-status` installation contacts only
 `https://pypi.org/simple` and `https://files.pythonhosted.org` to download the

@@ -1013,6 +1013,14 @@ def _verify_export(
     candidate = consumed.get("candidate")
     if not isinstance(candidate, dict):
         return False
+    if entry["suite"] == "retirement-smoke":
+        retained = sealed_candidate.get("retained_profile_sha256")
+        if (
+            not isinstance(retained, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", retained)
+            or consumed.get("retained_profile_sha256") != retained
+        ):
+            return False
     return all(
         candidate.get(key) == sealed_candidate.get(key)
         for key in ("git_sha", "development_version", "artifact_tree_sha256")
@@ -1098,6 +1106,10 @@ def settle_suite_result(
             "development_version": binding.get("development_version"),
             "artifact_tree_sha256": binding.get("artifact_tree_sha256"),
         }
+        if entry["suite"] == "retirement-smoke":
+            sealed_candidate["retained_profile_sha256"] = spec["environment"][
+                "profile_digest"
+            ]
         export_destination = export_results(
             binary, run, entry, required_outputs, sealed_candidate
         )
@@ -1383,6 +1395,9 @@ def main() -> int:
                 args.resource,
                 args.mode,
                 candidate_sha=args.candidate_sha,
+                retained_profile=Path(args.retained_profile)
+                if getattr(args, "retained_profile", None)
+                else None,
                 artifact_dir=Path(args.artifact_dir) if args.artifact_dir else None,
                 artifact_manifest=(
                     json.loads(Path(args.artifact_manifest).read_text(encoding="utf-8"))
@@ -1495,6 +1510,7 @@ def parse_arguments() -> Any:
         os.environ.get("AQUARIUM_VM_FIXTURE_REQUIREMENTS") or None
     )
     arguments.baseline_profile = os.environ.get("AQUARIUM_VM_BASELINE_PROFILE") or None
+    arguments.retained_profile = os.environ.get("AQUARIUM_VM_RETAINED_PROFILE") or None
     arguments.combination_profile = (
         os.environ.get("AQUARIUM_VM_COMBINATION_PROFILE") or None
     )

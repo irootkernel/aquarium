@@ -7,7 +7,6 @@ import argparse
 import importlib.util
 import json
 import math
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -28,7 +27,6 @@ GLOBAL_COMPONENTS = (
     "podway",
     "haepari",
     "ouroboros",
-    "aquarium-dev",
     "aquarium-status",
     "aquarium-python",
 )
@@ -501,46 +499,6 @@ def inspect_global(
         tools["humanizer"] = inspector.inspect_humanizer()
     if "im-not-ai" in requested_components:
         tools["im-not-ai"] = inspector.inspect_im_not_ai()
-    if "aquarium-dev" in requested_components:
-        script = Path(__file__).resolve().parents[3] / "tools/aquarium-dev/install.py"
-        try:
-            probe = subprocess.run(
-                [sys.executable, "-B", str(script), "diagnose"],
-                cwd=neutral_cwd,
-                capture_output=True,
-                text=True,
-                timeout=timeout_seconds,
-                check=False,
-            )
-            if probe.returncode:
-                failure = {
-                    "status": "unverifiable",
-                    "reason": "probe_failed",
-                    "exit_code": probe.returncode,
-                    "problem": probe.stderr.strip(),
-                }
-                try:
-                    failure["diagnostic"] = json.loads(probe.stderr)
-                except ValueError:
-                    pass
-                tools["aquarium-dev"] = failure
-            else:
-                tools["aquarium-dev"] = json.loads(probe.stdout)
-        except subprocess.TimeoutExpired as error:
-            tools["aquarium-dev"] = {
-                "status": "unverifiable",
-                "reason": "probe_timeout",
-                "timeout_seconds": timeout_seconds,
-                "problem": str(error),
-            }
-        except (OSError, ValueError, subprocess.SubprocessError) as error:
-            tools["aquarium-dev"] = {
-                "status": "unverifiable",
-                "reason": "invalid_json"
-                if isinstance(error, ValueError)
-                else "probe_failed",
-                "problem": str(error),
-            }
     if "aquarium-status" in requested_components:
         tools["aquarium-status"] = inspect_aquarium_status()
     if "aquarium-python" in requested_components:

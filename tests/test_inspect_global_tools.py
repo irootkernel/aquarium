@@ -26,124 +26,6 @@ sys.path.insert(0, str(GLOBAL_SCRIPT.parent))
 import inspect_global_tools
 
 
-@pytest.mark.parametrize(
-    "case", ["timeout", "failed", "invalid_json", "unavailable", "broken"]
-)
-def test_aquarium_runtime_probe_preserves_failure_reason(tmp_path, monkeypatch, case):
-    diagnostic = {
-        "schema": "aquarium-dev-runtime-error/v1",
-        "error": {"code": "runtime_install_failed"},
-    }
-
-    def probe(command, **kwargs):
-        assert kwargs["timeout"] == 3.5
-        if case == "timeout":
-            raise subprocess.TimeoutExpired(command, 3.5)
-        if case == "unavailable":
-            raise OSError("interpreter unavailable")
-        if case == "failed":
-            return subprocess.CompletedProcess(command, 1, "", json.dumps(diagnostic))
-        if case == "invalid_json":
-            return subprocess.CompletedProcess(command, 0, "{", "")
-        return subprocess.CompletedProcess(
-            command,
-            0,
-            json.dumps({"status": "broken", "problem": "receipt missing"}),
-            "",
-        )
-
-    monkeypatch.setattr(inspect_global_tools.subprocess, "run", probe)
-    payload = inspect_global_tools.inspect_global(
-        str(tmp_path), 3.5, components=("aquarium-dev",)
-    )["tools"]["aquarium-dev"]
-    if case == "broken":
-        assert payload == {"status": "broken", "problem": "receipt missing"}
-    else:
-        assert payload["status"] == "unverifiable"
-        assert payload["problem"]
-        assert (
-            payload["reason"]
-            == {
-                "timeout": "probe_timeout",
-                "failed": "probe_failed",
-                "invalid_json": "invalid_json",
-                "unavailable": "probe_failed",
-            }[case]
-        )
-        if case == "failed":
-            assert payload["exit_code"] == 1
-            assert payload["diagnostic"] == diagnostic
-        elif case == "timeout":
-            assert payload["timeout_seconds"] == 3.5
-
-
-@pytest.mark.parametrize(
-    ("status", "installed", "launcher_state", "action"),
-    [
-        (
-            "current",
-            {
-                "plugin_version": "0.1.17",
-                "source_sha256": "installed-source",
-                "python_version": "3.13.7",
-            },
-            "managed_current",
-            None,
-        ),
-        ("missing", None, "missing", "install"),
-        (
-            "outdated",
-            {
-                "plugin_version": "0.1.16",
-                "source_sha256": "old-source",
-                "python_version": "3.13.7",
-            },
-            "managed_outdated",
-            "update",
-        ),
-        ("broken", None, "managed_outdated", "repair"),
-        ("unsafe", None, "unknown", None),
-    ],
-)
-def test_aquarium_status_diagnosis_is_passed_through(
-    monkeypatch, status, installed, launcher_state, action
-):
-    diagnosis = {
-        "schema": "aquarium-status-runtime-inspection/v1",
-        "status": status,
-        "bundled": {
-            "plugin_version": "0.1.17",
-            "source_sha256": "bundled-source",
-        },
-        "installed": installed,
-        "launcher": {
-            "path": "/isolated/home/.local/bin/aquarium-status",
-            "state": launcher_state,
-        },
-        "runtime_root": "/isolated/home/.local/share/aquarium-status",
-        "action": action,
-    }
-    diagnose = mock.Mock(return_value=diagnosis)
-    module = mock.Mock(diagnose=diagnose)
-    spec = mock.Mock(loader=mock.Mock())
-    monkeypatch.setattr(
-        inspect_global_tools.importlib.util,
-        "spec_from_file_location",
-        lambda *args, **kwargs: spec,
-    )
-    monkeypatch.setattr(
-        inspect_global_tools.importlib.util,
-        "module_from_spec",
-        lambda requested_spec: module,
-    )
-
-    result = inspect_global_tools.inspect_aquarium_status()
-
-    assert result is diagnosis
-    diagnose.assert_called_once()
-    assert diagnose.call_args.args[0].name == "aquarium-status"
-
-
 def test_aquarium_status_component_scope_is_isolated(tmp_path, monkeypatch):
     inspector = mock.Mock()
     diagnosis = {
@@ -322,7 +204,6 @@ class TestInspectGlobalTools:
             "humanizer",
             "im-not-ai",
             "ouroboros",
-            "aquarium-dev",
             "aquarium-status",
             "aquarium-python",
         }
@@ -2199,7 +2080,7 @@ HAEPARI_CAPABILITY_SET = [
 ]
 
 FAKE_HAEPARI = (
-    "#!/usr/bin/env python3\n"
+    f"#!{sys.executable}\n"
     "import hashlib, json, os, sys\n"
     'key = " ".join(sys.argv[1:])\n'
     'log = os.environ.get("FAKE_HAEPARI_LOG")\n'

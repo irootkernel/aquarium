@@ -19,7 +19,7 @@ supply helper dependencies.
 
 Aquarium plugin installation and updates belong to the host's plugin-management flow. A request to install or update only the Aquarium plugin, including a specific version, does not select this skill. If this skill was selected for that request, return to the host's plugin-management flow before reading the tool catalog or running any diagnostic. Do not infer a global tool setup request from plugin installation.
 
-Use this skill for an explicit global development setup request or a workflow continuation naming a global component that needs attention. An explicit request to install or update the optional `aquarium-dev` or `aquarium-status` runtime remains in scope; installing or updating the Aquarium plugin alone does not request either runtime.
+Use this skill for an explicit global development setup request or a workflow continuation naming a global component that needs attention. An explicit request to install or update the optional `aquarium-status` runtime remains in scope; installing or updating the plugin alone does not request it. The candidate no longer supplies `aquarium-dev` setup; existing host retirement requires a separately approved native transition and cleanup.
 
 Read the selected sections of [the shared tool catalog](../../references/tool-catalog.md). Do not read repository-local `.podway`, `.mulgae`, `.gaori`, `.sorage`, `.codex`, AGENTS.md, or CLAUDE.md as global setup evidence.
 
@@ -48,7 +48,6 @@ If a freshness lookup, download, validation, or comparison fails, report `freshn
 - Podway's single Direct CLI identity and Sorage's minimal user-global initialization.
 - Lora's `lore-commits` and `lore-query`, upstream Deslop, Humanizer, and im-not-ai's `humanize-korean` skill.
 - Ouroboros package version, Codex rules and skills, MCP runtime, effective global registration, and live exposure when safely observable.
-- The optional `aquarium-dev` CLI and MCP runtime bundled with Aquarium. Install and update it only on an explicit request; it is not part of production-binary readiness. Its MCP registration belongs to the plugin, not the global MCP table, and it has no paired skill.
 - The `aquarium-python` shared virtual environment. Diagnose it by default and include it as a direct prerequisite of scoped Podway setup. Prepare it once for a setup bundle before manifest normalization.
 - The `aquarium-status` user-global reporter runtime bundled with Aquarium. Diagnose it by default. Install, update, or repair its private hash-pinned runtime and launcher only after a separate exact approval. It is setup-recording infrastructure, not a bundle manifest tool and not part of production-binary readiness.
 - Haepari's shared per-user release controller and capacity-one VM resource: the controller is selected only through its explicit `HAEPARI_HOME` root, its readiness is separate from CLI, paired-skill, and resource readiness, and registration or service installation stays with Haepari's native authority. Haepari is optional like Dolgorae and Sanho.

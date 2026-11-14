@@ -8,14 +8,14 @@ Aquarium is distributed as one Codex plugin whose declarative workflows coordina
 - [Workflow runtime](workflow-runtime.md) follows invocation through discovery, approval, execution, and handoff.
 - [State and evidence](state-and-evidence.md) separates roadmap, Procedure, Git, host, and durable evidence planes.
 - [Verification](verification.md) explains the layered test architecture and the limits of each proof.
-- [Development channel](development-channel.md) traces exact-main production, immutable publication, atomic executable selection, and inherited-environment launch.
+- [Development packaging and retirement](development-channel.md) separates committed payloads, current harnesses and independently approved host cleanup.
 
 ## Core Boundaries
 
 - Aquarium coordinates Codex, Dolgorae, Herdr, Podway, Sanho, Mulgae, Gaori, Sorage, Haepari, Ouroboros, Lora, Deslop, Humanizer, and im-not-ai but does not vendor or own their upstream implementations. Herdr owns native reviewer execution; the [migration contract](../../plugins/aquarium/references/herdr-migration.md) preserves legacy sources, customizations and review evidence without retired dispatch. Haepari owns the per-user release controller, registered resources, managed Job lifecycles, and advisory locks; Aquarium owns the immutable consumer VM profiles (`tests/vm/profiles/`), sealed host-bundle wrapper (`make test-vm-host`), outer-boundary occupancy rules, and guest verification/cleanup recipes ([Haepari integration](../../plugins/aquarium/references/haepari-integration.md), [Haepari VM operations](../ops/haepari-vm-verification.md)).
 - Skills preserve separate authority for diagnosis, network lookup, installation, provider transmission, repository mutation, commits, and publication.
 - Podway and native tools own runtime and execution evidence. Sorage owns its Vault, Project identity, Handoffs, Project Memos, and derived inbox marker. Ignored runtime artifacts are not roadmap history, architecture, or durable specifications.
-- `aquarium-status` alone owns the private production setup ledger and its installed reporting runtime. Setup skills submit closed terminal-attempt documents; they do not write YAML. Ledger history remains separate from repository authority, live tool health, and `aquarium-dev` enrollment.
+- `aquarium-status` alone owns the private production setup ledger and its installed reporting runtime. Setup skills submit closed terminal-attempt documents; they do not write YAML. Ledger history remains separate from repository authority, live tool health and host retirement. Historical optional-component rows remain readable without legacy enrollment reads.
 - Canonical documentation describes current structure and delivery intent; it does not replace executable source, Git history, external release proof, or runtime activation evidence.
 
 ## Adaptive definitions and execution

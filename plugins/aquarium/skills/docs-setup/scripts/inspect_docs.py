@@ -510,7 +510,7 @@ def inspect_epic_lifecycle(
             )
         return findings
 
-    if status != "Completed" and status not in ACTIVE_EPIC_STATUSES:
+    if status not in {"Completed", "Cancelled"} and status not in ACTIVE_EPIC_STATUSES:
         if tasks or contract_evidence:
             findings.append(
                 finding(

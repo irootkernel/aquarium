@@ -77,7 +77,7 @@ def main() -> int:
         errors = dependency_errors(minimums, installed)
         if sys.version_info < (3, 11):
             errors.append("Python 3.11 or newer is required")
-        for module in ("pytest", "yaml", "mcp"):
+        for module in ("pytest", "yaml", "jsonschema"):
             if importlib.util.find_spec(module) is None:
                 errors.append(f"missing module: {module}")
         ruff = subprocess.run(

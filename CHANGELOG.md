@@ -34,6 +34,10 @@ This file records concise shipped outcomes and the planned next stable release.
 - Add a bounded installed `release-handler` plan-readiness startup check to managed release acceptance and a separate managed `release-orchestration` suite for full feature verification.
 - Require bounded Executor delivery and independent plan, QA-readiness, publication-readiness and publication-completion assessments in `release-handler`, including QA-neutral eligibility before equivalence approval, repository-defined gate order, post-hook commit binding, original publication and VM cleanup evidence, and same-Job recovery; finish active releases with their installed workflow before updating.
 
+### Removed
+
+- Remove the `aquarium-dev` MCP server and shared runtime in favor of VM artifacts built directly from committed source; existing users must settle channel consumers and explicitly approve legacy runtime removal.
+
 ## v0.1.22 - 2026-11-04
 
 ### Added

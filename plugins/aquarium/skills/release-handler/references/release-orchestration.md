@@ -308,15 +308,7 @@ remain separate.
 This contract adds no blanket ban on publishing an Epic member before all members
 finish; apply existing release requirements to its actual candidate and effects.
 
-The current output is one Codex plugin: the
-marketplace declaration at `.agents/plugins/marketplace.json` selects
-`plugins/aquarium`; its [manifest](../../../.codex-plugin/plugin.json) owns version,
-skills and MCP entrypoints. The payload includes skills, references, assets,
-hooks, helpers and bundled tools. The
-[development producer](../../../tools/aquarium-dev/build_aquarium_artifact.py)
-copies the marketplace declaration and plugin tree as `artifact_kind: codex-plugin`
-with a development-version stamp. That artifact does not prove official
-distribution readiness.
+The current output is one Codex plugin. The marketplace declaration at `.agents/plugins/marketplace.json` selects `plugins/aquarium`; its [manifest](../../../.codex-plugin/plugin.json) owns version and skills, with no bundled MCP declaration. The payload includes skills, references, assets, hooks, helpers and tools. The source repository's host-only committed builder copies marketplace/plugin bytes as `artifact_kind: codex-plugin` with a development-version stamp. That artifact does not establish distribution readiness.
 
 The selected installed qualification claim is the Codex edition only. Generic
 ordinary Codex/Claude semantics and development Herdr participation by other CLIs

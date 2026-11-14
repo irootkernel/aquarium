@@ -57,13 +57,11 @@ Aquarium은 third-party skill이나 문서 source를 저장소에 내장(vendor)
 
 외부 패키지가 필요한 Aquarium의 Python 보조 도구는 `$aquarium:dev-setup-global`에서 준비한 사용자 공용 가상환경을 사용합니다. 여러 프로젝트에서 PyYAML과 `jsonschema`를 재사용하며 프로젝트 가상환경이나 글로벌 Python 패키지는 변경하지 않습니다. 기존 사용자는 업데이트 후 이 환경을 한 번 준비해야 합니다. 플러그인 설치만으로는 자동 설치되지 않으며 초기 실행에는 Python 3.11 이상이 필요하며 가상환경 생성에는 런타임 계약에 명시된 Apple Silicon CPython wheel 지원 범위를 따릅니다. 표준 라이브러리만 사용하는 설정 검사는 환경 준비 전에도 실행할 수 있습니다. Podway opt-out과 Git 저장소가 아닌 `new-project` 경로는 기존의 무의존 동작을 유지합니다([Python 런타임 설정](plugins/aquarium/references/python-runtime.md)).
 
-## Development Channel
+## 공용 개발 채널 종료
 
-`aquarium-dev`은 Aquarium maintainer를 위한 명시적 Apple Silicon macOS development channel입니다. 사용자가 지정한 canonical local-`main` checkout 하나를 등록하고, commit이 정확히 고정된 immutable artifact를 `~/.aquarium-dev/` 아래에 만들며, foreground executable 또는 producer-owned managed service를 `~/.aquarium-dev/bin/`에 atomic하게 노출합니다. Enrollment, hook 변경, build, managed-service activation, launcher 설치는 각각 별도 승인을 유지합니다.
+이 후보에서는 선택 사항이던 `aquarium-dev` manager, launcher, MCP server와 producer target을 제거합니다. 호스트에서는 설치된 정식 도구와 임시 fixture로 개발하고, 후보 설치가 필요한 검증은 전용 UTM VM에서 수행합니다. 호스트의 VM adapter는 공용 채널 없이도 commit이 고정된 플러그인 artifact를 만듭니다.
 
-Aquarium 플러그인에는 manager의 MCP tool과 CLI가 포함되어 있습니다. 대화에서 development channel 진단을 요청하거나 `aquarium-dev diagnose --repository <absolute-git-root>`를 실행합니다. 선택 사항인 `aquarium-dev` runtime의 최초 설치와 이후 업데이트는 `$aquarium:dev-setup-global`에 명시적으로 요청하고 완료 후 새 Codex 세션을 시작합니다. 플러그인 업데이트만으로 설치된 runtime이 자동 교체되지는 않습니다. 자세한 절차는 [development runbook](docs/ops/development-channel.md)을 참고합니다.
-
-사용자 전역의 `aquarium-dev <tool> [args...]` launcher는 지원되는 tool만 허용합니다. Foreground tool의 development generation이 없을 때만 두 Aquarium root 밖의 caller global `PATH`로 fallback합니다. Managed service는 producer controller가 동일 generation을 ready 또는 busy 상태로 보고할 때만 실행하며 pending, missing, mismatched, stopped, recovering 상태에서는 production으로 fallback하지 않고 fail closed합니다. Podway의 service enrollment는 legacy development build에만 적용됩니다. 단일 Direct CLI를 쓰는 Podway >=v0.2.14는 지원하지 않습니다. Sanho는 명시적인 선택 항목입니다. Legacy development channel의 종료는 EPIC-033이 담당합니다. Manager는 caller의 Codex home, authentication, plugin installation, global MCP configuration을 변경하지 않습니다. Development artifact는 local integration evidence일 뿐 release나 distribution evidence가 아닙니다.
+기존 설치의 native 설정 전환, 활성 session·client 정리와 정확한 legacy 상태 삭제에는 별도 승인이 필요합니다. 소스 제거만으로 호스트에서 채널이 비활성화되었다고 판단하지 않습니다. TASK-101은 실제 호스트 전환·삭제 관찰과 재설치 없는 managed VM smoke를, TASK-102는 최종 변경 후보의 설치·업그레이드 검증을 담당합니다. 자세한 순서는 [종료 runbook](docs/ops/development-channel.md)을 따릅니다.
 
 ## 주요 워크플로
 

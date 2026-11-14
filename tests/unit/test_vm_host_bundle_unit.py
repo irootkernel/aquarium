@@ -31,6 +31,42 @@ GUEST_CONTEXT = {
 }
 
 
+def retirement_originals():
+    owner = {"path": "/Users/synthetic/owner.json", "sha256": "a" * 64}
+    return {
+        "original_handoff": {"sha256": "b" * 64},
+        "qa": {
+            "files": [
+                {"path": f"/qa/file-{index}", "sha256": "a" * 64, "bytes": 1}
+                for index in range(32)
+            ],
+            "directory_paths": [f"/qa/dir-{index}" for index in range(42)],
+            "not_captured": ["Whole-root digest"],
+        },
+        "custody": {
+            "files": [
+                {"path": f"/custody/bin/tool-{index}", "sha256": "a" * 64}
+                for index in range(6)
+            ],
+            "owner_sidecar": owner,
+        },
+        "legacy_preimage": {
+            "objects": [
+                {"retained_path": "/legacy/launcher", "content_read": False},
+                {"retained_path": "/legacy/root", "content_read": False},
+            ],
+            "owner_sidecar": owner,
+        },
+        "podway_preimage": {
+            "files": [
+                {"retained_path": "/podway/plist"},
+                {"retained_path": "/podway/service.json"},
+            ],
+            "owner_sidecar": owner,
+        },
+    }
+
+
 def load_module(name: str, path: Path):
     spec = importlib.util.spec_from_file_location(name, path)
     assert spec is not None and spec.loader is not None
@@ -50,7 +86,7 @@ def load_validator():
 class HostBundleTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.work = Path(tempfile.mkdtemp(prefix="vm-host-bundle-"))
+        cls.work = Path(tempfile.mkdtemp(prefix="vm-host-bundle-")).resolve()
         cls.addClassCleanup(shutil.rmtree, cls.work, True)
         cls.repository = cls.work / "repository"
         cls.repository.mkdir()
@@ -69,16 +105,6 @@ class HostBundleTest(unittest.TestCase):
         status = cls.repository / "plugins/aquarium/tools/aquarium-status"
         status.mkdir(parents=True)
         (status / "install.py").write_text("# synthetic installer\n")
-        dev = cls.repository / "plugins/aquarium/tools/aquarium-dev"
-        dev.mkdir(parents=True)
-        source_dev = REPOSITORY / "plugins/aquarium/tools/aquarium-dev"
-        for module in sorted(source_dev.glob("*.py")):
-            shutil.copyfile(module, dev / module.name)
-        (cls.repository / "Makefile").write_text(
-            "aquarium-dev-build:\n"
-            "\t@python3 plugins/aquarium/tools/aquarium-dev/"
-            "build_aquarium_artifact.py build\n"
-        )
         # The harness lives inside the fixture repository: tracked files
         # are committed, and candidate-style untracked files appear after
         # the commit, exactly like development reality.
@@ -491,7 +517,12 @@ class HostBundleTest(unittest.TestCase):
                 ).hexdigest(),
             )
         self.assertEqual(
-            {"host_bundle.py", "host_wrapper.py", "host_suites.json"},
+            {
+                "host_bundle.py",
+                "host_wrapper.py",
+                "host_suites.json",
+                "candidate_artifact.py",
+            },
             set(inputs["host_harness_sha256"]),
         )
         spec = json.loads((run / record["jobs"][0]["spec"]).read_text())
@@ -1207,6 +1238,110 @@ class HostBundleTest(unittest.TestCase):
         run_dir, _record = self.build()
         spec = json.loads((run_dir / "spec-0.json").read_text())
         self.assertNotIn("setup", spec)
+
+    def test_retirement_seals_retained_profile_without_retagging_payload(self):
+        profile = self.baseline()
+        retained = json.loads(profile.read_text())
+        plugin = next(
+            row for row in retained["components"] if row["name"] == "aquarium-plugin"
+        )
+        plugin["sealed_artifact"] = {
+            "tree_sha256": "c" * 64,
+            "development_version": "v0.1.22-dev.c783a6dfbd0b",
+        }
+        profile.write_text(json.dumps(retained))
+        context = self.work / "retirement-context.json"
+        context.write_text(
+            json.dumps(
+                {
+                    **GUEST_CONTEXT,
+                    "retirement_protected_paths": [
+                        "/Users/synthetic/retained-preimage"
+                    ],
+                    "retirement_preservation": retirement_originals(),
+                }
+            )
+        )
+        run, _ = self.build(
+            "retirement-smoke", retained_profile=profile.resolve(), context_path=context
+        )
+        inputs = json.loads((run / "bundle/harness/inputs.json").read_text())
+        spec = json.loads((run / "spec-0.json").read_text())
+        self.assertEqual(
+            profile.read_bytes(), (run / "bundle/profile/retained.json").read_bytes()
+        )
+        self.assertEqual(
+            hashlib.sha256(profile.read_bytes()).hexdigest(),
+            spec["environment"]["profile_digest"],
+        )
+        self.assertEqual(self.git_sha, inputs["candidate"]["git_sha"])
+        self.assertIn("candidate_artifact.py", inputs["host_harness_sha256"])
+        self.assertNotIn("setup", spec)
+        self.assertEqual(5, len(spec["workload"]["required_outputs"]))
+        self.assertEqual(
+            ["/Users/synthetic/retained-preimage"],
+            inputs["retirement_smoke"]["protected_paths"],
+        )
+        self.assertEqual(
+            retirement_originals(), inputs["retirement_smoke"]["preservation"]
+        )
+
+    def test_retirement_refuses_missing_identity_or_approved_preservation_scope(self):
+        with self.assertRaises(self.module.BundleError):
+            self.build("retirement-smoke")
+        with self.assertRaises(self.module.BundleError):
+            self.build("retirement-smoke", retained_profile=self.baseline().resolve())
+        with self.assertRaises(self.module.BundleError):
+            self.build("baseline", retained_profile=self.baseline().resolve())
+
+    def test_retirement_refuses_incomplete_or_content_expanding_originals(self):
+        profile = self.baseline()
+        retained = json.loads(profile.read_text())
+        plugin = next(
+            row for row in retained["components"] if row["name"] == "aquarium-plugin"
+        )
+        plugin["sealed_artifact"] = {
+            "tree_sha256": "c" * 64,
+            "development_version": "v0.1.22-dev.c783a6dfbd0b",
+        }
+        profile.write_text(json.dumps(retained))
+        for fault in (
+            "missing",
+            "missing_directory",
+            "missing_file",
+            "duplicate_directory",
+            "legacy_hash",
+        ):
+            with self.subTest(fault=fault):
+                original = retirement_originals()
+                if fault == "missing":
+                    del original["podway_preimage"]
+                elif fault == "missing_directory":
+                    original["qa"]["directory_paths"].pop()
+                elif fault == "missing_file":
+                    original["custody"]["files"].pop()
+                elif fault == "duplicate_directory":
+                    original["qa"]["directory_paths"][-1] = original["qa"][
+                        "directory_paths"
+                    ][0]
+                else:
+                    original["legacy_preimage"]["objects"][0]["sha256"] = "a" * 64
+                context = self.work / ("retirement-" + fault + ".json")
+                context.write_text(
+                    json.dumps(
+                        {
+                            **GUEST_CONTEXT,
+                            "retirement_protected_paths": ["/qa"],
+                            "retirement_preservation": original,
+                        }
+                    )
+                )
+                with self.assertRaises(self.module.BundleError):
+                    self.build(
+                        "retirement-smoke",
+                        retained_profile=profile.resolve(),
+                        context_path=context,
+                    )
 
 
 if __name__ == "__main__":

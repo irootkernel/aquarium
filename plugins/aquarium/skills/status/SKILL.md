@@ -39,7 +39,7 @@ directly.
   active toolchain versions. Null means not yet observed; an empty declaration
   list means that language has no recognized version declaration.
 - Keep configuration freshness, release freshness, live root identity, and
-  `aquarium-dev` enrollment independent. Preserve partial-report warnings.
+  historical optional-component records independent. Preserve partial-report warnings. The compatible `enrollment` field reports `retired`; it performs no legacy filesystem observation and proves no host cleanup.
 
 ## Refresh Declared Languages
 

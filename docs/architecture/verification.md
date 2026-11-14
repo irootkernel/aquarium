@@ -2,6 +2,8 @@
 
 Aquarium verification is local and layered. Each layer has a bounded claim, and a higher-level workflow must not present one layer as proof of another.
 
+TASK-101's finite non-installing retirement smoke verifies a fresh reduced host route and the retained installed guest within one managed Job. It does not install the transported payload or replace TASK-102's final changed-candidate upgrade qualification. Source checks and preparation supply neither host-detachment nor VM acceptance evidence.
+
 ## Layers
 
 | Layer | Main authority | Claim |

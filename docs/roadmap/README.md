@@ -1071,7 +1071,7 @@ TASK-100 records native P/Q PASS, complete evidence and verified cleanup for com
 | Task | Title | Summary | Status | Depends On |
 | --- | --- | --- | --- | --- |
 | TASK-100 | Reconcile the full combination and upgrade path | Verify the exact installed/upgrade combination, shared VM, native review lock, release assessment inputs and cleanup; identify redundant integration layers and own bounded corrections and corrected producer returns. | Completed | EPIC-032; TASK-099 |
-| TASK-101 | Retire shared legacy source and simplify Haepari integration | Remove redundant layers, validators, harness code and obsolete tests alongside common legacy dependencies; preserve required behavior and production history, with final host cleanup separately approved. | Planned | TASK-100 |
+| TASK-101 | Retire shared legacy source and simplify Haepari integration | Remove redundant layers, validators, harness code and obsolete tests alongside common legacy dependencies; preserve required behavior and production history, with final host cleanup separately approved. | Completed | TASK-100 |
 | TASK-102 | Cold-validate, promote documentation and close out | Verify the final simplified combination's managed VM, released Mulgae lock, recovery and cleanup behavior; obtain actual overall/manual acceptance, promote durable contracts and settle dossiers at last-consumer closeout. | Planned | TASK-101 |
 
 

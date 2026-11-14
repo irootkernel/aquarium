@@ -112,6 +112,18 @@ preexisting peers and last-consumer binary custody as intentional retention,
 with their actual owners and removal conditions. Haepari's native Job cleanup
 and later last-consumer disposal remain separate from consumer settlement.
 
+## Non-installing TASK-101 retirement smoke
+
+The Coordinator (CO) owns this EPIC-033/TASK-101-only case through its last consumer, TASK-102 cold integration. During TASK-102 cleanup, once no consumer remains, remove the one-off case, its entrypoints, exclusive fixtures/tests and these temporary instructions before final Epic settlement. Keep original runtime evidence under its existing custody and disposal rules.
+
+After authorized source preparation and exact host/VM-effect approval, use `SUITE=retirement-smoke MODE=auto` through `make test-vm-host`. The [VM guide](../../tests/vm/README.md#non-installing-retirement-smoke) owns the concrete invocation and input map. Keep the reviewed committed transport payload, executing reduced host/recipe source and observed retained guest installation distinct. The existing TASK-101 runtime evidence owns their exact run identities. Do not normalize registration, install a prior baseline/candidate, downgrade or repair the guest to obtain success.
+
+Bind the original retained profile unchanged, approved protected guest paths and host pre/post scopes. Use the original same Job/spec/key across reconnect, guard guest/lease identity, verify sealed bytes, installed binaries/complete skills and registration, then run bounded digest-matched identity commands. Collect five declared outputs, verified consumer preservation and native cleanup/export separately. Mismatch or uncertain cleanup blocks consumption. Join actual fresh-context disabled-channel and protected-host observations; guest success cannot prove host inactivity.
+
+Seal the original finite preservation facts as private-context `retirement_preservation`. The unchanged input guards bind the case to that reviewed record. Observe its named QA files and directory paths including empty directories, custody files/owner and preimage peers by path. Legacy launcher/root observations are nonrecursive `lstat` only; hash only the explicitly known safe files and owner sidecars. Compare both with original recorded facts and across the new operation. Missing originals, absent required objects, type/metadata/hash drift or unreadable paths prevent preservation passage. Retain original ownership/Job/last-consumer attribution and uncaptured whole-tree limits; do not inspect legacy contents or repair the guest. The same case and five outputs carry these observations.
+
+Record the installed host daemon, standalone CLI and rehearsed guest versions separately in the reviewed inputs and runtime evidence. Demonstrate the native transition's applicability before host effects. No historical Codex restore, host candidate installation or VM power operation is authorized by this route.
+
 ## Prerequisites and diagnosis
 
 Use the verified Haepari v0.1.0 release and complete same-release `use-haepari`
@@ -194,7 +206,7 @@ The wrapper persists the request key and exact spec before admission, then saves
 the returned Job ID in `run.json` (`aquarium.vm-host-run/v1`). Its bundle includes
 `harness/inputs.json` (`aquarium.vm-host-inputs/v1`), the producer's
 `artifact-manifest.json`, sealed profiles and recipe inputs. The plugin comes
-from a clean clone of the selected committed SHA through `make aquarium-dev-build`;
+from a clean clone of the selected committed SHA through the host-only `tests/vm/candidate_artifact.py` builder;
 a dirty policy edit cannot masquerade as that commit's artifact.
 
 Select suites explicitly. `baseline`, `install`, `upgrade` and

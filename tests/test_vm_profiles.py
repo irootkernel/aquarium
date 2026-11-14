@@ -198,27 +198,6 @@ class InventoryContractTest(unittest.TestCase):
         invalid["run_root"] = "/private/tmp/run"
         self.assertNotEqual(self.validator.validate_inventory(invalid), [])
 
-    def test_candidate_comparison_reports_every_tree_difference(self) -> None:
-        differences = self.validator.compare_inventories(self.before, self.candidate)
-        self.assertEqual(differences["missing"], ["guest-path:legacy/old-runner.txt"])
-        self.assertEqual(
-            differences["added"],
-            [
-                (
-                    "codex-plugin-cache:plugin/aquarium/skills/task-handler"
-                    "/references/new-feature.md"
-                )
-            ],
-        )
-        self.assertEqual(
-            differences["changed"],
-            ["codex-plugin-cache:plugin/aquarium/.codex-plugin/plugin.json"],
-        )
-        self.assertEqual(
-            differences["executable_bit_changed"],
-            ["project-discovery:scripts/run-checks.sh"],
-        )
-
     def test_inventory_identity_includes_the_installation_scope(self) -> None:
         shadowed = copy.deepcopy(self.before)
         shadowed["entries"].append(
@@ -235,22 +214,6 @@ class InventoryContractTest(unittest.TestCase):
         errors = self.validator.validate_inventory(duplicate)
         self.assertTrue(
             any("duplicates the codex-home-skills entry" in e for e in errors)
-        )
-
-    def test_moving_a_file_between_scopes_is_missing_and_added(self) -> None:
-        moved = copy.deepcopy(self.before)
-        moved["entries"][0] = dict(moved["entries"][0])
-        moved["entries"][0]["installation_scope"] = "codex-home-skills"
-        differences = self.validator.compare_inventories(self.before, moved)
-        self.assertEqual(differences["missing"], ["user-global:bin/haepari"])
-        self.assertEqual(differences["added"], ["codex-home-skills:bin/haepari"])
-        self.assertEqual(differences["changed"], [])
-
-    def test_verified_cleanup_restores_the_before_tree(self) -> None:
-        differences = self.validator.compare_inventories(self.before, self.post_cleanup)
-        self.assertEqual(
-            differences,
-            {"missing": [], "added": [], "changed": [], "executable_bit_changed": []},
         )
 
 
@@ -338,64 +301,6 @@ class OverrideSemanticsTest(unittest.TestCase):
         merged, errors = self.validator.apply_override(self.base, override)
         self.assertIsNone(merged)
         self.assertNotEqual(errors, [])
-
-
-class IdentityDriftTest(unittest.TestCase):
-    def setUp(self) -> None:
-        self.validator = load_validator()
-        self.recorded = {
-            "installation_id": "local-0123456789abcdef",
-            "resource_id": "sample-vm",
-            "resource_revision": 1,
-            "known_resource_ids": ["sample-vm"],
-            "service_plan": {
-                "schema": "haepari.release-service-plan/v1",
-                "instance": "release",
-                "global_limit": 2,
-                "host_macos_guest_limit": 1,
-            },
-            "effective_settings": {"controller_selection": "explicit_haepari_home"},
-        }
-
-    def test_matching_identity_reports_no_drift(self) -> None:
-        self.assertEqual(
-            self.validator.check_identity(self.recorded, copy.deepcopy(self.recorded)),
-            [],
-        )
-
-    def test_wrong_installation_is_flagged(self) -> None:
-        observed = copy.deepcopy(self.recorded)
-        observed["installation_id"] = "local-fedcba9876543210"
-        errors = self.validator.check_identity(self.recorded, observed)
-        self.assertTrue(any("installation_id_mismatch" in error for error in errors))
-
-    def test_unobserved_installation_id_is_a_gap(self) -> None:
-        observed = copy.deepcopy(self.recorded)
-        observed["installation_id"] = None
-        errors = self.validator.check_identity(self.recorded, observed)
-        self.assertTrue(any("installation_id_unobserved" in error for error in errors))
-
-    def test_unknown_resource_is_flagged(self) -> None:
-        observed = copy.deepcopy(self.recorded)
-        observed["known_resource_ids"] = ["other-vm"]
-        errors = self.validator.check_identity(self.recorded, observed)
-        self.assertTrue(any("resource_unknown" in error for error in errors))
-
-    def test_changed_resource_revision_is_flagged(self) -> None:
-        observed = copy.deepcopy(self.recorded)
-        observed["resource_revision"] = 2
-        errors = self.validator.check_identity(self.recorded, observed)
-        self.assertTrue(any("resource_revision_changed" in error for error in errors))
-
-    def test_effective_settings_drift_is_flagged(self) -> None:
-        observed = copy.deepcopy(self.recorded)
-        observed["service_plan"]["global_limit"] = 1
-        errors = self.validator.check_identity(self.recorded, observed)
-        self.assertTrue(any("effective_settings_drift" in error for error in errors))
-        observed = copy.deepcopy(self.recorded)
-        observed["effective_settings"]["controller_selection"] = "default-root"
-        errors = self.validator.check_identity(self.recorded, observed)
-        self.assertTrue(any("settings_drift" in error for error in errors))
 
 
 class TreeDigestTest(unittest.TestCase):

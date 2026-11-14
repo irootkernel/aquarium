@@ -33,6 +33,40 @@ requires current original evidence and verified cleanup; source/helper success
 alone does not qualify the combination. The separate host-submitted Q stays
 queued until P releases capacity, and its completed result is joined afterward.
 
+## Non-installing retirement smoke
+
+`retirement-smoke` verifies the reduced host route against the retained TASK-100 guest. It is selected alone, excluded from `SUITE=all`, and requires exact host/VM-effect approval. It never normalizes registration, ensures a prior baseline, installs either payload, downgrades or repairs the guest.
+
+The Coordinator (CO) owns this EPIC-033/TASK-101-only case. Its last consumer is TASK-102 cold integration. During TASK-102 cleanup, once no consumer remains, remove the one-off case, its entrypoints, exclusive fixtures/tests and these temporary instructions before final Epic settlement. Retain original runtime evidence under its existing custody and disposal rules. The finite input guards remain bound to the original reviewed preservation record.
+
+Keep three identities distinct:
+
+- Transported, uninstalled plugin payload: the reviewed committed payload selected by `AQUARIUM_VM_CANDIDATE_SHA`.
+- Executing reduced host builder/wrapper and sealed current recipe harness: their actual source hashes in `harness/inputs.json`, separate from the committed payload.
+- Observed installed guest: the component versions and hashes in the reviewed original retained profile. Seal those profile bytes unchanged as `profile/retained.json`.
+
+The operator binds the original profile, private guest context, fresh physical run directory, selected controller/resource, interpreter and native queue budget. `retirement_protected_paths` is a sealed declaration only; actual observation paths come from `retirement_preservation`, the complete original finite QA/custody/preimage facts, provenance and historical unknowns. The case observes only named QA file hashes and directories including empty ones, custody files and their owner sidecar, legacy root/launcher preimages by nonrecursive `lstat` only, and known safe Podway files plus peer owner sidecars. It never enumerates peer contents or hashes legacy launcher/runtime contents. Compare by path against original facts and across the new pre/post samples; equal absence does not prove preservation. `comparison_fields` and mismatch fields separate recorded `original` facts from `current_policy` type expectations where historical types were not captured. Unknown historical metadata and whole-tree membership/digests remain unknown. Keep these facts as case-specific sealed metadata. Fixture requirements remain null; the case installs no fixture environment.
+
+```sh
+PATH="$PWD/.venv/bin:$PATH" \
+HAEPARI_HOME="<approved-operational-haepari-home>" \
+AQUARIUM_VM_CANDIDATE_SHA="<reviewed-committed-payload-sha>" \
+AQUARIUM_VM_RETAINED_PROFILE="<original-pinned-profile-path>" \
+AQUARIUM_VM_QUEUE_SECONDS="<native-required-budget>" \
+make test-vm-host HAEPARI="<installed-haepari-cli>" \
+  RESOURCE="<approved-registered-resource>" MODE=auto SUITE=retirement-smoke \
+  RUN_DIR="<fresh-private-physical-run-directory>" \
+  GUEST_CONTEXT="<approved-private-guest-context.json>"
+```
+
+Preparation through `host_bundle.py` submits nothing. The bundle may carry historical prior/candidate data required by existing sealed-input checks; the smoke executes neither installer nor baseline. Missing inputs or identity mismatch refuse without changing the guest. No checkpoint commit or host candidate installation is required.
+
+One saved spec/key/Job holds the VM throughout. Existing parent/lease and guest-UUID guards run before writes. The recipe verifies sealed inputs, retained profile bytes, digest-matched binaries, complete paired skills, native marketplace source and its retained artifact tree, installed plugin registration/version and complete Aquarium skills, then runs Codex/Python version checks and Podway `version --identity --json`. It compares installed and approved protected inventories before/after and writes only Job-owned evidence.
+
+The five required outputs under `results/retirement-smoke/` are `result.json`, `identity.json`, `inventories.json`, `consumer-cleanup.json` and `post-cleanup-inventory.json`. Receipt-verified export must match the transported candidate and retained profile digest. Protected-state drift, mismatched identity, missing evidence or uncertain cleanup prevents acceptance; preserve failures without repairing the guest. Consumer preservation/cleanup and native collection/cleanup remain separate. Reconnect the original Job after interruption and retain outputs through verified consumption before owned disposal.
+
+Join the actual approved host pre/post state, released command resolution and fresh-context disabled-channel/no-launch observations. Guest success alone does not establish host retirement. Master controls VM power. Preparation supplies no VM result; TASK-102 still qualifies the final changed installation and upgrade before release.
+
 ## TASK-100 combination observations
 
 On 2026-11-13, the exact committed Aquarium payload `c783a6d` and separately
@@ -209,25 +243,18 @@ object to the external request before updating managed files:
 }
 ```
 
-Build on the host from clean local `main` whose HEAD equals the exact candidate.
-Choose an existing empty absolute output directory outside the checkout and a
-manifest path outside both the checkout and output directory. Save the
-producer's stdout JSON:
+Prepare on the host through the existing bundle CLI. It creates a clean disposable local-`main` clone at the selected committed SHA, then calls the host-only builder. A dirty development worktree may supply the separately sealed current recipe harness; it cannot supply committed plugin payload bytes.
 
 ```sh
-git branch --show-current
-git rev-parse HEAD
-git status --porcelain
-AQUARIUM_DEV_OUTPUT=/absolute/empty/build-output make aquarium-dev-build > /absolute/artifact-manifest.json
+PATH="$PWD/.venv/bin:$PATH" .venv/bin/python -B tests/vm/host_bundle.py \
+  --run-dir /absolute/fresh/private-preparation \
+  --guest-context /absolute/approved-private-context.json \
+  --suite baseline --mode auto --resource macos-main \
+  --candidate-sha <exact-committed-candidate> \
+  --fixture-requirements /absolute/hash-locked-fixture-requirements.txt
 ```
 
-The first command must report `main`, the second the selected candidate SHA and
-the third no changes. The producer rejects other branches, a dirty checkout or
-a nonempty output directory. Set `artifact_root` to the output directory joined
-with the manifest's relative `artifact_path`. Copy the artifact
-and manifest through the user's transport. Transfer Git objects or otherwise
-prepare a clean guest verification checkout at that exact SHA, including its
-committed tests. Do not install the artifact on the host.
+This command prepares only; it submits no Job and executes no baseline recipe. Use `bundle/artifact` and `bundle/artifact-manifest.json` for the external request. Retain preparation outputs through their consumer and remove only the owned preparation directory afterward. Guest execution/installation remains separately authorized; never install the artifact on the host.
 
 The manifest binds artifact content and development version to `git_sha`;
 the artifact excludes tests. The driver independently checks
@@ -566,10 +593,9 @@ acquisition. `Makefile` defines `override PYTHON := .venv/bin/python` when
 `.venv/bin/python` exists in the current working tree and `override PYTHON :=
 python3` otherwise, so passing `PYTHON=<path>` on the `make` command line is
 ignored. Callers in the primary checkout use `.venv/bin/python` automatically;
-callers in a clean disposable clone (where `.venv` is absent) and
-the nested `make aquarium-dev-build` in `tests/vm/host_bundle.py` resolve
-`python3` from `PATH`. The producer
-(`plugins/aquarium/tools/aquarium-dev/build_aquarium_artifact.py`) builds the
+callers in a clean disposable clone (where `.venv` is absent) resolve
+`python3` from `PATH`. The host-only builder
+(`tests/vm/candidate_artifact.py`), called in the adapter's interpreter without nested Make, builds the
 marketplace tree from a clean clone of `AQUARIUM_VM_CANDIDATE_SHA` and returns
 `git_sha`, `development_version` `v<version>-dev.<sha12>` and `sha256` in its
 manifest, saved as `bundle/artifact-manifest.json`.

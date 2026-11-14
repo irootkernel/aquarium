@@ -17,14 +17,6 @@ from status_contract import DEV_VERSION_RE, VERSION_RE, ContractError, version_t
 
 LATEST_RELEASE_URL = "https://api.github.com/repos/irootkernel/aquarium/releases/latest"
 MAX_EXTERNAL_BYTES = 1024 * 1024
-KNOWN_PROJECT_IDS = (
-    "aquarium",
-    "dolgorae",
-    "gaori",
-    "mulgae",
-    "podway",
-    "sanho",
-)
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -99,67 +91,6 @@ def root_state(row: dict[str, Any]) -> str:
         )
     except (OSError, subprocess.SubprocessError):
         return "unreadable"
-
-
-def _bounded_json(path: Path) -> dict[str, Any] | None:
-    try:
-        info = path.lstat()
-    except FileNotFoundError:
-        return None
-    if (
-        stat.S_ISLNK(info.st_mode)
-        or not stat.S_ISREG(info.st_mode)
-        or info.st_size > MAX_EXTERNAL_BYTES
-    ):
-        raise ValueError("external JSON path is unsafe")
-    value = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(value, dict):
-        raise TypeError("external JSON is not an object")
-    return value
-
-
-def enrollment(row: dict[str, Any]) -> tuple[dict[str, Any], str | None]:
-    base = Path.home()
-    try:
-        for part in (".aquarium-dev", "enrollments"):
-            base = base / part
-            try:
-                info = base.lstat()
-            except FileNotFoundError:
-                return {"state": "absent", "project_id": None}, None
-            if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
-                return (
-                    {"state": "unreadable", "project_id": None},
-                    "enrollment_unreadable",
-                )
-        expected = {
-            "schema",
-            "project_id",
-            "checkout",
-            "hook_path",
-            "hook_block",
-            "enrolled_at",
-        }
-        for project_id in KNOWN_PROJECT_IDS:
-            try:
-                value = _bounded_json(base / f"{project_id}.json")
-            except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError):
-                continue
-            if value is None or value.get("checkout") != row["git_root"]:
-                continue
-            if (
-                set(value) != expected
-                or value.get("schema") != "aquarium-dev-enrollment/v1"
-                or value.get("project_id") != project_id
-            ):
-                return (
-                    {"state": "invalid", "project_id": None},
-                    "enrollment_invalid",
-                )
-            return {"state": "enrolled", "project_id": project_id}, None
-        return {"state": "absent", "project_id": None}, None
-    except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError):
-        return {"state": "unreadable", "project_id": None}, "enrollment_unreadable"
 
 
 def release_version(refresh: bool) -> tuple[dict[str, Any], str | None]:

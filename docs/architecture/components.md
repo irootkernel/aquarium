@@ -16,6 +16,8 @@ Aquarium is a declarative orchestration plugin. Most product behavior is express
 | Public product surface | Root README, privacy, terms, testing, and changelog files | Installation, user-visible behavior, disclosures, test meaning, and release history |
 | Canonical maintainer docs | [`docs/`](../) | Current specifications, architecture, decisions, implementation guidance, and delivery identity |
 
+The candidate contains no shared development-channel runtime or MCP declaration. Committed VM payload packaging lives in the source-only [candidate builder](../../tests/vm/candidate_artifact.py), outside the shipped plugin and guest recipes. The host adapter seals current harness identity separately from transported payload and retained installed guest identity.
+
 ## Skill Layer
 
 The skill entrypoints form four kinds of component:

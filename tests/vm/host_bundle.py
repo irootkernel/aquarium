@@ -321,6 +321,7 @@ def validate_suite(name: str, suite: Any, selected_files: set[str]) -> None:
         "candidate",
         "podway-candidate",
         "combination-candidate",
+        "retained",
     }:
         raise BundleError(f"{label} environment_profile must select a declared profile")
     argv = suite.get("argv")
@@ -443,25 +444,16 @@ def build_candidate_artifact(
     status = _git(scratch, "status", "--porcelain=v1")
     if status.strip():
         raise BundleError("scratch clone at the candidate is not clean")
-    make = subprocess.run(
-        [
-            "make",
-            "aquarium-dev-build",
-        ],
-        cwd=scratch,
-        env={**os.environ, "AQUARIUM_DEV_OUTPUT": str(output)},
-        capture_output=True,
-        text=True,
-        check=False,
+    builder_path = Path(__file__).with_name("candidate_artifact.py")
+    spec = importlib.util.spec_from_file_location(
+        "aquarium_candidate_artifact", builder_path
     )
-    if make.returncode != 0:
-        raise BundleError(
-            f"candidate artifact build failed: {make.stderr.strip()[:400]}"
-        )
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
     try:
-        manifest = json.loads(make.stdout)
+        manifest = builder.build(scratch.resolve(), git_sha, output.resolve())
     except ValueError as error:
-        raise BundleError(f"candidate artifact manifest is invalid: {error}") from error
+        raise BundleError(f"candidate artifact build failed: {error}") from error
     if (
         manifest.get("schema") != "aquarium-dev-artifact-manifest/v1"
         or manifest.get("git_sha") != git_sha
@@ -861,12 +853,13 @@ def build_bundle(
     baseline_profile: Path | None = None,
     combination_profile: Path | None = None,
     combination_input: Path | None = None,
+    retained_profile: Path | None = None,
 ) -> dict[str, Any]:
     context = load_guest_context(context_path)
     declarations = load_suites()
     suite_map = declarations["suites"]
     names = (
-        sorted(suite_map)
+        sorted(name for name in suite_map if name != "retirement-smoke")
         if suites_selection == "all"
         else [suites_selection]
         if suites_selection in suite_map
@@ -874,6 +867,80 @@ def build_bundle(
     )
     if not names:
         raise BundleError("select a consumer-declared suite or all")
+    retained_bytes = None
+    if names == ["retirement-smoke"]:
+        if (
+            retained_profile is None
+            or not retained_profile.is_absolute()
+            or retained_profile != retained_profile.resolve()
+            or not retained_profile.is_file()
+        ):
+            raise BundleError(
+                "retirement-smoke requires a physical absolute retained profile"
+            )
+        retained_bytes = retained_profile.read_bytes()
+        try:
+            retained = json.loads(retained_bytes)
+        except (UnicodeError, ValueError) as error:
+            raise BundleError("retained profile is invalid JSON") from error
+        errors = _PROFILE_VALIDATOR.validate_profile(retained)
+        if errors:
+            raise BundleError("invalid retained profile: " + "; ".join(errors))
+        retained_plugin = next(
+            (row for row in retained["components"] if row["name"] == "aquarium-plugin"),
+            {},
+        )
+        if not retained_plugin.get("sealed_artifact", {}).get("tree_sha256"):
+            raise BundleError(
+                "retained profile must pin the installed Aquarium source tree"
+            )
+        protected = context.get("retirement_protected_paths")
+        if (
+            not isinstance(protected, list)
+            or not protected
+            or any(
+                not isinstance(path, str)
+                or not path.startswith("/")
+                or ".." in Path(path).parts
+                or path in {"/", context["guest_home"]}
+                for path in protected
+            )
+        ):
+            raise BundleError(
+                "retirement-smoke requires exact approved retirement_protected_paths in guest context"
+            )
+        originals = context.get("retirement_preservation")
+        try:
+            complete = (
+                isinstance(originals, dict)
+                and bool(originals["original_handoff"]["sha256"])
+                and len(originals["qa"]["files"]) == 32
+                and len(originals["qa"]["directory_paths"]) == 42
+                and len(originals["custody"]["files"]) == 6
+                and len(originals["legacy_preimage"]["objects"]) == 2
+                and len(originals["podway_preimage"]["files"]) == 2
+                and len({row["path"] for row in originals["qa"]["files"]}) == 32
+                and len(set(originals["qa"]["directory_paths"])) == 42
+                and len({row["path"] for row in originals["custody"]["files"]}) == 6
+                and all(
+                    isinstance(row, dict)
+                    and row.get("content_read") is False
+                    and "sha256" not in row
+                    for row in originals["legacy_preimage"]["objects"]
+                )
+                and all(
+                    originals[group]["owner_sidecar"]["sha256"]
+                    for group in ("custody", "legacy_preimage", "podway_preimage")
+                )
+            )
+        except (KeyError, TypeError):
+            complete = False
+        if not complete:
+            raise BundleError(
+                "retirement-smoke requires complete original finite preservation facts; legacy contents must remain unread"
+            )
+    elif retained_profile is not None or "retirement-smoke" in names:
+        raise BundleError("select retirement-smoke alone with its retained profile")
     dependency_suites = {
         "podway-upgrade",
         "epic-squad",
@@ -1053,6 +1120,9 @@ def build_bundle(
         stable_profile, candidate_digest, development_version, candidate_skill_digest
     )
     dependency_files: list[str] = []
+    if retained_bytes is not None:
+        (bundle / "profile/retained.json").write_bytes(retained_bytes)
+        dependency_files.append("profile/retained.json")
     podway_upgrade = None
     if podway_release is not None:
         podway_profile = json.loads(json.dumps(candidate_profile))
@@ -1186,6 +1256,25 @@ def build_bundle(
         "harness_tree_sha256": harness_tree,
         "fixture_requirements": lock_relative,
     }
+    if retained_bytes is not None:
+        inputs["retirement_smoke"] = {
+            "profile_sha256": hashlib.sha256(retained_bytes).hexdigest(),
+            "profile_path": "profile/retained.json",
+            "protected_paths": context["retirement_protected_paths"],
+            "preservation": context["retirement_preservation"],
+        }
+    if combination is not None or retained_bytes is not None:
+        inputs["host_harness_sha256"] = {
+            name: hashlib.sha256(
+                (Path(__file__).parent / name).read_bytes()
+            ).hexdigest()
+            for name in (
+                "host_bundle.py",
+                "host_wrapper.py",
+                "host_suites.json",
+                "candidate_artifact.py",
+            )
+        }
     if combination is not None:
         inputs["combination"] = {
             "payload_root": "dependencies/combination",
@@ -1198,12 +1287,6 @@ def build_bundle(
         }
         if combination["delivery"] is not None:
             inputs["combination"]["delivery"] = combination["delivery"]
-        inputs["host_harness_sha256"] = {
-            name: hashlib.sha256(
-                (Path(__file__).parent / name).read_bytes()
-            ).hexdigest()
-            for name in ("host_bundle.py", "host_wrapper.py", "host_suites.json")
-        }
     if podway_upgrade is not None:
         inputs["podway_upgrade"] = podway_upgrade
         if podway_previous_release is not None:
@@ -1348,6 +1431,7 @@ def main() -> int:
     parser.add_argument("--baseline-profile", type=Path)
     parser.add_argument("--combination-profile", type=Path)
     parser.add_argument("--combination-input", type=Path)
+    parser.add_argument("--retained-profile", type=Path)
     arguments = parser.parse_args()
     try:
         record = build_bundle(
@@ -1375,6 +1459,7 @@ def main() -> int:
             baseline_profile=arguments.baseline_profile,
             combination_profile=arguments.combination_profile,
             combination_input=arguments.combination_input,
+            retained_profile=arguments.retained_profile,
         )
     except (BundleError, OSError, subprocess.SubprocessError) as error:
         print(f"aquarium host bundle: {error}", file=sys.stderr)

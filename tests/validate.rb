@@ -37,14 +37,21 @@ assert(nonempty_string(manifest.fetch("description")), "plugin description is mi
 assert(local_path(PLUGIN.join(manifest.fetch("skills"))) == PLUGIN.join("skills"),
        "plugin skills path must resolve to its skill directory")
 
-mcp = JSON.parse(read_file(PLUGIN.join(manifest.fetch("mcpServers"))))
-mcp.fetch("mcpServers").each do |name, server|
-  command = server.fetch("command")
-  assert(command.start_with?("./"), "bundled MCP command must be plugin-relative: #{name}")
-  executable = local_path(PLUGIN.join(command))
-  assert(executable.to_s.start_with?("#{PLUGIN}/"), "MCP command escapes plugin: #{name}")
-  assert(executable.file? && executable.executable?, "MCP command is not executable: #{name}")
-  assert(server.fetch("args").is_a?(Array), "MCP arguments must be an array: #{name}")
+mcp_path = manifest["mcpServers"]
+if manifest.key?("mcpServers")
+  assert(nonempty_string(mcp_path), "MCP declaration path must be a nonempty string")
+  mcp = JSON.parse(read_file(PLUGIN.join(mcp_path)))
+  servers = mcp.fetch("mcpServers")
+  assert(servers.is_a?(Hash), "MCP servers must be a map")
+  servers.each do |name, server|
+    assert(nonempty_string(name) && server.is_a?(Hash), "MCP server must be a named object")
+    command = server.fetch("command")
+    assert(nonempty_string(command) && command.start_with?("./"), "bundled MCP command must be plugin-relative: #{name}")
+    executable = local_path(PLUGIN.join(command))
+    assert(executable.to_s.start_with?("#{PLUGIN}/"), "MCP command escapes plugin: #{name}")
+    assert(executable.file? && executable.executable?, "MCP command is not executable: #{name}")
+    assert(server.fetch("args").is_a?(Array), "MCP arguments must be an array: #{name}")
+  end
 end
 
 marketplace = JSON.parse(read_file(ROOT.join(".agents/plugins/marketplace.json")))

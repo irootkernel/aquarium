@@ -118,3 +118,41 @@ def test_documentation_inventory_includes_code_adjacent_markdown() -> None:
         Path("docs/specs/README.md"),
         Path("plugins/example/SKILL.md"),
     ]
+
+
+def test_cancelled_epic_validates_its_retained_dossier_and_preserves_history():
+    roadmap = Path("docs/roadmap/README.md")
+    dossier = Path("docs/todo/TODO-OLD.md")
+    text = """## EPIC-002: Withdrawn
+
+**Status:** `Cancelled`
+
+**Detailed SOT:** [History](../todo/TODO-OLD.md)
+
+| Task | Status |
+| --- | --- |
+| TASK-001 | Completed |
+| TASK-002 | Cancelled |
+"""
+    result, findings = inspect_docs.inspect_roadmap(
+        roadmap, {"name": "test"}, text, {roadmap, dossier}, {roadmap, dossier}
+    )
+    assert findings == []
+    assert result["epics"][0]["status"] == "Cancelled"
+    assert result["epics"][0]["tasks"][0]["status"] == "Completed"
+    _, missing = inspect_docs.inspect_roadmap(
+        roadmap, {"name": "test"}, text, {roadmap}, {roadmap}
+    )
+    assert any(row["code"] == "epic_detailed_sot_invalid" for row in missing)
+    _, excluded = inspect_docs.inspect_roadmap(
+        roadmap, {"name": "test"}, text, {roadmap, dossier}, {roadmap}
+    )
+    assert any(row["code"] == "epic_detailed_sot_unverifiable" for row in excluded)
+    _, unknown = inspect_docs.inspect_roadmap(
+        roadmap,
+        {"name": "test"},
+        text.replace("`Cancelled`", "`Unrecognized`"),
+        {roadmap, dossier},
+        {roadmap, dossier},
+    )
+    assert any(row["code"] == "epic_lifecycle_unverifiable" for row in unknown)

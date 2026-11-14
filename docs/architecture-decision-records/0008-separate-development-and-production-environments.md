@@ -8,6 +8,8 @@
 
 **Current review-route status:** EPIC-015 disabled Dolgorae-backed Independent Review, EPIC-016 defines Independent Review through fresh native Codex subagents, and EPIC-020 replaces Orca Review with Herdr. Aquarium v0.1.20 names the host-native route Subagent Review. The production and development environment separation decided here remains in force; the statements below about Independent Review and Orca record the routes that existed when this ADR was accepted.
 
+**Channel retirement update (EPIC-033 / TASK-101):** The candidate removes the manager, launcher, producer targets and MCP declaration described below. Those mechanisms are superseded by installed-release host development, host-only committed packaging and separately approved native retirement. Production namespace/account separation remains effective. The original decision/history is retained; this update claims no host transition or installed qualification. See the [retirement specification](../specs/development-channel.md).
+
 ## Context
 
 The first development-channel design stored development artifacts and a dedicated Codex home below `~/.aquarium/`, and it enrolled Dolgorae as another source-built producer. That mixed unreleased development state with Aquarium's production namespace, duplicated Codex configuration and authentication concerns, and created a private Dolgorae runtime even though production reviews should use the official globally installed release.

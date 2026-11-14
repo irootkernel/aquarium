@@ -183,7 +183,7 @@ another broker operation. Producer implementation remains outside this task.
   supported key and verify the declared server through isolated STDIO checks
   (M-F2). Keep CLI diagnosis separately available. TASK-085 and final Epic
   validation own the required fresh installed-session observation of the
-  expected `aquarium_dev_*` tools.
+  expected `aquarium_dev_*` tools. EPIC-033 supersedes that channel-specific future expectation after retirement: observe the exact shipped package and fresh native skill discovery, and verify retired MCP declaration/tool absence. Preserve the original requirement and historical unknowns; this supplies no installed gate result.
 
 Acceptance: the review instruction carries the same forbidden operations as
 the canonical review contract; design invocation does not silently write to
@@ -311,7 +311,7 @@ behavior while Master retains skill-functional verification.
   expands these families with the affected per-task checks. Report observed
   outcomes and unperformed scenarios separately through its workflow handoff.
 - Observe the corrected plugin in a fresh installed Codex session and confirm
-  the expected `aquarium_dev_*` tools before accepting final Epic validation.
+  the expected `aquarium_dev_*` tools before accepting final Epic validation. After EPIC-033 retirement, the future expectation is the exact shipped package, fresh native skill discovery and retired MCP declaration/tool absence. Preserve the original channel requirement and unverified outcomes as history; real installed-session evidence remains due.
   This is the installed-session gate transferred from TASK-078; JSON parsing
   and direct STDIO tests do not satisfy it. Installation and session changes
   retain their separate authority.

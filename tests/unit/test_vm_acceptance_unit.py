@@ -197,8 +197,8 @@ def test_candidate_binding_reads_real_git_and_installed_bytes(candidate):
 def test_artifact_digest_interoperates_with_canonical_prefix_directory_order(
     tmp_path, monkeypatch
 ):
-    monkeypatch.syspath_prepend(str(ROOT / "plugins/aquarium/tools/aquarium-dev"))
-    from dev_manager import artifact_digest as producer_digest
+    monkeypatch.syspath_prepend(str(ROOT / "tests/vm"))
+    from candidate_artifact import artifact_digest as producer_digest
 
     for name in ("dev-setup", "dev-setup-bundle"):
         path = tmp_path / "skills" / name / "SKILL.md"

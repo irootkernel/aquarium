@@ -19,6 +19,9 @@ override PYTEST_ADDOPTS :=
 export PYTEST_ADDOPTS
 
 PYTHON_FILES := \
+	tests/vm/candidate_artifact.py \
+	tests/unit/test_vm_candidate_artifact_unit.py \
+	tests/unit/test_vm_retirement_unit.py \
 	plugins/aquarium/skills/version/scripts/inspect_versions.py \
 	tests/unit/test_version_inspection_unit.py \
 	plugins/aquarium/tools/aquarium-python/runtime.py \
@@ -97,12 +100,8 @@ PYTHON_FILES := \
 	tests/vm/fixtures/directory-guidance/src/exports/render.py \
 	tests/vm/fixtures/directory-guidance/tests/test_workflow.py \
 	plugins/aquarium/skills/dev-setup-global/scripts/inspect_skill_inventory.py \
-	tests/unit/test_aquarium_dev_tool_unit.py \
 	tests/unit/test_aquarium_status_install_unit.py \
 	tests/unit/test_aquarium_status_unit.py \
-	plugins/aquarium/tools/aquarium-dev/mcp_server.py \
-	plugins/aquarium/tools/aquarium-dev/install.py \
-	plugins/aquarium/tools/aquarium-dev/runtime_entry.py \
 	plugins/aquarium/tools/aquarium-status/aquarium_status.py \
 	plugins/aquarium/tools/aquarium-status/language_inventory.py \
 	plugins/aquarium/tools/aquarium-status/install.py \
@@ -117,11 +116,6 @@ PYTHON_FILES := \
 	tests/unit/test_mulgae_adoption_unit.py \
 	plugins/aquarium/skills/dev-setup-global/scripts/inspect_global_tools.py \
 	plugins/aquarium/skills/dev-setup-global/scripts/inspect_ouroboros.py \
-	plugins/aquarium/tools/aquarium-dev/dev_contract.py \
-	plugins/aquarium/tools/aquarium-dev/aquarium_dev.py \
-	plugins/aquarium/tools/aquarium-dev/aquarium_dev_launcher.py \
-	plugins/aquarium/tools/aquarium-dev/build_aquarium_artifact.py \
-	plugins/aquarium/tools/aquarium-dev/dev_manager.py \
 	plugins/aquarium/skills/dev-setup-bundle/scripts/normalize_manifest.py \
 	plugins/aquarium/skills/docs-setup/scripts/inspect_docs.py \
 	plugins/aquarium/skills/subagent-review/scripts/inspect_review_target.py \
@@ -152,13 +146,6 @@ PYTHON_FILES := \
 	tests/verify_gaori_compatibility.py \
 	tests/unit/test_verify_gaori_compatibility_unit.py \
 	tests/unit/test_inspect_docs_unit.py \
-	tests/unit/test_aquarium_dev_contract_unit.py \
-	tests/unit/test_aquarium_dev_enrollment_unit.py \
-	tests/unit/test_aquarium_dev_publication_unit.py \
-	tests/unit/test_aquarium_dev_resolution_unit.py \
-	tests/unit/test_aquarium_dev_runtime_unit.py \
-	tests/unit/test_aquarium_dev_service_unit.py \
-	tests/unit/test_aquarium_dev_feasibility_unit.py \
 	tests/unit/test_inspect_publication_state_unit.py \
 	tests/unit/test_inspect_review_target_unit.py \
 	tests/unit/test_prepare_assignment_unit.py \
@@ -177,14 +164,6 @@ PYTHON_FILES := \
 	tests/e2e/test_release_qa_confirmation_cli.py
 
 .PHONY: test test-requirements test-prepare test-unit test-int test-e2e test-podway-compat test-sanho-compat test-gaori-compat test-vm test-vm-host
-.PHONY: aquarium-dev-describe aquarium-dev-build
-
-aquarium-dev-describe:
-	@$(PYTHON) plugins/aquarium/tools/aquarium-dev/build_aquarium_artifact.py describe
-
-aquarium-dev-build:
-	@$(PYTHON) plugins/aquarium/tools/aquarium-dev/build_aquarium_artifact.py build
-
 test:
 	$(MAKE) test-prepare
 	$(MAKE) test-unit

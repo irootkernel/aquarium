@@ -118,7 +118,7 @@ The inspector exposes only doctor severity counts and the resolved Project slug,
 
 A successful unregistered result is `registration_required`. A valid native resolution failure is `resolution_error` and cannot authorize Project creation or binding. `--include-sorage` runs doctor after selection and runs Project resolution only when doctor has no blocking check. The repository inspector owns `tools.sorage` repository readiness; the global inspector owns user-global installation and update evidence.
 
-`plugins/aquarium/tools/aquarium-dev/aquarium_dev.py` owns diagnose, enrollment, hook repair, build request, rebuild, worker, cleanup, launcher installation, and managed-service planning and application. Managed-service producers emit `aquarium-dev-producer-description/v2` and `aquarium-dev-artifact-manifest/v2`; their controllers emit `aquarium-dev-service-status/v1`, `aquarium-dev-service-plan/v1`, and `aquarium-dev-service-result/v1`. It has no Codex-configuration or production-tool setup operation. The installed `aquarium-dev` CLI exposes the manager commands; its tool-invocation form accepts a supported tool and arguments, falls back only an absent foreground tool to the caller's global `PATH` outside both Aquarium roots, and requires a matching ready managed service without production fallback while leaving the caller's environment unchanged.
+The candidate has no shared development-channel CLI or bundled MCP declaration. Source-only artifact production lives in `tests/vm/candidate_artifact.py`, called by the host adapter with a clean disposable local-main clone. The `aquarium-dev-artifact-manifest/v1` data contract retains its exact SHA, stamped version and checksum; it is not an installed channel or distribution claim.
 
 The release-QA evidence lifecycle accepts `aquarium-release-qa-cluster-result/v1` executor results and the `aquarium-release-qa-full-pass/v2`, `aquarium-release-qa-confirmation-prepare/v2`, `aquarium-release-qa-confirmation-begin/v2`, and `aquarium-release-qa-confirmation-finish/v2` command inputs. Full-pass v2 and record/manifest v3 explicitly bind a previous-release or first-release baseline; the latter retains every reachable commit and current tree path with null previous-release identity. They freeze the active Design Gate inventory and positive/failure scenario matrix separately from delta coverage. Confirmation preserves those exact fields, and claim, admission, and result schemas remain unchanged. These inputs and artifacts use closed shapes, create-once outputs with physically normalized parents and byte-bounded basenames, canonical bytes, and exact digests. Before a settlement admission exists, repeating an identical begin verifies the existing artifact and returns the same successful claim receipt without replacing it; begin cannot authorize another executor dispatch after admission. Finish creates one claim-keyed settlement admission that binds the canonical request, submitted evidence bytes, and terminal output path, matches scenario identities independently of array order, and computes its verdict from the same cluster bytes verified against the admission before converging on one terminal `PASS`, `FINDINGS`, `INCOMPLETE`, or `REJECTED` result. A canonical admission with a malformed snapshot shape settles as `REJECTED`. A changed request or output path reports `settlement_pending` before a terminal exists and `settlement_replay` afterward; neither can replace an artifact. Unexpected transient settlement failures remain recoverable by the exact admitted request and output path. Contract failures return `aquarium-release-qa-error/v1` with a nonzero exit.
 
@@ -255,7 +255,7 @@ The hook is advisory rather than a security boundary. Indirect commits may bypas
 - Keep inspection read-only and bounded. Mutation belongs to the owning skill after an exact proposal and approval.
 - Treat a green parser or schema validator as proof of only that structural contract; add scenario coverage for approval, lifecycle, ownership, and handoff behavior.
 
-The bundled `.mcp.json` starts the installed `aquarium-dev` stdio server. Its six `aquarium_dev_*` tools map to diagnose, enroll, repair-hook, rebuild, service-plan, and service-apply and return the same JSON envelopes as the CLI, with MCP `isError` set for failures. The bundled `tools/aquarium-dev/install.py` provides read-only runtime diagnosis and an explicitly approved install/update operation; runtime identity and setup failures use `aquarium-dev-runtime/v1`, `aquarium-dev-runtime-inspection/v1`, and `aquarium-dev-runtime-error/v1`.
+The plugin manifest omits `mcpServers` and the package has no bundled MCP declaration. The package validator supports absence while validating any advertised declaration's file, server map, plugin-relative executable and arguments. Installed discovery remains a separate exact-candidate observation.
 
 The repository inspector excludes `.mulgaeignore` from the Mulgae configuration inventory. It admits stable Mulgae v0.1.27 or newer and command-result v23 or newer, while retaining the Doctor v7 member name `config_v3` for native Config v5 diagnostics.
 
@@ -407,10 +407,10 @@ Its fixed canonical release regressions remain separate. Exact candidate/tools,
 public native role/result and selected evidence, original criteria, application
 approval and case oracles must pass; helper tests do not establish installed
 behavior. The host-submitted managed VM wrapper (`make test-vm-host`) seals
-committed candidate artifacts via `make aquarium-dev-build`, resolves `$(PYTHON)`
+committed candidate artifacts via the host-only `tests/vm/candidate_artifact.py` builder, resolves `$(PYTHON)`
 through `Makefile`'s `override PYTHON` rule (`.venv/bin/python` when present in
 the working tree or `python3` from `PATH`, requiring the verified repository Python environment on `PATH` for disposable
-clones and nested builds
+clones
 rather than `PYTHON=<path>` on the Make command line), emits JSON-line stdout
 reports and retains per-Job observations in `RUN_DIR/run.json`. Capture the
 wrapper process exit separately from GNU Make exit `2`. It passes

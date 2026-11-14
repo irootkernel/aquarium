@@ -1985,10 +1985,12 @@ class HostWrapperTest(unittest.TestCase):
                 export_manifest_skeleton(inspect_envelope(revision)), skeleton
             )
 
-    def _real_layout_export(self, name: str) -> tuple[Path, dict, list, dict]:
+    def _real_layout_export(
+        self, name: str, suite="baseline", retained=None
+    ) -> tuple[Path, dict, list, dict]:
         """A trimmed static export of the real J-BASE #2 v0.1.0 layout."""
         destination = self.work / f"export-fixture-{name}"
-        (destination / "artifacts/results/baseline").mkdir(parents=True)
+        (destination / f"artifacts/results/{suite}").mkdir(parents=True)
         sealed = {
             "git_sha": "1" * 40,
             "development_version": "v0.1.21-dev.synthetic",
@@ -1996,19 +1998,24 @@ class HostWrapperTest(unittest.TestCase):
         }
         entries = [
             (
-                "results/baseline/result.json",
+                f"results/{suite}/result.json",
                 json.dumps(
                     {
                         "schema": "aquarium.vm-suite-result/v1",
-                        "suite": "baseline",
+                        "suite": suite,
                         "outcome": "pass",
                         "consumer_cleanup": "verified",
                         "candidate": sealed,
+                        **(
+                            {"retained_profile_sha256": retained}
+                            if retained is not None
+                            else {}
+                        ),
                     }
                 ),
             ),
             (
-                "results/baseline/inventory-before.json",
+                f"results/{suite}/inventory-before.json",
                 json.dumps({"synthetic": "inventory-before"}),
             ),
         ]
@@ -2077,12 +2084,22 @@ class HostWrapperTest(unittest.TestCase):
                 }
             )
         )
-        entry = {"job_id": "job-fixture-synthetic", "suite": "baseline"}
+        entry = {"job_id": "job-fixture-synthetic", "suite": suite}
         return destination, entry, [relative for relative, _ in entries], sealed
 
     def test_c21_real_layout_export_fixture_accepted(self):
         module = self._load_host_wrapper_module("hw_export_verify")
         destination, entry, required, sealed = self._real_layout_export("accept")
+        self.assertTrue(module._verify_export(destination, entry, required, sealed))
+
+    def test_retirement_export_requires_matching_retained_profile(self):
+        module = self._load_host_wrapper_module("hw_retirement_export")
+        destination, entry, required, sealed = self._real_layout_export(
+            "retirement", suite="retirement-smoke", retained="a" * 64
+        )
+        sealed["retained_profile_sha256"] = "b" * 64
+        self.assertFalse(module._verify_export(destination, entry, required, sealed))
+        sealed["retained_profile_sha256"] = "a" * 64
         self.assertTrue(module._verify_export(destination, entry, required, sealed))
 
     def test_c22_export_manifests_match_haepari_skeleton(self):

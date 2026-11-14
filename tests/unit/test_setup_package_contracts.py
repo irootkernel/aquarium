@@ -34,6 +34,46 @@ def test_published_plugin_resolves_without_repository(tmp_path):
     assert result.returncode == 0, result.stderr
 
 
+@pytest.mark.parametrize(
+    "fault", [None, "null", "missing", "map", "command", "escape", "args"]
+)
+def test_package_validator_supports_optional_mcp_but_validates_advertised_declarations(
+    tmp_path, fault
+):
+    shutil.copytree(ROOT / "plugins/aquarium", tmp_path / "plugins/aquarium")
+    shutil.copytree(ROOT / ".agents/plugins", tmp_path / ".agents/plugins")
+    (tmp_path / "tests/support").mkdir(parents=True)
+    shutil.copy2(ROOT / "tests/validate.rb", tmp_path / "tests/validate.rb")
+    shutil.copy2(LINK_CHECK, tmp_path / "tests/support/local_references.rb")
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    plugin = tmp_path / "plugins/aquarium"
+    manifest_path = plugin / ".codex-plugin/plugin.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["mcpServers"] = None if fault == "null" else "./.mcp.json"
+    manifest_path.write_text(json.dumps(manifest))
+    launcher = plugin / "fixture-launcher"
+    launcher.write_text("#!/bin/sh\nexit 0\n")
+    launcher.chmod(0o755)
+    server = {"command": "./fixture-launcher", "args": []}
+    if fault == "command":
+        server["command"] = False
+    elif fault == "escape":
+        server["command"] = "./../outside"
+    elif fault == "args":
+        server["args"] = "invalid"
+    if fault != "missing":
+        (plugin / ".mcp.json").write_text(
+            json.dumps({"mcpServers": [] if fault == "map" else {"fixture": server}})
+        )
+    result = subprocess.run(
+        ["ruby", str(tmp_path / "tests/validate.rb")],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert (result.returncode == 0) is (fault is None), result.stderr
+
+
 @pytest.mark.parametrize("target", ["../outside.md", "missing.md", "linked.md"])
 def test_package_rejects_escape_missing_and_symlink(tmp_path, target):
     plugin = tmp_path / "plugin"

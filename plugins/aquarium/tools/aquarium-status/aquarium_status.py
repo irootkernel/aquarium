@@ -28,7 +28,6 @@ from status_contract import (
     validate_record,
 )
 from status_report import (
-    enrollment,
     freshness,
     release_version,
     root_state,
@@ -290,9 +289,7 @@ def show(refresh: bool, source_root: str | None) -> dict[str, Any]:
                 ),
                 report_version,
             )
-            row["enrollment"], warning = enrollment(stored)
-            if warning:
-                warnings.add(warning)
+            row["enrollment"] = {"state": "retired", "project_id": None}
             repositories.append(row)
         return {
             "schema": REPORT_SCHEMA,
