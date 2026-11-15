@@ -3005,7 +3005,9 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
         context.codex = str(self._fake_codex)
         return context, home
 
-    def _stable_profile_for(self, context) -> None:
+    def _stable_profile_for(
+        self, context, skill_scope: str = "shared-agents-skills"
+    ) -> None:
         stable = json.loads(
             (
                 REPOSITORY
@@ -3031,6 +3033,8 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
         (reference / "SKILL.md").write_text("# synthetic use-podway\n")
         for component in stable["components"]:
             if component["name"] == "use-podway":
+                component["installation_scope"] = skill_scope
+                component["skill_tree"]["installation_scope"] = skill_scope
                 component["skill_tree"]["sha256"] = (
                     self.guest_main.lib.skill_tree_digest(context.checkout, reference)
                 )
@@ -3096,6 +3100,32 @@ class ReleaseAcceptanceUnitTest(unittest.TestCase):
         podway = document["skill_trees"]["use-podway"]
         self.assertTrue(podway["found"])
         self.assertIs(podway["match"], True)
+
+    def test_pinned_codex_home_skill_passes_at_prior_and_candidate(self):
+        context, home = self._identity_fixture(with_plugin=True, use_podway="match")
+        tree = home / ".codex/skills/use-podway"
+        tree.parent.mkdir(parents=True)
+        shutil.move(home / ".agents/skills/use-podway", tree)
+        self._stable_profile_for(context, skill_scope="codex-home-skills")
+        for stage in ("prior", "candidate"):
+            with self.subTest(stage=stage):
+                document = self.guest_main.skill_identity_document(context, stage)
+                self.assertIs(document["comparisons"]["all_passed"], True)
+                self.assertEqual(
+                    document["skill_trees"]["use-podway"]["root"], str(tree)
+                )
+                self.assertIs(document["skill_trees"]["use-podway"]["match"], True)
+
+    def test_pinned_codex_home_skill_does_not_use_shared_tree(self):
+        context, home = self._identity_fixture(with_plugin=True, use_podway="match")
+        self._stable_profile_for(context, skill_scope="codex-home-skills")
+        document = self.guest_main.skill_identity_document(context, "candidate")
+        self.assertIs(document["comparisons"]["all_passed"], False)
+        self.assertEqual(
+            document["skill_trees"]["use-podway"]["root"],
+            str(home / ".codex/skills/use-podway"),
+        )
+        self.assertIs(document["skill_trees"]["use-podway"]["found"], False)
 
     def test_plugin_skill_declared_name_matches_renamed_copy(self):
         context, _home = self._identity_fixture(with_plugin=True, use_podway="match")

@@ -1574,7 +1574,12 @@ def skill_identity_document(
         plugin_problems.append("installed-plugin-skills: tree not found")
     pinned_problems: list[str] = []
     for name, pinned in sorted(pinned_skills.items()):
-        tree = context.home / ".agents/skills" / name
+        directory = (
+            ".codex/skills"
+            if pinned["scope"] == "codex-home-skills"
+            else ".agents/skills"
+        )
+        tree = context.home / directory / name
         if not tree.is_dir():
             trees[name] = {
                 "algorithm": lib.SKILL_TREE_DIGEST_ALGORITHM,
