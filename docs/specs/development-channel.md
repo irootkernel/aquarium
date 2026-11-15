@@ -4,4 +4,23 @@ The candidate no longer ships the shared `aquarium-dev` manager, launcher, insta
 
 Use supported installed tool releases for host development and disposable fixtures for source checks. Installation-dependent verification stays in the dedicated UTM VM. The host-only [candidate builder](../../tests/vm/candidate_artifact.py), called by [host bundle preparation](../../tests/vm/host_bundle.py), consumes a clean disposable local-`main` clone at the selected committed SHA. It preserves the `aquarium-dev-artifact-manifest/v1` data schema, version stamp, file bytes/modes and canonical digest. That historical schema name is not an active channel dependency or distribution proof.
 
-Record current host source, sealed recipe harness, transported committed payload and installed guest identities separately. The finite `retirement-smoke` suite observes the retained guest profile without installing a candidate or historical baseline. Preparation alone is not a VM result. The [runbook](../ops/development-channel.md) owns the separately approved native host transition and exact owner-based cleanup. TASK-101 needs actual transition, removal and fresh workflow observations; TASK-102 separately qualifies the final changed installation/upgrade before release. Historical decisions and dossiers retain their original meaning, including EPIC-002's Cancelled status.
+Record host source, sealed recipe harness, transported committed payload and
+installed guest identities separately. TASK-101's original non-installing
+observations retain their finite scope in the
+[operations record](../ops/haepari-vm-verification.md#task-101-observed-retirement-scope).
+The temporary check has no current entrypoint after its cold-integration source
+consumers finish. TASK-102 qualifies the changed installation and upgrade before
+release and preserves any missing evidence as an open obligation. The
+[runbook](../ops/development-channel.md) owns separately approved native host
+transition and cleanup. Historical decisions retain their original meaning, including EPIC-002's
+Cancelled status and completed Task history. Settled dossier references resolve
+to these canonical owners; deleting a dossier never relabels withdrawn work.
+
+The [qualification and source binding](../../tests/vm/README.md#accepted-source-and-acceptance-binding)
+retains the exact installed candidate, applicable original cases, negative and
+recovery outcomes, actual functional observations and overall acceptance state.
+The [dated host observation](../ops/haepari-vm-verification.md#task-102-bounded-host-observation)
+is a bounded check of the released host, not guest acceptance or host activation.
+Later release readiness must resolve accepted source/closeout ancestry and
+inspect intervening retirement-affecting changes. It cannot transfer an earlier
+installed or host result to changed payload bytes.

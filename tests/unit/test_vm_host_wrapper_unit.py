@@ -1986,7 +1986,7 @@ class HostWrapperTest(unittest.TestCase):
             )
 
     def _real_layout_export(
-        self, name: str, suite="baseline", retained=None
+        self, name: str, suite="baseline"
     ) -> tuple[Path, dict, list, dict]:
         """A trimmed static export of the real J-BASE #2 v0.1.0 layout."""
         destination = self.work / f"export-fixture-{name}"
@@ -2006,11 +2006,6 @@ class HostWrapperTest(unittest.TestCase):
                         "outcome": "pass",
                         "consumer_cleanup": "verified",
                         "candidate": sealed,
-                        **(
-                            {"retained_profile_sha256": retained}
-                            if retained is not None
-                            else {}
-                        ),
                     }
                 ),
             ),
@@ -2090,16 +2085,6 @@ class HostWrapperTest(unittest.TestCase):
     def test_c21_real_layout_export_fixture_accepted(self):
         module = self._load_host_wrapper_module("hw_export_verify")
         destination, entry, required, sealed = self._real_layout_export("accept")
-        self.assertTrue(module._verify_export(destination, entry, required, sealed))
-
-    def test_retirement_export_requires_matching_retained_profile(self):
-        module = self._load_host_wrapper_module("hw_retirement_export")
-        destination, entry, required, sealed = self._real_layout_export(
-            "retirement", suite="retirement-smoke", retained="a" * 64
-        )
-        sealed["retained_profile_sha256"] = "b" * 64
-        self.assertFalse(module._verify_export(destination, entry, required, sealed))
-        sealed["retained_profile_sha256"] = "a" * 64
         self.assertTrue(module._verify_export(destination, entry, required, sealed))
 
     def test_c22_export_manifests_match_haepari_skeleton(self):

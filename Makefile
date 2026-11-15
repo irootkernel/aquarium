@@ -21,7 +21,6 @@ export PYTEST_ADDOPTS
 PYTHON_FILES := \
 	tests/vm/candidate_artifact.py \
 	tests/unit/test_vm_candidate_artifact_unit.py \
-	tests/unit/test_vm_retirement_unit.py \
 	plugins/aquarium/skills/version/scripts/inspect_versions.py \
 	tests/unit/test_version_inspection_unit.py \
 	plugins/aquarium/tools/aquarium-python/runtime.py \

@@ -2,7 +2,7 @@
 
 Aquarium verification is local and layered. Each layer has a bounded claim, and a higher-level workflow must not present one layer as proof of another.
 
-TASK-101's finite non-installing retirement smoke verifies a fresh reduced host route and the retained installed guest within one managed Job. It does not install the transported payload or replace TASK-102's final changed-candidate upgrade qualification. Source checks and preparation supply neither host-detachment nor VM acceptance evidence.
+TASK-101's original non-installing observations retain their finite host-route and retained-guest scope, including incomplete and corrected results. The [retirement record](../ops/haepari-vm-verification.md#task-101-observed-retirement-scope) preserves those limits after the one-off case is retired. TASK-102 qualifies the changed installation and upgrade through the current combination suite. Source checks and preparation supply neither host-detachment nor VM acceptance evidence.
 
 ## Layers
 

@@ -34,7 +34,7 @@ The seven native manual cases cover real released state, unchanged writer refusa
 | Stage | Checks |
 |---|---|
 | `test-prepare` | Ruff formatting and lint for maintained Python files; plugin-manifest JSON parsing; Ruby syntax; package metadata, local references, basic Procedure structure, and release-version identity; whitespace validation. |
-| `test-unit` | Native pytest tests for isolated installed-plugin resource containment through the Ruby link checker, complete upstream skill inventories, Procedure routing and qualification harnesses, production-status contracts and storage, committed-payload packaging and the finite non-installing retirement recipe, release-QA evidence and publication helpers, and the setup, documentation, release-note, and review-target inspectors. |
+| `test-unit` | Native pytest tests for isolated installed-plugin resource containment through the Ruby link checker, complete upstream skill inventories, Procedure routing and qualification harnesses, production-status contracts and storage, committed-payload packaging, release-QA evidence and publication helpers, and the setup, documentation, release-note, and review-target inspectors. |
 | `test-int` | Native pytest production-status persistence, concurrency, stored-key removal and inventory-retention scenarios plus the documentation, global-tool and testing inspectors; the three approved legacy unittest suites exercise tool inspection, manifest normalization and commit gates across temporary Git repositories and subprocess boundaries. |
 | `test-e2e` | Python pytest scenarios invoking the shipped production-status and test-setup CLIs and release-QA freeze/confirmation CLI as black boxes against isolated temporary fixtures. |
 
@@ -93,9 +93,20 @@ Podway skill changes also need Master's manual verification: setup must compare 
 
 For the v0.2.14 adoption, UTM installed verification must also cover fresh Codex and Claude skill discovery, Direct setup and managed-session workflows, stable-version eligibility without an upper bound, legacy and writer-mismatch recovery with separately approved history loss, and the absence of retired daemon/job/mode commands from the affected current paths. Preserve the baseline's running sessions and services. Bind results to the exact installed candidate and distinguish fixture evidence from Master's functional results.
 
-## Finite retirement verification
+## Retirement evidence and final qualification
 
-The [non-installing retirement smoke](tests/vm/README.md#non-installing-retirement-smoke) is a current TASK-101 check through the existing managed Job adapter. Focused unit cases cover committed-builder provenance/failures, exact retained-profile sealing, protected-state changes, identity mismatch refusal and export/profile binding. They do not establish installed or host results. The actual approved operation must observe the reduced host route, retained installed guest and protected pre/post state with separate consumer/native cleanup. TASK-102 still qualifies the final changed installation/upgrade before release.
+TASK-101's non-installing verification retains its original incomplete result,
+corrected finite preservation observations and separate native/consumer cleanup
+outcomes. The one-off case and its exclusive input, export and test paths are
+retired after TASK-102 cold integration consumed those originals. The
+[current qualification boundary](tests/vm/README.md#task-102-current-qualification)
+keeps that evidence separate from the changed installed candidate.
+
+Shared builder, combination sealing, recovery and receipt-bound export tests
+remain. TASK-102 still requires applicable installation/upgrade evidence, actual
+Master observations, current P/Q and consumer cleanup, one exact-final project
+gate and the bounded final host observation. Ordinary local tests do not perform
+those VM or host operations.
 
 ## Workflow Functional Verification
 

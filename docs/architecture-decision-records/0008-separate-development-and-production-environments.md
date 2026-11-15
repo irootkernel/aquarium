@@ -48,6 +48,6 @@ For a managed service, publish a new immutable generation as pending and retain 
 
 ## References
 
-- [Aquarium development environment dossier](../todo/TODO-AQUARIUM-DEV.md)
+- [Development channel retirement runbook](../ops/development-channel.md)
 - [Development channel specification](../specs/development-channel.md)
 - [Separate effect approvals](0005-separate-effect-approvals.md)

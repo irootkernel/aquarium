@@ -1429,30 +1429,42 @@ def case_artifact(directory, value):
 def assignment_criterion_ids(assignment):
     work = assignment["work"]
     require(isinstance(work, dict), "assignment work is unavailable")
-    records = work.get("criteria", [])
-    require(
-        isinstance(records, list)
-        and all(
-            isinstance(row, dict) and isinstance(row.get("id"), str) and row["id"]
-            for row in records
-        ),
-        "assignment criterion records are invalid",
-    )
-    mapping = work.get("original_smoke_criteria", {})
-    require(
-        isinstance(mapping, dict)
-        and all(
-            isinstance(key, str) and key and isinstance(value, str) and value
-            for key, value in mapping.items()
-        ),
-        "assignment criterion mapping is invalid",
-    )
+    identifiers = set()
+    for domain in ("criteria", "original_criteria"):
+        records = work.get(domain, [])
+        require(
+            isinstance(records, list)
+            and all(
+                isinstance(row, dict)
+                and isinstance(row.get("id"), str)
+                and row["id"]
+                and (
+                    domain != "original_criteria"
+                    or isinstance(row.get("source"), str)
+                    and row["source"]
+                )
+                for row in records
+            ),
+            "assignment criterion records are invalid",
+        )
+        identifiers.update(row["id"] for row in records)
+    for domain in ("original_smoke_criteria", "smoke_criteria"):
+        mapping = work.get(domain, {})
+        require(
+            isinstance(mapping, dict)
+            and all(
+                isinstance(key, str) and key and isinstance(value, str) and value
+                for key, value in mapping.items()
+            ),
+            "assignment criterion mapping is invalid",
+        )
+        identifiers.update(mapping)
     legacy = assignment.get("success_criteria")
     require(
         isinstance(legacy, list) and all(isinstance(value, str) for value in legacy),
         "assignment success criteria are invalid",
     )
-    return {row["id"] for row in records} | set(mapping) | set(legacy)
+    return identifiers | set(legacy)
 
 
 def validate_native_case(observation, evidence, repository, case_root):

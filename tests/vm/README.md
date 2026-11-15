@@ -33,40 +33,6 @@ requires current original evidence and verified cleanup; source/helper success
 alone does not qualify the combination. The separate host-submitted Q stays
 queued until P releases capacity, and its completed result is joined afterward.
 
-## Non-installing retirement smoke
-
-`retirement-smoke` verifies the reduced host route against the retained TASK-100 guest. It is selected alone, excluded from `SUITE=all`, and requires exact host/VM-effect approval. It never normalizes registration, ensures a prior baseline, installs either payload, downgrades or repairs the guest.
-
-The Coordinator (CO) owns this EPIC-033/TASK-101-only case. Its last consumer is TASK-102 cold integration. During TASK-102 cleanup, once no consumer remains, remove the one-off case, its entrypoints, exclusive fixtures/tests and these temporary instructions before final Epic settlement. Retain original runtime evidence under its existing custody and disposal rules. The finite input guards remain bound to the original reviewed preservation record.
-
-Keep three identities distinct:
-
-- Transported, uninstalled plugin payload: the reviewed committed payload selected by `AQUARIUM_VM_CANDIDATE_SHA`.
-- Executing reduced host builder/wrapper and sealed current recipe harness: their actual source hashes in `harness/inputs.json`, separate from the committed payload.
-- Observed installed guest: the component versions and hashes in the reviewed original retained profile. Seal those profile bytes unchanged as `profile/retained.json`.
-
-The operator binds the original profile, private guest context, fresh physical run directory, selected controller/resource, interpreter and native queue budget. `retirement_protected_paths` is a sealed declaration only; actual observation paths come from `retirement_preservation`, the complete original finite QA/custody/preimage facts, provenance and historical unknowns. The case observes only named QA file hashes and directories including empty ones, custody files and their owner sidecar, legacy root/launcher preimages by nonrecursive `lstat` only, and known safe Podway files plus peer owner sidecars. It never enumerates peer contents or hashes legacy launcher/runtime contents. Compare by path against original facts and across the new pre/post samples; equal absence does not prove preservation. `comparison_fields` and mismatch fields separate recorded `original` facts from `current_policy` type expectations where historical types were not captured. Unknown historical metadata and whole-tree membership/digests remain unknown. Keep these facts as case-specific sealed metadata. Fixture requirements remain null; the case installs no fixture environment.
-
-```sh
-PATH="$PWD/.venv/bin:$PATH" \
-HAEPARI_HOME="<approved-operational-haepari-home>" \
-AQUARIUM_VM_CANDIDATE_SHA="<reviewed-committed-payload-sha>" \
-AQUARIUM_VM_RETAINED_PROFILE="<original-pinned-profile-path>" \
-AQUARIUM_VM_QUEUE_SECONDS="<native-required-budget>" \
-make test-vm-host HAEPARI="<installed-haepari-cli>" \
-  RESOURCE="<approved-registered-resource>" MODE=auto SUITE=retirement-smoke \
-  RUN_DIR="<fresh-private-physical-run-directory>" \
-  GUEST_CONTEXT="<approved-private-guest-context.json>"
-```
-
-Preparation through `host_bundle.py` submits nothing. The bundle may carry historical prior/candidate data required by existing sealed-input checks; the smoke executes neither installer nor baseline. Missing inputs or identity mismatch refuse without changing the guest. No checkpoint commit or host candidate installation is required.
-
-One saved spec/key/Job holds the VM throughout. Existing parent/lease and guest-UUID guards run before writes. The recipe verifies sealed inputs, retained profile bytes, digest-matched binaries, complete paired skills, native marketplace source and its retained artifact tree, installed plugin registration/version and complete Aquarium skills, then runs Codex/Python version checks and Podway `version --identity --json`. It compares installed and approved protected inventories before/after and writes only Job-owned evidence.
-
-The five required outputs under `results/retirement-smoke/` are `result.json`, `identity.json`, `inventories.json`, `consumer-cleanup.json` and `post-cleanup-inventory.json`. Receipt-verified export must match the transported candidate and retained profile digest. Protected-state drift, mismatched identity, missing evidence or uncertain cleanup prevents acceptance; preserve failures without repairing the guest. Consumer preservation/cleanup and native collection/cleanup remain separate. Reconnect the original Job after interruption and retain outputs through verified consumption before owned disposal.
-
-Join the actual approved host pre/post state, released command resolution and fresh-context disabled-channel/no-launch observations. Guest success alone does not establish host retirement. Master controls VM power. Preparation supplies no VM result; TASK-102 still qualifies the final changed installation and upgrade before release.
-
 ## TASK-100 combination observations
 
 On 2026-11-13, the exact committed Aquarium payload `c783a6d` and separately
@@ -108,6 +74,143 @@ Task/Epic acceptance, host detachment, release readiness and qualification of
 changed TASK-101 bytes remain separate. The [operations handoff](../../docs/ops/haepari-vm-verification.md#task-101-transition-and-reduction-handoff)
 owns the supported next steps; the [roadmap](../../docs/roadmap/README.md) owns
 Task and Epic lifecycle state.
+
+## TASK-102 current qualification
+
+Master accepted the whole TASK-102 and EPIC-033 result on 2026-11-15. Its
+installed observation uses committed Aquarium `09972644` with the declared
+target tool and complete-skill profile.
+The original TASK-100 results retain their earlier payload, harness and profile;
+changed installation and migration behavior requires current evidence.
+
+The current baseline observed the actual host-related older tool bytes and
+complete skills before returning the four related CLIs to their target versions.
+Those older four CLIs were not invoked. The released Aquarium planning case used
+the target four and the original Podway 0.2.16 fixture. It stopped on unavailable
+Python prerequisites before native workflow startup; that negative remains part
+of migration evidence. The final Podway 0.2.17 binary and complete skill were
+returned without resetting the original writer history.
+
+A target-selection failure showed that restoring the earlier development cache
+to the active plugin cache selected that older version. The correction retained
+the same directory and filesystem identity in protected custody outside the
+active cache, then observed `09972644` selected without reinstalling it. Final
+consumer inventories must use that logical-to-physical retention mapping.
+
+The target Task and Epic fixtures reached their bounded documentation and
+evidence-recording checkpoints through actual independent roles. Their fixed
+collectors passed the original greeting oracles and fixture checks; global future
+rows and unfinished logical sessions remain evidence. The bounded release plan
+passed its seven due rows while retaining its future evidence-needed result.
+A separate owned HOME observed product absence, current plugin installation and
+fresh private discovery. Its original failed assertions remain alongside the
+corrected proof; the owned home was then removed after its last consumers,
+retaining its sidecar and original receipts.
+
+Candidate-matched status-runtime update and read-only reporting preserved the
+original generations, ledger and launcher preimage. A separately approved
+Sanho-only setup attempt ended declined, without initialization or network
+work, and the native recorder stored that actual result and language observation.
+These earlier agent-operated cases retain their own bounded evidence. The
+separately delegated functional observations below identify their actual actors
+and outcomes. The per-case evidence was assembled offline and consumed by the Coordinator.
+Selected source consumers have finished; original captures remain with their
+existing custodians.
+
+The original P Job reached its manual deadline and finished INCOMPLETE with
+partial evidence and verified native cleanup. That cleanup removed its owned
+workspace. The exported case index retains 30 recorded rows; the prepared
+additional 22 rows were not executed and remain offline applicability inputs.
+P's missing staging archives and unobserved manual work remain in its evidence
+gaps.
+
+The original queued Q Job started after P's cleanup and passed with verified
+cleanup. It observed the declared target plugin skills and remaining component
+identities with no differences. Its result proves the recorded non-overlap and
+target identity observations; P's timeout and missing manual evidence remain.
+
+A subsequent read-only protection collection retained a native FAIL. Its 93
+cache-directory mode differences came from comparing source permissions with
+native cache permissions. Separately approved recovery recreated 35 declared QA
+leaf directories and passed, with all 32 named QA files unchanged in metadata
+and content before and after. The new directory identities are recovery facts;
+the disappearance cause and exhaustive historical membership remain unknown.
+The original collection FAIL and P timeout remain unchanged.
+
+Bounded host checks matched the existing released plugin manifest, selected
+Codex binary, and Podway CLI and complete paired skill. The retired root and
+launcher remained absent; protected Haepari paths remained present. These
+read-only checks did not re-observe active daemons or establish a host upgrade.
+
+Master delegated the five functional observations to CO and retained overall
+acceptance. CO accepted all five observations performed by the delegated operator
+using the installed skills and the original behavior criteria. The initial
+status command's `lock_failed` and the release case's resulting non-execution
+remain in the evidence. A later continuation on the same native thread observed
+the supported parent default status output and the existing release-plan proof.
+These are CO-delegated results; no personal Master verification is claimed.
+
+| Required functional observation | Actual outcome |
+| --- | --- |
+| Global setup routing, retired-channel request and plugin-only update separation | Observed; accepted by CO under Master's delegation |
+| Original genuine declined repository setup/record, language and history interpretation | Observed; accepted by CO under Master's delegation |
+| Real EPIC-002 Cancelled/completed history and canonical reference settlement | Observed; accepted by CO under Master's delegation |
+| Default status, retired enrollment and preserved partial/missing-root history | Observed; accepted by CO under Master's delegation |
+| Original release-plan artifact/source identity, development versus distribution and handoff | Observed; accepted by CO under Master's delegation |
+
+The parent status command exited successfully and returned 72 repository rows
+with derived enrollment retired and project identity null. It preserved the old
+records and left the full ledger and lock unchanged. Configuration freshness
+remained unknown and release freshness was not checked. The release observation
+interpreted the original seven met plan rows and their independent assessment,
+with all 81 future rows still unverified and the global result evidence-needed.
+It neither generated a new plan nor performed a real release. The retained
+archive includes the operator's public command results and reports, alongside
+the original refusals and their provenance.
+
+The final project Make gate passed once on the frozen implementation with the
+source and index unchanged. This closeout delta changes documentation,
+references and conditional lifecycle records; the installed plugin payload is
+unchanged. Focused metadata, reference and diff checks cover these record edits.
+Master accepted the whole result on 2026-11-15. The original EE and sole source
+writer have completed their selected source consumption. This closeout settles
+the two dossiers after promoting their durable content and references, while
+preserving all original local evidence with its existing custodians. The temporary TASK-101
+smoke has finished its selected source consumers and is retired from current
+test selection. Its original incomplete and corrected results stay with their
+existing evidence owners.
+
+### Accepted source and acceptance binding
+
+The tested installed payload is committed Aquarium `09972644`; the separately
+sealed recipe snapshot and later host-only cleanup/documentation changes retain
+their distinct identities. Original P remains INCOMPLETE after its deadline;
+original Q passed after P's verified cleanup. The later protection collection
+FAIL and declared QA-directory recovery PASS are separate original results.
+The finite offline join preserves all 58 original case scopes and their original
+114 asset paths. Thirty rows were recorded in P; the remaining applicability
+composition does not rewrite that terminal index or imply a new managed P PASS.
+
+CO accepted the five delegated functional observations. The original EE found
+the final prospective closeout technically ready, and Master accepted the whole
+result on 2026-11-15 against the reviewed closeout delta and unchanged executable
+source. The selected source consumers have finished and their original evidence
+is retained. Git history binds the accepted implementation and closeout commits.
+No future commit identifier or host upgrade is asserted here.
+
+On 2026-11-15, the retained VM evidence distinguished the installed `09972644`
+payload from the sealed harness and later host-only source corrections. Original
+P's deadline and cleanup, Q's subsequent passing identity probe, the failed
+protection comparison and the separately authorized directory recovery retain
+their individual outcomes. Current source checks include the corrected evidence
+consumer and the one passing final Make gate. Documentation and closeout records
+do not establish a new installed payload or repeat those behavior checks.
+
+At release readiness, resolve the accepted implementation and closeout commits
+from Git history and inspect subsequent changes under the existing release
+prerequisite. The functional-observer delegation leaves overall acceptance with
+Master; it transfers neither acceptance nor installed evidence to a later
+candidate.
 
 ## Purpose and invocation
 

@@ -64,7 +64,7 @@ These decisions constrain the shared contract in `TASK-006`:
 
 ## References
 
-- [Aquarium development environment dossier](../todo/TODO-AQUARIUM-DEV.md)
+- [Development channel retirement runbook](../ops/development-channel.md)
 - [No central Aquarium state](0003-no-central-aquarium-state.md)
 - [Separate effect approvals](0005-separate-effect-approvals.md)
 - [State and evidence architecture](../architecture/state-and-evidence.md)

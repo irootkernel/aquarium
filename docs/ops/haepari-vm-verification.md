@@ -93,8 +93,9 @@ recovery dependency and disposition. Use an observation only when it cannot star
 a daemon; inaccessible or partial sources remain unknown. Removing source grants
 no host-state effect or producer broker operation.
 
-The [Epic dossier](../todo/TODO-HAEPARI-COMBINATION-RETIREMENT.md) owns the complete
-TASK-101 scope. The finite consumer inventory selects these reductions:
+The [canonical retirement contract](../specs/development-channel.md) and
+[current qualification boundary](../../tests/vm/README.md#task-102-current-qualification)
+own the retained scope. The finite consumer inventory selects these reductions:
 
 | Owner | Retained requirement and TASK-101 action |
 | --- | --- |
@@ -112,17 +113,26 @@ preexisting peers and last-consumer binary custody as intentional retention,
 with their actual owners and removal conditions. Haepari's native Job cleanup
 and later last-consumer disposal remain separate from consumer settlement.
 
-## Non-installing TASK-101 retirement smoke
+## TASK-101 observed retirement scope
 
-The Coordinator (CO) owns this EPIC-033/TASK-101-only case through its last consumer, TASK-102 cold integration. During TASK-102 cleanup, once no consumer remains, remove the one-off case, its entrypoints, exclusive fixtures/tests and these temporary instructions before final Epic settlement. Keep original runtime evidence under its existing custody and disposal rules.
+The accepted host transition, shared-channel removal and fresh development
+operation keep their original observation date and installed identity. The first
+non-installing VM observation was incomplete: required identity, consumer and
+post-cleanup outputs were missing. Its corrected observation verified the five
+declared outputs and finite protected before/after facts on the retained earlier
+guest. Consumer preservation and native cleanup remain separate results.
 
-After authorized source preparation and exact host/VM-effect approval, use `SUITE=retirement-smoke MODE=auto` through `make test-vm-host`. The [VM guide](../../tests/vm/README.md#non-installing-retirement-smoke) owns the concrete invocation and input map. Keep the reviewed committed transport payload, executing reduced host/recipe source and observed retained guest installation distinct. The existing TASK-101 runtime evidence owns their exact run identities. Do not normalize registration, install a prior baseline/candidate, downgrade or repair the guest to obtain success.
+Cold TASK-102 integration consumed the original source and both results. The
+one-off executable and its instructions are retired after the Coordinator
+confirmed no selected live-source consumer. Preserve the original source pins,
+reports, exports, QA/preimages and custody for their existing acceptance and
+release consumers. Removing source does not dispose of that evidence.
 
-Bind the original retained profile unchanged, approved protected guest paths and host pre/post scopes. Use the original same Job/spec/key across reconnect, guard guest/lease identity, verify sealed bytes, installed binaries/complete skills and registration, then run bounded digest-matched identity commands. Collect five declared outputs, verified consumer preservation and native cleanup/export separately. Mismatch or uncertain cleanup blocks consumption. Join actual fresh-context disabled-channel and protected-host observations; guest success cannot prove host inactivity.
-
-Seal the original finite preservation facts as private-context `retirement_preservation`. The unchanged input guards bind the case to that reviewed record. Observe its named QA files and directory paths including empty directories, custody files/owner and preimage peers by path. Legacy launcher/root observations are nonrecursive `lstat` only; hash only the explicitly known safe files and owner sidecars. Compare both with original recorded facts and across the new operation. Missing originals, absent required objects, type/metadata/hash drift or unreadable paths prevent preservation passage. Retain original ownership/Job/last-consumer attribution and uncaptured whole-tree limits; do not inspect legacy contents or repair the guest. The same case and five outputs carry these observations.
-
-Record the installed host daemon, standalone CLI and rehearsed guest versions separately in the reviewed inputs and runtime evidence. Demonstrate the native transition's applicability before host effects. No historical Codex restore, host candidate installation or VM power operation is authorized by this route.
+The [current TASK-102 boundary](../../tests/vm/README.md#task-102-current-qualification)
+records changed installed verification and remaining work. The final host
+observation must reconcile the actual selected Podway CLI and complete paired
+skill with that migration evidence. Historical host retirement does not qualify
+a later candidate, and VM success does not establish host inactivity.
 
 ## Prerequisites and diagnosis
 
@@ -353,3 +363,21 @@ installation, controller replacement, VM power operation or publication.
 ## Explicit Podway upgrade qualification
 
 Use `SUITE=podway-upgrade MODE=manual` only under the exact VM-test authority described by the [operator scenario](../../tests/vm/recipes/scenarios/podway-upgrade.md). Supply physical paths for `AQUARIUM_VM_BASELINE_PROFILE`, matching the host's installed released combination, `AQUARIUM_VM_PODWAY_RELEASE` and `AQUARIUM_VM_PODWAY_PREVIOUS_RELEASE`, in addition to the normal candidate, resource and private guest context. The selected Job retains that original baseline and a separate v0.2.17 candidate profile with authentic sealed v0.2.16 previous-release input. Historical v0.2.14 profiles remain unchanged. Seven native manual cases, actual installed skill observations and verified restoration remain required; the helper never installs tools or discards runtime state. Recover the original Job and phase captures after disconnect.
+
+## TASK-102 bounded host observation
+
+On 2026-11-15, bounded read-only host checks matched the existing Aquarium
+0.1.22 plugin manifest, selected Codex 0.167.2 binary, Podway 0.2.16 CLI and its
+complete five-file paired skill. The retired root and launcher remained absent;
+the protected operational Haepari home and service file remained present. These
+checks did not re-observe active daemons, establish global quiescence or perform
+a host upgrade. The guest candidate `09972644` and Podway 0.2.17 remain distinct
+from that host combination.
+
+TASK-101's original native transition and removal observations retain their
+recorded date and scope. The later bounded checks do not replay that transition or erase
+its original failures and unknowns. The [current qualification record](../../tests/vm/README.md#task-102-current-qualification)
+owns changed installed evidence, the delegated functional checks and actual
+overall acceptance. Release readiness resolves the accepted implementation and
+closeout ancestry through Git and these canonical owners; it must inspect later
+retirement-affecting changes under the existing release prerequisite.

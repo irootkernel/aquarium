@@ -409,7 +409,10 @@ def test_public_native_roles_allow_null_metadata_and_future_global_gap(native_ca
     }
 
 
-@pytest.mark.parametrize("domain", ["criteria", "original_smoke_criteria"])
+@pytest.mark.parametrize(
+    "domain",
+    ["criteria", "original_criteria", "original_smoke_criteria", "smoke_criteria"],
+)
 @pytest.mark.parametrize("missing", [False, True])
 def test_structured_original_criteria_bind_the_complete_due_set(
     native_case, domain, missing
@@ -423,8 +426,11 @@ def test_structured_original_criteria_bind_the_complete_due_set(
         assignment = gate.read_json(path)
         assignment["success_criteria"] = ["Meet the complete original due set"]
         assignment["work"][domain] = (
-            [{"id": key, "meaning": meaning} for key, meaning in criteria.items()]
-            if domain == "criteria"
+            [
+                {"id": key, "source": "Fixture dossier", "meaning": meaning}
+                for key, meaning in criteria.items()
+            ]
+            if domain in {"criteria", "original_criteria"}
             else criteria
         )
         write_json(path, assignment)
@@ -453,8 +459,20 @@ def test_legacy_assignment_requires_every_explicit_id(native_case, role):
     [
         ("criteria", None),
         ("criteria", [{"id": None}]),
+        ("original_criteria", None),
+        ("original_criteria", {}),
+        ("original_criteria", [None]),
+        ("original_criteria", [{"id": None, "source": "Fixture dossier"}]),
+        ("original_criteria", [{"id": "", "source": "Fixture dossier"}]),
+        ("original_criteria", [{"id": "uppercase-default"}]),
+        ("original_criteria", [{"id": "uppercase-default", "source": None}]),
+        ("original_criteria", [{"id": "uppercase-default", "source": ""}]),
         ("original_smoke_criteria", []),
         ("original_smoke_criteria", {"uppercase-default": None}),
+        ("smoke_criteria", []),
+        ("smoke_criteria", {"uppercase-default": None}),
+        ("smoke_criteria", {"": "Original requirement"}),
+        ("smoke_criteria", {"uppercase-default": ""}),
         ("success_criteria", None),
     ],
 )
