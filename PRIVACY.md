@@ -20,6 +20,18 @@ covered by the existing transmission approval. After successful useful use,
 repository preservation requires specific content consent, follows original
 workflow finalization and needs a matching grant for any commit.
 
+Aquarium keeps a local production setup-status ledger at
+`~/.aquarium/status.yaml`. Terminal repository setup may record canonical
+absolute Git worktree and common-directory paths, a display label, attempt
+identifiers and times, outcome and scope, sourced Aquarium versions, the latest
+settled Sanho observations, and bounded Go, Rust, Python, TypeScript and Dart
+declaration values with relative manifest paths and observation times.
+Terminal setup recording and the explicit `refresh-languages` command read local
+declaration files from recorded roots without running project code or making a
+network request. Declaration values must match supported version or version-range
+forms; unrecognized values are not stored. The scanner skips credential-named
+paths.
+
 The ledger excludes credentials, repository source, provider output and raw diagnostics. Default reporting is offline and no longer reads legacy enrollment files. Explicit `--refresh` contacts only the official Aquarium GitHub latest stable Release endpoint; source-root observation reads only that checkout's manifest and CHANGELOG. Moved/deleted worktree rows remain until exact-row forgetting. Owned state uses private `0700` directories and `0600` files; repository-local `.aquarium` state remains forbidden.
 
 `dev-setup-bundle` reads only the explicitly supplied local YAML manifest and the listed Git repositories needed for setup preflight. It keeps the manifest path and digest only for the active request, does not discover sibling repositories, persist the manifest, or transmit its contents, delegates the selected global union once to `dev-setup-global`, and delegates repository state to `dev-setup`.
