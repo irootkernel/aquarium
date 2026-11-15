@@ -259,7 +259,7 @@ writer inputs before submitting a Job. Use `MODE=manual SUITE=release-acceptance
 and follow the
 [complete operator runbook](../../tests/vm/recipes/scenarios/release-acceptance.md).
 It owns the phase commands, fixed profiles, model-use budget, actual proposal and
-result decisions, eleven required scenarios, ten bounded evidence archives and
+result decisions, twelve required scenarios, eleven bounded evidence archives and
 abort/recovery checkpoints. One Job holds the VM throughout. The guest-side
 `make test-vm` and nested handler fixtures run inside that allocation.
 
